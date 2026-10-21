@@ -132,6 +132,7 @@ from sdmxlib.storage._checked import checked
 from sdmxlib.storage._kinds import (
     CLASS_TO_NAME as _CLASS_TO_NAME,
 )
+from sdmxlib.storage._parsed import parsed
 from sdmxlib.storage._projections import _thread_cursor
 from sdmxlib.storage._projections import code_map as code_map  # noqa: PLC0414  # re-export
 from sdmxlib.storage.lazy import LazyCodelist, LazyHierarchy
@@ -192,7 +193,10 @@ def _read_name_and_description(
     grows with the plan, so simple statements beat one wide one.
     """
     rows = conn.execute(
-        "SELECT field, lang, text FROM localized_text WHERE owner_urn = ? AND field IN ('name', 'description')",
+        parsed(
+            conn,
+            "SELECT field, lang, text FROM localized_text WHERE owner_urn = ? AND field IN ('name', 'description')",
+        ),
         [owner_urn],
     ).fetchall()
     texts: dict[str, dict[str, str]] = {"name": {}, "description": {}}
@@ -313,7 +317,9 @@ def _read_spine(conn: duckdb.DuckDBPyConnection, urn: str) -> SpineRow | None:
     import (`project_duckdb_pandas_probe`).
     """
     row = conn.execute(
-        """
+        parsed(
+            conn,
+            """
         WITH own AS (
             SELECT list({'rel': rel, 'url': url, 'urn': urn, 'type': link_type, 'hreflang': hreflang}
                         ORDER BY position) AS links
@@ -327,6 +333,7 @@ def _read_spine(conn: duckdb.DuckDBPyConnection, urn: str) -> SpineRow | None:
                is_partial_language, own.links, items.n
         FROM artefact, own, items WHERE artefact.urn = $urn
         """,
+        ),
         {"urn": urn},
     ).fetchone()
     if row is None:

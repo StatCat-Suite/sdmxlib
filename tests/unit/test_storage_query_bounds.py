@@ -27,6 +27,7 @@ with item count, Ref fan-out, or number of read calls."
 
 from typing import Any
 
+import duckdb
 import pytest
 
 from sdmxlib.local import LocalRegistry
@@ -52,6 +53,11 @@ pytestmark = pytest.mark.unit
 _NAME = InternationalString(en="Test")
 
 
+def _text(sql: duckdb.Statement | str) -> str:
+    """The SQL text a call ran: a cached store read arrives parsed (GH-39)."""
+    return sql.query if isinstance(sql, duckdb.Statement) else sql
+
+
 class CountingCursor:
     """Connection proxy that counts every ``execute`` call.
 
@@ -67,9 +73,10 @@ class CountingCursor:
         self.executes: list[str] = []
         self.calls: list[tuple[str, tuple[Any, ...]]] = []
 
-    def execute(self, sql: str, *args: Any, **kwargs: Any) -> Any:
-        self.executes.append(sql)
-        self.calls.append((sql, args))
+    def execute(self, sql: duckdb.Statement | str, *args: Any, **kwargs: Any) -> Any:
+        text = _text(sql)
+        self.executes.append(text)
+        self.calls.append((text, args))
         return self._inner.execute(sql, *args, **kwargs)
 
     def cursor(self) -> Any:
@@ -90,9 +97,10 @@ class _SpawnedCountingCursor:
         self._inner = inner
         self._parent = parent
 
-    def execute(self, sql: str, *args: Any, **kwargs: Any) -> Any:
-        self._parent.executes.append(sql)
-        self._parent.calls.append((sql, args))
+    def execute(self, sql: duckdb.Statement | str, *args: Any, **kwargs: Any) -> Any:
+        text = _text(sql)
+        self._parent.executes.append(text)
+        self._parent.calls.append((text, args))
         return self._inner.execute(sql, *args, **kwargs)
 
     def cursor(self) -> Any:
