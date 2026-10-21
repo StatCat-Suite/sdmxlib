@@ -134,6 +134,18 @@ Two key python implementations of the SDMX information model are:
 Use these to check our model, and when possible make sure we follow the data
 representation they use if we are unsure.
 
+## Issue references
+
+Issues live on GitHub (StatCat-Suite/sdmxlib). The project moved from GitLab
+in October 2026, and the tree cites the GitLab tracker about 4,350 times as a
+bare `#N` — `#492`, `#75`. Those keep meaning GitLab
+(gitlab.com/pinax-suite/sdmxlib, an archive now) and are not rewritten.
+
+**Write a GitHub issue or PR as `GH-N`**, never a bare `#N`: GitHub numbers
+from 1, so a bare number would collide with the GitLab one the tree already
+means. GitHub links `GH-N` by itself. The 31 issues still open at the move were
+re-created on GitHub, each carrying a "Moved from GitLab #N" line.
+
 ## Key files
 
 | File                              | Purpose                                                                                                                                                                |

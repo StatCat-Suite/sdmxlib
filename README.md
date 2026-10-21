@@ -119,3 +119,8 @@ just test            # unit tests
 just test-integration  # end-to-end tests, replayed from recorded cassettes
 just ci              # the full gate: lint, typecheck, unit, docs, integration
 ```
+
+Issues are tracked on [GitHub](https://github.com/StatCat-Suite/sdmxlib/issues).
+The project started on GitLab, so a bare `#492` in code, comments or docs means
+an issue in the [GitLab tracker](https://gitlab.com/pinax-suite/sdmxlib/-/issues),
+which stays readable as an archive. GitHub issues are written `GH-12`.
