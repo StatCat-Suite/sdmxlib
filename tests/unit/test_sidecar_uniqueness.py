@@ -24,12 +24,14 @@ from datetime import UTC, datetime
 import duckdb
 import pytest
 
+import sdmxlib.local.sql
 from sdmxlib.local import LocalRegistry
 from sdmxlib.local.data_store import DuckDBDataStore
 from sdmxlib.local.sql import SchemaInspector, SidecarNotUniqueError
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.ref import Ref
+from sdmxlib.session import cursor_for
 
 pytestmark = pytest.mark.unit
 
@@ -131,25 +133,35 @@ def test_duplicates_under_a_null_key_are_accepted() -> None:
         assert query.filter(query.col("GEO_LEVEL") == "Country").count() == 6
 
 
-class _CountingConn:
-    """Forwards to a real connection, counting the uniqueness checks it is asked to run."""
+class _CountingHandle:
+    """Forwards to a thread's real handle, counting uniqueness checks into its spy."""
 
-    def __init__(self, real: duckdb.DuckDBPyConnection) -> None:
+    def __init__(self, real: duckdb.DuckDBPyConnection, spy: _CountingCursors) -> None:
         self._real = real
-        self.checks = 0
+        self._spy = spy
 
     def execute(self, sql: str, *args: object, **kwargs: object) -> object:
         if "count(DISTINCT" in sql:
-            self.checks += 1
+            self._spy.checks += 1
         return self._real.execute(sql, *args, **kwargs)
+
+
+class _CountingCursors:
+    """Stands in for `cursor_for` where the inspector calls it — the handle it runs on (#75)."""
+
+    def __init__(self) -> None:
+        self.checks = 0
+
+    def __call__(self, base: duckdb.DuckDBPyConnection) -> _CountingHandle:
+        return _CountingHandle(cursor_for(base), self)
 
 
 def test_the_check_runs_once_per_table_and_again_after_invalidate(monkeypatch: pytest.MonkeyPatch) -> None:
     with LocalRegistry(":memory:") as registry:
         _tables(registry.connection.cursor(), UNIQUE)
         inspector = SchemaInspector(registry.connection)
-        conn = _CountingConn(registry.connection)
-        monkeypatch.setattr(inspector, "_conn", conn)
+        conn = _CountingCursors()
+        monkeypatch.setattr(sdmxlib.local.sql, "cursor_for", conn)
         for _ in range(5):
             inspector.plan(_binding())
         assert conn.checks == 1, "cached across plans"
