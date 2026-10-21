@@ -17,23 +17,11 @@ classifiers = [
 ]
 dependencies = [
     "attrs>=26.1.0",
-    # >=1.5.3: ducklake extension must support DuckLake catalog format 1.0,
-    # which is what a bundle built with duckdb 1.5.3 carries. duckdb 1.5.1's
-    # ducklake tops out at format 0.4 and fails to ATTACH such bundles with "DuckLake catalog version mismatch".
-    #
-    # Moved to >=1.5.5 while investigating #400 — two patch releases of fixes,
-    # taken on their own merits. It is **not** a fix for #400: 1.5.0, 1.5.1,
-    # 1.5.2, 1.5.3, 1.5.4, 1.5.5 and 1.6.0.dev379 all read the affected bundle
-    # identically, so that defect is in the file rather than in the reader.
-    #
-    # >=1.5.6: test_annotation_subtree_read (#426) asserts the annotation
-    # subtree read uses the owner index. 1.5.5's planner chooses a SEQ_SCAN
-    # over `owner_artefact_urn = ?` (502 rows read) and 1.5.6 uses the index,
-    # so on 1.5.5 the read scans every annotation row.
-    # <2: DuckDB 2.0 removed `pl()` from an `execute()` result and refuses a
-    # relation call on a handle with an unfinished result; this release
-    # predates the move to 2.0, which is its own change.
-    "duckdb>=1.5.6,<2",
+    # >=2.0: an `execute()` result has no `pl()` any more, so frames come from
+    # a relation (`sql().pl()`), and a relation call on a handle holding an
+    # unfinished result raises rather than clobbering it (`session.completed`).
+    # The tests assert 2.0's profile JSON, error text and sort costs.
+    "duckdb>=2.0.0",
     "httpx>=0.28.1",
     "lxml>=6.0.2",
     "msgspec>=0.19",

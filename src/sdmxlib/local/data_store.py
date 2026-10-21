@@ -31,7 +31,7 @@ from sdmxlib.model.ref import Ref
 from sdmxlib.model.representation import Facet
 from sdmxlib.query.observations import Observations, ObsQuery, Sidecar
 from sdmxlib.query.query import build
-from sdmxlib.session import SessionFactory
+from sdmxlib.session import SessionFactory, completed
 
 if TYPE_CHECKING:
     # `local.registry` imports this module at runtime: a cycle.
@@ -676,10 +676,10 @@ class DuckDBDataStore(SessionFactory):
             raise ValueError(msg)
 
         conn = self.connection
-        # Register the source as a temporary view the CTAS can scan.
+        # Registered for this session, not created as a view: a view is
+        # catalog state, and DuckDB refuses one over a Python object.
         view_name = f"__sdmxlib_write_obs_{id(source):x}"
-        rel = _as_relation(conn, source)
-        rel.create_view(view_name, replace=True)
+        completed(conn).register(view_name, _as_relation(conn, source))
         try:
             target = f"{lake_alias}.{schema}.{table}"
             conn.execute(f"CREATE SCHEMA IF NOT EXISTS {lake_alias}.{schema}")
@@ -696,7 +696,7 @@ class DuckDBDataStore(SessionFactory):
                 msg = f"Unknown mode: {mode!r} (expected 'overwrite' or 'append')"
                 raise ValueError(msg)
         finally:
-            conn.execute(f"DROP VIEW IF EXISTS {view_name}")
+            completed(conn).unregister(view_name)
         # A rewrite can change the target table's schema; drop cached column
         # lists so the inspector (internal query path + custom SQL) re-reflects.
         # The target may be cached under a differently-qualified name than the

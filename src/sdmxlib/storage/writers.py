@@ -65,6 +65,7 @@ from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.model.valuelist import ValueList
 from sdmxlib.model.version import is_final
 from sdmxlib.model.version import sort_key as version_sort_key
+from sdmxlib.session import completed
 from sdmxlib.storage._kinds import CLASS_TO_NAME as _CLASS_TO_NAME
 from sdmxlib.storage.resolve import level_urn, part_owner
 from sdmxlib.storage.schema import ENUMERATION_FORMAT_COLUMN_NAMES, FACET_COLUMN_NAMES, TO_TEXT_FORMAT_COLUMN_NAMES
@@ -154,12 +155,12 @@ def _execute_bulk_insert(
     columns = list(zip(*rows, strict=True))
     arrays = [_to_arrow_array(list(col)) for col in columns]
     arrow_table = pa.Table.from_arrays(arrays, names=list(cols))
-    conn.register("__sdmx_bulk_insert", arrow_table)
+    completed(conn).register("__sdmx_bulk_insert", arrow_table)
     try:
         col_str = ", ".join(cols)
         conn.execute(f"INSERT INTO {table} ({col_str}) SELECT * FROM __sdmx_bulk_insert")
     finally:
-        conn.unregister("__sdmx_bulk_insert")
+        completed(conn).unregister("__sdmx_bulk_insert")
 
 
 # ── Spine + text + annotations helpers ──────────────────────────────────

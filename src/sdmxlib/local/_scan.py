@@ -38,6 +38,7 @@ from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.model.ref import Ref
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.query.observations import ObsQuery
+from sdmxlib.session import completed
 
 #: The catalog every scan's relation lives in — see the module docstring.
 SCANS = "sdmx_scans"
@@ -99,11 +100,11 @@ def scan_frame_into(
         if column in frame.columns
     )
     name = relation.rpartition(".")[2]
-    plane.connection.register(name, typed.to_arrow())
+    completed(plane.connection).register(name, typed.to_arrow())
     try:
         plane.connection.execute(f"CREATE TABLE {relation} AS SELECT * FROM {name}")
     finally:
-        plane.connection.unregister(name)
+        completed(plane.connection).unregister(name)
     return plane.obs(binding, dsd=dsd)
 
 

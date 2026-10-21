@@ -36,6 +36,8 @@ import attrs
 import duckdb
 import polars as pl
 
+from sdmxlib.session import completed, frame_of
+
 #: A `$name` placeholder. Matched only outside strings, comments and
 #: identifiers — see `_rewrite`.
 _PLACEHOLDER = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)")
@@ -281,7 +283,7 @@ class RawSql:
 
     def collect(self) -> pl.DataFrame:
         """Execute and return a `polars.DataFrame`. The only executing call."""
-        return self._conn.execute(self.sql, list(self.params)).pl()
+        return frame_of(completed(self._conn).sql(self.sql, params=list(self.params)))
 
     def explain(self) -> str:
         """The statement and its binds. Runs nothing."""

@@ -73,7 +73,7 @@ from sdmxlib.query._expr import (
 )
 from sdmxlib.query._plan import Plan, scanned
 from sdmxlib.query._pushdown import DUCKDB, Program, Push, plan_program
-from sdmxlib.session import cursor_for
+from sdmxlib.session import completed, cursor_for, frame_of
 
 
 def _partition_prefix(root: AnyCols, order: Sequence[OrderKey]) -> tuple[str, ...]:
@@ -127,7 +127,7 @@ def _stream_by_partition[R: RowKind, A](
             # does not pull the next partition until this one is finished — which
             # is exactly what keeps peak at one partition rather than their sum.
             cursor = query._cursor().cursor()
-            yield cursor.execute(compiled.sql, list(compiled.params)).to_arrow_reader(chunk_rows)
+            yield completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
 
     stream = readers()
     first = next(stream)
@@ -1613,7 +1613,7 @@ class Query[R: RowKind, A = object]:
         their `Facet` declares.
         """
         compiled = self.to_sql()
-        frame = _typed(self._cursor().execute(compiled.sql, list(compiled.params)).pl(), self.root)
+        frame = _typed(frame_of(completed(self._cursor()).sql(compiled.sql, params=list(compiled.params))), self.root)
         if not labels:
             return frame
         return _labelled(frame, self.root, labels, label_suffix)
@@ -1699,7 +1699,7 @@ class Query[R: RowKind, A = object]:
         # on one connection would overwrite each other's row buffer (#75), and
         # the reader holds this one until it is exhausted or closed.
         cursor = self._cursor().cursor()
-        return cursor.execute(compiled.sql, list(compiled.params)).to_arrow_reader(chunk_rows)
+        return completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
 
     def _partition_values(self, partitions: tuple[str, ...]) -> list[tuple[object, ...]]:
         """Every partition, in key order — one small query before the stream.
@@ -2355,7 +2355,7 @@ class Select[R: RowKind, A = object]:
         # component id -> the name it was projected under, so an aliased column
         # is typed and labelled under the alias.
         aliases = {item.projected_name: name for name, item in self.items if isinstance(item, AnyCol)}
-        frame = _as_utc(cursor.execute(compiled.sql, list(compiled.params)).pl(), self.items)
+        frame = _as_utc(frame_of(completed(cursor).sql(compiled.sql, params=list(compiled.params))), self.items)
         frame = _typed(frame, self._query.root, aliases)
         if not labels:
             return frame
@@ -2450,7 +2450,7 @@ class Select[R: RowKind, A = object]:
         # on one connection would overwrite each other's row buffer (#75), and
         # the reader holds this one until it is exhausted or closed.
         cursor = self._query._cursor(self._query._projection_columns(self.items)).cursor()
-        return cursor.execute(compiled.sql, list(compiled.params)).to_arrow_reader(chunk_rows)
+        return completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
 
     @override
     def __repr__(self) -> str:
