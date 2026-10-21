@@ -177,8 +177,9 @@ def test_the_mixed_reproducer_still_catches_a_shared_cursor(monkeypatch: pytest.
             try:
                 _race_mixed_reads(reg)
             # A garbled row now often meets a field validator before anything
-            # else, and is refused as the model builds it (#492).
-            except AssertionError, IndexError, ValueError, TypeError, ValidationError:
+            # else, and is refused as the model builds it (#492). DuckDB 2.0
+            # often refuses the second thread outright instead of garbling.
+            except AssertionError, IndexError, ValueError, TypeError, ValidationError, duckdb.ResourceInUseException:
                 return
     pytest.fail("three races over one shared cursor read back clean: the reproducer no longer reproduces")
 

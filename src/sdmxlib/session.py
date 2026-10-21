@@ -50,6 +50,7 @@ from uuid import uuid4
 
 import attrs
 import duckdb
+import polars as pl
 import pyarrow as pa
 
 #: `cursor_for` is deliberately absent: it hands out an *unmanaged* handle —
@@ -58,6 +59,8 @@ import pyarrow as pa
 #: themselves in a block. This module is public, so `__all__` is where that
 #: distinction gets stated (CLAUDE.md rule 4, and the contract #265's guard
 #: keys on). Importing it still works; it is just not part of the surface.
+#: `completed` is absent for the same reason: package-internal, for every
+#: module that calls `sql`, `register` or `unregister` on a handle; `frame_of` too.
 __all__ = ["Session", "SessionFactory", "SessionHook", "ValueSet"]
 
 #: Per-thread, per-connection handle cache. Weak keys so closing a store lets
@@ -118,11 +121,11 @@ def value_match(cur: duckdb.DuckDBPyConnection, values: Sequence[object]) -> Gen
         yield "= ANY(?)", [listed]
         return
     name = f"_sl_values_{uuid4().hex[:12]}"
-    cur.register(name, pa.table({"v": listed}))
+    completed(cur).register(name, pa.table({"v": listed}))
     try:
         yield f"IN (SELECT v FROM {name})", []
     finally:
-        cur.unregister(name)
+        completed(cur).unregister(name)
 
 
 def cursor_for(conn: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyConnection:
@@ -153,6 +156,55 @@ def cursor_for(conn: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyConnection:
         table[conn] = cur
         _apply_hooks(conn, cur)
     return cur
+
+
+def completed(handle: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyConnection:
+    """``handle``, with any unfinished `execute()` result on it abandoned.
+
+    Every `sql`, `register` and `unregister` call on a handle goes through
+    this. DuckDB 2.0 refuses those — and any read of a relation — while the
+    handle holds an `execute()` result nobody finished, and `fetchone()` never
+    finishes one, even on a one-row result: only a fetch that comes back empty,
+    `fetchall()`, or `complete()` does. A thread's handle is shared by every
+    read on that thread, so the `fetchone()` that strands a result and the
+    `sql()` it then breaks are usually in unrelated modules — `key_counts`
+    and `Select.collect` were the first pair.
+
+    `execute()` itself abandons a pending result, as DB-API does and as every
+    call did on 1.5; this gives the relation calls the same rule rather than
+    making each of forty reads remember to finish. A result still being read
+    when a relation starts is lost — as it already was to the next `execute()`.
+
+    Args:
+        handle: The handle about to run a relation call.
+
+    Returns:
+        ``handle`` itself, so the call reads ``completed(cur).sql(...)``.
+    """
+    handle.complete()
+    return handle
+
+
+def frame_of(relation: duckdb.DuckDBPyRelation) -> pl.DataFrame:
+    """``relation``'s rows as a polars frame.
+
+    `pl()` with its type recovered: polars is optional to DuckDB, so its stub
+    returns `Any`, and that `Any` rode unchecked into `_typed` at two sites.
+
+    Args:
+        relation: The relation to run.
+
+    Returns:
+        Its rows, all of them.
+
+    Raises:
+        TypeError: If `pl()` returned something other than a `DataFrame`.
+    """
+    frame = relation.pl()
+    if not isinstance(frame, pl.DataFrame):
+        msg = f"DuckDB's pl() returned {type(frame).__name__}, not a polars DataFrame"
+        raise TypeError(msg)
+    return frame
 
 
 def _release(conn: duckdb.DuckDBPyConnection) -> None:
@@ -333,11 +385,11 @@ class Session:
             A `ValueSet` to pass to `is_in`.
         """
         name = f"_sl_values_{uuid4().hex[:12]}"
-        self._handle.register(name, pa.table({"value": list(values)}))
+        completed(self._handle).register(name, pa.table({"value": list(values)}))
         try:
             yield ValueSet(name)
         finally:
-            self._handle.unregister(name)
+            completed(self._handle).unregister(name)
 
 
 class SessionFactory:

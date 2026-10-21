@@ -31,12 +31,16 @@ newly opened store's default hook was applied to every handle in the process —
 including closed ones. 23 tests failed with "Connection already closed".
 """
 
+import ast
 import threading
+from collections import Counter
 from collections.abc import Callable
+from pathlib import Path
 
 import duckdb
 import pytest
 
+import sdmxlib
 from sdmxlib.local import LocalRegistry
 from sdmxlib.model.codelist import Code, Codelist
 from sdmxlib.query.accessors import q
@@ -330,3 +334,58 @@ def test_open_sessions_does_not_count_another_store(reg) -> None:
         with other.session():
             assert other.open_sessions == 1
             assert reg.open_sessions == 1
+
+
+# ── An unfinished result does not refuse the next relation (DuckDB 2.0) ────
+
+
+def test_a_relation_runs_after_a_fetchone_left_its_result_open(reg) -> None:
+    """The pair that broke: `key_counts` ends in `fetchone()`, which never
+    finishes a result, and `Select.collect` then ran `sql()` on the same
+    thread's handle — refused with `ResourceInUseException` by DuckDB 2.0."""
+    cursor_for(reg.connection).execute("SELECT count(*) FROM sdmx.artefact").fetchone()
+    assert reg.query(q.dataflow).select(q.dataflow.id).collect().height == 0
+
+
+#: Calls named `sql`, `query`, `register` or `unregister` in `src/` whose
+#: receiver is not a DuckDB handle, so `completed` has nothing to finish.
+_NOT_A_HANDLE = Counter(
+    {
+        ("api/registry.py", "self._query_store()", "query"): 1,  # the registry's path language
+        ("local/registry.py", "self", "query"): 3,  # likewise
+        ("formats/sdmx_json/_data_common.py", "pool", "register"): 1,  # the annotation pool
+        ("formats/sdmx_json/_data_common.py", "self._annotations", "register"): 2,  # likewise
+    }
+)
+
+
+def test_every_relation_call_on_a_handle_goes_through_completed() -> None:
+    """A static inventory, because the failure is non-local: the `fetchone()`
+    that strands a result and the `sql()` it breaks live in unrelated modules,
+    and only the order calls arrive on one thread decides whether it shows.
+
+    Exact on both sides: a new unguarded call fails it, and so does an exempt
+    one that has gone, so the exemptions cannot outlive their reasons.
+    """
+    root = Path(sdmxlib.__file__).parent
+    unguarded: Counter[tuple[str, str, str]] = Counter()
+    guarded = 0
+    for path in sorted(root.rglob("*.py")):
+        for node in ast.walk(ast.parse(path.read_text())):
+            if not (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr in {"sql", "query", "register", "unregister"}
+            ):
+                continue
+            receiver = node.func.value
+            if (
+                isinstance(receiver, ast.Call)
+                and isinstance(receiver.func, ast.Name)
+                and receiver.func.id == "completed"
+            ):
+                guarded += 1
+                continue
+            unguarded[path.relative_to(root).as_posix(), ast.unparse(receiver), node.func.attr] += 1
+    assert unguarded == _NOT_A_HANDLE
+    assert guarded == 17, "the guarded sites moved — recount, and check each still names a handle"

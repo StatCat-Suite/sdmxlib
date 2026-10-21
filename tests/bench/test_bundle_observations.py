@@ -48,10 +48,13 @@ also means this tier exercises the public constructor #387 fixed.
 """
 
 import time
+from collections.abc import Callable
 
 import pytest
 
 from sdmxlib.model.urn import SdmxUrn
+from sdmxlib.query._compile import CompiledQuery
+from sdmxlib.session import completed, cursor_for
 from tests.bench import _bundle
 
 pytestmark = pytest.mark.bundle
@@ -160,21 +163,29 @@ def test_declining_the_order_returns_the_same_rows(partitioned):
     assert partitioned.order_by(None).count() == partitioned.count()
 
 
-def test_the_key_order_is_what_a_large_frame_pays_for(partitioned, observations):
+def test_the_key_order_is_what_a_large_frame_pays_for(partitioned, observations, data_plane_registry):
     """The second wall assertion, and the reason #389 is not cosmetic.
 
-    On the census bundle's 4.26 M-row `CensusDivision` partition this was 337 ms
-    against 75 ms for two columns. A ratio again, against the same projection
-    with the clause declined.
+    A ratio again, against the same projection with the clause declined — and
+    timed on the SQL alone, because the clause is what it is about. `collect`
+    adds a typing pass that costs the same either way: on DuckDB 1.5 the clause
+    still dominated it (337 ms against 75 ms on the 4.26 M-row `CensusDivision`
+    partition), but 2.0 sorts so much faster that the shared pass diluted the
+    whole-`collect` ratio to 1.7x (321 ms against 185 ms) while the SQL alone
+    stayed at 14x (147 ms against 10.5 ms, on 4.9 M-row
+    `FederalElectoralDistrict`).
     """
     columns = [observations.col(c) for c in observations.components[:2]]
-    ordered = partitioned.select(*columns)
-    unordered = partitioned.order_by(None).select(*columns)
-    ordered_s = _best(ordered.collect)
-    unordered_s = _best(unordered.collect)
+    handle = cursor_for(data_plane_registry.connection)
+
+    def run(compiled: CompiledQuery) -> Callable[[], object]:
+        return lambda: completed(handle).sql(compiled.sql, params=list(compiled.params)).to_arrow_table()
+
+    ordered_s = _best(run(partitioned.select(*columns).to_sql()))
+    unordered_s = _best(run(partitioned.order_by(None).select(*columns).to_sql()))
     assert unordered_s * 2 < ordered_s, (
         f"declining the key order saved only {ordered_s / unordered_s:.1f}x "
-        f"({unordered_s:.3f}s vs {ordered_s:.3f}s) — on the census bundle it is ~4.5x"
+        f"({unordered_s:.3f}s vs {ordered_s:.3f}s) — on the census bundle it is ~14x"
     )
 
 

@@ -709,7 +709,7 @@ def test_alias_reaches_inside_list_where_keywords_cannot(reg: sl.LocalRegistry) 
     names, so two of them called `id` is a database error with no call-site
     keyword to reach them (#363).
     """
-    with pytest.raises(duckdb.BinderException, match="Duplicate struct entry"):
+    with pytest.raises(duckdb.BinderException, match='Duplicate named argument "id"'):
         reg.query(q.codelist).select(
             codes=q.codelist.codes.list(q.codelist.codes.id, q.codelist.codes.parent.id)
         ).collect()

@@ -61,12 +61,12 @@ def _annotation_rows_scanned(conn: duckdb.DuckDBPyConnection, tmp_path: Path, re
     finally:
         conn.execute("SET enable_profiling = 'no_output'")
     scanned = 0
-    pending = [json.loads(profile.read_text())]
+    pending = list(json.loads(profile.read_text())["operator"])
     while pending:
         node = pending.pop()
         # Qualified by catalog and schema: ``memory.sdmx.annotation``.
         if str(node.get("extra_info", {}).get("Table", "")).endswith(".sdmx.annotation"):
-            scanned += int(node.get("operator_rows_scanned", 0))
+            scanned += int(node.get("rows_scanned", 0))
         pending.extend(node.get("children", []))
     return scanned
 
