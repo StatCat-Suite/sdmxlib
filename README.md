@@ -91,7 +91,7 @@ library's actual surface. Point your assistant at them.
 ## Upgrading
 
 sdmxlib is pre-stability and breaks cleanly rather than carrying two spellings
-of the same idea. [Upgrading](https://pinax-suite.gitlab.io/sdmxlib/upgrading/)
+of the same idea. [Upgrading](https://statcat-suite.github.io/sdmxlib/upgrading/)
 lists every breaking change since 0.48, with the old and new spelling of each —
 `sl.Registry` is now `sl.LocalRegistry`, `get()` takes a URN and a resolution
 depth, the four query DSLs are one path language, and every model class is
@@ -99,7 +99,7 @@ frozen.
 
 ## Documentation
 
-See the [docs](https://pinax-suite.gitlab.io/sdmxlib/) for the full cookbook,
+See the [docs](https://statcat-suite.github.io/sdmxlib/) for the full cookbook,
 including:
 
 - Connecting to registries and choosing a resolution depth

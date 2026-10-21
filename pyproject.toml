@@ -44,10 +44,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage      = "https://gitlab.com/pinax-suite/sdmxlib"
-Repository    = "https://gitlab.com/pinax-suite/sdmxlib"
-Documentation = "https://pinax-suite.gitlab.io/sdmxlib"
-Changelog     = "https://gitlab.com/pinax-suite/sdmxlib/-/blob/main/CHANGELOG.md"
+Homepage      = "https://github.com/StatCat-Suite/sdmxlib"
+Repository    = "https://github.com/StatCat-Suite/sdmxlib"
+Documentation = "https://statcat-suite.github.io/sdmxlib"
+Changelog     = "https://github.com/StatCat-Suite/sdmxlib/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["uv_build>=0.13.0,<0.14.0"]

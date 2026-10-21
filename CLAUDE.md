@@ -229,9 +229,9 @@ not, **saying so on its own line**: a tier the gate never runs cannot fail, and
 #386 proved it by renaming a `LocalRegistry` keyword past a green `just check`
 and 6,284 green unit tests. The measurements stay opt-in as `just bench-bundle`.
 
-**`just ci` is the gate, and it runs locally.** GitLab CI runs no tests — only
-a manual `pages` job that publishes the docs. So nothing merges on a green
-pipeline; it merges on a green `just ci`.
+**`just ci` is the gate, and it runs locally.** Hosted CI runs no tests — only
+`.github/workflows/docs.yml`, which publishes the docs to GitHub Pages. So
+nothing merges on a green pipeline; it merges on a green `just ci`.
 
 That is a hosting decision and **not** a licence to shape the suite around a
 runner budget. Test design here is not cost-constrained: Hypothesis explores at
