@@ -1,6 +1,6 @@
 [project]
 name = "sdmxlib"
-version = "0.69.0"
+version = "0.69.1"
 description = "SDMX structural metadata library for Python"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -30,7 +30,10 @@ dependencies = [
     # subtree read uses the owner index. 1.5.5's planner chooses a SEQ_SCAN
     # over `owner_artefact_urn = ?` (502 rows read) and 1.5.6 uses the index,
     # so on 1.5.5 the read scans every annotation row.
-    "duckdb>=1.5.6",
+    # <2: DuckDB 2.0 removed `pl()` from an `execute()` result and refuses a
+    # relation call on a handle with an unfinished result; this release
+    # predates the move to 2.0, which is its own change.
+    "duckdb>=1.5.6,<2",
     "httpx>=0.28.1",
     "lxml>=6.0.2",
     "msgspec>=0.19",
