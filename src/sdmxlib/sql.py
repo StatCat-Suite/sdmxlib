@@ -1,4 +1,4 @@
-"""The cross-library SQL seam — used across pinax-suite.
+"""The cross-library SQL seam — used across the StatCat Suite.
 
 **One primitive.** `SqlRelation`: a producer of ``(sql, params)`` for use as a
 subquery. A 50k-row hierarchy traversal compiles to one ``IN (SELECT …)``

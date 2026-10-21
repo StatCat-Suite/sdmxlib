@@ -9,12 +9,14 @@ import polars as pl
 import pytest
 
 import sdmxlib as sl
+import sdmxlib.local.sql
 from sdmxlib.local import LocalRegistry
 from sdmxlib.local.data_store import DuckDBDataStore
 from sdmxlib.local.sql import QueryPlan, SchemaInspector
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.ref import Ref
+from sdmxlib.session import cursor_for
 from sdmxlib.sql import SqlRelation
 
 pytestmark = pytest.mark.unit
@@ -63,17 +65,32 @@ def _binding(*, sidecar: str | None = None) -> DataflowBinding:
     )
 
 
-class _CountingConn:
-    """Proxy that forwards to a real connection and counts ``DESCRIBE`` calls."""
+class _CountingHandle:
+    """Forwards to a thread's real handle, counting ``DESCRIBE`` calls into its spy."""
 
-    def __init__(self, real: duckdb.DuckDBPyConnection) -> None:
+    def __init__(self, real: duckdb.DuckDBPyConnection, spy: _CountingCursors) -> None:
         self._real = real
-        self.describe_count = 0
+        self._spy = spy
 
     def execute(self, sql: str, *args: object, **kwargs: object) -> object:
         if sql.lstrip().upper().startswith("DESCRIBE"):
-            self.describe_count += 1
+            self._spy.describe_count += 1
         return self._real.execute(sql, *args, **kwargs)
+
+
+class _CountingCursors:
+    """Stands in for `cursor_for` where the inspector calls it.
+
+    The inspector runs on each thread's own handle, never on its base
+    connection (#75), so the count is taken there — every thread's handle
+    counting into this one spy.
+    """
+
+    def __init__(self) -> None:
+        self.describe_count = 0
+
+    def __call__(self, base: duckdb.DuckDBPyConnection) -> _CountingHandle:
+        return _CountingHandle(cursor_for(base), self)
 
 
 MAIN = "memory.data.observations"
@@ -145,7 +162,7 @@ def test_queryplan_from_clause_defaults():
 # ── DESCRIBE cache (Ask 2 — removes the consumer monkeypatch) ─────────────
 
 
-def test_describe_is_cached_across_queries():
+def test_describe_is_cached_across_queries(monkeypatch: pytest.MonkeyPatch) -> None:
     """Each table is DESCRIBEd at most once across many plans — the cache guard.
 
     Calls `plan` directly. It used to go through `_build_query`, which is gone
@@ -158,8 +175,8 @@ def test_describe_is_cached_across_queries():
         _build_tables(local)
         store = DuckDBDataStore.from_registry(local)
         insp = store.inspect()
-        counting = _CountingConn(insp._conn)
-        insp._conn = counting  # type: ignore[assignment]
+        counting = _CountingCursors()
+        monkeypatch.setattr(sdmxlib.local.sql, "cursor_for", counting)
         binding = _binding(sidecar="data.series_attrs")
         for _ in range(5):
             insp.plan(binding)
@@ -167,13 +184,13 @@ def test_describe_is_cached_across_queries():
         assert counting.describe_count == 2
 
 
-def test_columns_is_single_flight_under_concurrency():
+def test_columns_is_single_flight_under_concurrency(monkeypatch: pytest.MonkeyPatch) -> None:
     """Concurrent cold-cache callers for one table DESCRIBE it exactly once."""
     with LocalRegistry(":memory:") as local:
         _build_tables(local)
         insp = DuckDBDataStore.from_registry(local).inspect()
-        counting = _CountingConn(insp._conn)
-        insp._conn = counting  # type: ignore[assignment]
+        counting = _CountingCursors()
+        monkeypatch.setattr(sdmxlib.local.sql, "cursor_for", counting)
         start = threading.Barrier(8)
 
         def hammer() -> None:

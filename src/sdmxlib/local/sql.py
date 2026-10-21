@@ -52,6 +52,7 @@ import duckdb
 from attrs import frozen
 
 from sdmxlib.model.binding import DataflowBinding
+from sdmxlib.session import cursor_for
 
 
 class SidecarNotUniqueError(ValueError):
@@ -152,7 +153,9 @@ class SchemaInspector:
             cached = self._columns_cache.get(table)
             if cached is not None:
                 return cached
-            rows = self._conn.execute(f"DESCRIBE {table}").fetchall()
+            # On this thread's handle, never `_conn` itself: concurrent
+            # `execute()` on one handle overwrite each other's rows (#75).
+            rows = cursor_for(self._conn).execute(f"DESCRIBE {table}").fetchall()
             described = tuple((str(r[0]), str(r[1])) for r in rows)
             self._columns_cache[table] = described
             return described
@@ -190,9 +193,11 @@ class SchemaInspector:
                 return cached
             tuple_sql = ", ".join(keys)
             not_null = " AND ".join(f"{k} IS NOT NULL" for k in keys)
-            row = self._conn.execute(
-                f"SELECT count(*), count(DISTINCT ({tuple_sql})) FROM {table} WHERE {not_null}"
-            ).fetchone()
+            row = (
+                cursor_for(self._conn)
+                .execute(f"SELECT count(*), count(DISTINCT ({tuple_sql})) FROM {table} WHERE {not_null}")
+                .fetchone()
+            )
             counts = (int(row[0]), int(row[1])) if row else (0, 0)
             self._key_counts_cache[cache_key] = counts
             return counts
