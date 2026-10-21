@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.69.1] - 2026-10-21
+
+### Bug Fixes
+
+- SchemaInspector queries on the thread's own handle
+- Cap duckdb below 2
+
+### Miscellaneous
+
+- Describe the lockfile's mirror generically
+- Make GitHub the project's home
+
 ## [0.69.0] - 2026-10-21
 
 ### Breaking Changes
