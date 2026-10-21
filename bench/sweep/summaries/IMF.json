@@ -1,0 +1,771 @@
+{
+ "apis": {
+  "3.0": {
+   "base": "https://api.imf.org/external/sdmx/3.0",
+   "fetched": "2026-10-09T11:30:34+00:00",
+   "resources": {
+    "agencyscheme": {
+     "bytes": 359,
+     "error": null,
+     "status": 404
+    },
+    "categorisation": {
+     "artefacts": {
+      "Categorisation": 112
+     },
+     "bytes": 110096,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "Categorisations/Categorisation/@isExternalReference=false": 112,
+      "Categorisations/Categorisation/@urn": 112
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {
+        "annotations[].value": 101
+       },
+       "refused": {
+        "Categorisation.source: <urn>: a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a version SDMX-ML <n> can name": 11
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 101
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 112
+      },
+      "3.1": {
+       "gaps": {
+        "version": 112
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 112
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 112
+      }
+     }
+    },
+    "categoryscheme": {
+     "artefacts": {
+      "CategoryScheme": 1
+     },
+     "bytes": 4689,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "CategorySchemes/CategoryScheme/@isExternalReference=false": 1,
+      "CategorySchemes/CategoryScheme/@isPartial=false": 1,
+      "CategorySchemes/CategoryScheme/@urn": 1,
+      "CategorySchemes/CategoryScheme/Category/@urn": 10
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {
+        "annotations[].value": 1
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      }
+     }
+    },
+    "categoryschememap": {
+     "bytes": 364,
+     "error": null,
+     "status": 404
+    },
+    "codelist": {
+     "artefacts": {
+      "Codelist": 816
+     },
+     "bytes": 685332583,
+     "chunks": 7,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {
+      "Codelists/Codelist": 1,
+      "Codelists/Codelist/@agencyID": 1,
+      "Codelists/Codelist/@id": 1,
+      "Codelists/Codelist/@version": 1,
+      "Codelists/Codelist/Annotations": 1,
+      "Codelists/Codelist/Annotations/Annotation": 3,
+      "Codelists/Codelist/Annotations/Annotation/@id": 3,
+      "Codelists/Codelist/Annotations/Annotation/AnnotationValue": 2,
+      "Codelists/Codelist/Code": 4,
+      "Codelists/Codelist/Code/@id": 4,
+      "Codelists/Codelist/Code/Name": 3,
+      "Codelists/Codelist/Code/Name/@lang": 3,
+      "Codelists/Codelist/Name": 1,
+      "Codelists/Codelist/Name/@lang": 1
+     },
+     "read_lost_derivable": {
+      "Codelists/Codelist/@isExternalReference=false": 817,
+      "Codelists/Codelist/@isPartial=false": 817,
+      "Codelists/Codelist/@urn": 817,
+      "Codelists/Codelist/Code/@urn": 394729,
+      "Codelists/Codelist/Code/Annotations/Annotation/AnnotationText(empty)": 26823,
+      "Codelists/Codelist/Code/Annotations/Annotation/AnnotationText(empty)/@lang": 26823,
+      "Codelists/Codelist/Code/Name(empty)": 1,
+      "Codelists/Codelist/Code/Name(empty)/@lang": 1
+     },
+     "read_refused": {
+      "Codelist: Code.name[] — name is blank in this language; a name must name": 1
+     },
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {
+        "annotations[].urls": 1,
+        "annotations[].value": 816,
+        "codes[].annotations[].urls": 2
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 816
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {
+        "Codelist.codes[].parent_id: <n> code(s) have a parent SDMX-ML <n> cannot name: <examples>. <n> types <Parent> as an NCName id ([A-Za-z][A-Za-z0-9_-]*) though a code's own id may start with any id char": 3
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 813
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 816
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 816
+      }
+     }
+    },
+    "conceptscheme": {
+     "artefacts": {
+      "ConceptScheme": 198
+     },
+     "bytes": 11265372,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "ConceptSchemes/ConceptScheme/@isExternalReference=false": 198,
+      "ConceptSchemes/ConceptScheme/@isPartial=false": 198,
+      "ConceptSchemes/ConceptScheme/@urn": 198,
+      "ConceptSchemes/ConceptScheme/Concept/@urn": 16628,
+      "ConceptSchemes/ConceptScheme/Concept/Annotations/Annotation/AnnotationTitle(empty)": 9
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {
+        "annotations[].value": 62,
+        "concepts[].annotations[].value": 3
+       },
+       "refused": {
+        "ConceptScheme.concepts[].core_representation: <urn>: a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a version ": 136
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 62
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 198
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 198
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 198
+      }
+     }
+    },
+    "conceptschememap": {
+     "bytes": 363,
+     "error": null,
+     "status": 404
+    },
+    "customtypescheme": {
+     "bytes": 363,
+     "error": null,
+     "status": 404
+    },
+    "dataconstraint": {
+     "artefacts": {
+      "DataConstraint": 3
+     },
+     "bytes": 22030,
+     "error": null,
+     "read_gained": {
+      "DataConstraints/DataConstraint/@role": 3
+     },
+     "read_lost": {
+      "DataConstraints/DataConstraint/CubeRegion/KeyValue/@include=true": 3,
+      "DataConstraints/DataConstraint/CubeRegion/KeyValue/@removePrefix=false": 3
+     },
+     "read_lost_derivable": {
+      "DataConstraints/DataConstraint/@isExternalReference=false": 3,
+      "DataConstraints/DataConstraint/@urn": 3
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {
+        "annotations[].value": 3
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 3
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 3
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 3
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 3
+      }
+     }
+    },
+    "dataconsumerscheme": {
+     "bytes": 365,
+     "error": null,
+     "status": 404
+    },
+    "dataflow": {
+     "artefacts": {
+      "Dataflow": 224
+     },
+     "bytes": 487392,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "Dataflows/Dataflow/@isExternalReference=false": 224,
+      "Dataflows/Dataflow/@urn": 224,
+      "Dataflows/Dataflow/Annotations/Annotation/AnnotationTitle(empty)": 15
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {
+        "annotations[].value": 122
+       },
+       "refused": {
+        "Dataflow.structure: <urn>: a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a version SDMX-ML <n> can name": 102
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 122
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 224
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 224
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 224
+      }
+     }
+    },
+    "dataproviderscheme": {
+     "bytes": 365,
+     "error": null,
+     "status": 404
+    },
+    "datastructure": {
+     "artefacts": {
+      "DataStructure": 186
+     },
+     "bytes": 3340838,
+     "error": null,
+     "read_gained": {
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/AttributeRelationship/Dataflow(empty)": 10,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/MetadataAttributeUsage/AttributeRelationship": 3047,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/MetadataAttributeUsage/AttributeRelationship/Dataflow(empty)": 3047,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/Measure/@usage=optional": 198
+     },
+     "read_lost": {
+      "DataStructures/DataStructure": 54,
+      "DataStructures/DataStructure/@agencyID": 54,
+      "DataStructures/DataStructure/@id": 54,
+      "DataStructures/DataStructure/@version": 54,
+      "DataStructures/DataStructure/Annotations": 54,
+      "DataStructures/DataStructure/Annotations/Annotation": 162,
+      "DataStructures/DataStructure/Annotations/Annotation/@id": 162,
+      "DataStructures/DataStructure/Annotations/Annotation/AnnotationValue": 108,
+      "DataStructures/DataStructure/DataStructureComponents": 54,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList": 55,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/@id": 55,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute": 162,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/@id": 162,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/AttributeRelationship": 146,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/AttributeRelationship/Dimension": 6,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/ConceptIdentity": 162,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList": 54,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/@id": 54,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension": 192,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/@id": 192,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/@position": 192,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/ConceptIdentity": 192,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension": 54,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension/@id": 54,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension/ConceptIdentity": 54,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension/LocalRepresentation": 54,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension/LocalRepresentation/TextFormat": 54,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension/LocalRepresentation/TextFormat/@textType": 54,
+      "DataStructures/DataStructure/DataStructureComponents/Group": 6,
+      "DataStructures/DataStructure/DataStructureComponents/Group/@id": 6,
+      "DataStructures/DataStructure/DataStructureComponents/Group/GroupDimension": 6,
+      "DataStructures/DataStructure/DataStructureComponents/Group/GroupDimension/DimensionReference": 6,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList": 54,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/@id": 54,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/Measure": 96,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/Measure/@id": 96,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/Measure/ConceptIdentity": 96,
+      "DataStructures/DataStructure/Description": 24,
+      "DataStructures/DataStructure/Description/@lang": 24,
+      "DataStructures/DataStructure/Name": 54,
+      "DataStructures/DataStructure/Name/@lang": 54
+     },
+     "read_lost_derivable": {
+      "DataStructures/DataStructure/@isExternalReference=false": 240,
+      "DataStructures/DataStructure/@urn": 240,
+      "DataStructures/DataStructure/Annotations/Annotation/AnnotationURL(empty)": 28,
+      "DataStructures/DataStructure/Annotations/Annotation/AnnotationURL(empty)/@lang": 28,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/@urn": 2232,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/@usage=optional": 162,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/AttributeRelationship/Observation(empty)": 150,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/MetadataAttributeUsage/@urn": 4176,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/@urn": 1007,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension/@urn": 236,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/Measure/@urn": 294
+     },
+     "read_refused": {
+      "DataStructure: DataStructure.time_dimension.representation.type — a time dimension<q>String'": 54
+     },
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {
+        "annotations[].value": 50,
+        "metadata": 32,
+        "metadata_attributes": 32
+       },
+       "refused": {
+        "DataStructure.attributes[].concept: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a version SDMX-ML <n>": 133,
+        "DataStructure.dimensions[].concept: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a version SDMX-ML <n>": 136,
+        "DataStructure.measures: SDMX-ML <n> allows exactly one PrimaryMeasure, but this DSD has <n> measures (ANSWER_KEY, SCORE, REC_COUNT, REC_PERCENT, FULLY_COUNT, FULLY_PERCENT, ADHERENCE); valid SDMX <n> ": 1,
+        "DataStructure.measures: SDMX-ML <n> allows exactly one PrimaryMeasure, but this DSD has <n> measures (DEFINITION, CONSOLIDATION_BASIS, INTRAGROUP_ADJUSTMENTS, ACCOUNTING_STANDARDS); valid SDMX <n> wit": 1,
+        "DataStructure.measures: SDMX-ML <n> allows exactly one PrimaryMeasure, but this DSD has <n> measures (RESPONSE, COMMENTS); valid SDMX <n> with no <n> representation": 2,
+        "DataStructure.measures: SDMX-ML <n> allows exactly one PrimaryMeasure, but this DSD has <n> measures (TRADE_COVERED, SIZE_OF_SUBSIDY); valid SDMX <n> with no <n> representation": 1,
+        "DataStructure.measures[].concept: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a version SDMX-ML <n> c": 136,
+        "DataStructure.metadata: <urn>: a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a version SDMX-ML <n> can name": 129,
+        "DataStructure.time_dimension.concept: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a version SDMX-ML <": 133
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 50
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 186
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 186
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 186
+      }
+     }
+    },
+    "geographiccodelist": {
+     "bytes": 365,
+     "error": null,
+     "status": 404
+    },
+    "geogridcodelist": {
+     "bytes": 362,
+     "error": null,
+     "status": 404
+    },
+    "hierarchy": {
+     "artefacts": {
+      "Hierarchy": 99
+     },
+     "bytes": 3086617,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {
+      "Hierarchies/Hierarchy/HierarchicalCode/Level": 12279
+     },
+     "read_lost_derivable": {
+      "Hierarchies/Hierarchy/@isExternalReference=false": 99,
+      "Hierarchies/Hierarchy/@urn": 99
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {
+        "annotations[].value": 1
+       },
+       "refused": {
+        "Hierarchy.tree[].children[].children[].children[].children[].children[].children[].children[].code: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, ": 2,
+        "Hierarchy.tree[].children[].children[].children[].children[].children[].children[].code: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON i": 5,
+        "Hierarchy.tree[].children[].children[].children[].children[].children[].code: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or ": 11,
+        "Hierarchy.tree[].children[].children[].children[].children[].code: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the ref": 25,
+        "Hierarchy.tree[].children[].children[].children[].code: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a": 44,
+        "Hierarchy.tree[].children[].children[].code: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a version SD": 74,
+        "Hierarchy.tree[].children[].code: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a version SDMX-ML <n> c": 95,
+        "Hierarchy.tree[].code: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a version SDMX-ML <n> can name": 95
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {
+        "Hierarchy.codes[].id: <n> node id(s) repeat in another branch: <examples>. SDMX-ML <n> requires a node id to be unique across the whole hierarchy, where <n> asks it only of siblings — write SDMX-ML <n": 31
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 68
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {
+        "Hierarchy.codes[].id: <n> node id(s) repeat in another branch: <examples>. SDMX-ML <n> requires a node id to be unique across the whole hierarchy, where <n> asks it only of siblings — write SDMX-ML <n": 31
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 68
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 99
+      }
+     }
+    },
+    "hierarchyassociation": {
+     "bytes": 367,
+     "error": null,
+     "status": 404
+    },
+    "metadataconstraint": {
+     "bytes": 365,
+     "error": null,
+     "status": 404
+    },
+    "metadataflow": {
+     "artefacts": {
+      "Metadataflow": 1
+     },
+     "bytes": 1630,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "Metadataflows/Metadataflow/@isExternalReference=false": 1,
+      "Metadataflows/Metadataflow/@urn": 1
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {
+        "annotations[].value": 1
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {
+        "Metadataflow.targets: SDMX-ML <n> requires at least one <str:Target> on a Metadataflow, but targets is empty and cannot be derived from its metadata structure: its metadata structure <urn> is neither ": 1
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 0
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {
+        "Metadataflow.targets: SDMX-ML <n> requires at least one <str:Target> on a Metadataflow, but targets is empty and cannot be derived from its metadata structure: its metadata structure <urn> is neither ": 1
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 0
+      },
+      "json": {
+       "gaps": {},
+       "refused": {
+        "Metadataflow.targets: SDMX-ML json requires at least one <str:Target> on a Metadataflow, but targets is empty and cannot be derived from its metadata structure: its metadata structure <urn> is neither": 1
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 0
+      }
+     }
+    },
+    "metadataproviderscheme": {
+     "bytes": 369,
+     "error": null,
+     "status": 404
+    },
+    "metadataprovisionagreement": {
+     "bytes": 373,
+     "error": null,
+     "status": 404
+    },
+    "metadatastructure": {
+     "artefacts": {
+      "MetadataStructure": 31
+     },
+     "bytes": 3229555,
+     "error": null,
+     "read_gained": {
+      "MetadataStructures/MetadataStructure/MetadataStructureComponents/MetadataAttributeList/@id": 31
+     },
+     "read_lost": {
+      "MetadataStructures/MetadataStructure/MetadataStructureComponents/MetadataAttributeList/MetadataAttribute/@isPresentational=false": 11205
+     },
+     "read_lost_derivable": {
+      "MetadataStructures/MetadataStructure/@isExternalReference=false": 31,
+      "MetadataStructures/MetadataStructure/@urn": 31,
+      "MetadataStructures/MetadataStructure/MetadataStructureComponents/MetadataAttributeList/MetadataAttribute/@maxOccurs=1": 11128,
+      "MetadataStructures/MetadataStructure/MetadataStructureComponents/MetadataAttributeList/MetadataAttribute/@minOccurs=1": 2
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {
+        "annotations[].value": 2
+       },
+       "refused": {
+        "MetadataStructure.attributes[].children[].children[].concept: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the referenc": 23,
+        "MetadataStructure.attributes[].children[].concept: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a vers": 23,
+        "MetadataStructure.attributes[].concept: <urn> a reference to version <q> cannot be written as SDMX-ML <n> — write SDMX-ML <n>, SDMX-ML <n>, SDMX-JSON instead, or pin the reference to a version SDMX-ML": 29
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 31
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 31
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 31
+      }
+     }
+    },
+    "namepersonalisationscheme": {
+     "bytes": 372,
+     "error": null,
+     "status": 404
+    },
+    "organisationschememap": {
+     "bytes": 367,
+     "error": null,
+     "status": 404
+    },
+    "organisationunitscheme": {
+     "bytes": 369,
+     "error": null,
+     "status": 404
+    },
+    "process": {
+     "bytes": 354,
+     "error": null,
+     "status": 404
+    },
+    "provisionagreement": {
+     "bytes": 365,
+     "error": null,
+     "status": 404
+    },
+    "representationmap": {
+     "bytes": 0,
+     "error": null,
+     "status": 204
+    },
+    "rulesetscheme": {
+     "bytes": 360,
+     "error": null,
+     "status": 404
+    },
+    "structuremap": {
+     "bytes": 0,
+     "error": null,
+     "status": 204
+    },
+    "transformationscheme": {
+     "bytes": 367,
+     "error": null,
+     "status": 404
+    },
+    "userdefinedoperatorscheme": {
+     "bytes": 372,
+     "error": null,
+     "status": 404
+    },
+    "valuelist": {
+     "bytes": 356,
+     "error": null,
+     "status": 404
+    },
+    "vtlmappingscheme": {
+     "bytes": 363,
+     "error": null,
+     "status": 404
+    }
+   }
+  }
+ },
+ "engine": "unverified",
+ "registry": "IMF"
+}

@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SDMX-ML 3.0 minimal fixture. Conforms to the v3.0.0 XSDs.
+
+  Key shape differences from SDMX-ML 2.1:
+    - Namespaces: v3_1 instead of v2_1.
+    - `isFinal` removed everywhere; AgencyScheme has fixed id="AGENCIES" with
+      no version attribute.
+    - AgencySchemes and DataProviderSchemes are separate top-level containers
+      (replacing the 2.1 unified OrganisationSchemes).
+    - Concepts → ConceptSchemes container; Constraints → DataConstraints.
+    - Cross-references emitted as URN-text content, not <Ref/> children:
+      ConceptIdentity, Enumeration, Structure (in Dataflow), Source/Target
+      (in Categorisation, scheme maps), ConstraintAttachment children.
+    - Code Parent is a simple element with the parent code id as text.
+    - DataStructure: Annotations element comes FIRST, before Name.
+    - MeasureList uses <str:Measure>; AttributeRelationship uses
+      <str:ObservationValue/>; Attribute uses `usage=`; Group uses
+      `dimensionRef=`. (Same as before — these were already correct.)
+-->
+<mes:Structure
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/message"
+  xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/structure"
+  xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/common"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <mes:Header>
+    <mes:ID>IREF000001</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2024-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+
+    <str:AgencySchemes>
+      <str:AgencyScheme agencyID="SDMX" id="AGENCIES">
+        <com:Name xml:lang="en">SDMX Agency Scheme</com:Name>
+        <str:Agency id="SDMX">
+          <com:Name xml:lang="en">SDMX</com:Name>
+          <str:Contact>
+            <com:Name xml:lang="en">SDMX Support</com:Name>
+            <str:Email>support@sdmx.org</str:Email>
+          </str:Contact>
+        </str:Agency>
+        <str:Agency id="TEST">
+          <com:Name xml:lang="en">Test Agency</com:Name>
+        </str:Agency>
+      </str:AgencyScheme>
+    </str:AgencySchemes>
+
+    <str:Codelists>
+      <str:Codelist id="CL_FREQ" agencyID="SDMX" version="1.0">
+        <com:Name xml:lang="en">Frequency</com:Name>
+        <com:Name xml:lang="fr">Fréquence</com:Name>
+        <str:Code id="A">
+          <com:Name xml:lang="en">Annual</com:Name>
+          <com:Name xml:lang="fr">Annuel</com:Name>
+        </str:Code>
+        <str:Code id="Q">
+          <com:Name xml:lang="en">Quarterly</com:Name>
+        </str:Code>
+        <str:Code id="M">
+          <com:Name xml:lang="en">Monthly</com:Name>
+        </str:Code>
+        <str:Code id="Q1">
+          <com:Name xml:lang="en">Q1 sub-code</com:Name>
+          <str:Parent>Q</str:Parent>
+        </str:Code>
+      </str:Codelist>
+    </str:Codelists>
+
+    <str:ConceptSchemes>
+      <str:ConceptScheme id="CROSS_DOMAIN_CONCEPTS" agencyID="SDMX" version="1.0">
+        <com:Name xml:lang="en">SDMX Cross Domain Concepts</com:Name>
+        <str:Concept id="FREQ">
+          <com:Name xml:lang="en">Frequency</com:Name>
+          <str:CoreRepresentation>
+            <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(1.0)</str:Enumeration>
+          </str:CoreRepresentation>
+        </str:Concept>
+        <str:Concept id="TIME_PERIOD">
+          <com:Name xml:lang="en">Time Period</com:Name>
+        </str:Concept>
+        <str:Concept id="OBS_VALUE">
+          <com:Name xml:lang="en">Observation Value</com:Name>
+        </str:Concept>
+        <str:Concept id="OBS_STATUS">
+          <com:Name xml:lang="en">Observation Status</com:Name>
+        </str:Concept>
+      </str:ConceptScheme>
+    </str:ConceptSchemes>
+
+    <str:DataStructures>
+      <str:DataStructure id="DSD_TEST" agencyID="TEST" version="1.0">
+        <com:Annotations>
+          <com:Annotation>
+            <com:AnnotationType>SOURCE</com:AnnotationType>
+            <com:AnnotationText xml:lang="en">Test fixture</com:AnnotationText>
+          </com:Annotation>
+        </com:Annotations>
+        <com:Name xml:lang="en">Test Data Structure</com:Name>
+        <str:DataStructureComponents>
+          <str:DimensionList id="DimensionDescriptor">
+            <str:Dimension id="FREQ" position="1">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).FREQ</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(1.0)</str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:TimeDimension id="TIME_PERIOD">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).TIME_PERIOD</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="ObservationalTimePeriod"/>
+              </str:LocalRepresentation>
+            </str:TimeDimension>
+          </str:DimensionList>
+          <str:AttributeList id="AttributeDescriptor">
+            <str:Attribute id="OBS_STATUS" usage="optional">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).OBS_STATUS</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="String" maxLength="1"/>
+              </str:LocalRepresentation>
+              <str:AttributeRelationship>
+                <str:Observation/>
+              </str:AttributeRelationship>
+            </str:Attribute>
+          </str:AttributeList>
+          <str:MeasureList id="MeasureDescriptor">
+            <str:Measure id="OBS_VALUE">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).OBS_VALUE</str:ConceptIdentity>
+            </str:Measure>
+          </str:MeasureList>
+        </str:DataStructureComponents>
+      </str:DataStructure>
+    </str:DataStructures>
+
+    <str:Dataflows>
+      <str:Dataflow id="DF_TEST" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Test Dataflow</com:Name>
+        <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=TEST:DSD_TEST(1.0)</str:Structure>
+      </str:Dataflow>
+    </str:Dataflows>
+
+    <str:CategorySchemes>
+      <str:CategoryScheme id="CS_TEST" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Test Category Scheme</com:Name>
+        <str:Category id="CAT_A">
+          <com:Name xml:lang="en">Category A</com:Name>
+          <str:Category id="CAT_A1">
+            <com:Name xml:lang="en">Category A1</com:Name>
+          </str:Category>
+        </str:Category>
+      </str:CategoryScheme>
+    </str:CategorySchemes>
+
+    <str:Categorisations>
+      <!--
+        v3.1 Categorisation: ``@version`` is prohibited (issue #103). The
+        artefact is unversioned in 3.1; 3.0 required a version attribute.
+      -->
+      <str:Categorisation id="CAT_DF_TEST" agencyID="TEST">
+        <com:Name xml:lang="en">DF_TEST categorisation</com:Name>
+        <str:Source>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=TEST:DF_TEST(1.0)</str:Source>
+        <str:Target>urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=TEST:CS_TEST(1.0).CAT_A</str:Target>
+      </str:Categorisation>
+    </str:Categorisations>
+
+    <str:DataConstraints>
+      <!--
+        v3.1 DataConstraint divergences from 3.0 (issue #104):
+          - No @role attribute (3.0 had role="Allowed"|"Actual"). 3.1
+            DataConstraint is allowed-only by definition.
+          - No <ReleaseCalendar> in the sequence; that timing semantic
+            moved to the new AvailabilityConstraint artefact (not yet
+            modelled by sdmxlib).
+      -->
+      <str:DataConstraint id="CC_TEST" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Test Constraint</com:Name>
+        <str:ConstraintAttachment>
+          <str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=TEST:DF_TEST(1.0)</str:Dataflow>
+        </str:ConstraintAttachment>
+        <str:CubeRegion include="true">
+          <str:KeyValue id="FREQ">
+            <str:Value>A</str:Value>
+            <str:Value>Q</str:Value>
+          </str:KeyValue>
+        </str:CubeRegion>
+      </str:DataConstraint>
+    </str:DataConstraints>
+
+  </mes:Structures>
+</mes:Structure>

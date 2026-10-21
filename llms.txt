@@ -1,0 +1,647 @@
+# sdmxlib
+
+sdmxlib fetches and models SDMX structural metadata — data structures,
+codelists, dataflows, hierarchies, reference metadata — from SDMX REST APIs
+and SDMX files, as a typed graph of frozen artefacts you navigate by plain
+attribute access. It also reads observation data, as Polars frames paired with
+the structure that describes them.
+
+This file is the whole library in one pass. `llms-dsl.txt` is the path query
+language (`sl.q`, `reg.query`, `reg.sql`) in depth. Every Python block in both
+files is executed by the test suite, so what is here runs.
+
+## Install
+
+```bash
+# Python 3.14+
+uv add sdmxlib        # or: pip install sdmxlib
+```
+
+`import sdmxlib as sl` is the convention throughout.
+
+## The shape of the library
+
+- **Three registries, one read seam.** `RestRegistry` reads an SDMX REST
+  endpoint; `LocalRegistry` is a persistent DuckDB store; `InMemoryRegistry`
+  is a plain dict of artefacts. `FederatedRegistry` routes by agency across
+  any of them. All four answer `get(urn)`.
+- **Identity is a URN.** `get` takes an `SdmxUrn` or a `Ref`, never a bare
+  string or a type plus keywords.
+- **Artefacts are frozen.** Every model class is an attrs `@frozen` class. A
+  change is a copy: `attrs.evolve(cl, version="2.0")`.
+- **Rules run as an artefact is built.** A bad id, a missing name, a missing
+  concept raise `sl.ValidationError` from the constructor, not later.
+- **A reference finds its target on access.** A `Ref` holds a URN and the
+  registry that bound it; `ref()` looks the target up there.
+- **No default language.** Every multilingual call takes `lang=`.
+
+## Quick start
+
+```python
+with sl.RestRegistry(sl.Provider.ECB) as reg:
+    dsd = reg.get(sl.DataStructure.urn_for(agency="ECB", id="ECB_EXR1"), resolve=True)
+
+    dsd.dimensions                      # ItemList[Dimension]
+    freq = dsd.dimensions["FREQ"]       # Dimension
+    freq.representation                 # Ref[Codelist] — the reference
+    freq.codelist                       # Codelist — the reference, followed
+    print(freq.code_ids())  # ['A', 'D', 'M', 'Q']
+    freq.codes                          # ItemList[Code] — builds every Code
+
+    dsd.code_map(lang="en")             # {dim_id: {code_id: label}}
+    dsd.column_labels(lang="en")        # {component_id: concept label}
+
+    dsd.dimensions.filter(lambda d: d.is_enumerated)
+    dsd.dimensions.filter(sl.item("is_enumerated"))     # the same, as an expression
+
+    # every ECB dataflow, through the path query language
+    print(reg.query(sl.q.dataflow).filter(sl.q.dataflow.agency == "ECB").ids())  # ['EXR']
+```
+
+## Providers
+
+`sl.Provider` holds pre-configured endpoints, each with its API version:
+
+```python
+sl.Provider.ECB           # European Central Bank
+sl.Provider.BIS           # Bank for International Settlements
+sl.Provider.ESTAT         # Eurostat
+sl.Provider.IMF           # International Monetary Fund
+sl.Provider.OECD          # OECD
+sl.Provider.SDMX_GLOBAL   # SDMX Global Registry (REST 3.0)
+
+with sl.RestRegistry("https://data-api.ecb.europa.eu/service", api="2.1") as reg:
+    ...
+```
+
+A raw URL takes `api="2.1"` (the default) or `api="3.0"`; it must match the
+endpoint, so prefer a `Provider`.
+
+`sl.FmrRegistry` is a `RestRegistry` configured for a Fusion Metadata
+Registry; it defaults to the SDMX Global Registry:
+
+```python
+with sl.FmrRegistry() as reg: ...
+with sl.FmrRegistry("https://my-fmr.example.com/sdmx/v2/") as reg: ...
+with sl.FmrRegistry(auth=sl.BearerToken("eyJ...")) as reg: ...
+```
+
+`RestRegistry` options worth knowing: `store=` (a `LocalRegistry` to keep
+everything fetched, see below), `latest_ttl=` (seconds a `latest` lookup may
+be served from cache when the provider allows none), `timeout=`, `headers=`.
+
+## Identity and `get`
+
+```python
+urn = sl.Codelist.urn_for(agency="ECB", id="CL_FREQ")             # version "latest"
+urn = sl.Codelist.urn_for(agency="ECB", id="CL_FREQ", version="1.0")
+urn = sl.SdmxUrn.parse("urn:sdmx:org.sdmx.infomodel.codelist.Codelist=ECB:CL_FREQ(1.0)")
+print((urn.agency, urn.id, urn.version))  # ('ECB', 'CL_FREQ', '1.0')
+```
+
+`Class.urn_for(...)` builds a URN; `artefact.urn` is an artefact's own. A
+string you were handed goes through `SdmxUrn.parse` first: `get("urn:...")`
+raises `TypeError`, because a string is not identity.
+
+`RestRegistry.get` takes the depth to fetch:
+
+```python
+with sl.RestRegistry(sl.Provider.ECB) as reg:
+    urn = sl.DataStructure.urn_for(agency="ECB", id="ECB_EXR1")
+    dsd = reg.get(urn)                                  # the DSD; references not fetched
+    dsd = reg.get(urn, resolve=True)                    # every reference followed
+    dsd = reg.get(urn, resolve=[sl.Codelist])           # only references of these types
+    dsd = reg.get(urn, resolve=True, partial=False)     # codelists untrimmed by constraints
+    dsd = reg.get(urn, expect=sl.DataStructure)         # typed result; raises if it is not one
+```
+
+- `get` returns `None` when the artefact does not exist; an unreachable
+  source raises `sl.RegistryUnavailable` instead. `None` only ever means
+  absent.
+- `version="latest"` is a pointer: re-asked within whatever cache window the
+  provider grants. A pinned version is cached for good.
+- Everything fetched accumulates in `reg.registry`, an `InMemoryRegistry`.
+- An artefact the provider served but that breaks a rule is not returned; it
+  is listed in `reg.refused`, each entry with the reason.
+
+## Navigating a data structure
+
+```python
+with sl.RestRegistry(sl.Provider.ECB) as reg:
+    dsd = reg.get(sl.DataStructure.urn_for(agency="ECB", id="ECB_EXR1"), resolve=True)
+
+dsd.dimensions            # ItemList[Dimension] — the regular dimensions
+dsd.time_dimension        # TimeDimension | None
+dsd.measure_dimension     # MeasureDimension | None (rare: SDMX 2.1 cross-sections)
+dsd.attributes            # ItemList[Attribute]
+dsd.measures              # ItemList[Measure]
+dsd.components            # every component
+dsd.key_dimensions        # the key's dimensions, in key order
+dsd.find_component("OBS_VALUE")     # any component by id, or None
+dsd.enumerated_dimensions           # dimensions with a codelist or value list
+dsd.all_codelists                   # {component_id: Codelist}
+```
+
+A component's `representation` is a `Ref` to an enumeration, a `Facet`
+(a typed free-text format), or `None`:
+
+```python
+for dim in dsd.dimensions:
+    match dim.representation:
+        case sl.Ref():                    # enumerated: Codelist or ValueList
+            enumeration = dim.representation()
+        case sl.Facet(type=dtype):        # free text; dtype is a DataType
+            pass
+        case None:                        # nothing declared
+            pass
+```
+
+On an enumerated dimension:
+
+- `dim.codelist` is the `Codelist` itself — the reference, followed. It
+  raises `TypeError` on a facet, and `sl.UnresolvedRef` when the codelist was
+  never fetched. It is not callable.
+- `dim.code_ids()` is the cheap path: ids only, no `Code` objects.
+- `dim.codes` builds every `Code` (an `ItemList[Code]`), `None` on a facet.
+
+## Collections
+
+`ItemList[T]` holds child items — dimensions, codes, concepts:
+
+```python
+dims = dsd.dimensions
+dims["FREQ"]                  # by id; KeyError if missing
+dims[0]                       # by position
+dims.get("FREQ")              # None on a miss
+dims.ids()                    # ['FREQ', 'CURRENCY', ...]
+"FREQ" in dims
+len(dims)
+dims.filter(lambda d: d.is_enumerated)            # → new ItemList
+dims.filter(sl.item("id").is_in(["FREQ", "CURRENCY"]))
+dims.first_where(sl.item("id") == "FREQ")         # first match or None
+enumerated, free = dims.partition(sl.item("is_enumerated"))
+dims.sort_by(lambda d: d.id)
+dims.to_dict()                # {id: item}
+```
+
+`ArtefactList[T]` holds maintainables (a message's `codelists`,
+`data_structures`, ...) and takes richer keys:
+
+```python
+msg = sl.StructureMessage(codelists=list(dsd.all_codelists.values()))
+msg.codelists["CL_FREQ"]                  # bare id (KeyError if ambiguous)
+msg.codelists["ECB:CL_FREQ"]              # agency-qualified
+msg.codelists["ECB:CL_FREQ(1.0)"]         # fully qualified
+msg.codelists[sl.Codelist.urn_for(agency="ECB", id="CL_FREQ", version="1.0")]
+msg.codelists[sl.SdmxRef(agency="ECB", id="CL_FREQ")]
+print(msg.codelists.ids(qualified=True)[:2])  # ['ECB:CL_FREQ(1.0)', 'ECB:CL_CURRENCY(1.0)']
+```
+
+Collections are immutable and unhashable; key them by `urn`.
+
+## `Ref[T]`
+
+Every cross-artefact link is a `Ref[T]`. It always carries the URN, and
+finds its target through the registry that bound it, on access. Bound by an
+`InMemoryRegistry` or a `RestRegistry`, it finds a target added later too;
+bound by a `LocalRegistry` read, it sees what that read loaded — `get` again
+after adding.
+
+```python
+ref = dsd.dimensions["FREQ"].representation
+ref.urn                  # SdmxUrn — always available
+ref.id, ref.agency, ref.version
+ref.resolved             # can the target be found now?
+ref.bound                # is a registry bound to it?
+ref()                    # the target; raises sl.UnresolvedRef if it cannot be found
+ref.name                 # attribute proxy to the target (same rule)
+
+sl.Ref.to(dsd)                               # to an artefact you hold
+sl.Ref[sl.Codelist].unresolved(ref.urn)      # to a URN alone
+```
+
+`Ref(obj)` raises: build from an artefact with `Ref.to`, from a URN with
+`Ref.unresolved`.
+
+## Building artefacts
+
+Constructors take keyword arguments; `name` is required on every
+maintainable, and lists convert to the immutable collections.
+
+```python
+concepts = sl.ConceptScheme(
+    id="CS_GEO",
+    maintainer="AG",
+    name={"en": "Geography concepts"},
+    concepts=[sl.Concept(id="GEO", name={"en": "Geography"})],
+)
+geo = sl.Codelist(
+    id="CL_GEO",
+    maintainer="AG",
+    version="1.0",
+    name={"en": "Geography", "fr": "Géographie"},
+    codes=[
+        sl.Code(id="CA", name={"en": "Canada"}),
+        sl.Code(id="ON", name={"en": "Ontario"}, parent_id="CA"),
+        sl.Code(id="QC", name={"en": "Quebec"}, parent_id="CA"),
+    ],
+)
+structure = sl.DataStructure(
+    id="DSD_POP",
+    maintainer="AG",
+    name={"en": "Population"},
+    dimensions=[
+        sl.Dimension(id="GEO", concept=concepts.ref_to("GEO"), representation=sl.Ref.to(geo)),
+    ],
+    measures=[sl.Measure(id="OBS_VALUE", concept=concepts.ref_to("GEO"))],
+)
+```
+
+- Every component needs a `concept=`; `scheme.ref_to(id)` builds one.
+- A rule broken as it is built raises `sl.ValidationError` listing every issue.
+- Models are frozen. `attrs.evolve(geo, version="1.1")` is the changed copy;
+  `geo.add(code)`, `geo.drop("QC")`, `structure.add(...)`,
+  `structure.drop(...)` return new objects.
+- A rule only the information model states — no SDMX schema enforces it —
+  builds the artefact anyway and warns with `sl.ImRuleWarning` (a subclass of
+  `sl.SdmxWarning`), whose `.issues` lists what was broken. Make them errors
+  with the standard `warnings` filter:
+
+```python
+import warnings
+
+with warnings.catch_warnings():
+    warnings.simplefilter("error", sl.SdmxWarning)
+    sl.Codelist(id="CL_OK", maintainer="AG", name={"en": "fine"})
+```
+
+## LocalRegistry — the DuckDB store
+
+```python
+with sl.LocalRegistry("store.duckdb") as local:      # or ":memory:"; `with` opens it
+    local.add(geo)
+    local.add_all([concepts, structure])             # one transaction, any order
+
+    cl = local.get(geo.urn)                          # LazyCodelist — codes load on demand
+    print(cl.codes.count())  # 3
+    eager = local.get(geo.urn, eager=True)           # Codelist
+    print(local.code_map(geo.urn, lang="en"))  # {'CA': 'Canada', 'ON': 'Ontario', 'QC': 'Quebec'}
+
+    local.refused          # artefacts a read refused, each with why
+    local.drop(geo.urn)    # True if it existed
+```
+
+- Without `with`, call `.open()` first; a closed registry raises
+  `RuntimeError`. `LocalRegistry.from_connection(conn)` wraps a DuckDB
+  connection you already have.
+- `get` returns a `LazyCodelist` for a codelist and a `LazyHierarchy` for a
+  hierarchy — their multi-row walks are lazy `Query` objects (no `len`, no
+  iteration; use `.count()`, `.ids()`, `.collect()`). `eager=True` returns the
+  plain artefact. Everything else comes back whole, references bound to the
+  store. `get` takes no `resolve=`: a store already holds what it holds.
+- A store read checks what it builds the way `add` does: `get` raises on an
+  artefact a rule refuses; bulk reads skip it into `local.refused`.
+- `add_all(..., rewrite_version=sl.versions.strip_leading_zeros)` accepts
+  SDMX 2.1 versions (`"01.0"`) that 3.x cannot hold, recording each rewrite.
+- `LocalRegistry.bundle(path)` opens a published bundle — structure plus
+  observation tables.
+
+`RestRegistry(..., store=local)` keeps everything a REST registry fetches in
+the store, so a second session reads it without the network:
+
+```python
+with sl.LocalRegistry("store.duckdb") as local:
+    with sl.RestRegistry(sl.Provider.ECB, store=local) as reg:
+        reg.get(sl.DataStructure.urn_for(agency="ECB", id="ECB_EXR1"), resolve=True)
+    print(local.get(sl.DataStructure.urn_for(agency="ECB", id="ECB_EXR1", version="1.0")).id)  # ECB_EXR1
+```
+
+## InMemoryRegistry
+
+```python
+mem = sl.InMemoryRegistry()
+mem.add_all([geo, concepts, structure])
+stored = mem.get(structure.urn)               # a copy, its references bound to `mem`
+print((stored is structure, stored == structure))  # (False, True)
+print(stored.dimensions["GEO"].codelist.id)  # CL_GEO
+mem.get_all(sl.Codelist)                      # list[Codelist]
+mem.ref(geo.urn)                              # a Ref bound to `mem`
+geo.urn in mem
+```
+
+`add` stores a copy whose references are bound to the registry; the object
+you passed is left as built. Read the stored one back with `get`.
+
+## Querying structure — `reg.query(sl.q.X)`
+
+One path language over every relation, on `LocalRegistry` and `RestRegistry`
+alike. `llms-dsl.txt` has the whole of it.
+
+```python
+with sl.LocalRegistry(":memory:") as local:
+    local.add_all([geo, concepts, structure])
+    local.query(sl.q.dataflow).filter(sl.q.dataflow.agency == "ECB").ids()
+    print(local.query(sl.q.dsd).filter(sl.q.dsd.dimensions.id == "GEO").ids())  # ['DSD_POP']
+    cl = local.get(geo.urn)
+    print(cl.codes.filter(sl.q.code.parent.id == "CA").ids())  # ['ON', 'QC']
+    print(local.query(sl.q.codelist).select(sl.q.codelist.id, n=sl.q.codelist.codes.id.count()).collect().rows())  # [('CL_GEO', 3)]
+```
+
+Over REST the query is planned against what the endpoint can answer, fetched,
+and run locally. A query that filters on anything REST cannot express needs
+an agency on its scan (`sl.q.dataflow.agency == "ECB"`), or it raises
+`PushdownError` naming the column to add.
+
+## Trees — codelists, hierarchies, category schemes, MSDs
+
+All four share the SKOS verbs: `roots()`, `leaves()`, `narrower(x)`,
+`broader(x)`, `narrower_transitive(x, depth=None, include_self=False)`,
+`broader_transitive(...)`, `depth_of(x)`, and the bulk maps `depths()`,
+`broader_map()`, `narrower_map()`, `ancestors_map()`, `descendants_map()`,
+`inherit_along_broader(values)`.
+
+A **codelist** is keyed by code id:
+
+```python
+print((geo.narrower("CA").ids(), geo.depth_of("ON")))  # (['ON', 'QC'], 1)
+print(geo.inherit_along_broader({"CA": "country"}))  # {'CA': 'country', 'ON': 'country', 'QC': 'country'}
+```
+
+A **hierarchy**, **category scheme** or **metadata structure** is keyed by
+**path** — the ids from the root, dot-separated — because a node id may repeat
+across branches:
+
+```python
+h = sl.Hierarchy(
+    id="H_GEO",
+    maintainer="AG",
+    name={"en": "Geography"},
+    tree=[
+        sl.HierarchicalCode(
+            id="CA",
+            code=geo.ref_to("CA"),
+            children=[sl.HierarchicalCode(id="ON", code=geo.ref_to("ON"))],
+        )
+    ],
+)
+print((h["CA.ON"].id, h.depth_of("CA.ON")))  # ('ON', 1)
+print([node.id for node in h.by_id("ON")])  # ['ON']
+print(h.depths())  # {'CA': 0, 'CA.ON': 1}
+h.codes                  # every node, in pre-order (a tuple)
+h["CA.ON"].code()        # the Code this node places
+```
+
+`depth_of("ON")` raises `KeyError` — a bare id is not a path. `h.by_id(id)`
+finds every placement of an id; `h.path_of(node)` gives a node's path.
+
+The lazy forms (`LazyCodelist`, `LazyHierarchy`, from `LocalRegistry.get`)
+have the same verbs; their multi-node walks return a `Query`, and
+`.materialize()` gives the eager artefact. A `LazyHierarchy`'s placements are
+`.nodes`.
+
+## Observation data
+
+### `reg.obs(flow)` → `ObsQuery`
+
+The path language over a dataflow's observations, on `RestRegistry` and
+`LocalRegistry`. Columns are named by component id; `obs.col(id)` names one
+(and `obs.num(id)` / `obs.text(id)` one with an exact static type), and comparing
+a code with a number, or a number with text, is refused as the filter is built,
+and a predicate on a dimension or the time period goes into the REST key or
+period. Results are typed from the DSD: codes as `pl.Enum`, values as their
+`Facet` declares.
+
+```python
+with sl.RestRegistry(sl.Provider.ECB) as reg:
+    flow = reg.get(sl.Dataflow.urn_for(agency="ECB", id="EXR"), resolve=True)
+    obs = reg.obs(flow)
+    usd = obs.filter(obs.col("CURRENCY") == "USD")
+    print(usd.frame().height)  # 4
+    usd.frame(labels="en")     # CURRENCY_label_en, ... beside each code
+    usd.stream()               # the same rows, as Arrow batches
+    obs.structure              # the DataStructure
+    obs.validate()             # every value no codelist allows, with a count (empty = clean)
+    obs.pivot(on="CURRENCY")   # wide; on= defaults to the DSD's MeasureDimension
+    usd.sink_parquet("usd.parquet")  # also sink_csv, sink_json(lang=); typed batch by batch
+```
+
+`select`, `group_by(...).agg(...)`, `order_by`, `limit` and `explain()` work
+as on a structural query (see `llms-dsl.txt`). `labels=` takes a language or
+several and adds `<id>_label_<lang>` beside each coded column, keeping the
+codes. `pivot()` raises, naming the candidates, when the DSD has no
+`MeasureDimension` and no `on=` is given.
+
+### `reg.download(flow, fmt=)`
+
+The provider's bytes, unparsed, in any `sl.DataFormat` (SDMX-CSV 1.0/2.0/2.1,
+SDMX-JSON 1.0/2.0, SDMX-ML 2.1 generic and structure-specific, 3.0, 3.1);
+`to=` writes them to a path instead.
+
+```python
+with sl.RestRegistry(sl.Provider.ECB) as reg:
+    flow = reg.get(sl.Dataflow.urn_for(agency="ECB", id="EXR"))
+    csv_bytes = reg.download(flow, fmt=sl.DataFormat.SDMX_CSV_1_0_0)
+```
+
+### Local files
+
+A file read through a registry is the same `ObsQuery`: the registry resolves
+the structure the file names (SDMX-CSV's `STRUCTURE_ID` or `DATAFLOW`, an
+SDMX-JSON message's dataflow link). A CSV path is read in place on every query.
+
+```python
+with sl.RestRegistry(sl.Provider.ECB) as reg:
+    obs = reg.scan_csv("ecb_exr.csv")             # also reg.scan_json(path) for SDMX-JSON
+    obs.frame()                                   # .filter, .pivot(on=), .validate(), .sink_*
+```
+
+### The Polars bridge
+
+For a frame read some other way:
+
+```python
+import polars as pl
+import sdmxlib.polars as slpl
+
+slpl.schema(dsd)                              # {column: pl.DataType} for read_csv
+frame = pl.read_csv("ecb_exr.csv", schema_overrides=slpl.schema(dsd, coded_as="string"))
+slpl.validation_report(dsd, frame)            # codes no codelist allows
+slpl.label(frame.lazy(), dsd, lang="en")      # adds FREQ_label_en, ...
+slpl.structure_frame(dsd, lang="en")          # the DSD as a tidy DataFrame
+```
+
+## Reading and writing SDMX
+
+```python
+msg = sl.StructureMessage(codelists=[geo], concept_schemes=[concepts], data_structures=[structure])
+
+xml = sl.to_xml(msg)                            # SDMX-ML 2.1 (the default)
+xml = sl.to_xml(msg, version="3.0", pretty_print=True)   # also "3.1"
+data = sl.to_json(msg)                          # SDMX-JSON 2.0
+raw = sl.serialize(msg, version="3.0")          # the same, by version string
+
+back = sl.parse(xml)                            # bytes in; format and version detected
+with open("pop.xml", "wb") as f:
+    f.write(xml)
+back = sl.read("pop.xml")                       # a path (or bytes)
+print(back.data_structures.ids())  # ['DSD_POP']
+```
+
+- `parse` / `read` return a `StructureMessage` or a `MetadataMessage`.
+- An artefact that breaks a rule is refused. By default (`strict=True`) that
+  raises `SdmxConformanceError` (an `sl.SdmxParseError`) naming each refusal;
+  `strict=False` returns the message without it, listed in `msg.refused`.
+- What the model could not keep is recorded in `msg.lost`, and values the
+  reader had to supply in `msg.assumed`; `lossless=True` raises
+  `sl.LossyReadError` instead.
+- `parse(data, registry=mem)` adds what it reads into a registry (structure
+  messages; nothing is added if the call raises).
+- Writers validate first (`validate=True`), and leave out every attribute at
+  its schema default — output is minimal; the model holds the meaning.
+- `sl.unrepresentable(artefact, "2.1")` lists the `Gap`s writing to a format
+  would lose; `sl.dropped(msg, "2.1")` lists artefacts a format cannot carry
+  at all (SDMX-ML 2.1 has no `ValueList`, for one).
+- `sl.validate(msg)` checks what only a whole message can know — every
+  reference resolves inside it, nothing is in it twice. It returns `None` and
+  raises `sl.ReferenceValidationError` / `sl.ValidationError`.
+
+### The message header
+
+```python
+from datetime import UTC, datetime
+
+header = sl.Header(
+    id="REQ_1",
+    prepared=datetime(2026, 1, 1, tzinfo=UTC),
+    sender=sl.Sender(id="AG", name={"en": "My agency"}),
+    receivers=[sl.Party(id="ECB")],
+)
+with_header = sl.StructureMessage(header=header, codelists=[geo])
+print(sl.parse(sl.to_xml(with_header)).header == header)  # True
+```
+
+A message without a header is written with fixed placeholders (`SDMX_MSG`,
+`2000-01-01T00:00:00`, sender `sdmxlib`), so a write is reproducible, and
+those read back as `header is None`. A reference-metadata message takes a
+`sl.MetadataHeader`.
+
+## Reference metadata
+
+Definitions travel in a `StructureMessage`: a `MetadataStructure` (MSD) and
+the `Metadataflow` built on it. Populated values travel in a
+`MetadataMessage` of `MetadataSet`s.
+
+```python
+msd = sl.MetadataStructure(
+    id="MSD_FOOTNOTES",
+    maintainer="AG",
+    name={"en": "Footnotes"},
+    attributes=[
+        sl.MetadataAttribute(
+            id="FOOTNOTE",
+            concept=concepts.ref_to("GEO"),
+            representation=sl.Facet(type=sl.DataType.String),
+            min_occurs=0,
+            max_occurs=None,               # unbounded
+        )
+    ],
+)
+mdf = sl.Metadataflow(id="MDF_FOOTNOTES", maintainer="AG", name={"en": "Footnotes"}, structure=msd)
+
+footnotes = sl.MetadataSet(
+    id="FOOTNOTE_A",
+    maintainer="AG",
+    name={"en": "Footnote A"},
+    structure=mdf,
+    targets=[geo.ref_to("ON"), geo.ref_to("QC")],
+    attributes=[sl.ReportedAttribute(id="FOOTNOTE", value={"en": "Provisional."})],
+)
+metadata = sl.MetadataMessage(metadata_sets=[footnotes])
+sl.to_xml(metadata, version="3.0")       # <mes:GenericMetadata>
+sl.to_json(metadata)                     # the SDMX-JSON metadata schema
+```
+
+- A `MetadataSet` holds `targets` (what it describes) and one attribute tree
+  applying to all of them; `structure` is its `Metadataflow` (or a
+  `MetadataProvisionAgreement`).
+- `ReportedAttribute.value` is `str | int | float | bool |
+  InternationalString | None`. Repetition is sibling attributes with the same
+  id, never a list. `children=` nests; `is_presentational=True` on the
+  `MetadataAttribute` marks a container that carries no value.
+- `LocalRegistry.metadata_for_target(urn)` finds the sets describing an
+  artefact; `local.reported_attributes()` is a `Query` over every value.
+
+## InternationalString
+
+```python
+name = geo.name
+name["en"]                # KeyError if absent
+name.get("fr")            # None if absent
+name.get("de", "en")      # first present, in priority order
+print(name.langs)  # ['en', 'fr']
+name.as_dict()            # {'en': ..., 'fr': ...}
+sl.InternationalString(en="Frequency", fr="Fréquence")
+```
+
+Constructors take a plain dict wherever an `InternationalString` goes.
+
+## Federation
+
+```python
+with sl.LocalRegistry(":memory:") as local, sl.RestRegistry(sl.Provider.ECB) as ecb:
+    fed = sl.FederatedRegistry(routing={"ECB": ecb, "AG": local})
+    fed.get(sl.DataStructure.urn_for(agency="ECB", id="ECB_EXR1"))   # routed by agency
+```
+
+`routing` maps agency → source; `default=` catches the rest. A source that
+cannot be reached raises `sl.RegistryUnavailable` naming itself.
+
+## Types at a glance
+
+| Type | What it is |
+| ---- | ---------- |
+| `DataStructure` | A DSD: `dimensions`, `time_dimension`, `attributes`, `measures`, `groups` |
+| `Dimension` / `TimeDimension` / `MeasureDimension` | Identifying components |
+| `Attribute`, `Measure` | Non-identifying components; an attribute has `attachment` |
+| `Codelist`, `Code` | Enumeration; a code has `id`, `name`, `parent_id` |
+| `ValueList`, `ValueItem` | SDMX 3.x enumeration that is not a codelist (no SDMX-ML 2.1 form) |
+| `ConceptScheme`, `Concept` | Meanings components point at (`concept=`) |
+| `Dataflow` | A published data product; `structure` is its DSD |
+| `ProvisionAgreement` | A data provider's agreement to report a dataflow |
+| `DataConstraint` | Allowed keys: `regions` (`CubeRegion`s) and `data_key_sets` |
+| `Hierarchy`, `HierarchicalCode`, `Level` | A path-keyed tree placing codes; `HierarchyAssociation` binds one to a dimension |
+| `CategoryScheme`, `Category`, `Categorisation` | Topic trees, and what is filed under them |
+| `AgencyScheme`, `DataProviderScheme`, `DataConsumerScheme`, `MetadataProviderScheme`, `OrganisationUnitScheme` | Organisation schemes |
+| `StructureMap`, `RepresentationMap`, `ConceptSchemeMap`, ... , `StructureSet` | Mappings between structures |
+| `MetadataStructure`, `MetadataAttribute`, `Metadataflow`, `MetadataSet`, `ReportedAttribute` | Reference metadata |
+| `StructureMessage`, `MetadataMessage`, `Header` | Wire envelopes |
+| `Facet`, `DataType` | A free-text format, and SDMX's text types (a `StrEnum`) |
+| `Annotation`, `Link` | Annotations, and SDMX 3.x links (beside `uri`) |
+| `Ref[T]`, `SdmxUrn[T]`, `SdmxRef` | Reference, identity, partial identity for lookup |
+| `ItemList[T]`, `ArtefactList[T]` | Immutable collections |
+| `InternationalString` | Multilingual text |
+| `RestRegistry`, `FmrRegistry`, `LocalRegistry`, `InMemoryRegistry`, `FederatedRegistry` | Sources |
+| `LazyCodelist`, `LazyHierarchy` | Store-backed codelist and hierarchy; walks return `Query` |
+| `Query`, `Select`, `ObsQuery` | The path language: rows, projections, observations |
+| `DataFormat` | The wire formats `reg.download` fetches |
+| `DataflowBinding`, `DuckDBDataStore` | Where a dataflow's observation table lives, and the store holding it |
+| `ValidationError`, `ReferenceValidationError`, `SdmxWarning`, `ImRuleWarning`, `LossyReadError`, `UnresolvedRef`, `RegistryUnavailable` | What can go wrong |
+
+## Gotchas
+
+- **`get` takes identity.** `reg.get(sl.X.urn_for(...))`, never
+  `reg.get(sl.X, agency=..., id=...)` and never a string.
+- **`dim.codelist` is not callable** — it already is the codelist.
+  `dim.representation()` unwraps the reference.
+- **A lazy query is not a list.** `len(cl.codes)` raises on a
+  `LazyCodelist`; use `cl.codes.count()`, `cl.code_ids()`, `.collect()`.
+- **Paths, not ids, in hierarchies.** `h["CA.ON"]`, `h.depth_of("CA.ON")`.
+- **Models are frozen.** Assignment raises `FrozenInstanceError`; use
+  `attrs.evolve`.
+- **`lang=` is always required** for labels; there is no default language.
+- **REST scans that filter need an agency**, or `PushdownError`.
+
+## What sdmxlib does not do
+
+- Pandas — use `ObsQuery.frame()` (polars) / `sdmxlib.polars`.
+- Submit to registries — reading only.

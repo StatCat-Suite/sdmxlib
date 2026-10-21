@@ -1,0 +1,214 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=3.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - Python-urllib/3.13
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/hierarchy/*/*/*
+  response:
+    body:
+      string: <?xml version='1.0' encoding='UTF-8'?><message:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+        xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><message:Header><message:ID>IREF204537</message:ID><message:Test>false</message:Test><message:Prepared>2026-08-20T10:07:37Z</message:Prepared><message:Sender
+        id="Unknown"/><message:Receiver id="not_supplied"/></message:Header><message:Structures><str:Hierarchies><str:Hierarchy
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0)"
+        isExternalReference="false" agencyID="ESTAT" id="HCL_WSTATUS_SCL_BNSPART"
+        version="1.0" hasFormalLevels="false"><com:Name xml:lang="en">SCL_BNSPART</com:Name><com:Description
+        xml:lang="en">Business partner</com:Description><str:HierarchicalCode urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0).thUA"
+        id="thUA"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).TOTAL</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0).Iu3n"
+        id="Iu3n"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).SELF</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0).jMXt"
+        id="jMXt"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).SELF_COWN</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0).qxSI"
+        id="qxSI"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).NONE</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0).bVpL"
+        id="bVpL"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).NAP</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0).2xsu"
+        id="2xsu"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).NSAL</str:Code></str:HierarchicalCode></str:Hierarchy><str:Hierarchy
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0)"
+        isExternalReference="false" agencyID="ESTAT" id="HCL_WSTATUS_SCL_WSTATUSPR"
+        version="1.0" hasFormalLevels="false"><com:Name xml:lang="en">SCL_WSTATUSPR</com:Name><com:Description
+        xml:lang="en">Preferred employment status</com:Description><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0).oF0V"
+        id="oF0V"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).TOTAL</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0).4zl6"
+        id="4zl6"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).SAL</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0).w2YF"
+        id="w2YF"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).SELF</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0).1NMR"
+        id="1NMR"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).NCHG</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0).3Kga"
+        id="3Kga"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).NRP</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0).oJyx"
+        id="oJyx"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).NAP</str:Code></str:HierarchicalCode></str:Hierarchy><str:Hierarchy
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=SDMX:HCL_TEST_AREA(1.0)"
+        isExternalReference="false" agencyID="SDMX" id="HCL_TEST_AREA" version="1.0"
+        hasFormalLevels="true"><com:Annotations><com:Annotation><com:AnnotationTitle>DRAFT</com:AnnotationTitle></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Area</com:Name><str:Level urn="urn:sdmx:org.sdmx.infomodel.codelist.Level=SDMX:HCL_TEST_AREA(1.0).Level1"
+        id="Level1"><com:Name xml:lang="en">AREA_LEVEL</com:Name><com:Description
+        xml:lang="en">Area level</com:Description><str:Level urn="urn:sdmx:org.sdmx.infomodel.codelist.Level=SDMX:HCL_TEST_AREA(1.0).Level2"
+        id="Level2"><com:Name xml:lang="en">ACTIVITY_LEVEL</com:Name><com:Description
+        xml:lang="en">Activity level</com:Description></str:Level></str:Level><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).Bt3R"
+        id="Bt3R"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_AREA(1.8).4D</str:Code><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).Bt3R.B05"
+        id="B05"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_ACTIVITY(1.6).B05</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).Bt3R.B06"
+        id="B06"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_ACTIVITY(1.6).B06</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).Bt3R.B06_09"
+        id="B06_09"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_ACTIVITY(1.6).B06_09</str:Code></str:HierarchicalCode></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).RUlb"
+        id="RUlb"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_AREA(1.8).1B</str:Code><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).RUlb.C262"
+        id="C262"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_ACTIVITY(1.6).C262</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).RUlb.C26"
+        id="C26"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_ACTIVITY(1.6).C26</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).RUlb.C25"
+        id="C25"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_ACTIVITY(1.6).C25</str:Code></str:HierarchicalCode></str:HierarchicalCode></str:Hierarchy></str:Hierarchies></message:Structures></message:Structure>
+    headers:
+      cache-control:
+      - private
+      connection:
+      - close
+      content-disposition:
+      - inline; filename="structure.xml"
+      content-length:
+      - '7046'
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 20 Aug 2026 10:07:37 GMT
+      etag:
+      - a543086932530df4
+      set-cookie:
+      - JSESSIONID=DD39DA5BDF1452D8CD15BA27A908A5CF; Path=/; Secure; HttpOnly
+      - 7fd38c8cd85a70a9027a63339d2c9c92=eaeb66c45f2b478c26b73fa2c3ef8c89; path=/;
+        HttpOnly; Secure; SameSite=None
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: ''
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=3.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - sdmxlib-tests
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/hierarchy/*/*/*
+  response:
+    body:
+      string: <?xml version='1.0' encoding='UTF-8'?><message:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+        xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><message:Header><message:ID>IREF205547</message:ID><message:Test>false</message:Test><message:Prepared>2026-08-20T10:09:11Z</message:Prepared><message:Sender
+        id="Unknown"/><message:Receiver id="not_supplied"/></message:Header><message:Structures><str:Hierarchies><str:Hierarchy
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0)"
+        isExternalReference="false" agencyID="ESTAT" id="HCL_WSTATUS_SCL_BNSPART"
+        version="1.0" hasFormalLevels="false"><com:Name xml:lang="en">SCL_BNSPART</com:Name><com:Description
+        xml:lang="en">Business partner</com:Description><str:HierarchicalCode urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0).thUA"
+        id="thUA"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).TOTAL</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0).Iu3n"
+        id="Iu3n"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).SELF</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0).jMXt"
+        id="jMXt"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).SELF_COWN</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0).qxSI"
+        id="qxSI"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).NONE</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0).bVpL"
+        id="bVpL"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).NAP</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_BNSPART(1.0).2xsu"
+        id="2xsu"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).NSAL</str:Code></str:HierarchicalCode></str:Hierarchy><str:Hierarchy
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0)"
+        isExternalReference="false" agencyID="ESTAT" id="HCL_WSTATUS_SCL_WSTATUSPR"
+        version="1.0" hasFormalLevels="false"><com:Name xml:lang="en">SCL_WSTATUSPR</com:Name><com:Description
+        xml:lang="en">Preferred employment status</com:Description><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0).oF0V"
+        id="oF0V"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).TOTAL</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0).4zl6"
+        id="4zl6"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).SAL</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0).w2YF"
+        id="w2YF"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).SELF</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0).1NMR"
+        id="1NMR"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).NCHG</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0).3Kga"
+        id="3Kga"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).NRP</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=ESTAT:HCL_WSTATUS_SCL_WSTATUSPR(1.0).oJyx"
+        id="oJyx"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:SCL_WSTATUS(1.0).NAP</str:Code></str:HierarchicalCode></str:Hierarchy><str:Hierarchy
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=SDMX:HCL_TEST_AREA(1.0)"
+        isExternalReference="false" agencyID="SDMX" id="HCL_TEST_AREA" version="1.0"
+        hasFormalLevels="true"><com:Annotations><com:Annotation><com:AnnotationTitle>DRAFT</com:AnnotationTitle></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Area</com:Name><str:Level urn="urn:sdmx:org.sdmx.infomodel.codelist.Level=SDMX:HCL_TEST_AREA(1.0).Level1"
+        id="Level1"><com:Name xml:lang="en">AREA_LEVEL</com:Name><com:Description
+        xml:lang="en">Area level</com:Description><str:Level urn="urn:sdmx:org.sdmx.infomodel.codelist.Level=SDMX:HCL_TEST_AREA(1.0).Level2"
+        id="Level2"><com:Name xml:lang="en">ACTIVITY_LEVEL</com:Name><com:Description
+        xml:lang="en">Activity level</com:Description></str:Level></str:Level><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).Bt3R"
+        id="Bt3R"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_AREA(1.8).4D</str:Code><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).Bt3R.B05"
+        id="B05"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_ACTIVITY(1.6).B05</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).Bt3R.B06"
+        id="B06"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_ACTIVITY(1.6).B06</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).Bt3R.B06_09"
+        id="B06_09"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_ACTIVITY(1.6).B06_09</str:Code></str:HierarchicalCode></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).RUlb"
+        id="RUlb"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_AREA(1.8).1B</str:Code><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).RUlb.C262"
+        id="C262"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_ACTIVITY(1.6).C262</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).RUlb.C26"
+        id="C26"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_ACTIVITY(1.6).C26</str:Code></str:HierarchicalCode><str:HierarchicalCode
+        urn="urn:sdmx:org.sdmx.infomodel.codelist.HierarchicalCode=SDMX:HCL_TEST_AREA(1.0).RUlb.C25"
+        id="C25"><str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ESTAT:CL_ACTIVITY(1.6).C25</str:Code></str:HierarchicalCode></str:HierarchicalCode></str:Hierarchy></str:Hierarchies></message:Structures></message:Structure>
+    headers:
+      cache-control:
+      - private
+      connection:
+      - close
+      content-disposition:
+      - inline; filename="structure.xml"
+      content-length:
+      - '7046'
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 20 Aug 2026 10:09:12 GMT
+      etag:
+      - a543086932530df4
+      set-cookie:
+      - JSESSIONID=EFA965883B1D0BF165BEC093104556D3; Path=/; Secure; HttpOnly
+      - 7fd38c8cd85a70a9027a63339d2c9c92=eaeb66c45f2b478c26b73fa2c3ef8c89; path=/;
+        HttpOnly; Secure; SameSite=None
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: ''
+version: 1

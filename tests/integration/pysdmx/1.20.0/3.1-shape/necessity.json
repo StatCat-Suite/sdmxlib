@@ -1,0 +1,14 @@
+[
+  {
+    "failure": "TypeError: Unexpected keyword argument 'CodelistExtension'",
+    "xpath": "//*[local-name()='Codelist']/*[local-name()='CodelistExtension']"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'GeoFeatureSetCode'",
+    "xpath": "//*[local-name()='Codelist']/*[local-name()='GeoFeatureSetCode']"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'GeoGridCode'",
+    "xpath": "//*[local-name()='Codelist']/*[local-name()='GeoGridCode']"
+  }
+]

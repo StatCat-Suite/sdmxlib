@@ -1,0 +1,1678 @@
+{
+ "apis": {
+  "2.1": {
+   "base": "https://registry.sdmx.org/ws/public/sdmxapi/rest",
+   "fetched": "2026-10-09T11:30:35+00:00",
+   "resources": {
+    "agencyscheme": {
+     "artefacts": {
+      "AgencyScheme": 1
+     },
+     "bytes": 15128,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "OrganisationSchemes/AgencyScheme/@isExternalReference=false": 1,
+      "OrganisationSchemes/AgencyScheme/@isFinal=false": 1,
+      "OrganisationSchemes/AgencyScheme/@urn": 1,
+      "OrganisationSchemes/AgencyScheme/Agency/@urn": 23
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      }
+     }
+    },
+    "attachmentconstraint": {
+     "bytes": 468,
+     "error": null,
+     "status": 500
+    },
+    "categorisation": {
+     "artefacts": {
+      "Categorisation": 349
+     },
+     "bytes": 240325,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "Categorisations/Categorisation/@isExternalReference=false": 349,
+      "Categorisations/Categorisation/@isFinal=false": 349,
+      "Categorisations/Categorisation/@urn": 349
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 349
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 349
+      },
+      "3.1": {
+       "gaps": {
+        "version": 349
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 349
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 349
+      }
+     }
+    },
+    "categoryscheme": {
+     "artefacts": {
+      "CategoryScheme": 2
+     },
+     "bytes": 49935,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "CategorySchemes/CategoryScheme/@isExternalReference=false": 2,
+      "CategorySchemes/CategoryScheme/@urn": 2,
+      "CategorySchemes/CategoryScheme/Category/@urn": 51
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "3.0": {
+       "gaps": {
+        "legacy_is_final": 2
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "3.1": {
+       "gaps": {
+        "legacy_is_final": 2
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "json": {
+       "gaps": {
+        "legacy_is_final": 2
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      }
+     }
+    },
+    "codelist": {
+     "artefacts": {
+      "Codelist": 140
+     },
+     "bytes": 28538985,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "Codelists/Codelist/@isExternalReference=false": 140,
+      "Codelists/Codelist/@isFinal=false": 14,
+      "Codelists/Codelist/@urn": 140,
+      "Codelists/Codelist/Code/@urn": 103141
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 140
+      },
+      "3.0": {
+       "gaps": {
+        "legacy_is_final": 116
+       },
+       "refused": {
+        "Codelist.codes[].parent_id: <n> code(s) have a parent SDMX-ML <n> cannot name: <examples>. <n> types <Parent> as an NCName id ([A-Za-z][A-Za-z0-9_-]*) though a code's own id may start with any id char": 9
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 131
+      },
+      "3.1": {
+       "gaps": {
+        "legacy_is_final": 120
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 140
+      },
+      "json": {
+       "gaps": {
+        "legacy_is_final": 120
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 140
+      }
+     }
+    },
+    "conceptscheme": {
+     "artefacts": {
+      "ConceptScheme": 13
+     },
+     "bytes": 534875,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "Concepts/ConceptScheme/@isExternalReference=false": 13,
+      "Concepts/ConceptScheme/@isFinal=false": 1,
+      "Concepts/ConceptScheme/@urn": 13,
+      "Concepts/ConceptScheme/Concept/@urn": 696
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 13
+      },
+      "3.0": {
+       "gaps": {
+        "legacy_is_final": 9
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 13
+      },
+      "3.1": {
+       "gaps": {
+        "legacy_is_final": 9
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 13
+      },
+      "json": {
+       "gaps": {
+        "legacy_is_final": 9
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 13
+      }
+     }
+    },
+    "contentconstraint": {
+     "artefacts": {
+      "DataConstraint": 94
+     },
+     "bytes": 6104225,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "Constraints/ContentConstraint/@isExternalReference=false": 94,
+      "Constraints/ContentConstraint/@isFinal=false": 90,
+      "Constraints/ContentConstraint/@urn": 94
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 94
+      },
+      "3.0": {
+       "gaps": {
+        "legacy_is_final": 80
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 94
+      },
+      "3.1": {
+       "gaps": {
+        "legacy_is_final": 80
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 94
+      },
+      "json": {
+       "gaps": {
+        "legacy_is_final": 80
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 94
+      }
+     }
+    },
+    "dataconsumerscheme": {
+     "artefacts": {
+      "DataConsumerScheme": 1
+     },
+     "bytes": 928,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "OrganisationSchemes/DataConsumerScheme/@isExternalReference=false": 1,
+      "OrganisationSchemes/DataConsumerScheme/@isFinal=false": 1,
+      "OrganisationSchemes/DataConsumerScheme/@urn": 1
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      }
+     }
+    },
+    "dataflow": {
+     "artefacts": {
+      "Dataflow": 111
+     },
+     "bytes": 45048,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "Dataflows/Dataflow/@isExternalReference=false": 111,
+      "Dataflows/Dataflow/@isFinal=false": 30,
+      "Dataflows/Dataflow/@urn": 111
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 111
+      },
+      "3.0": {
+       "gaps": {
+        "legacy_is_final": 41
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 111
+      },
+      "3.1": {
+       "gaps": {
+        "legacy_is_final": 41
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 111
+      },
+      "json": {
+       "gaps": {
+        "legacy_is_final": 41
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 111
+      }
+     }
+    },
+    "dataproviderscheme": {
+     "artefacts": {
+      "DataProviderScheme": 2
+     },
+     "bytes": 2137,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "OrganisationSchemes/DataProviderScheme/@isExternalReference=false": 2,
+      "OrganisationSchemes/DataProviderScheme/@isFinal=false": 2,
+      "OrganisationSchemes/DataProviderScheme/@urn": 2,
+      "OrganisationSchemes/DataProviderScheme/DataProvider/@urn": 5
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      }
+     }
+    },
+    "datastructure": {
+     "artefacts": {
+      "DataStructure": 23
+     },
+     "bytes": 597935,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "DataStructures/DataStructure/@isExternalReference=false": 23,
+      "DataStructures/DataStructure/@isFinal=false": 14,
+      "DataStructures/DataStructure/@urn": 23,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/@urn": 23,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/@urn": 389,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/@urn": 23,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/@urn": 297,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/MeasureDimension/@urn": 3,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension/@urn": 23,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/@urn": 23,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/PrimaryMeasure/@urn": 23
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 23
+      },
+      "3.0": {
+       "gaps": {
+        "legacy_is_final": 16
+       },
+       "refused": {
+        "DataStructure.measure_dimension: a MeasureDimension has no SDMX-ML <n> representation — it is a <n> cross-sectional construct that <n> replaced with the measure list, and the SDMX-ML <n> writer drops ": 3
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 20
+      },
+      "3.1": {
+       "gaps": {
+        "legacy_is_final": 16
+       },
+       "refused": {
+        "DataStructure.measure_dimension: a MeasureDimension has no SDMX-ML <n> representation — it is a <n> cross-sectional construct that <n> replaced with the measure list, and the SDMX-ML <n> writer drops ": 3
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 20
+      },
+      "json": {
+       "gaps": {
+        "legacy_is_final": 16
+       },
+       "refused": {
+        "DataStructure.measure_dimension: a MeasureDimension has no SDMX-JSON representation — it is a <n> cross-sectional construct that <n> replaced with the measure list, and the SDMX-JSON writer drops it s": 3
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 20
+      }
+     }
+    },
+    "hierarchicalcodelist": {
+     "artefacts": {
+      "Hierarchy": 3
+     },
+     "bytes": 9173,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "HierarchicalCodelists/HierarchicalCodelist/@isExternalReference=false": 3,
+      "HierarchicalCodelists/HierarchicalCodelist/@isFinal=false": 3,
+      "HierarchicalCodelists/HierarchicalCodelist/@urn": 3,
+      "HierarchicalCodelists/HierarchicalCodelist/Hierarchy/@leveled=false": 2,
+      "HierarchicalCodelists/HierarchicalCodelist/Hierarchy/@urn": 3,
+      "HierarchicalCodelists/HierarchicalCodelist/Hierarchy/HierarchicalCode/@urn": 20,
+      "HierarchicalCodelists/HierarchicalCodelist/Hierarchy/Level/@urn": 2
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 3
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 3
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 3
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 3
+      }
+     }
+    },
+    "metadataflow": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "metadatastructure": {
+     "artefacts": {
+      "MetadataStructure": 1
+     },
+     "bytes": 19339,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "MetadataStructures/MetadataStructure/@isExternalReference=false": 1,
+      "MetadataStructures/MetadataStructure/@urn": 1,
+      "MetadataStructures/MetadataStructure/MetadataStructureComponents/ReportStructure/MetadataAttribute/@maxOccurs=1": 44,
+      "MetadataStructures/MetadataStructure/MetadataStructureComponents/ReportStructure/MetadataAttribute/@urn": 44
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {
+      "MetadataStructure.report_structures (length)": 1,
+      "MetadataStructure.targets (length)": 1
+     },
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.0": {
+       "gaps": {
+        "legacy_is_final": 1,
+        "report_structures": 1,
+        "targets": 1
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.1": {
+       "gaps": {
+        "legacy_is_final": 1,
+        "report_structures": 1,
+        "targets": 1
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "json": {
+       "gaps": {
+        "legacy_is_final": 1,
+        "report_structures": 1,
+        "targets": 1
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      }
+     }
+    },
+    "organisationunitscheme": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "process": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "provisionagreement": {
+     "artefacts": {
+      "ProvisionAgreement": 8
+     },
+     "bytes": 5622,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "ProvisionAgreements/ProvisionAgreement/@isExternalReference=false": 8,
+      "ProvisionAgreements/ProvisionAgreement/@isFinal=false": 7,
+      "ProvisionAgreements/ProvisionAgreement/@urn": 8
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 8
+      },
+      "3.0": {
+       "gaps": {
+        "legacy_is_final": 1
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 8
+      },
+      "3.1": {
+       "gaps": {
+        "legacy_is_final": 1
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 8
+      },
+      "json": {
+       "gaps": {
+        "legacy_is_final": 1
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 8
+      }
+     }
+    },
+    "reportingtaxonomy": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "structureset": {
+     "bytes": 481,
+     "error": null,
+     "status": 501
+    }
+   }
+  },
+  "3.0": {
+   "base": "https://registry.sdmx.org/sdmx/v2",
+   "fetched": "2026-10-09T11:30:34+00:00",
+   "resources": {
+    "agencyscheme": {
+     "artefacts": {
+      "AgencyScheme": 1
+     },
+     "bytes": 15146,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "AgencySchemes/AgencyScheme/@isExternalReference=false": 1,
+      "AgencySchemes/AgencyScheme/@urn": 1,
+      "AgencySchemes/AgencyScheme/Agency/@urn": 23
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      }
+     }
+    },
+    "categorisation": {
+     "artefacts": {
+      "Categorisation": 349
+     },
+     "bytes": 205013,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "Categorisations/Categorisation/@isExternalReference=false": 349,
+      "Categorisations/Categorisation/@urn": 349
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 349
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 349
+      },
+      "3.1": {
+       "gaps": {
+        "version": 349
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 349
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 349
+      }
+     }
+    },
+    "categoryscheme": {
+     "artefacts": {
+      "CategoryScheme": 2
+     },
+     "bytes": 49965,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "CategorySchemes/CategoryScheme/@isExternalReference=false": 2,
+      "CategorySchemes/CategoryScheme/@urn": 2,
+      "CategorySchemes/CategoryScheme/Category/@urn": 51
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      }
+     }
+    },
+    "categoryschememap": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "codelist": {
+     "artefacts": {
+      "Codelist": 140
+     },
+     "bytes": 28380799,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "Codelists/Codelist/@isExternalReference=false": 140,
+      "Codelists/Codelist/@urn": 140,
+      "Codelists/Codelist/Code/@urn": 103141
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 140
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {
+        "Codelist.codes[].parent_id: <n> code(s) have a parent SDMX-ML <n> cannot name: <examples>. <n> types <Parent> as an NCName id ([A-Za-z][A-Za-z0-9_-]*) though a code's own id may start with any id char": 9
+       },
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 131
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 140
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 140
+      }
+     }
+    },
+    "conceptscheme": {
+     "artefacts": {
+      "ConceptScheme": 13
+     },
+     "bytes": 530569,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "ConceptSchemes/ConceptScheme/@isExternalReference=false": 13,
+      "ConceptSchemes/ConceptScheme/@urn": 13,
+      "ConceptSchemes/ConceptScheme/Concept/@urn": 696
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 13
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 13
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 13
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 13
+      }
+     }
+    },
+    "conceptschememap": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "customtypescheme": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "dataconstraint": {
+     "artefacts": {
+      "DataConstraint": 94
+     },
+     "bytes": 6099919,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "DataConstraints/DataConstraint/@isExternalReference=false": 94,
+      "DataConstraints/DataConstraint/@urn": 94
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 94
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 94
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 94
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 94
+      }
+     }
+    },
+    "dataconsumerscheme": {
+     "artefacts": {
+      "DataConsumerScheme": 1
+     },
+     "bytes": 958,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "DataConsumerSchemes/DataConsumerScheme/@isExternalReference=false": 1,
+      "DataConsumerSchemes/DataConsumerScheme/@urn": 1
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      }
+     }
+    },
+    "dataflow": {
+     "artefacts": {
+      "Dataflow": 111
+     },
+     "bytes": 40971,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "Dataflows/Dataflow/@isExternalReference=false": 111,
+      "Dataflows/Dataflow/@urn": 111
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 111
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 111
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 111
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 111
+      }
+     }
+    },
+    "dataproviderscheme": {
+     "artefacts": {
+      "DataProviderScheme": 2
+     },
+     "bytes": 2137,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "DataProviderSchemes/DataProviderScheme/@isExternalReference=false": 2,
+      "DataProviderSchemes/DataProviderScheme/@urn": 2,
+      "DataProviderSchemes/DataProviderScheme/DataProvider/@urn": 5
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      }
+     }
+    },
+    "datastructure": {
+     "artefacts": {
+      "DataStructure": 20
+     },
+     "bytes": 504563,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {
+      "DataStructures/DataStructure": 3,
+      "DataStructures/DataStructure/@agencyID": 3,
+      "DataStructures/DataStructure/@id": 3,
+      "DataStructures/DataStructure/@version": 3,
+      "DataStructures/DataStructure/DataStructureComponents": 3,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList": 3,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/@id": 3,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute": 27,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/@id": 27,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/@usage=mandatory": 16,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/AttributeRelationship": 27,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/AttributeRelationship/Dimension": 15,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/ConceptIdentity": 27,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/LocalRepresentation": 27,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/LocalRepresentation/Enumeration": 16,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/LocalRepresentation/TextFormat": 11,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/LocalRepresentation/TextFormat/@textType": 11,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/MeasureRelationship": 12,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/MeasureRelationship/Measure": 12,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList": 3,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/@id": 3,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension": 36,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/@id": 36,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/@position": 36,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/ConceptIdentity": 36,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/LocalRepresentation": 36,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/LocalRepresentation/Enumeration": 34,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/LocalRepresentation/TextFormat": 2,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/LocalRepresentation/TextFormat/@endValue": 2,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/LocalRepresentation/TextFormat/@interval": 2,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/LocalRepresentation/TextFormat/@isSequence=true": 2,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/LocalRepresentation/TextFormat/@maxLength": 2,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/LocalRepresentation/TextFormat/@startValue": 2,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/LocalRepresentation/TextFormat/@textType": 2,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension": 3,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension/@id": 3,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension/ConceptIdentity": 3,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension/LocalRepresentation": 3,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension/LocalRepresentation/TextFormat": 3,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension/LocalRepresentation/TextFormat/@textType": 3,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList": 3,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/@id": 3,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/Measure": 3,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/Measure/@id": 3,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/Measure/ConceptIdentity": 3,
+      "DataStructures/DataStructure/Name": 3,
+      "DataStructures/DataStructure/Name/@lang": 3
+     },
+     "read_lost_derivable": {
+      "DataStructures/DataStructure/@isExternalReference=false": 23,
+      "DataStructures/DataStructure/@urn": 23,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/@urn": 23,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/@urn": 389,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/@usage=optional": 11,
+      "DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/AttributeRelationship/Observation(empty)": 12,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/@urn": 23,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/@urn": 300,
+      "DataStructures/DataStructure/DataStructureComponents/DimensionList/TimeDimension/@urn": 23,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/@urn": 23,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/Measure/@urn": 23,
+      "DataStructures/DataStructure/DataStructureComponents/MeasureList/Measure/@usage=optional": 3
+     },
+     "read_refused": {
+      "DataStructure: <Enumeration>: schema requires a Codelist reference here, but the URN names a ConceptScheme (<urn>). The message is not schema-valid.": 3
+     },
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {
+        "attributes[].related_measures": 20
+       },
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 20
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 20
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 20
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 20
+      }
+     }
+    },
+    "geographiccodelist": {
+     "bytes": 466,
+     "error": null,
+     "status": 500
+    },
+    "geogridcodelist": {
+     "bytes": 463,
+     "error": null,
+     "status": 500
+    },
+    "hierarchy": {
+     "artefacts": {
+      "Hierarchy": 3
+     },
+     "bytes": 7046,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "Hierarchies/Hierarchy/@isExternalReference=false": 3,
+      "Hierarchies/Hierarchy/@urn": 3,
+      "Hierarchies/Hierarchy/HierarchicalCode/@urn": 20,
+      "Hierarchies/Hierarchy/Level/@urn": 2
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 3
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 3
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 3
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 3
+      }
+     }
+    },
+    "hierarchyassociation": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "metadataconstraint": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "metadataflow": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "metadataproviderscheme": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "metadataprovisionagreement": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "metadatastructure": {
+     "artefacts": {
+      "MetadataStructure": 1
+     },
+     "bytes": 16285,
+     "error": null,
+     "read_gained": {
+      "MetadataStructures/MetadataStructure/MetadataStructureComponents/MetadataAttributeList/@id": 1
+     },
+     "read_lost": {},
+     "read_lost_derivable": {
+      "MetadataStructures/MetadataStructure/@isExternalReference=false": 1,
+      "MetadataStructures/MetadataStructure/@urn": 1,
+      "MetadataStructures/MetadataStructure/MetadataStructureComponents/MetadataAttributeList/MetadataAttribute/@maxOccurs=1": 44,
+      "MetadataStructures/MetadataStructure/MetadataStructureComponents/MetadataAttributeList/MetadataAttribute/@urn": 44
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 1
+      }
+     }
+    },
+    "namepersonalisationscheme": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "organisationschememap": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "organisationunitscheme": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "process": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "provisionagreement": {
+     "artefacts": {
+      "ProvisionAgreement": 8
+     },
+     "bytes": 4779,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "ProvisionAgreements/ProvisionAgreement/@isExternalReference=false": 8,
+      "ProvisionAgreements/ProvisionAgreement/@urn": 8
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 8
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 8
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 8
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 8
+      }
+     }
+    },
+    "representationmap": {
+     "artefacts": {
+      "RepresentationMap": 2
+     },
+     "bytes": 36785,
+     "error": null,
+     "read_gained": {},
+     "read_lost": {},
+     "read_lost_derivable": {
+      "RepresentationMaps/RepresentationMap/@isExternalReference=false": 2,
+      "RepresentationMaps/RepresentationMap/@urn": 2
+     },
+     "read_refused": {},
+     "status": 200,
+     "store_diff": {},
+     "store_refused": {},
+     "targets": {
+      "2.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "3.0": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "3.1": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      },
+      "json": {
+       "gaps": {},
+       "refused": {},
+       "schema_invalid": {},
+       "write_error": {},
+       "written": 2
+      }
+     }
+    },
+    "rulesetscheme": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "structuremap": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "transformationscheme": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "userdefinedoperatorscheme": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "valuelist": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    },
+    "vtlmappingscheme": {
+     "bytes": 421,
+     "error": null,
+     "status": 404
+    }
+   }
+  }
+ },
+ "cross_api": {
+  "agencyscheme / agencyscheme": {
+   "diff": {},
+   "only_2.1": 0,
+   "only_3.0": 0,
+   "paired": 1
+  },
+  "categorisation / categorisation": {
+   "diff": {},
+   "only_2.1": 0,
+   "only_3.0": 0,
+   "paired": 349
+  },
+  "categoryscheme / categoryscheme": {
+   "diff": {
+    "CategoryScheme.legacy_is_final (type)": 2
+   },
+   "only_2.1": 0,
+   "only_3.0": 0,
+   "paired": 2
+  },
+  "codelist / codelist": {
+   "diff": {
+    "Codelist.legacy_is_final (type)": 120
+   },
+   "only_2.1": 0,
+   "only_3.0": 0,
+   "paired": 140
+  },
+  "conceptscheme / conceptscheme": {
+   "diff": {
+    "ConceptScheme.legacy_is_final (type)": 9
+   },
+   "only_2.1": 0,
+   "only_3.0": 0,
+   "paired": 13
+  },
+  "contentconstraint / dataconstraint": {
+   "diff": {
+    "DataConstraint.legacy_is_final (type)": 80
+   },
+   "only_2.1": 0,
+   "only_3.0": 0,
+   "paired": 94
+  },
+  "dataflow / dataflow": {
+   "diff": {
+    "Dataflow.legacy_is_final (type)": 41
+   },
+   "only_2.1": 0,
+   "only_3.0": 0,
+   "paired": 111
+  },
+  "dataproviderscheme / dataproviderscheme": {
+   "diff": {},
+   "only_2.1": 0,
+   "only_3.0": 0,
+   "paired": 2
+  },
+  "datastructure / datastructure": {
+   "diff": {
+    "DataStructure.attributes[].related_measures (type)": 20,
+    "DataStructure.legacy_is_final (type)": 16
+   },
+   "only_2.1": 3,
+   "only_3.0": 0,
+   "paired": 20
+  },
+  "metadatastructure / metadatastructure": {
+   "diff": {
+    "MetadataStructure.legacy_is_final (type)": 1,
+    "MetadataStructure.report_structures (length)": 1,
+    "MetadataStructure.targets (length)": 1
+   },
+   "only_2.1": 0,
+   "only_3.0": 0,
+   "paired": 1
+  },
+  "provisionagreement / provisionagreement": {
+   "diff": {
+    "ProvisionAgreement.legacy_is_final (type)": 1
+   },
+   "only_2.1": 0,
+   "only_3.0": 0,
+   "paired": 8
+  }
+ },
+ "engine": "fmr",
+ "registry": "SDMX"
+}

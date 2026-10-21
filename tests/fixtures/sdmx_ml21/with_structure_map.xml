@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SDMX-ML 2.1 fixture: a StructureMap inside a declared StructureSet (#242).
+
+  The 2.1 read path for a structure map had no document coverage at all, and
+  the write path was refused outright until #242, on the reasoning that a
+  ComponentMap does not carry the class and component-list id that 2.1's
+  local component reference requires. It does not — the mapped structure
+  does, which is why both structures are in this message.
+
+  One ComponentMap per component kind, so the reader has to survive all four
+  classes: Dimension, TimeDimension, Attribute and PrimaryMeasure.
+
+  The StructureSet here is *declared*: it has its own id and name, and it
+  survives a 2.1 round-trip as an artefact. That is the difference from the
+  wrapper the writer invents for maps belonging to no set, which is annotated
+  as synthetic and dropped on read (see formats/sdmx_ml21/_synthetic.py).
+-->
+<mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message" xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message SDMXMessage.xsd">
+  <mes:Header>
+    <mes:ID>WITH_STRUCTURE_MAP</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2024-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+    <str:Codelists>
+      <str:Codelist id="CL_FREQ" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Frequency</com:Name>
+        <str:Code id="A">
+          <com:Name xml:lang="en">Annual</com:Name>
+        </str:Code>
+        <str:Code id="Q">
+          <com:Name xml:lang="en">Quarterly</com:Name>
+        </str:Code>
+      </str:Codelist>
+    </str:Codelists>
+    <str:Concepts>
+      <str:ConceptScheme id="CS_MAP" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Concepts for the mapped structures</com:Name>
+        <str:Concept id="FREQ">
+          <com:Name xml:lang="en">Frequency</com:Name>
+        </str:Concept>
+        <str:Concept id="REF_AREA">
+          <com:Name xml:lang="en">Reference area</com:Name>
+        </str:Concept>
+        <str:Concept id="TIME_PERIOD">
+          <com:Name xml:lang="en">Time period</com:Name>
+        </str:Concept>
+        <str:Concept id="OBS_STATUS">
+          <com:Name xml:lang="en">Observation status</com:Name>
+        </str:Concept>
+        <str:Concept id="OBS_VALUE">
+          <com:Name xml:lang="en">Observation value</com:Name>
+        </str:Concept>
+      </str:ConceptScheme>
+    </str:Concepts>
+    <str:DataStructures>
+      <str:DataStructure id="DSD_SOURCE" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Source structure</com:Name>
+        <str:DataStructureComponents>
+          <str:DimensionList id="DimensionDescriptor">
+            <str:Dimension id="FREQ" position="1">
+              <str:ConceptIdentity>
+                <Ref agencyID="TEST" id="FREQ" maintainableParentID="CS_MAP" maintainableParentVersion="1.0" class="Concept" package="conceptscheme"/>
+              </str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>
+                  <Ref agencyID="TEST" id="CL_FREQ" version="1.0" class="Codelist" package="codelist"/>
+                </str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:TimeDimension id="TIME_PERIOD" position="2">
+              <str:ConceptIdentity>
+                <Ref agencyID="TEST" id="TIME_PERIOD" maintainableParentID="CS_MAP" maintainableParentVersion="1.0" class="Concept" package="conceptscheme"/>
+              </str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="ObservationalTimePeriod"/>
+              </str:LocalRepresentation>
+            </str:TimeDimension>
+          </str:DimensionList>
+          <str:AttributeList id="AttributeDescriptor">
+            <str:Attribute id="OBS_STATUS" assignmentStatus="Conditional">
+              <str:ConceptIdentity>
+                <Ref agencyID="TEST" id="OBS_STATUS" maintainableParentID="CS_MAP" maintainableParentVersion="1.0" class="Concept" package="conceptscheme"/>
+              </str:ConceptIdentity>
+              <str:AttributeRelationship>
+                <str:PrimaryMeasure>
+                  <Ref id="OBS_VALUE"/>
+                </str:PrimaryMeasure>
+              </str:AttributeRelationship>
+            </str:Attribute>
+          </str:AttributeList>
+          <str:MeasureList id="MeasureDescriptor">
+            <str:PrimaryMeasure id="OBS_VALUE">
+              <str:ConceptIdentity>
+                <Ref agencyID="TEST" id="OBS_VALUE" maintainableParentID="CS_MAP" maintainableParentVersion="1.0" class="Concept" package="conceptscheme"/>
+              </str:ConceptIdentity>
+            </str:PrimaryMeasure>
+          </str:MeasureList>
+        </str:DataStructureComponents>
+      </str:DataStructure>
+      <str:DataStructure id="DSD_TARGET" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Target structure</com:Name>
+        <str:DataStructureComponents>
+          <str:DimensionList id="DimensionDescriptor">
+            <str:Dimension id="REF_AREA" position="1">
+              <str:ConceptIdentity>
+                <Ref agencyID="TEST" id="REF_AREA" maintainableParentID="CS_MAP" maintainableParentVersion="1.0" class="Concept" package="conceptscheme"/>
+              </str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>
+                  <Ref agencyID="TEST" id="CL_FREQ" version="1.0" class="Codelist" package="codelist"/>
+                </str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:TimeDimension id="TIME_PERIOD" position="2">
+              <str:ConceptIdentity>
+                <Ref agencyID="TEST" id="TIME_PERIOD" maintainableParentID="CS_MAP" maintainableParentVersion="1.0" class="Concept" package="conceptscheme"/>
+              </str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="ObservationalTimePeriod"/>
+              </str:LocalRepresentation>
+            </str:TimeDimension>
+          </str:DimensionList>
+          <str:AttributeList id="AttributeDescriptor">
+            <str:Attribute id="OBS_STATUS" assignmentStatus="Conditional">
+              <str:ConceptIdentity>
+                <Ref agencyID="TEST" id="OBS_STATUS" maintainableParentID="CS_MAP" maintainableParentVersion="1.0" class="Concept" package="conceptscheme"/>
+              </str:ConceptIdentity>
+              <str:AttributeRelationship>
+                <str:PrimaryMeasure>
+                  <Ref id="OBS_VALUE"/>
+                </str:PrimaryMeasure>
+              </str:AttributeRelationship>
+            </str:Attribute>
+          </str:AttributeList>
+          <str:MeasureList id="MeasureDescriptor">
+            <str:PrimaryMeasure id="OBS_VALUE">
+              <str:ConceptIdentity>
+                <Ref agencyID="TEST" id="OBS_VALUE" maintainableParentID="CS_MAP" maintainableParentVersion="1.0" class="Concept" package="conceptscheme"/>
+              </str:ConceptIdentity>
+            </str:PrimaryMeasure>
+          </str:MeasureList>
+        </str:DataStructureComponents>
+      </str:DataStructure>
+    </str:DataStructures>
+    <str:StructureSets>
+      <str:StructureSet id="SS_MAPPING" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Declared structure set grouping the map</com:Name>
+        <str:StructureMap id="SM_SOURCE_TO_TARGET">
+          <com:Name xml:lang="en">Source to target</com:Name>
+          <str:Source>
+            <Ref agencyID="TEST" id="DSD_SOURCE" version="1.0" class="DataStructure" package="datastructure"/>
+          </str:Source>
+          <str:Target>
+            <Ref agencyID="TEST" id="DSD_TARGET" version="1.0" class="DataStructure" package="datastructure"/>
+          </str:Target>
+          <str:ComponentMap>
+            <str:Source>
+              <Ref id="FREQ" class="Dimension" package="datastructure" containerID="DimensionDescriptor"/>
+            </str:Source>
+            <str:Target>
+              <Ref id="REF_AREA" class="Dimension" package="datastructure" containerID="DimensionDescriptor"/>
+            </str:Target>
+          </str:ComponentMap>
+          <str:ComponentMap>
+            <str:Source>
+              <Ref id="TIME_PERIOD" class="TimeDimension" package="datastructure" containerID="DimensionDescriptor"/>
+            </str:Source>
+            <str:Target>
+              <Ref id="TIME_PERIOD" class="TimeDimension" package="datastructure" containerID="DimensionDescriptor"/>
+            </str:Target>
+          </str:ComponentMap>
+          <str:ComponentMap>
+            <str:Source>
+              <Ref id="OBS_STATUS" class="Attribute" package="datastructure" containerID="AttributeDescriptor"/>
+            </str:Source>
+            <str:Target>
+              <Ref id="OBS_STATUS" class="Attribute" package="datastructure" containerID="AttributeDescriptor"/>
+            </str:Target>
+          </str:ComponentMap>
+          <str:ComponentMap>
+            <str:Source>
+              <Ref id="OBS_VALUE" class="PrimaryMeasure" package="datastructure" containerID="MeasureDescriptor"/>
+            </str:Source>
+            <str:Target>
+              <Ref id="OBS_VALUE" class="PrimaryMeasure" package="datastructure" containerID="MeasureDescriptor"/>
+            </str:Target>
+          </str:ComponentMap>
+        </str:StructureMap>
+      </str:StructureSet>
+    </str:StructureSets>
+  </mes:Structures>
+</mes:Structure>

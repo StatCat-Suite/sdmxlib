@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SDMX-ML 3.0 complete fixture, conformant to the v3.0.0 XSDs.
+
+  Contains one instance of every modelled artefact type that exists in
+  SDMX 3.0, for round-trip acceptance tests:
+    - AgencySchemes + DataProviderSchemes (split in SDMX 3.0)
+    - Codelists (with hierarchical code)
+    - ConceptScheme
+    - DataStructures (dimensions, time dimension, attribute, measure, group)
+    - Dataflows
+    - CategorySchemes + Categorisations
+    - ProvisionAgreements
+    - DataConstraints (CubeRegion + KeyValues)
+
+  StructureSets are intentionally absent — SDMX 3.0 removed the unified
+  StructureSets container. Each map kind (CodelistMaps, etc.) became its
+  own top-level container. Round-trip tests for StructureSets live in the
+  2.1 complete fixture; the 3.0 round-trip tests skip those assertions.
+
+  Key 3.0 differences from 2.1 reflected here:
+    - Namespaces: v3_0 instead of v2_1
+    - <str:AgencySchemes> + <str:DataProviderSchemes> (vs. unified OrganisationSchemes)
+    - isFinal attribute removed from all maintainables
+    - <str:ConceptSchemes> container (vs. <str:Concepts>)
+    - <str:DataConstraints> container (vs. <str:Constraints>)
+    - <str:DataConstraint> artefact (vs. <str:ContentConstraint>) with role= attribute
+    - Cross-artefact references as URN text (vs. wrapped <Ref/>)
+    - DataStructure Annotations BEFORE Name (XSD sequence)
+    - Attribute usage= ∈ {mandatory, optional} (vs. assignmentStatus= ∈ {Mandatory, Conditional})
+    - AttributeRelationship/<str:Observation> (vs. ObservationValue / PrimaryMeasure)
+    - <str:Measure> (vs. <str:PrimaryMeasure>)
+    - GroupDimension via nested <str:DimensionReference> text (vs. dimensionRef= attribute)
+    - CubeRegion key-values in str: namespace (vs. com:)
+-->
+<mes:Structure
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+  xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure"
+  xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <mes:Header>
+    <mes:ID>COMPLETE_FIXTURE</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2024-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+
+    <str:AgencySchemes>
+      <str:AgencyScheme agencyID="SDMX" id="AGENCIES">
+        <com:Name xml:lang="en">SDMX Agency Scheme</com:Name>
+        <str:Agency id="SDMX">
+          <com:Name xml:lang="en">SDMX</com:Name>
+          <str:Contact>
+            <com:Name xml:lang="en">SDMX Support</com:Name>
+            <str:Email>support@sdmx.org</str:Email>
+          </str:Contact>
+          <!-- Second Contact exercises every ContactType field the XSD allows
+               (Name + Department + Role + Telephone + Fax + X400 + URI + Email,
+               with multi-language Name to verify per-Contact i18n round-trips). -->
+          <str:Contact>
+            <com:Name xml:lang="en">SDMX Press Office</com:Name>
+            <com:Name xml:lang="fr">Bureau de presse SDMX</com:Name>
+            <str:Department xml:lang="en">Communications</str:Department>
+            <str:Role xml:lang="en">Media liaison</str:Role>
+            <str:Telephone>+33 1 23 45 67 89</str:Telephone>
+            <str:Telephone>+33 1 98 76 54 32</str:Telephone>
+            <str:Fax>+33 1 11 22 33 44</str:Fax>
+            <str:X400>C=FR;A=ATLAS;P=SDMX;O=PRESS;S=OFFICE</str:X400>
+            <str:URI>https://sdmx.org/press</str:URI>
+            <str:Email>press@sdmx.org</str:Email>
+            <str:Email>media@sdmx.org</str:Email>
+          </str:Contact>
+        </str:Agency>
+        <str:Agency id="TEST">
+          <com:Name xml:lang="en">Test Agency</com:Name>
+        </str:Agency>
+      </str:AgencyScheme>
+    </str:AgencySchemes>
+
+    <str:DataProviderSchemes>
+      <str:DataProviderScheme agencyID="TEST" id="DATA_PROVIDERS">
+        <com:Name xml:lang="en">Test Data Providers</com:Name>
+        <str:DataProvider id="PROV_A">
+          <com:Name xml:lang="en">Provider A</com:Name>
+        </str:DataProvider>
+      </str:DataProviderScheme>
+    </str:DataProviderSchemes>
+
+    <str:Codelists>
+      <str:Codelist id="CL_FREQ" agencyID="SDMX" version="1.0">
+        <com:Annotations>
+          <com:Annotation id="cl-src">
+            <com:AnnotationTitle>Source frequency codelist</com:AnnotationTitle>
+            <com:AnnotationType>SOURCE</com:AnnotationType>
+            <com:AnnotationURL>https://example.org/CL_FREQ</com:AnnotationURL>
+            <com:AnnotationText xml:lang="en">Curated by SDMX</com:AnnotationText>
+            <com:AnnotationText xml:lang="fr">Conservé par SDMX</com:AnnotationText>
+          </com:Annotation>
+        </com:Annotations>
+        <!--
+          Multi-language coverage (issue #100). The Codelist Name carries
+          en + fr + de + es (plain BCP-47 primary tags) and the Annual code
+          adds two region/script-coded tags (pt-BR Brazilian Portuguese and
+          zh-Hans Simplified Chinese) plus an extended-region tag (es-419
+          Latin American Spanish) to confirm hyphenated tags round-trip
+          verbatim without normalization or case folding.
+        -->
+        <com:Name xml:lang="en">Frequency</com:Name>
+        <com:Name xml:lang="fr">Fréquence</com:Name>
+        <com:Name xml:lang="de">Häufigkeit</com:Name>
+        <com:Name xml:lang="es">Frecuencia</com:Name>
+        <str:Code id="A">
+          <com:Name xml:lang="en">Annual</com:Name>
+          <com:Name xml:lang="fr">Annuel</com:Name>
+          <com:Name xml:lang="de">Jährlich</com:Name>
+          <com:Name xml:lang="pt-BR">Anual</com:Name>
+          <com:Name xml:lang="zh-Hans">每年</com:Name>
+          <com:Name xml:lang="es-419">Anual</com:Name>
+        </str:Code>
+        <str:Code id="Q">
+          <com:Name xml:lang="en">Quarterly</com:Name>
+        </str:Code>
+        <str:Code id="M">
+          <com:Name xml:lang="en">Monthly</com:Name>
+        </str:Code>
+        <str:Code id="Q1">
+          <com:Name xml:lang="en">Q1 sub-code</com:Name>
+          <str:Parent>Q</str:Parent>
+        </str:Code>
+      </str:Codelist>
+      <str:Codelist id="CL_AREA" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Area</com:Name>
+        <str:Code id="EU">
+          <com:Name xml:lang="en">European Union</com:Name>
+        </str:Code>
+        <str:Code id="US">
+          <com:Name xml:lang="en">United States</com:Name>
+        </str:Code>
+      </str:Codelist>
+      <!--
+        Coded attribute + coded measure each need a backing codelist so the
+        DSD's LocalRepresentation Enumeration can resolve.
+      -->
+      <str:Codelist id="CL_OBS_STATUS" agencyID="SDMX" version="1.0">
+        <com:Name xml:lang="en">Observation Status</com:Name>
+        <str:Code id="A"><com:Name xml:lang="en">Normal</com:Name></str:Code>
+        <str:Code id="M"><com:Name xml:lang="en">Missing</com:Name></str:Code>
+      </str:Codelist>
+      <str:Codelist id="CL_QUALITY" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Quality</com:Name>
+        <str:Code id="HIGH"><com:Name xml:lang="en">High</com:Name></str:Code>
+        <str:Code id="LOW"><com:Name xml:lang="en">Low</com:Name></str:Code>
+      </str:Codelist>
+    </str:Codelists>
+
+    <str:ConceptSchemes>
+      <str:ConceptScheme id="CROSS_DOMAIN_CONCEPTS" agencyID="SDMX" version="1.0">
+        <com:Annotations>
+          <com:Annotation>
+            <com:AnnotationType>DEPRECATED</com:AnnotationType>
+          </com:Annotation>
+        </com:Annotations>
+        <com:Name xml:lang="en">SDMX Cross Domain Concepts</com:Name>
+        <!-- FREQ carries a CoreRepresentation pointing at CL_FREQ. -->
+        <str:Concept id="FREQ">
+          <com:Name xml:lang="en">Frequency</com:Name>
+          <str:CoreRepresentation>
+            <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(1.0)</str:Enumeration>
+          </str:CoreRepresentation>
+        </str:Concept>
+        <str:Concept id="REF_AREA">
+          <com:Name xml:lang="en">Reference Area</com:Name>
+        </str:Concept>
+        <str:Concept id="TIME_PERIOD">
+          <com:Name xml:lang="en">Time Period</com:Name>
+        </str:Concept>
+        <str:Concept id="OBS_LABEL">
+          <com:Name xml:lang="en">Observation Label</com:Name>
+        </str:Concept>
+        <str:Concept id="OBS_VALUE">
+          <com:Name xml:lang="en">Observation Value</com:Name>
+        </str:Concept>
+        <str:Concept id="OBS_DECIMALS">
+          <com:Name xml:lang="en">Observation Decimals</com:Name>
+        </str:Concept>
+        <str:Concept id="OBS_QUALITY">
+          <com:Name xml:lang="en">Observation Quality</com:Name>
+        </str:Concept>
+        <str:Concept id="OBS_STATUS">
+          <com:Name xml:lang="en">Observation Status</com:Name>
+        </str:Concept>
+      </str:ConceptScheme>
+    </str:ConceptSchemes>
+
+    <str:DataStructures>
+      <str:DataStructure id="DSD_TEST" agencyID="TEST" version="1.0">
+        <com:Annotations>
+          <com:Annotation>
+            <com:AnnotationType>SOURCE</com:AnnotationType>
+            <com:AnnotationText xml:lang="en">Complete fixture</com:AnnotationText>
+          </com:Annotation>
+        </com:Annotations>
+        <com:Name xml:lang="en">Test Data Structure</com:Name>
+        <str:DataStructureComponents>
+          <str:DimensionList id="DimensionDescriptor">
+            <str:Dimension id="FREQ" position="1">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).FREQ</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(1.0)</str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:Dimension id="REF_AREA" position="2">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).REF_AREA</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=TEST:CL_AREA(1.0)</str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <!--
+              Free-text dimension (no enumeration) — exercises
+              SimpleDataStructureRepresentationType "format" branch in JSON.
+            -->
+            <str:Dimension id="OBS_LABEL" position="3">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).OBS_LABEL</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="String" maxLength="50"/>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:TimeDimension id="TIME_PERIOD">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).TIME_PERIOD</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="ObservationalTimePeriod"/>
+              </str:LocalRepresentation>
+            </str:TimeDimension>
+          </str:DimensionList>
+          <str:Group id="GRP_FREQ_AREA">
+            <str:GroupDimension>
+              <str:DimensionReference>FREQ</str:DimensionReference>
+            </str:GroupDimension>
+            <str:GroupDimension>
+              <str:DimensionReference>REF_AREA</str:DimensionReference>
+            </str:GroupDimension>
+          </str:Group>
+          <str:AttributeList id="AttributeDescriptor">
+            <!--
+              Coded attribute (Enumeration-typed LocalRepresentation) — covers
+              AttributeRepresentationType: enumeration variant in JSON.
+            -->
+            <str:Attribute id="OBS_STATUS" usage="optional">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).OBS_STATUS</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_OBS_STATUS(1.0)</str:Enumeration>
+              </str:LocalRepresentation>
+              <str:AttributeRelationship>
+                <str:Observation/>
+              </str:AttributeRelationship>
+            </str:Attribute>
+          </str:AttributeList>
+          <str:MeasureList id="MeasureDescriptor">
+            <!-- OBS_VALUE: no local representation (default-typed). -->
+            <str:Measure id="OBS_VALUE">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).OBS_VALUE</str:ConceptIdentity>
+            </str:Measure>
+            <!--
+              Typed measure (TextFormat-typed) — covers
+              MeasureRepresentationType: format variant in JSON.
+            -->
+            <str:Measure id="OBS_DECIMALS">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).OBS_DECIMALS</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="Integer" minValue="0" maxValue="15"/>
+              </str:LocalRepresentation>
+            </str:Measure>
+            <!--
+              Coded measure (Enumeration-typed) — covers
+              MeasureRepresentationType: enumeration variant in JSON.
+            -->
+            <str:Measure id="OBS_QUALITY">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).OBS_QUALITY</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=TEST:CL_QUALITY(1.0)</str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Measure>
+          </str:MeasureList>
+        </str:DataStructureComponents>
+      </str:DataStructure>
+    </str:DataStructures>
+
+    <str:Dataflows>
+      <str:Dataflow id="DF_TEST" agencyID="TEST" version="1.0">
+        <com:Annotations>
+          <com:Annotation id="df-status">
+            <com:AnnotationType>STATUS</com:AnnotationType>
+            <com:AnnotationText xml:lang="en">Production-ready</com:AnnotationText>
+          </com:Annotation>
+        </com:Annotations>
+        <com:Name xml:lang="en">Test Dataflow</com:Name>
+        <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=TEST:DSD_TEST(1.0)</str:Structure>
+      </str:Dataflow>
+    </str:Dataflows>
+
+    <str:CategorySchemes>
+      <str:CategoryScheme id="CS_TEST" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Test Category Scheme</com:Name>
+        <str:Category id="CAT_A">
+          <com:Name xml:lang="en">Category A</com:Name>
+          <str:Category id="CAT_A1">
+            <com:Name xml:lang="en">Category A1</com:Name>
+          </str:Category>
+        </str:Category>
+      </str:CategoryScheme>
+    </str:CategorySchemes>
+
+    <str:Categorisations>
+      <str:Categorisation id="CAT_DF_TEST" agencyID="TEST" version="1.0">
+        <com:Annotations>
+          <com:Annotation>
+            <com:AnnotationType>SOURCE</com:AnnotationType>
+            <com:AnnotationText xml:lang="en">Manual categorisation</com:AnnotationText>
+          </com:Annotation>
+        </com:Annotations>
+        <com:Name xml:lang="en">DF_TEST categorisation</com:Name>
+        <str:Source>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=TEST:DF_TEST(1.0)</str:Source>
+        <str:Target>urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=TEST:CS_TEST(1.0).CAT_A</str:Target>
+      </str:Categorisation>
+    </str:Categorisations>
+
+    <str:ProvisionAgreements>
+      <str:ProvisionAgreement id="PA_TEST" agencyID="TEST" version="1.0">
+        <com:Annotations>
+          <com:Annotation>
+            <com:AnnotationType>CONTACT</com:AnnotationType>
+            <com:AnnotationURL>mailto:owner@example.org</com:AnnotationURL>
+          </com:Annotation>
+        </com:Annotations>
+        <com:Name xml:lang="en">Test Provision Agreement</com:Name>
+        <str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=TEST:DF_TEST(1.0)</str:Dataflow>
+        <str:DataProvider>urn:sdmx:org.sdmx.infomodel.base.DataProvider=TEST:DATA_PROVIDERS(1.0).PROV_A</str:DataProvider>
+      </str:ProvisionAgreement>
+    </str:ProvisionAgreements>
+
+    <str:DataConstraints>
+      <str:DataConstraint id="CC_TEST" agencyID="TEST" version="1.0" role="Allowed">
+        <com:Annotations>
+          <com:Annotation>
+            <com:AnnotationType>NOTE</com:AnnotationType>
+            <com:AnnotationText xml:lang="en">Restricted dimensions for Q1 reporting</com:AnnotationText>
+          </com:Annotation>
+        </com:Annotations>
+        <com:Name xml:lang="en">Test Constraint</com:Name>
+        <str:ConstraintAttachment>
+          <str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=TEST:DF_TEST(1.0)</str:Dataflow>
+        </str:ConstraintAttachment>
+        <str:CubeRegion include="true">
+          <str:KeyValue id="FREQ">
+            <str:Value>A</str:Value>
+            <str:Value>Q</str:Value>
+          </str:KeyValue>
+          <str:KeyValue id="REF_AREA">
+            <str:Value>EU</str:Value>
+            <str:Value>US</str:Value>
+          </str:KeyValue>
+        </str:CubeRegion>
+        <!--
+          Second CubeRegion exercises include="false" — the XSD permits at
+          most two CubeRegions per DataConstraint (maxOccurs="2"), one
+          allowed-set and one excluded-set. The Allowed/Actual role flag
+          is independent of the include flag.
+        -->
+        <str:CubeRegion include="false">
+          <str:KeyValue id="REF_AREA">
+            <str:Value>XX</str:Value>
+          </str:KeyValue>
+        </str:CubeRegion>
+      </str:DataConstraint>
+      <!--
+        Second DataConstraint exercises role="Actual" (vs the first's
+        "Allowed"). Per ConstraintRoleType the only legal values are
+        Allowed and Actual — there is no "Forbidden" role; the include=false
+        semantics live on CubeRegion, not on the constraint itself.
+      -->
+      <str:DataConstraint id="CC_ACTUAL" agencyID="TEST" version="1.0" role="Actual">
+        <com:Name xml:lang="en">Observed data coverage</com:Name>
+        <str:ConstraintAttachment>
+          <str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=TEST:DF_TEST(1.0)</str:Dataflow>
+        </str:ConstraintAttachment>
+        <str:CubeRegion include="true">
+          <str:KeyValue id="FREQ">
+            <str:Value>A</str:Value>
+          </str:KeyValue>
+        </str:CubeRegion>
+      </str:DataConstraint>
+      <!--
+        DSD-attached DataConstraint — exercises the
+        DataConstraintAttachmentType: dataStructures variant in JSON.
+      -->
+      <str:DataConstraint id="CC_DSD" agencyID="TEST" version="1.0" role="Allowed">
+        <com:Name xml:lang="en">DSD-attached constraint</com:Name>
+        <str:ConstraintAttachment>
+          <str:DataStructure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=TEST:DSD_TEST(1.0)</str:DataStructure>
+        </str:ConstraintAttachment>
+        <str:CubeRegion include="true">
+          <str:KeyValue id="FREQ">
+            <str:Value>Q</str:Value>
+          </str:KeyValue>
+        </str:CubeRegion>
+      </str:DataConstraint>
+      <!--
+        ProvisionAgreement-attached DataConstraint — exercises the
+        DataConstraintAttachmentType: provisionAgreements variant in JSON.
+      -->
+      <str:DataConstraint id="CC_PA" agencyID="TEST" version="1.0" role="Allowed">
+        <com:Name xml:lang="en">PA-attached constraint</com:Name>
+        <str:ConstraintAttachment>
+          <str:ProvisionAgreement>urn:sdmx:org.sdmx.infomodel.registry.ProvisionAgreement=TEST:PA_TEST(1.0)</str:ProvisionAgreement>
+        </str:ConstraintAttachment>
+        <str:CubeRegion include="true">
+          <str:KeyValue id="REF_AREA">
+            <str:Value>EU</str:Value>
+          </str:KeyValue>
+        </str:CubeRegion>
+      </str:DataConstraint>
+      <!--
+        DataProvider-attached DataConstraint — exercises the
+        DataConstraintAttachmentType: dataProvider variant (#130).
+      -->
+      <str:DataConstraint id="CC_DP" agencyID="TEST" version="1.0" role="Allowed">
+        <com:Name xml:lang="en">Provider-attached constraint</com:Name>
+        <str:ConstraintAttachment>
+          <str:DataProvider>urn:sdmx:org.sdmx.infomodel.base.DataProvider=TEST:DATA_PROVIDERS(1.0).PROV_A</str:DataProvider>
+        </str:ConstraintAttachment>
+        <str:CubeRegion include="true">
+          <str:KeyValue id="REF_AREA">
+            <str:Value>EU</str:Value>
+          </str:KeyValue>
+        </str:CubeRegion>
+      </str:DataConstraint>
+    </str:DataConstraints>
+
+  </mes:Structures>
+</mes:Structure>

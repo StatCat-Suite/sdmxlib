@@ -1,0 +1,122 @@
+site_name: sdmxlib
+site_description: SDMX structural metadata library for Python
+site_url: "https://pinax-suite.gitlab.io/sdmxlib/"
+repo_url: "https://gitlab.com/pinax-suite/sdmxlib"
+repo_name: "gitlab.com/pinax-suite/sdmxlib"
+edit_uri: ""
+
+extra_css:
+  - stylesheets/catppuccin.css
+
+theme:
+  name: material
+  icon:
+    repo: fontawesome/brands/gitlab
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      pygments_style: catppuccin-latte
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Upgrading: upgrading.md
+  - Tutorials:
+      - Building Artefacts: building_tutorial.md
+      - Fetching Observation Data: data_tutorial.md
+      - Local Registry: local_registry_tutorial.md
+      - Querying Metadata: query_tutorial.md
+      - Querying Observations: data_query_tutorial.md
+  - Cookbook:
+      - Connecting & Fetching: cookbook/registry.md
+      - Catalogue Discovery: cookbook/discovery.md
+      - Resolution Modes: cookbook/resolution.md
+      - Local Files: cookbook/local_files.md
+      - Inspecting DSDs: cookbook/inspecting.md
+      - Constraints: cookbook/constraints.md
+      - Hierarchies: cookbook/hierarchies.md
+      - Structures as Frames: cookbook/structures_as_frames.md
+      - Polars Integration: cookbook/polars.md
+      - Observation Data: cookbook/data.md
+      - Indicator Flows: cookbook/indicator_flows.md
+      - Data Catalog: cookbook/catalog.md
+      - Federation: cookbook/federation.md
+      - REST Facade Kit: cookbook/rest_facade.md
+      - Reference Metadata: cookbook/reference_metadata.md
+      - Serialization: cookbook/serialization.md
+  - API Reference: api.md
+  - Design:
+      - The Registry API: design/registry-and-catalog.md
+      - Query language:
+          - Naming relations, joining tables: design/query-language.md
+          - How it names things: design/query-naming.md
+          - Composition: design/query-composition.md
+          - Tree paths: design/query-tree-paths.md
+          - Pushdown — where a query runs: design/query-pushdown.md
+          - The surface, construct by construct: design/query-language-examples.md
+          - Worked solutions: design/query-language-cookbook.md
+          - Evidence: design/query-language-evidence.md
+          - Explorations that did not survive: design/query-language-explorations.md
+      - Data plane:
+          - Querying observations without SQL: design/data-plane-query.md
+          - Pushing an observation query to REST: design/data-plane-pushdown.md
+      - Runtime:
+          - Performance & Caching: design/performance.md
+          - Caching Strategy: design/caching.md
+          - Concurrency: design/concurrency.md
+      - Implementation:
+          - JSON & Parsing: design/json-and-parsing.md
+          - Phantom Generics & Witnesses: design/phantom-generics.md
+      - Testing:
+          - Mutation testing: design/mutation-testing.md
+          - What the mutation runs measured: design/mutation-evidence.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            members_order: source
+            heading_level: 3
+            merge_init_into_class: true
+            show_signature_annotations: true
+            separate_signature: true

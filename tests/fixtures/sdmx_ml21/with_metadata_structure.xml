@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message"
+               xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure"
+               xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common">
+  <mes:Header>
+    <mes:ID>IREF_MSD21</mes:ID><mes:Test>false</mes:Test>
+    <mes:Prepared>2000-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+    <str:MetadataStructures>
+      <str:MetadataStructure agencyID="AG" id="MSD_X" version="1.0">
+        <com:Name xml:lang="en">Quality report MSD</com:Name>
+        <str:MetadataStructureComponents>
+          <str:MetadataTarget id="TARGET_DF">
+            <str:IdentifiableObjectTarget id="DF_REF" objectType="Dataflow">
+              <str:LocalRepresentation>
+                <str:TextFormat textType="IdentifiableReference"/>
+              </str:LocalRepresentation>
+            </str:IdentifiableObjectTarget>
+          </str:MetadataTarget>
+          <str:ReportStructure id="REPORT_A">
+            <str:MetadataAttribute id="CONTACT">
+              <str:ConceptIdentity>
+                <Ref agencyID="AG" maintainableParentID="CS" maintainableParentVersion="1.0" id="CONTACT" package="conceptscheme" class="Concept"/>
+              </str:ConceptIdentity>
+              <str:MetadataAttribute id="EMAIL">
+                <str:ConceptIdentity>
+                  <Ref agencyID="AG" maintainableParentID="CS" maintainableParentVersion="1.0" id="EMAIL" package="conceptscheme" class="Concept"/>
+                </str:ConceptIdentity>
+              </str:MetadataAttribute>
+            </str:MetadataAttribute>
+            <str:MetadataTarget><Ref id="TARGET_DF"/></str:MetadataTarget>
+          </str:ReportStructure>
+          <str:ReportStructure id="REPORT_B">
+            <str:MetadataAttribute id="QUALITY" minOccurs="0" maxOccurs="unbounded">
+              <str:ConceptIdentity>
+                <Ref agencyID="AG" maintainableParentID="CS" maintainableParentVersion="1.0" id="QUALITY" package="conceptscheme" class="Concept"/>
+              </str:ConceptIdentity>
+            </str:MetadataAttribute>
+            <str:MetadataTarget><Ref id="TARGET_DF"/></str:MetadataTarget>
+          </str:ReportStructure>
+        </str:MetadataStructureComponents>
+      </str:MetadataStructure>
+    </str:MetadataStructures>
+  </mes:Structures>
+</mes:Structure>

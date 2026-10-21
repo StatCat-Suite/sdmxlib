@@ -1,0 +1,96 @@
+{
+  "_version": "0.50.0",
+  "_note": "Pinned read-perf baseline. Compared against by `just bench-concurrency`; overwritten by `just bench-concurrency-update`. See bench/concurrency/README.md.",
+  "results": {
+    "single_get_dataflow_cold": {
+      "name": "single_get_dataflow_cold",
+      "iterations": 5000,
+      "median_us": 801.02,
+      "p99_us": 921.42,
+      "ops_per_sec": null,
+      "workers": null,
+      "errors": 0,
+      "error_samples": []
+    },
+    "single_get_dataflow_warm": {
+      "name": "single_get_dataflow_warm",
+      "iterations": 5000,
+      "median_us": 801.77,
+      "p99_us": 1183.08,
+      "ops_per_sec": null,
+      "workers": null,
+      "errors": 0,
+      "error_samples": []
+    },
+    "single_get_codelist_eager": {
+      "name": "single_get_codelist_eager",
+      "iterations": 5000,
+      "median_us": 1352.79,
+      "p99_us": 1616.42,
+      "ops_per_sec": null,
+      "workers": null,
+      "errors": 0,
+      "error_samples": []
+    },
+    "single_code_map": {
+      "name": "single_code_map",
+      "iterations": 1000,
+      "median_us": 212.44,
+      "p99_us": 241.17,
+      "ops_per_sec": null,
+      "workers": null,
+      "errors": 0,
+      "error_samples": []
+    },
+    "concurrent_get_mixed_1w": {
+      "name": "concurrent_get_mixed_1w",
+      "iterations": 500,
+      "median_us": null,
+      "p99_us": null,
+      "ops_per_sec": 884.81,
+      "workers": 1,
+      "errors": 0,
+      "error_samples": []
+    },
+    "concurrent_get_mixed_4w": {
+      "name": "concurrent_get_mixed_4w",
+      "iterations": 2000,
+      "median_us": null,
+      "p99_us": null,
+      "ops_per_sec": 1044.76,
+      "workers": 4,
+      "errors": 0,
+      "error_samples": []
+    },
+    "concurrent_get_mixed_8w": {
+      "name": "concurrent_get_mixed_8w",
+      "iterations": 4000,
+      "median_us": null,
+      "p99_us": null,
+      "ops_per_sec": 815.07,
+      "workers": 8,
+      "errors": 0,
+      "error_samples": []
+    },
+    "concurrent_get_mixed_16w": {
+      "name": "concurrent_get_mixed_16w",
+      "iterations": 8000,
+      "median_us": null,
+      "p99_us": null,
+      "ops_per_sec": 797.89,
+      "workers": 16,
+      "errors": 0,
+      "error_samples": []
+    },
+    "concurrent_cache_hit_32w": {
+      "name": "concurrent_cache_hit_32w",
+      "iterations": 16000,
+      "median_us": null,
+      "p99_us": null,
+      "ops_per_sec": 958.61,
+      "workers": 32,
+      "errors": 0,
+      "error_samples": []
+    }
+  }
+}

@@ -1,0 +1,1176 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=3.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - Python-urllib/3.13
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/categoryscheme/*/*/*
+  response:
+    body:
+      string: "<?xml version='1.0' encoding='UTF-8'?><message:Structure xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
+        xmlns:xml=\"http://www.w3.org/XML/1998/namespace\" xmlns:message=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message\"
+        xmlns:str=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure\"
+        xmlns:com=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common\"><message:Header><message:ID>IREF204641</message:ID><message:Test>false</message:Test><message:Prepared>2026-08-20T10:07:41Z</message:Prepared><message:Sender
+        id=\"Unknown\"/><message:Receiver id=\"not_supplied\"/></message:Header><message:Structures><str:CategorySchemes><str:CategoryScheme
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=ESTAT:ESA2010TP(1.0)\"
+        isExternalReference=\"false\" agencyID=\"ESTAT\" id=\"ESA2010TP\" version=\"1.0\"><com:Name
+        xml:lang=\"en\">ESA 2010 - Transmission programme</com:Name><com:Description
+        xml:lang=\"en\">This category scheme represents data flows defined for the
+        programme of national accounts data delivery within the framework of the new
+        European System of National and Regional Accounts (ESA 2010), as defined in
+        Annex B of the Council Regulation (EU) No 549/2013 of the European Parliament
+        and of the Council of 21 May 2013. ESA 2010 is the newest internationally
+        compatible European Union (EU) accounting framework for a systematic and detailed
+        description of an economy. ESA 2010 was published in the Official Journal
+        on 26 June 2013. It will be implemented as from September 2014.</com:Description><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010MA\"
+        id=\"ESA2010MA\"><com:Name xml:lang=\"en\">Main aggregates</com:Name><com:Description
+        xml:lang=\"en\">Table 1 \u2014 Main aggregates \u2014 quarterly and annual
+        exercise\nTable 3 \u2014 Tables by industry\nTable 5 \u2014 Household final
+        consumption expenditure\nTable 20 \u2014 Cross classification of fixed assets
+        by industry and by asset (stocks)\nTable 22 \u2014 Cross classification of
+        gross fixed capital formation (GFCF) by industry and by asset\n(transactions)</com:Description><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010MA.A\"
+        id=\"A\"><com:Name xml:lang=\"en\">Main aggregates (annual)</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010MA.Q\"
+        id=\"Q\"><com:Name xml:lang=\"en\">Main aggregates (quarterly)</com:Name></str:Category></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010FINA\"
+        id=\"ESA2010FINA\"><com:Name xml:lang=\"en\">Financial accounts</com:Name><com:Description
+        xml:lang=\"en\">Table 6 \u2014 Financial accounts by sector\nTable 7 \u2014
+        Balance Sheets for financial assets and liabilities (Stocks of financial instruments
+        \u2014 consolidated and non-consolidated \u2014 and counterpart information</com:Description></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010NFSA\"
+        id=\"ESA2010NFSA\"><com:Name xml:lang=\"en\">Non-financial accounts</com:Name><com:Description
+        xml:lang=\"en\">Table 8 \u2014 Non-financial accounts by sector \u2014 annual\nTable
+        801 \u2014 Non-financial accounts by sector \u2014 quarterly\nTable 26 \u2014
+        Balance sheets for non-financial assets</com:Description></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010GFS\"
+        id=\"ESA2010GFS\"><com:Name xml:lang=\"en\">Government finance</com:Name><com:Description
+        xml:lang=\"en\">Table 2 \u2014 Main aggregates of general government\nTable
+        9 \u2014 Detailed tax and social contribution receipts by type of tax or social
+        contribution and receiving subsector including the list of taxes and social
+        contributions according to national classification\nTable 11 \u2014 General
+        government expenditure by function\nTable 27 \u2014 Quarterly financial accounts
+        of general government\nTable 28 \u2014 Quarterly government debt (Maastricht
+        debt) for general government</com:Description></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010REG\"
+        id=\"ESA2010REG\"><com:Name xml:lang=\"en\">Regional accounts</com:Name><com:Description
+        xml:lang=\"en\">Table 10 \u2014 Tables by industry and by region (NUTS level
+        2)\nTable 12 \u2014 Tables by industry and by region (NUTS level 3)\nTable
+        13 \u2014 Households accounts by region (NUTS level 2)</com:Description></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010SUIOT\"
+        id=\"ESA2010SUIOT\"><com:Name xml:lang=\"en\">Supply/Use and Input/Output
+        tables</com:Name><com:Description xml:lang=\"en\">Table 15 \u2014 Supply table
+        at basic prices, including transformation into purchasers\u2019 prices (current
+        prices and previous year\u2019s prices)\nTable 16 \u2014 Use table at purchasers\u2019
+        prices\nTable 17 \u2014 Symmetric input-output table\nTable 18 \u2014 Symmetric
+        input-output table for domestic output\nTable 19 \u2014 Symmetric input-output
+        table for imports</com:Description><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010SUIOT.SU\"
+        id=\"SU\"><com:Name xml:lang=\"en\">Supply/Use tables</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010SUIOT.IO\"
+        id=\"IO\"><com:Name xml:lang=\"en\">Input/Output tables</com:Name></str:Category></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010PENS\"
+        id=\"ESA2010PENS\"><com:Name xml:lang=\"en\">Pensions</com:Name><com:Description
+        xml:lang=\"en\">Table 29 \u2014 Accrued-to-date pension entitlements in social
+        insurance</com:Description></str:Category></str:CategoryScheme><str:CategoryScheme
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=SDMX:STAT_SUBJECT_MATTER(1.0)\"
+        isExternalReference=\"false\" agencyID=\"SDMX\" id=\"STAT_SUBJECT_MATTER\"
+        version=\"1.0\"><com:Annotations><com:Annotation><com:AnnotationType>REFERENCE_SOURCE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">United Nations Economic Commission for Europe. This classification
+        of statistical subject-matter domains is based on that used in the Database
+        of International Statistical Activities (DISA - http://unece.unog.ch/disa/
+        ). The DISA classification includes two additional domains covering statistical
+        methodology and strategic managerial issues, which do not relate directly
+        to data or metadata, so are not considered relevant for SDMX purposes.</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">SDMX Statistical Subject-Matter Domains</com:Name><com:Description
+        xml:lang=\"en\">This is the canonical representation of the SDMX Content Guidelines
+        for Statistical Subject-Matter Domains. Within SDMX, the list of Statistical
+        Subject-Matter Domains (aligned to the Classification of International Statistical
+        Activities maintained by the Conference of European Statisticians of the United
+        Nations Economic Commission for Europe, UNECE) is a standard reference list
+        against which the categorisation schemes of various participants in exchange
+        arrangements can be mapped to facilitate data and metadata exchange.</com:Description><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT\"
+        id=\"DEMO_SOCIAL_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Demographic and social statistics</com:Name><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.POP_MIGRATION\"
+        id=\"POP_MIGRATION\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Population and migration - covers work in population and demographic
+        statistics, topics like demography, vital statistics, population structures
+        and growth, demographic projections, families and households (marriages, divorces,
+        household size), migration, refugees and asylum seekers. \nExcludes\n- causes
+        of death (1.4 - Health)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.1</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Population and migration</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.LABOUR\"
+        id=\"LABOUR\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Labour -  covers statistics on labour force, labour market,
+        employment and unemployment; the more detailed topics include economically
+        active population, labour conditions, health and safety at work (accidents
+        at work, occupational injuries and diseases, work-related health problems),
+        working time and other working conditions, strikes and lockouts, job vacancies,
+        job creation. \nExcludes \n- migrant workers (1.1 - Population and migration)\n-
+        unemployment insurance and unemployment benefits (1.6 - Social protection)\n-
+        trade union membership (1.10 - Political and other community activities)\n-
+        unpaid work (1.11 - Time use)\n- statistics on earnings, wages and salaries
+        (2.8 - Labour cost)\n- labour cost (2.8 - Labour cost)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.2</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Labour</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.EDUCATION\"
+        id=\"EDUCATION\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Education - includes educational participation, illiteracy,
+        educational institutions and systems, human and financial resources invested
+        in education, lifelong learning, vocational training and adult learning, impact
+        of education, assessments of student performance, etc.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.3</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Education</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.HEALTH\"
+        id=\"HEALTH\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Health - covers the health and mortality related statistical
+        activities, including topics like life expectancy, health status, health and
+        safety, health determinants (including lifestyle, nutrition, smoking, alcohol
+        abuse), health resources and expenditure, health care systems, morbidity and
+        mortality (including infant and child mortality), hospital admission, causes
+        of illness and death, specific diseases (e.g. AIDS), disabilities, pharmaceutical
+        consumption and sales, health personnel, remuneration of health professions,
+        environmental health status, health inequality, health accounts.\nExcludes
+        \n- work related health and safety (1.2 - Labour) \n- victimisation from criminal
+        behaviour (1.8 - Justice and crime)\n- traffic accidents and injuries (2.4.4
+        - Transport)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.4</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Health</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.INCOME_CONSUMP\"
+        id=\"INCOME_CONSUMP\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Income and consumption - covers statistics on household income
+        and expenditures from household viewpoint (all types of income and expenditure),
+        including topics like distribution of incomes, in-kind income, income transfers
+        received and paid, income- or expenditure-based measures of poverty, consumer
+        protection, consumption patterns, consumer goods and durables, household wealth
+        and debts.\nExcludes \n- social protection schemes against various risks (1.6
+        - Social protection)\n- tax schemes (2.5 - Government finance, fiscal and
+        public sector statistics)\n- poverty in a multidimensional sense (3.3.1 -
+        Living conditions, poverty and cross-cutting social issues) \n- living conditions
+        (3.3.1- Living conditions, poverty and cross-cutting social issues)\n- social
+        inclusion/exclusion (3.3.1- Living conditions, poverty and cross-cutting social
+        issues)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.5</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Income and consumption</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.SOCIAL_PROTECT\"
+        id=\"SOCIAL_PROTECT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Social protection - deals with statistics on measures to protect
+        people against the risks of inadequate incomes associated with unemployment,
+        ill health, invalidity, old age, parental responsibilities, or inadequate
+        income following the loss of a spouse or parent, etc., includes statistics
+        on pension beneficiaries, social security schemes, social protection expenditure,
+        etc.\nExcludes \n- insurance companies as economic actors (2.4.6 - Banking,
+        insurance, financial statistics)\n- pension funds as actors in financial markets
+        (2.4.6 - Banking, insurance, financial statistics)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.6</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Social protection</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.HOUSING\"
+        id=\"HOUSING\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Human settlements and housing - covers statistical activities
+        on housing, dwellings and human settlements.\nExcludes \n- rents (2.7 - Prices)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.7</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Human settlements and housing</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.JUSTICE_CRIME\"
+        id=\"JUSTICE_CRIME\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Justice and crime - activities including crime, convictions,
+        operation of criminal justice systems, justice, safety, victims, clear-up
+        rates, prison population, illicit drug production, trafficking and use, etc.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.8</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Justice and crime</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.CULTURE\"
+        id=\"CULTURE\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Culture - statistics dealing with cultural activities in society,
+        like theatre, cinemas, museums, libraries, mass media, book production, sports,
+        etc., including expenditure and financing of culture.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.9</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Culture</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.COMMUNITY_ACTIVITIES\"
+        id=\"COMMUNITY_ACTIVITIES\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Political and other community activities - statistics on voting
+        turnout, participation in political and other community activities, trade
+        union membership, social dialogue, civil society, social capital, etc.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.10</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Political and other community activities</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.TIME_USE\"
+        id=\"TIME_USE\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Time-use - statistics on the use of time by individuals, often
+        related to work-life balance (reconciling family responsibilities and paid
+        work); unpaid work. \nExcludes \n- working time (1.2 - Labour)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.11</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Time use</com:Name></str:Category></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT\"
+        id=\"ECO_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Economic statistics</com:Name><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.MACROECO_STAT\"
+        id=\"MACROECO_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Macroeconomic statistics - all activities that are dealing
+        with economy wide statistics at macro level that go beyond, or are different
+        from National Accounts, whether annual, quarterly or monthly. Examples are
+        macroeconomic databases that combine national accounts and other macroeconomic
+        indicators like Main Economic Indicators (OECD), Principal European Economic
+        Indicators (Eurostat), etc. ; business tendency and consumer opinion surveys,
+        economic growth, stability and structural adjustment, cyclical indicators,
+        statistics for business cycle analysis.\nExcludes: \n- methodology and frameworks
+        of national accounts (2.2 - Economic accounts)\n- collection and dissemination
+        of national accounts and productivity data not linked to other macroeconomic
+        statistics (2.2 - Economic accounts)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.1</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Macroeconomic statistics</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.ECO_ACCOUNTS\"
+        id=\"ECO_ACCOUNTS\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Economic accounts - covers work on National Accounts in both
+        current and constant prices, dealing with topics like implementation of the
+        1993 System of National Accounts (1993 SNA), update of the 1993 SNA, European
+        System of Accounts (ESA95), Gross Domestic Product (GDP), Gross National Income
+        (GNI), non-observed and informal economy, measurement of capital, input-output
+        tables, balance sheets, etc.\nExcludes \n- agricultural economic accounts
+        (2.4.1 - Agriculture, forestry, fisheries)\n- tourism satellite accounts (2.4.5
+        - Tourism)\n- detailed general government accounts (2.5 - Government finance,
+        fiscal and public sector statistics)\n- financial accounts (2.5 - Government
+        finance, fiscal and public sector statistics)\n- price statistics (2.7 - Prices)\n-
+        environmental accounts (3.1 - Environment)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.2</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Economic accounts</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.BUSINESS_STAT\"
+        id=\"BUSINESS_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Business statistics - economy wide statistics on the activities
+        of enterprises, covers work on economic statistics across different sectors
+        (as opposed to 2.4 (Sectoral statistics) that deals with specific individual
+        sectors), deals with topics like statistics on economic activities of enterprises,
+        business demography, business investment, business services, demand for services,
+        industrial performance, enterprises by size class, industrial production,
+        commodities, structure of sales and services, outputs of the service industries,
+        non-profit institutions.\nExcludes:\n- business tendency surveys (2.1 - Macroeconomic
+        statistics)\n- international trade (2.6 - International trade and balance
+        of payments)\n- prices (2.7 - Prices)\n- labour cost (2.8 - Labour cost)\n-
+        science and technology (2.9 - Science, technology and innovation)\n- ICT (3.3.3
+        - Information society)\n- activities of foreign affiliates and multinational
+        companies (3.3.4 - Globalisation)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.3</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Business statistics</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT\"
+        id=\"SECTORAL_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Sectoral statistics - statistical activities dealing with
+        one of the specific branches of industry or services mentioned at the three
+        digit level of the classification.\nExcludes: \n- education (1.3 - Education)
+        \n- health (1.4 - Health)\n- social security (1.6 - Social protection)\n-
+        culture (1.9 - Culture)\n- statistics covering the whole industrial sector
+        (2.3 - Business statistics)\n- statistics covering the whole service or market
+        service sector (2.3 - Business statistics)\n- distributive trade (2.3 - Business
+        statistics)\n- government and public sector statistics (2.5 - Government finance,
+        fiscal and public sector statistics)\n- research and development (2.9 - Science,
+        technology and innovation) \n- telecommunication statistics (3.3.3 - Information
+        society)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Sectoral statistics</com:Name><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT.AGRI_FOREST_FISH\"
+        id=\"AGRI_FOREST_FISH\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Agriculture, forestry, fisheries - includes all agriculture,
+        forestry and fishery related statistics, e.g. agricultural monetary statistics
+        (agricultural economic accounts), agricultural structures (farm structure),
+        trade in agricultural products, agricultural labour input, crop and animal
+        production, agricultural commodities, agro-industry statistics (including
+        food production and safety), organic farming and organic food, government
+        expenditure for agriculture, fishing and forestry, products source and use
+        tables, forest and forest product statistics, forest resource assessment and
+        forest fire, trade in forest products, fisheries.\nExcludes \n- agricultural
+        and similar prices (2.7 - Prices)\n- rural development (3.2 - Regional and
+        small area statistics)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4.1</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Agriculture, forestry, fisheries</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT.ENERGY\"
+        id=\"ENERGY\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Energy - energy supply, energy use, energy balances, security
+        of supply, energy markets, trade in energy, energy efficiency, renewable energy
+        sources, government expenditure on energy.\nExcludes\n- energy prices (2.7
+        - Prices)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4.2</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Energy</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT.MINING_MANUFACT_CONSTRUCT\"
+        id=\"MINING_MANUFACT_CONSTRUCT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Mining, manufacturing, construction - statistics on specific
+        industrial activities, e.g. steel, shipbuilding, and on construction, trade
+        in specific products related to mining, manufacturing and construction.\nExcludes\n-
+        prices of manufactured products (2.7 - Prices)\n- construction prices (2.7
+        - Prices)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4.3</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Mining, manufacturing, construction</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT.TRANSPORT\"
+        id=\"TRANSPORT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Transport - covers statistics on all modes of transport (air,
+        rail, road, inland waterways, sea), includes topics like transport infrastructure,
+        equipment, traffic flows, personal mobility, safety, energy consumption, transport
+        enterprises, passengers and freight transport, transport sector trends, road
+        traffic accidents.\nExcludes\n- transport prices (2.7 - Prices)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4.4</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Transport</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT.TOURISM\"
+        id=\"TOURISM\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Tourism - covers statistics regarding visitor activity (such
+        as arrivals/departures, overnight stays, expenditures, purpose of the visit,
+        etc.) associated to different forms of tourism (inbound, domestic and outbound),
+        tourism industries activity and infrastructure, employment and tourism satellite
+        accounts. \nExcludes\n- prices for tourist services (2.7 - Prices)\n- environmental
+        impacts (3.1 - Environment)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4.5</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Tourism</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT.BANK_INSURANCE_FINANCE\"
+        id=\"BANK_INSURANCE_FINANCE\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Banking, insurance, financial statistics - money, banking
+        and financial market statistics, including financial accounts, money supply,
+        interest rates, exchange rates, stock market indicators, securities, bank
+        profitability, private sector insurance and pension fund statistics, Financial
+        Soundness Indicators. \nExcludes \n- beneficiaries of private pension funds
+        (1.6 - Social protection) \n- financing of state pension and of other state
+        social security schemes (2.5 - Government finance, fiscal and public sector
+        statistics)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4.6</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Banking, insurance, financial statistics</com:Name></str:Category></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.GOV_FINANCE_PUBLIC_SECTOR\"
+        id=\"GOV_FINANCE_PUBLIC_SECTOR\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Government finance, fiscal and public sector statistics -
+        all statistics related to the government sector, including debt and deficit,
+        revenue and expenditure, accounts of the government sector, central government,
+        tax rates and revenues, tax and benefit systems, financing of state pension
+        and other state social security schemes, public sector employment.\nExcludes
+        \n- government expenditure in specific areas, like health (1.4 - Health),
+        education (1.3 - Education), research and development (2.9 - Science, technology
+        and innovation), etc.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.5</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Government finance, fiscal and public sector statistics</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.INTERN_TRADE_BOP\"
+        id=\"INTERN_TRADE_BOP\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">International trade and balance of payments - deals with statistics
+        on all cross-border transactions recorded in the balance of payments, includes
+        topics like trade in goods and services, external positions and debt, foreign
+        direct investment, foreign affiliated trade, tariffs, market access, foreign
+        aid, development assistance, resource flows to developing countries.\nExcludes:
+        \n- trade in specific commodities/services mentioned in 2.4.1 to 2.4.5 (Agriculture,
+        forestry, fisheries; Energy; Mining, manufacturing, construction; Transport;
+        Tourism)\n- multinational companies and activities of foreign affiliates (3.3.4
+        - Globalisation)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.6</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">International trade and balance of payments</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.PRICES\"
+        id=\"PRICES\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Prices - covers any statistical activity dealing with prices,
+        including Purchasing Power Parities (PPPs) and international comparisons of
+        GDP, covers topics like Consumer Price Indices (CPI), inflation, Producer
+        Price Indices (PPI), price indexes for specific products and services (e.g.
+        Information and Communication Technology products). \nExcludes \n- interest
+        rates (2.4.6 - Banking, insurance, financial statistics)\n- wages (2.8 - Labour
+        cost)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.7</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Prices</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.LABOUR_COST\"
+        id=\"LABOUR_COST\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Labour cost - statistics activities on labour cost, earning
+        and wages, both for structural and short-term statistics. \nExcludes\n- wages
+        as part of total income of private households (1.5 - Income and consumption)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.8</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Labour cost</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SCIENCE_TECHNO_INNO\"
+        id=\"SCIENCE_TECHNO_INNO\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Science, technology and innovation - includes Research and
+        Development (R&amp;D), innovation, patents, human resources (in science, technology
+        and innovation), high tech industries and knowledge based services, biotechnology,
+        financing of R&amp;D and innovation. \nExcludes: \n- information and communication
+        technologies (ICTs) (3.3.3 - Information society)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.9</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Science, technology and innovation</com:Name></str:Category></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT\"
+        id=\"ENVIRONMENT_MULTIDOMAIN_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Environment and multi-domain statistics</com:Name><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.ENVIRONMENT\"
+        id=\"ENVIRONMENT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Environment - includes topics like climate, climate change,
+        biodiversity, environment and health, natural resources, soil, water, air,
+        landscape, waste, environmental expenditure, expenditure for the protection
+        of the environment, environmental accounts, agri-environmental indicators,
+        environmental pressure, environmental impact of industry, transport, energy
+        etc., environmental monitoring, material flow analysis, environmental decoupling
+        indicators, pollution, ecosystems, land use and cover, environmental protection,
+        nationally protected areas.\nExcludes\n- environment as part of sustainable
+        development (3.3.6 - Sustainable development)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.1</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Environment</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.REGIONAL_STAT\"
+        id=\"REGIONAL_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Regional and small area statistics - activities dealing with
+        regional statistics and statistics referring to sub-national areas or areas
+        based on administrative units, urban and rural statistics, rural development,
+        regional accounts, regional typologies, and regional disparities.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.2</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Regional and small area statistics</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC\"
+        id=\"MULTIDOMAIN_STAT_INDIC\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Multi-domain statistics and indicators - deals with conceptual
+        or data work based on a specific thematic approach to outputs that cut across
+        several economic, social or environmental subject areas; the two-digit-level
+        of the classification covers activities dealing with such type of issues that
+        are not explicitly mentioned at the three-digit level.\nExcludes: \n- multi-domain
+        statistics based on a regional approach (3.2 - Regional and small area statistics)\n-
+        yearbook type of compendia or similar products by international organisations
+        not following a specific thematic approach (3.4 - Yearbooks and similar compendia)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Multi-domain statistics and indicators</com:Name><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.LIVING_CONDITIONS\"
+        id=\"LIVING_CONDITIONS\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Living conditions, poverty and cross-cutting social issues
+        - includes work on multidimensional methods to measure poverty, living conditions
+        in the broad sense, social inclusion/exclusion, social indicators, and social
+        situation.\nExcludes:\n- purely monetary approach to poverty (1.5 - Income
+        and consumption)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.1</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Living conditions, poverty, and cross-cutting social issues</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.GENDER_SPECIAL_POP_GROUPS\"
+        id=\"GENDER_SPECIAL_POP_GROUPS\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Gender and special population groups - their living conditions
+        and role in the society: comparisons men/women and situation of special population
+        groups like children, youth, women, elderly, disabled, minority groups, etc.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.2</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Gender and special population groups</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.INFORMATION_SOC\"
+        id=\"INFORMATION_SOC\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Information society - statistics allowing to assess the use
+        and impact of information and communication technologies on society, includes
+        access and use of ICTs (including Internet), ICT expenditure and investment,
+        ICT infrastructure, telecommunication networks, electronic communications,
+        e-government, electronic commerce, e-learning, broadband penetration, ICT
+        services, communication tariffs, network infrastructure, revenues, expenses
+        and investment of operators, Internet indicators, trade in telecommunications
+        equipment.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.3</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Information society</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.GLOBALISATION\"
+        id=\"GLOBALISATION\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Globalisation - deals with measuring the economic activities
+        of multinational companies, as well as with attempts to measure globalisation
+        through a variety of components from other subject areas.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.4</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Globalisation</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.MILLENIUM_GOALS\"
+        id=\"MILLENIUM_GOALS\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Indicators related to the Millennium Development Goals - work
+        on sets of indicators to monitor the achievement of the Millennium Development
+        Goals agreed upon at the UN Millennium Summit.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.5</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Indicators related to the Millennium Development Goals</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.SUSTAINABLE_DEV\"
+        id=\"SUSTAINABLE_DEV\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Sustainable development - work on indicators and frameworks
+        to monitor the economic, social and environmental dimensions of sustainable
+        development.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.6</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Sustainable development</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.ENTREPRENEURSHIP\"
+        id=\"ENTREPRENEURSHIP\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Entrepreneurship - the measurement of the determinants, performance
+        and impact of entrepreneurial activities of people and organisations.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.7</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Entrepreneurship</com:Name></str:Category></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.YEARBOOKS_COMPENDIA\"
+        id=\"YEARBOOKS_COMPENDIA\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Yearbooks and similar compendia - multi-domain statistical
+        publications, databases and other data products without specific thematic
+        or issue-oriented focus.\nExcludes:\n- Multi-domain statistical products based
+        on specific thematic approaches, like sustainable development, MDGs etc. (under
+        3.3.1 to 3.3.5 - Living conditions, poverty and cross-cutting social issues;
+        Gender and special population groups; Informations society; Globalisation;
+        Indicators related to the Millennium Development Goals)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.4</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Yearbooks and similar compendia</com:Name></str:Category></str:Category></str:CategoryScheme></str:CategorySchemes></message:Structures></message:Structure>"
+    headers:
+      cache-control:
+      - private
+      connection:
+      - close
+      content-disposition:
+      - inline; filename="structure.xml"
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 20 Aug 2026 10:07:41 GMT
+      etag:
+      - 97a0dbc6ec6ef6ad
+      set-cookie:
+      - JSESSIONID=3010D3AE634C3A56BCD83648C266C5F7; Path=/; Secure; HttpOnly
+      - 7fd38c8cd85a70a9027a63339d2c9c92=eaeb66c45f2b478c26b73fa2c3ef8c89; path=/;
+        HttpOnly; Secure; SameSite=None
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: ''
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=3.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - sdmxlib-tests
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/categoryscheme/*/*/*
+  response:
+    body:
+      string: "<?xml version='1.0' encoding='UTF-8'?><message:Structure xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
+        xmlns:xml=\"http://www.w3.org/XML/1998/namespace\" xmlns:message=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message\"
+        xmlns:str=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure\"
+        xmlns:com=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common\"><message:Header><message:ID>IREF205551</message:ID><message:Test>false</message:Test><message:Prepared>2026-08-20T10:09:15Z</message:Prepared><message:Sender
+        id=\"Unknown\"/><message:Receiver id=\"not_supplied\"/></message:Header><message:Structures><str:CategorySchemes><str:CategoryScheme
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=ESTAT:ESA2010TP(1.0)\"
+        isExternalReference=\"false\" agencyID=\"ESTAT\" id=\"ESA2010TP\" version=\"1.0\"><com:Name
+        xml:lang=\"en\">ESA 2010 - Transmission programme</com:Name><com:Description
+        xml:lang=\"en\">This category scheme represents data flows defined for the
+        programme of national accounts data delivery within the framework of the new
+        European System of National and Regional Accounts (ESA 2010), as defined in
+        Annex B of the Council Regulation (EU) No 549/2013 of the European Parliament
+        and of the Council of 21 May 2013. ESA 2010 is the newest internationally
+        compatible European Union (EU) accounting framework for a systematic and detailed
+        description of an economy. ESA 2010 was published in the Official Journal
+        on 26 June 2013. It will be implemented as from September 2014.</com:Description><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010MA\"
+        id=\"ESA2010MA\"><com:Name xml:lang=\"en\">Main aggregates</com:Name><com:Description
+        xml:lang=\"en\">Table 1 \u2014 Main aggregates \u2014 quarterly and annual
+        exercise\nTable 3 \u2014 Tables by industry\nTable 5 \u2014 Household final
+        consumption expenditure\nTable 20 \u2014 Cross classification of fixed assets
+        by industry and by asset (stocks)\nTable 22 \u2014 Cross classification of
+        gross fixed capital formation (GFCF) by industry and by asset\n(transactions)</com:Description><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010MA.A\"
+        id=\"A\"><com:Name xml:lang=\"en\">Main aggregates (annual)</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010MA.Q\"
+        id=\"Q\"><com:Name xml:lang=\"en\">Main aggregates (quarterly)</com:Name></str:Category></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010FINA\"
+        id=\"ESA2010FINA\"><com:Name xml:lang=\"en\">Financial accounts</com:Name><com:Description
+        xml:lang=\"en\">Table 6 \u2014 Financial accounts by sector\nTable 7 \u2014
+        Balance Sheets for financial assets and liabilities (Stocks of financial instruments
+        \u2014 consolidated and non-consolidated \u2014 and counterpart information</com:Description></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010NFSA\"
+        id=\"ESA2010NFSA\"><com:Name xml:lang=\"en\">Non-financial accounts</com:Name><com:Description
+        xml:lang=\"en\">Table 8 \u2014 Non-financial accounts by sector \u2014 annual\nTable
+        801 \u2014 Non-financial accounts by sector \u2014 quarterly\nTable 26 \u2014
+        Balance sheets for non-financial assets</com:Description></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010GFS\"
+        id=\"ESA2010GFS\"><com:Name xml:lang=\"en\">Government finance</com:Name><com:Description
+        xml:lang=\"en\">Table 2 \u2014 Main aggregates of general government\nTable
+        9 \u2014 Detailed tax and social contribution receipts by type of tax or social
+        contribution and receiving subsector including the list of taxes and social
+        contributions according to national classification\nTable 11 \u2014 General
+        government expenditure by function\nTable 27 \u2014 Quarterly financial accounts
+        of general government\nTable 28 \u2014 Quarterly government debt (Maastricht
+        debt) for general government</com:Description></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010REG\"
+        id=\"ESA2010REG\"><com:Name xml:lang=\"en\">Regional accounts</com:Name><com:Description
+        xml:lang=\"en\">Table 10 \u2014 Tables by industry and by region (NUTS level
+        2)\nTable 12 \u2014 Tables by industry and by region (NUTS level 3)\nTable
+        13 \u2014 Households accounts by region (NUTS level 2)</com:Description></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010SUIOT\"
+        id=\"ESA2010SUIOT\"><com:Name xml:lang=\"en\">Supply/Use and Input/Output
+        tables</com:Name><com:Description xml:lang=\"en\">Table 15 \u2014 Supply table
+        at basic prices, including transformation into purchasers\u2019 prices (current
+        prices and previous year\u2019s prices)\nTable 16 \u2014 Use table at purchasers\u2019
+        prices\nTable 17 \u2014 Symmetric input-output table\nTable 18 \u2014 Symmetric
+        input-output table for domestic output\nTable 19 \u2014 Symmetric input-output
+        table for imports</com:Description><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010SUIOT.SU\"
+        id=\"SU\"><com:Name xml:lang=\"en\">Supply/Use tables</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010SUIOT.IO\"
+        id=\"IO\"><com:Name xml:lang=\"en\">Input/Output tables</com:Name></str:Category></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ESTAT:ESA2010TP(1.0).ESA2010PENS\"
+        id=\"ESA2010PENS\"><com:Name xml:lang=\"en\">Pensions</com:Name><com:Description
+        xml:lang=\"en\">Table 29 \u2014 Accrued-to-date pension entitlements in social
+        insurance</com:Description></str:Category></str:CategoryScheme><str:CategoryScheme
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=SDMX:STAT_SUBJECT_MATTER(1.0)\"
+        isExternalReference=\"false\" agencyID=\"SDMX\" id=\"STAT_SUBJECT_MATTER\"
+        version=\"1.0\"><com:Annotations><com:Annotation><com:AnnotationType>REFERENCE_SOURCE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">United Nations Economic Commission for Europe. This classification
+        of statistical subject-matter domains is based on that used in the Database
+        of International Statistical Activities (DISA - http://unece.unog.ch/disa/
+        ). The DISA classification includes two additional domains covering statistical
+        methodology and strategic managerial issues, which do not relate directly
+        to data or metadata, so are not considered relevant for SDMX purposes.</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">SDMX Statistical Subject-Matter Domains</com:Name><com:Description
+        xml:lang=\"en\">This is the canonical representation of the SDMX Content Guidelines
+        for Statistical Subject-Matter Domains. Within SDMX, the list of Statistical
+        Subject-Matter Domains (aligned to the Classification of International Statistical
+        Activities maintained by the Conference of European Statisticians of the United
+        Nations Economic Commission for Europe, UNECE) is a standard reference list
+        against which the categorisation schemes of various participants in exchange
+        arrangements can be mapped to facilitate data and metadata exchange.</com:Description><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT\"
+        id=\"DEMO_SOCIAL_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Demographic and social statistics</com:Name><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.POP_MIGRATION\"
+        id=\"POP_MIGRATION\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Population and migration - covers work in population and demographic
+        statistics, topics like demography, vital statistics, population structures
+        and growth, demographic projections, families and households (marriages, divorces,
+        household size), migration, refugees and asylum seekers. \nExcludes\n- causes
+        of death (1.4 - Health)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.1</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Population and migration</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.LABOUR\"
+        id=\"LABOUR\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Labour -  covers statistics on labour force, labour market,
+        employment and unemployment; the more detailed topics include economically
+        active population, labour conditions, health and safety at work (accidents
+        at work, occupational injuries and diseases, work-related health problems),
+        working time and other working conditions, strikes and lockouts, job vacancies,
+        job creation. \nExcludes \n- migrant workers (1.1 - Population and migration)\n-
+        unemployment insurance and unemployment benefits (1.6 - Social protection)\n-
+        trade union membership (1.10 - Political and other community activities)\n-
+        unpaid work (1.11 - Time use)\n- statistics on earnings, wages and salaries
+        (2.8 - Labour cost)\n- labour cost (2.8 - Labour cost)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.2</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Labour</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.EDUCATION\"
+        id=\"EDUCATION\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Education - includes educational participation, illiteracy,
+        educational institutions and systems, human and financial resources invested
+        in education, lifelong learning, vocational training and adult learning, impact
+        of education, assessments of student performance, etc.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.3</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Education</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.HEALTH\"
+        id=\"HEALTH\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Health - covers the health and mortality related statistical
+        activities, including topics like life expectancy, health status, health and
+        safety, health determinants (including lifestyle, nutrition, smoking, alcohol
+        abuse), health resources and expenditure, health care systems, morbidity and
+        mortality (including infant and child mortality), hospital admission, causes
+        of illness and death, specific diseases (e.g. AIDS), disabilities, pharmaceutical
+        consumption and sales, health personnel, remuneration of health professions,
+        environmental health status, health inequality, health accounts.\nExcludes
+        \n- work related health and safety (1.2 - Labour) \n- victimisation from criminal
+        behaviour (1.8 - Justice and crime)\n- traffic accidents and injuries (2.4.4
+        - Transport)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.4</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Health</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.INCOME_CONSUMP\"
+        id=\"INCOME_CONSUMP\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Income and consumption - covers statistics on household income
+        and expenditures from household viewpoint (all types of income and expenditure),
+        including topics like distribution of incomes, in-kind income, income transfers
+        received and paid, income- or expenditure-based measures of poverty, consumer
+        protection, consumption patterns, consumer goods and durables, household wealth
+        and debts.\nExcludes \n- social protection schemes against various risks (1.6
+        - Social protection)\n- tax schemes (2.5 - Government finance, fiscal and
+        public sector statistics)\n- poverty in a multidimensional sense (3.3.1 -
+        Living conditions, poverty and cross-cutting social issues) \n- living conditions
+        (3.3.1- Living conditions, poverty and cross-cutting social issues)\n- social
+        inclusion/exclusion (3.3.1- Living conditions, poverty and cross-cutting social
+        issues)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.5</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Income and consumption</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.SOCIAL_PROTECT\"
+        id=\"SOCIAL_PROTECT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Social protection - deals with statistics on measures to protect
+        people against the risks of inadequate incomes associated with unemployment,
+        ill health, invalidity, old age, parental responsibilities, or inadequate
+        income following the loss of a spouse or parent, etc., includes statistics
+        on pension beneficiaries, social security schemes, social protection expenditure,
+        etc.\nExcludes \n- insurance companies as economic actors (2.4.6 - Banking,
+        insurance, financial statistics)\n- pension funds as actors in financial markets
+        (2.4.6 - Banking, insurance, financial statistics)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.6</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Social protection</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.HOUSING\"
+        id=\"HOUSING\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Human settlements and housing - covers statistical activities
+        on housing, dwellings and human settlements.\nExcludes \n- rents (2.7 - Prices)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.7</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Human settlements and housing</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.JUSTICE_CRIME\"
+        id=\"JUSTICE_CRIME\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Justice and crime - activities including crime, convictions,
+        operation of criminal justice systems, justice, safety, victims, clear-up
+        rates, prison population, illicit drug production, trafficking and use, etc.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.8</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Justice and crime</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.CULTURE\"
+        id=\"CULTURE\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Culture - statistics dealing with cultural activities in society,
+        like theatre, cinemas, museums, libraries, mass media, book production, sports,
+        etc., including expenditure and financing of culture.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.9</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Culture</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.COMMUNITY_ACTIVITIES\"
+        id=\"COMMUNITY_ACTIVITIES\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Political and other community activities - statistics on voting
+        turnout, participation in political and other community activities, trade
+        union membership, social dialogue, civil society, social capital, etc.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.10</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Political and other community activities</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).DEMO_SOCIAL_STAT.TIME_USE\"
+        id=\"TIME_USE\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Time-use - statistics on the use of time by individuals, often
+        related to work-life balance (reconciling family responsibilities and paid
+        work); unpaid work. \nExcludes \n- working time (1.2 - Labour)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">1.11</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Time use</com:Name></str:Category></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT\"
+        id=\"ECO_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Economic statistics</com:Name><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.MACROECO_STAT\"
+        id=\"MACROECO_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Macroeconomic statistics - all activities that are dealing
+        with economy wide statistics at macro level that go beyond, or are different
+        from National Accounts, whether annual, quarterly or monthly. Examples are
+        macroeconomic databases that combine national accounts and other macroeconomic
+        indicators like Main Economic Indicators (OECD), Principal European Economic
+        Indicators (Eurostat), etc. ; business tendency and consumer opinion surveys,
+        economic growth, stability and structural adjustment, cyclical indicators,
+        statistics for business cycle analysis.\nExcludes: \n- methodology and frameworks
+        of national accounts (2.2 - Economic accounts)\n- collection and dissemination
+        of national accounts and productivity data not linked to other macroeconomic
+        statistics (2.2 - Economic accounts)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.1</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Macroeconomic statistics</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.ECO_ACCOUNTS\"
+        id=\"ECO_ACCOUNTS\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Economic accounts - covers work on National Accounts in both
+        current and constant prices, dealing with topics like implementation of the
+        1993 System of National Accounts (1993 SNA), update of the 1993 SNA, European
+        System of Accounts (ESA95), Gross Domestic Product (GDP), Gross National Income
+        (GNI), non-observed and informal economy, measurement of capital, input-output
+        tables, balance sheets, etc.\nExcludes \n- agricultural economic accounts
+        (2.4.1 - Agriculture, forestry, fisheries)\n- tourism satellite accounts (2.4.5
+        - Tourism)\n- detailed general government accounts (2.5 - Government finance,
+        fiscal and public sector statistics)\n- financial accounts (2.5 - Government
+        finance, fiscal and public sector statistics)\n- price statistics (2.7 - Prices)\n-
+        environmental accounts (3.1 - Environment)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.2</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Economic accounts</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.BUSINESS_STAT\"
+        id=\"BUSINESS_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Business statistics - economy wide statistics on the activities
+        of enterprises, covers work on economic statistics across different sectors
+        (as opposed to 2.4 (Sectoral statistics) that deals with specific individual
+        sectors), deals with topics like statistics on economic activities of enterprises,
+        business demography, business investment, business services, demand for services,
+        industrial performance, enterprises by size class, industrial production,
+        commodities, structure of sales and services, outputs of the service industries,
+        non-profit institutions.\nExcludes:\n- business tendency surveys (2.1 - Macroeconomic
+        statistics)\n- international trade (2.6 - International trade and balance
+        of payments)\n- prices (2.7 - Prices)\n- labour cost (2.8 - Labour cost)\n-
+        science and technology (2.9 - Science, technology and innovation)\n- ICT (3.3.3
+        - Information society)\n- activities of foreign affiliates and multinational
+        companies (3.3.4 - Globalisation)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.3</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Business statistics</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT\"
+        id=\"SECTORAL_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Sectoral statistics - statistical activities dealing with
+        one of the specific branches of industry or services mentioned at the three
+        digit level of the classification.\nExcludes: \n- education (1.3 - Education)
+        \n- health (1.4 - Health)\n- social security (1.6 - Social protection)\n-
+        culture (1.9 - Culture)\n- statistics covering the whole industrial sector
+        (2.3 - Business statistics)\n- statistics covering the whole service or market
+        service sector (2.3 - Business statistics)\n- distributive trade (2.3 - Business
+        statistics)\n- government and public sector statistics (2.5 - Government finance,
+        fiscal and public sector statistics)\n- research and development (2.9 - Science,
+        technology and innovation) \n- telecommunication statistics (3.3.3 - Information
+        society)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Sectoral statistics</com:Name><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT.AGRI_FOREST_FISH\"
+        id=\"AGRI_FOREST_FISH\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Agriculture, forestry, fisheries - includes all agriculture,
+        forestry and fishery related statistics, e.g. agricultural monetary statistics
+        (agricultural economic accounts), agricultural structures (farm structure),
+        trade in agricultural products, agricultural labour input, crop and animal
+        production, agricultural commodities, agro-industry statistics (including
+        food production and safety), organic farming and organic food, government
+        expenditure for agriculture, fishing and forestry, products source and use
+        tables, forest and forest product statistics, forest resource assessment and
+        forest fire, trade in forest products, fisheries.\nExcludes \n- agricultural
+        and similar prices (2.7 - Prices)\n- rural development (3.2 - Regional and
+        small area statistics)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4.1</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Agriculture, forestry, fisheries</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT.ENERGY\"
+        id=\"ENERGY\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Energy - energy supply, energy use, energy balances, security
+        of supply, energy markets, trade in energy, energy efficiency, renewable energy
+        sources, government expenditure on energy.\nExcludes\n- energy prices (2.7
+        - Prices)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4.2</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Energy</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT.MINING_MANUFACT_CONSTRUCT\"
+        id=\"MINING_MANUFACT_CONSTRUCT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Mining, manufacturing, construction - statistics on specific
+        industrial activities, e.g. steel, shipbuilding, and on construction, trade
+        in specific products related to mining, manufacturing and construction.\nExcludes\n-
+        prices of manufactured products (2.7 - Prices)\n- construction prices (2.7
+        - Prices)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4.3</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Mining, manufacturing, construction</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT.TRANSPORT\"
+        id=\"TRANSPORT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Transport - covers statistics on all modes of transport (air,
+        rail, road, inland waterways, sea), includes topics like transport infrastructure,
+        equipment, traffic flows, personal mobility, safety, energy consumption, transport
+        enterprises, passengers and freight transport, transport sector trends, road
+        traffic accidents.\nExcludes\n- transport prices (2.7 - Prices)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4.4</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Transport</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT.TOURISM\"
+        id=\"TOURISM\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Tourism - covers statistics regarding visitor activity (such
+        as arrivals/departures, overnight stays, expenditures, purpose of the visit,
+        etc.) associated to different forms of tourism (inbound, domestic and outbound),
+        tourism industries activity and infrastructure, employment and tourism satellite
+        accounts. \nExcludes\n- prices for tourist services (2.7 - Prices)\n- environmental
+        impacts (3.1 - Environment)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4.5</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Tourism</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SECTORAL_STAT.BANK_INSURANCE_FINANCE\"
+        id=\"BANK_INSURANCE_FINANCE\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Banking, insurance, financial statistics - money, banking
+        and financial market statistics, including financial accounts, money supply,
+        interest rates, exchange rates, stock market indicators, securities, bank
+        profitability, private sector insurance and pension fund statistics, Financial
+        Soundness Indicators. \nExcludes \n- beneficiaries of private pension funds
+        (1.6 - Social protection) \n- financing of state pension and of other state
+        social security schemes (2.5 - Government finance, fiscal and public sector
+        statistics)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.4.6</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Banking, insurance, financial statistics</com:Name></str:Category></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.GOV_FINANCE_PUBLIC_SECTOR\"
+        id=\"GOV_FINANCE_PUBLIC_SECTOR\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Government finance, fiscal and public sector statistics -
+        all statistics related to the government sector, including debt and deficit,
+        revenue and expenditure, accounts of the government sector, central government,
+        tax rates and revenues, tax and benefit systems, financing of state pension
+        and other state social security schemes, public sector employment.\nExcludes
+        \n- government expenditure in specific areas, like health (1.4 - Health),
+        education (1.3 - Education), research and development (2.9 - Science, technology
+        and innovation), etc.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.5</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Government finance, fiscal and public sector statistics</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.INTERN_TRADE_BOP\"
+        id=\"INTERN_TRADE_BOP\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">International trade and balance of payments - deals with statistics
+        on all cross-border transactions recorded in the balance of payments, includes
+        topics like trade in goods and services, external positions and debt, foreign
+        direct investment, foreign affiliated trade, tariffs, market access, foreign
+        aid, development assistance, resource flows to developing countries.\nExcludes:
+        \n- trade in specific commodities/services mentioned in 2.4.1 to 2.4.5 (Agriculture,
+        forestry, fisheries; Energy; Mining, manufacturing, construction; Transport;
+        Tourism)\n- multinational companies and activities of foreign affiliates (3.3.4
+        - Globalisation)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.6</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">International trade and balance of payments</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.PRICES\"
+        id=\"PRICES\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Prices - covers any statistical activity dealing with prices,
+        including Purchasing Power Parities (PPPs) and international comparisons of
+        GDP, covers topics like Consumer Price Indices (CPI), inflation, Producer
+        Price Indices (PPI), price indexes for specific products and services (e.g.
+        Information and Communication Technology products). \nExcludes \n- interest
+        rates (2.4.6 - Banking, insurance, financial statistics)\n- wages (2.8 - Labour
+        cost)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.7</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Prices</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.LABOUR_COST\"
+        id=\"LABOUR_COST\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Labour cost - statistics activities on labour cost, earning
+        and wages, both for structural and short-term statistics. \nExcludes\n- wages
+        as part of total income of private households (1.5 - Income and consumption)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.8</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Labour cost</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ECO_STAT.SCIENCE_TECHNO_INNO\"
+        id=\"SCIENCE_TECHNO_INNO\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Science, technology and innovation - includes Research and
+        Development (R&amp;D), innovation, patents, human resources (in science, technology
+        and innovation), high tech industries and knowledge based services, biotechnology,
+        financing of R&amp;D and innovation. \nExcludes: \n- information and communication
+        technologies (ICTs) (3.3.3 - Information society)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">2.9</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Science, technology and innovation</com:Name></str:Category></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT\"
+        id=\"ENVIRONMENT_MULTIDOMAIN_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Environment and multi-domain statistics</com:Name><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.ENVIRONMENT\"
+        id=\"ENVIRONMENT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Environment - includes topics like climate, climate change,
+        biodiversity, environment and health, natural resources, soil, water, air,
+        landscape, waste, environmental expenditure, expenditure for the protection
+        of the environment, environmental accounts, agri-environmental indicators,
+        environmental pressure, environmental impact of industry, transport, energy
+        etc., environmental monitoring, material flow analysis, environmental decoupling
+        indicators, pollution, ecosystems, land use and cover, environmental protection,
+        nationally protected areas.\nExcludes\n- environment as part of sustainable
+        development (3.3.6 - Sustainable development)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.1</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Environment</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.REGIONAL_STAT\"
+        id=\"REGIONAL_STAT\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Regional and small area statistics - activities dealing with
+        regional statistics and statistics referring to sub-national areas or areas
+        based on administrative units, urban and rural statistics, rural development,
+        regional accounts, regional typologies, and regional disparities.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.2</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Regional and small area statistics</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC\"
+        id=\"MULTIDOMAIN_STAT_INDIC\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Multi-domain statistics and indicators - deals with conceptual
+        or data work based on a specific thematic approach to outputs that cut across
+        several economic, social or environmental subject areas; the two-digit-level
+        of the classification covers activities dealing with such type of issues that
+        are not explicitly mentioned at the three-digit level.\nExcludes: \n- multi-domain
+        statistics based on a regional approach (3.2 - Regional and small area statistics)\n-
+        yearbook type of compendia or similar products by international organisations
+        not following a specific thematic approach (3.4 - Yearbooks and similar compendia)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Multi-domain statistics and indicators</com:Name><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.LIVING_CONDITIONS\"
+        id=\"LIVING_CONDITIONS\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Living conditions, poverty and cross-cutting social issues
+        - includes work on multidimensional methods to measure poverty, living conditions
+        in the broad sense, social inclusion/exclusion, social indicators, and social
+        situation.\nExcludes:\n- purely monetary approach to poverty (1.5 - Income
+        and consumption)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.1</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Living conditions, poverty, and cross-cutting social issues</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.GENDER_SPECIAL_POP_GROUPS\"
+        id=\"GENDER_SPECIAL_POP_GROUPS\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Gender and special population groups - their living conditions
+        and role in the society: comparisons men/women and situation of special population
+        groups like children, youth, women, elderly, disabled, minority groups, etc.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.2</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Gender and special population groups</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.INFORMATION_SOC\"
+        id=\"INFORMATION_SOC\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Information society - statistics allowing to assess the use
+        and impact of information and communication technologies on society, includes
+        access and use of ICTs (including Internet), ICT expenditure and investment,
+        ICT infrastructure, telecommunication networks, electronic communications,
+        e-government, electronic commerce, e-learning, broadband penetration, ICT
+        services, communication tariffs, network infrastructure, revenues, expenses
+        and investment of operators, Internet indicators, trade in telecommunications
+        equipment.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.3</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Information society</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.GLOBALISATION\"
+        id=\"GLOBALISATION\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Globalisation - deals with measuring the economic activities
+        of multinational companies, as well as with attempts to measure globalisation
+        through a variety of components from other subject areas.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.4</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Globalisation</com:Name></str:Category><str:Category urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.MILLENIUM_GOALS\"
+        id=\"MILLENIUM_GOALS\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Indicators related to the Millennium Development Goals - work
+        on sets of indicators to monitor the achievement of the Millennium Development
+        Goals agreed upon at the UN Millennium Summit.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.5</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Indicators related to the Millennium Development Goals</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.SUSTAINABLE_DEV\"
+        id=\"SUSTAINABLE_DEV\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Sustainable development - work on indicators and frameworks
+        to monitor the economic, social and environmental dimensions of sustainable
+        development.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.6</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Sustainable development</com:Name></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.MULTIDOMAIN_STAT_INDIC.ENTREPRENEURSHIP\"
+        id=\"ENTREPRENEURSHIP\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Entrepreneurship - the measurement of the determinants, performance
+        and impact of entrepreneurial activities of people and organisations.</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.3.7</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Entrepreneurship</com:Name></str:Category></str:Category><str:Category
+        urn=\"urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=SDMX:STAT_SUBJECT_MATTER(1.0).ENVIRONMENT_MULTIDOMAIN_STAT.YEARBOOKS_COMPENDIA\"
+        id=\"YEARBOOKS_COMPENDIA\"><com:Annotations><com:Annotation><com:AnnotationTitle>EXPLANATORY
+        NOTE</com:AnnotationTitle><com:AnnotationType>EXPLANATORY NOTE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">Yearbooks and similar compendia - multi-domain statistical
+        publications, databases and other data products without specific thematic
+        or issue-oriented focus.\nExcludes:\n- Multi-domain statistical products based
+        on specific thematic approaches, like sustainable development, MDGs etc. (under
+        3.3.1 to 3.3.5 - Living conditions, poverty and cross-cutting social issues;
+        Gender and special population groups; Informations society; Globalisation;
+        Indicators related to the Millennium Development Goals)</com:AnnotationText></com:Annotation><com:Annotation><com:AnnotationTitle>OFFICIAL
+        CODE</com:AnnotationTitle><com:AnnotationType>OFFICIAL CODE</com:AnnotationType><com:AnnotationText
+        xml:lang=\"en\">3.4</com:AnnotationText></com:Annotation></com:Annotations><com:Name
+        xml:lang=\"en\">Yearbooks and similar compendia</com:Name></str:Category></str:Category></str:CategoryScheme></str:CategorySchemes></message:Structures></message:Structure>"
+    headers:
+      cache-control:
+      - private
+      connection:
+      - close
+      content-disposition:
+      - inline; filename="structure.xml"
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 20 Aug 2026 10:09:15 GMT
+      etag:
+      - 97a0dbc6ec6ef6ad
+      set-cookie:
+      - JSESSIONID=3713A15E8D3B568782DFD24BA8D8D721; Path=/; Secure; HttpOnly
+      - 7fd38c8cd85a70a9027a63339d2c9c92=eaeb66c45f2b478c26b73fa2c3ef8c89; path=/;
+        HttpOnly; Secure; SameSite=None
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: ''
+version: 1

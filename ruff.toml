@@ -1,0 +1,208 @@
+# NOT `fix = true`. A config-level fix flag means every bare `ruff check` —
+# from CI, an editor-on-save hook, an agent, a typo — silently rewrites the
+# working tree, and "safe" fixes are not always semantics-preserving (ruff's
+# FURB152 rewrote a literal `3.14` in a test assertion to `math.pi`).
+# Fixing is opt-in: `just fmt` runs `ruff check --fix` explicitly.
+indent-width = 4
+line-length = 120
+target-version = "py314"
+
+[format]
+docstring-code-format = true
+docstring-code-line-length = 88
+indent-style = "space"
+line-ending = "auto"
+quote-style = "double"
+skip-magic-trailing-comma = false
+
+[lint]
+select = ["ALL"]
+ignore = [
+  # ── Docstring style conflicts ─────────────────────────────────────────────
+  # Google convention uses D211 (no blank before class docstring) + D212 (summary on first line)
+  "D203", # one-blank-line-before-class — conflicts with D211
+  "D213", # multi-line-summary-second-line — conflicts with D212
+
+  # ── Formatter conflicts ───────────────────────────────────────────────────
+  "COM812", # missing-trailing-comma — handled by formatter
+
+  # ── Encapsulation ─────────────────────────────────────────────────────────
+  # SLF001 (private-member-access) cannot see package boundaries, so a package
+  # reaching into its own internals reads as a violation at every line. Every
+  # comparable project does that routinely and none runs the rule — sqlalchemy
+  # ~3800 accesses, polars ~1019, rich ~163, pydantic ~142.
+  #
+  # Measured here before switching off (#207): of 40 suppressions, 28 were a
+  # ruff type-inference gap on `cls.__new__(cls)` locals — fixed in !198 with a
+  # `Self` annotation, not a suppression — and the remaining 12 were inspected
+  # individually. **Zero were defects.** A 0% true-positive rate is the written
+  # reason `select = ["ALL"]` requires for an opt-out.
+  #
+  # The barrier is a design rule, not a lint: see CLAUDE.md "The public /
+  # private barrier".
+  "SLF001", # private-member-access — see above
+
+  # ── Type annotations ──────────────────────────────────────────────────────
+  # ANN401 is NOT ignored globally. It used to be, on the rationale that "Any
+  # is legitimate for **kwargs and dunder args". Enabled here it becomes the
+  # lint that enforces CLAUDE.md's typed-core/untyped-shell boundary, with the
+  # shell (formats/, storage/, local/) exempted in per-file-ignores below.
+  #
+  # `flake8-annotations.allow-star-arg-any` is deliberately NOT set. The one
+  # genuine pass-through star-kwarg (httpx options, #196) was the obvious
+  # candidate for it, but a config flag pre-approves every future
+  # `**kwargs: Any` anywhere — including `model/`, where CLAUDE.md says Any
+  # must not reach — and is invisible in review afterwards. It turned out not
+  # to be needed at all: PEP 692 `Unpack[TypedDict]` types that pass-through
+  # exactly, with no `Any` and no suppression. Reach for that first.
+  "FA", # flake8-future-annotations — Python 3.12+, no __future__ needed
+
+  # ── Docstring style ───────────────────────────────────────────────────────
+  "D105", # undocumented-magic-method — dunder methods are self-evident (__iter__, __len__, etc.)
+  "D107", # undocumented-public-init — Google style documents __init__ in class docstring
+
+  # ── Pylint noise ─────────────────────────────────────────────────────────
+  "PLR0911", # too-many-return-statements — dispatch functions are idiomatic with many returns
+  # PLR0913 counts keyword-only arguments too, so it fires on exactly the
+  # shape we want — a wide, fully-keyword builder or row-reader where every
+  # argument is named at the call site. The real smell is a long *positional*
+  # run, and that is PLR0917, which is stable as of ruff 0.16, enabled, capped
+  # at 8 below, and clean. Keep the positional cap; drop the total-count one.
+  "PLR0913", # too-many-arguments
+  # PLR2004 fires on every literal in a comparison: HTTP status codes
+  # (`response.status_code == 200`), array offsets (`row[0]`, `[-1]`),
+  # length sentinels (`len(parts) != 3`), version checks. Naming these
+  # adds ceremony without insight — and the rule has no severity dial,
+  # so it'd be hundreds of noqa-justified call sites. Disabled.
+  "PLR2004", # magic-value-comparison
+
+  # ── Active development ────────────────────────────────────────────────────
+  "TD",  # flake8-todos — don't enforce TODO format during development
+  "FIX", # flake8-fixme — same
+
+  # ── Misc ──────────────────────────────────────────────────────────────────
+  # B008 was ignored here and measured zero hits across src + tests — dropped
+  # rather than carried as decoration. If a real one shows up it gets judged
+  # on its merits then.
+  "CPY001", # missing-copyright-notice — not used in this project (stable since ruff 0.16)
+  # SIM108: sometimes the if/else beats the one-liner. Its single hit today
+  # (_data_common.py, dimension-vs-attribute component map) would become a
+  # 130-character ternary. Readability wins.
+  "SIM108", # if-else-block-instead-of-if-exp
+  "ISC001", # single-line-implicit-string-concatenation — handled by formatter
+  # ERA001 flags any commented-out line that parses as code. In a codebase
+  # with frequent worked examples in docstrings ("# >>> ", "# foo = bar()")
+  # and SQL fragments inside long docstring blocks, it false-positives more
+  # than it helps. Genuine dead code is caught in review.
+  "ERA001", # commented-out-code
+  # PEP 749 (lazy annotations, accepted for 3.14) makes the TYPE_CHECKING
+  # ceremony that TC enforces obsolete. Until 3.14 is our minimum, eating
+  # the cost of a few non-TYPE_CHECKING annotations beats churning every
+  # import block in the codebase twice.
+  "TC", # flake8-type-checking
+]
+
+[lint.flake8-builtins]
+# `id` is what the SDMX information model calls the identifier field, so every
+# artefact constructor and lookup that takes one shadows the builtin. That is
+# the model, not an accident — and it is one project-wide decision, so it is
+# stated here once rather than as 35 per-site directives (21 in src, 14 in
+# tests). RUF100 confirmed the count both ways: adding this line made exactly
+# those 35 dead, and removing them left the rest of the lint untouched.
+builtins-ignorelist = ["id"]
+
+[lint.pylint]
+# PLR0917 (stable since ruff 0.16) at 8 rather than its default 5: the six
+# six-positional private readers are fine, and the cap still caught the
+# 13-positional `_build_representation`, which became keyword-only as a
+# result. See the PLR0913 note in `ignore` for why the positional count is
+# the one worth policing.
+max-positional-args = 8
+
+[lint.per-file-ignores]
+# Init files: allow re-exports and unordered imports
+"__init__.py" = ["E402", "F401", "I"]
+# ── The untyped shell (CLAUDE.md "Typed core, untyped shell") ──────────────
+# ANN401 used to be scoped OFF for formats/, storage/ and local/, on the
+# reasoning that `Any` is legitimate at the msgspec/lxml/duckdb boundary.
+# That was true of the boundary and false of the code: #202/#203/#204 typed
+# every one of those parameters, and lifting the exemption across all three
+# directories now yields exactly ONE finding — `readers.get_artefact`, which
+# dispatches on a runtime artefact-type column and genuinely cannot be typed.
+#
+# A directory-wide ignore that covers a single justified site is the shape
+# this repo treats with suspicion: it silences a range, so it ages badly and
+# hides anything added later. Replaced with one scoped `# noqa: ANN401` at
+# that site, so ANN401 is now ON everywhere and a new `Any` parameter
+# anywhere in src/ is a finding rather than a silence.
+#
+# Storage/local keep S608: query compilers legitimately build SQL by string
+# concatenation (clauses joined from validated, parameter-bound fragments —
+# see CLAUDE.md "SQL style"). S608 catches f-strings into SQL; we structure
+# but parameterise.
+"src/sdmxlib/storage/**/*.py" = ["S608"]
+"src/sdmxlib/local/**/*.py" = ["S608"]
+"src/sdmxlib/model/code_query.py" = ["S608"]
+"src/sdmxlib/model/hierarchy_query.py" = ["S608"]
+# The shared half of those two compilers (#267) — same code, same reason.
+"src/sdmxlib/model/_query_common.py" = ["S608"]
+# The artefact-spine compiler (#276) — fourth module of the same kind. Its
+# relationship predicates build correlated EXISTS clauses over fixed table
+# names and the row alias; every value is a bind.
+"src/sdmxlib/model/artefact_query.py" = ["S608"]
+# The reported-value compiler (#281) — fifth, same shape: one correlated
+# EXISTS into `metadata_target`, fixed table names, every value a bind.
+"src/sdmxlib/model/metadata_query.py" = ["S608"]
+# The path compiler (#306) — same shape again, and the identifiers are the
+# tightest of the set: table and column names come from the declared edge
+# graph, which `tests/unit/test_query_edges.py` checks against the live schema
+# on every run, and aliases are generated here. Every value is a bind, and
+# `test_values_are_parameterised` asserts a hostile literal never reaches the
+# SQL text.
+"src/sdmxlib/query/**/*.py" = ["S608"]
+# `ValueSet.to_sql` (#271) names a registered relation, and DuckDB has no
+# parameter form for a table name. Unlike the compilers above the interpolated
+# text is not even caller-derived: it is `_sl_values_` plus a uuid hex this
+# module generated. The set's *values* never touch the SQL at all — they live
+# in a registered Arrow table, which is the entire point of the feature.
+"src/sdmxlib/session.py" = ["S608"]
+# Builders scan the lake with quoted identifiers (no value interpolation).
+"src/sdmxlib/builders/**/*.py" = ["S608"]
+# Tests: skip docstrings, annotations, security checks, and unused-arg checks.
+# RUF002/S311 are noisy in concurrency stress tests (unicode in prose, non-crypto random).
+# DTZ: fixtures use naive datetimes deliberately — the storage layer normalises
+# tz-aware values, so naive is what actually round-trips.
+# FBT: fakes and stub registries mirror the signatures they stand in for; a
+# test double is not the place to relitigate a boolean parameter.
+# S608: tests build SQL constantly — benchmarks, oracles, spy assertions and
+# the escape-hatch tests all assemble statements from fixture identifiers. Test
+# code does not ship, and injection into a fixture is not a threat model. It
+# was already being waived one line at a time (six `# noqa: S608`, three of
+# them added in a single benchmark), which is the shape of a per-file ignore
+# arriving by instalments.
+#
+# Deliberately *not* switched off in `src/`. The rule sdmxlib actually holds is
+# "never interpolate values; identifier-only interpolation from a validated
+# source is allowed" (see CLAUDE.md "SQL style"), and S608 cannot tell those
+# apart — it flags any f-string SQL. That makes it a crude proxy, but the
+# friction is the mechanism: a *new* src module that starts building SQL is not
+# on the exemption list above, so someone has to stop and write down why. The
+# raw footprint is 48 sites, 41 of them in src/ and concentrated in the five
+# query compilers; the seven in tests/ are the only ones this line removes.
+#
+# Note the true-positive rate here is unknown rather than measured at zero, in
+# contrast to the SLF001 note in CLAUDE.md: every src site was exempted before
+# S608 ever had the chance to catch anything. #297 — caller SQL text spliced
+# into `_build_query`, including `order_by` — is the live surface that argues
+# for keeping the signal where it might still matter.
+"tests/**/*.py" = ["D", "ANN", "S101", "ARG", "PLC0415", "RUF002", "S311", "DTZ", "FBT", "S608"]
+# Examples: standalone scripts — allow print, missing docstrings, implicit namespace
+"examples/**/*.py" = ["T201", "D1", "INP001"]
+# Bench harness: standalone scripts; same relaxations as tests + allow `print`.
+"bench/**/*.py" = ["D", "ANN", "T201", "INP001", "RUF002", "S101", "BLE001"]
+
+[lint.pydocstyle]
+convention = "google"
+
+[lint.isort]
+known-first-party = ["sdmxlib"]

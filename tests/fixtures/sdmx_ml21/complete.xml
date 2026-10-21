@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SDMX-ML 2.1 complete fixture.
+  Contains one instance of every modelled element type for round-trip acceptance tests:
+    - OrganisationSchemes (AgencyScheme + DataProviderScheme)
+    - Codelists (with hierarchical code)
+    - ConceptScheme
+    - DataStructures (dimensions, time dimension, attribute, measure, group)
+    - Dataflows
+    - CategorySchemes + Categorisations
+    - ProvisionAgreements
+    - StructureSets (CodelistMap + CodeMaps)
+    - Constraints (ContentConstraint + CubeRegion + KeyValues)
+-->
+<mes:Structure
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message"
+  xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure"
+  xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <mes:Header>
+    <mes:ID>COMPLETE_FIXTURE</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2024-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+
+    <str:OrganisationSchemes>
+      <str:AgencyScheme agencyID="SDMX" id="AGENCIES" version="1.0" isFinal="false">
+        <com:Name xml:lang="en">SDMX Agency Scheme</com:Name>
+        <str:Agency id="SDMX">
+          <com:Name xml:lang="en">SDMX</com:Name>
+        </str:Agency>
+        <str:Agency id="TEST">
+          <com:Name xml:lang="en">Test Agency</com:Name>
+        </str:Agency>
+      </str:AgencyScheme>
+      <str:DataProviderScheme agencyID="TEST" id="DATA_PROVIDERS" version="1.0">
+        <com:Name xml:lang="en">Test Data Providers</com:Name>
+        <str:DataProvider id="PROV_A">
+          <com:Name xml:lang="en">Provider A</com:Name>
+        </str:DataProvider>
+      </str:DataProviderScheme>
+    </str:OrganisationSchemes>
+
+    <str:Codelists>
+      <str:Codelist id="CL_FREQ" agencyID="SDMX" version="1.0" isFinal="true">
+        <com:Name xml:lang="en">Frequency</com:Name>
+        <com:Name xml:lang="fr">Fréquence</com:Name>
+        <str:Code id="A">
+          <com:Name xml:lang="en">Annual</com:Name>
+          <com:Name xml:lang="fr">Annuel</com:Name>
+        </str:Code>
+        <str:Code id="Q">
+          <com:Name xml:lang="en">Quarterly</com:Name>
+        </str:Code>
+        <str:Code id="M">
+          <com:Name xml:lang="en">Monthly</com:Name>
+        </str:Code>
+        <str:Code id="Q1">
+          <com:Name xml:lang="en">Q1 sub-code</com:Name>
+          <str:Parent>
+            <Ref id="Q"/>
+          </str:Parent>
+        </str:Code>
+      </str:Codelist>
+      <str:Codelist id="CL_AREA" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Area</com:Name>
+        <str:Code id="EU">
+          <com:Name xml:lang="en">European Union</com:Name>
+        </str:Code>
+        <str:Code id="US">
+          <com:Name xml:lang="en">United States</com:Name>
+        </str:Code>
+      </str:Codelist>
+    </str:Codelists>
+
+    <str:Concepts>
+      <str:ConceptScheme id="CROSS_DOMAIN_CONCEPTS" agencyID="SDMX" version="1.0">
+        <com:Name xml:lang="en">SDMX Cross Domain Concepts</com:Name>
+        <str:Concept id="FREQ">
+          <com:Name xml:lang="en">Frequency</com:Name>
+        </str:Concept>
+        <str:Concept id="REF_AREA">
+          <com:Name xml:lang="en">Reference Area</com:Name>
+        </str:Concept>
+        <str:Concept id="TIME_PERIOD">
+          <com:Name xml:lang="en">Time Period</com:Name>
+        </str:Concept>
+        <str:Concept id="OBS_VALUE">
+          <com:Name xml:lang="en">Observation Value</com:Name>
+        </str:Concept>
+        <str:Concept id="OBS_STATUS">
+          <com:Name xml:lang="en">Observation Status</com:Name>
+        </str:Concept>
+      </str:ConceptScheme>
+    </str:Concepts>
+
+    <str:DataStructures>
+      <str:DataStructure id="DSD_TEST" agencyID="TEST" version="1.0" isFinal="true">
+        <com:Name xml:lang="en">Test Data Structure</com:Name>
+        <com:Annotations>
+          <com:Annotation>
+            <com:AnnotationType>SOURCE</com:AnnotationType>
+            <com:AnnotationText xml:lang="en">Complete fixture</com:AnnotationText>
+          </com:Annotation>
+        </com:Annotations>
+        <str:DataStructureComponents>
+          <str:DimensionList id="DimensionDescriptor">
+            <str:Dimension id="FREQ" position="1">
+              <str:ConceptIdentity>
+                <Ref id="FREQ" maintainableParentID="CROSS_DOMAIN_CONCEPTS" maintainableParentVersion="1.0" agencyID="SDMX" package="conceptscheme" class="Concept"/>
+              </str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>
+                  <Ref id="CL_FREQ" agencyID="SDMX" version="1.0" package="codelist" class="Codelist"/>
+                </str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:Dimension id="REF_AREA" position="2">
+              <str:ConceptIdentity>
+                <Ref id="REF_AREA" maintainableParentID="CROSS_DOMAIN_CONCEPTS" maintainableParentVersion="1.0" agencyID="SDMX" package="conceptscheme" class="Concept"/>
+              </str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>
+                  <Ref id="CL_AREA" agencyID="TEST" version="1.0" package="codelist" class="Codelist"/>
+                </str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:TimeDimension id="TIME_PERIOD" position="3">
+              <str:ConceptIdentity>
+                <Ref id="TIME_PERIOD" maintainableParentID="CROSS_DOMAIN_CONCEPTS" maintainableParentVersion="1.0" agencyID="SDMX" package="conceptscheme" class="Concept"/>
+              </str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="ObservationalTimePeriod"/>
+              </str:LocalRepresentation>
+            </str:TimeDimension>
+          </str:DimensionList>
+          <str:Group id="GRP_FREQ_AREA">
+            <str:GroupDimension>
+              <str:DimensionReference>
+                <Ref id="FREQ"/>
+              </str:DimensionReference>
+            </str:GroupDimension>
+            <str:GroupDimension>
+              <str:DimensionReference>
+                <Ref id="REF_AREA"/>
+              </str:DimensionReference>
+            </str:GroupDimension>
+          </str:Group>
+          <str:AttributeList id="AttributeDescriptor">
+            <str:Attribute id="OBS_STATUS" assignmentStatus="Conditional">
+              <str:ConceptIdentity>
+                <Ref id="OBS_STATUS" maintainableParentID="CROSS_DOMAIN_CONCEPTS" maintainableParentVersion="1.0" agencyID="SDMX" package="conceptscheme" class="Concept"/>
+              </str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="String" maxLength="1"/>
+              </str:LocalRepresentation>
+              <str:AttributeRelationship>
+                <str:PrimaryMeasure>
+                  <Ref id="OBS_VALUE"/>
+                </str:PrimaryMeasure>
+              </str:AttributeRelationship>
+            </str:Attribute>
+          </str:AttributeList>
+          <str:MeasureList id="MeasureDescriptor">
+            <str:PrimaryMeasure id="OBS_VALUE">
+              <str:ConceptIdentity>
+                <Ref id="OBS_VALUE" maintainableParentID="CROSS_DOMAIN_CONCEPTS" maintainableParentVersion="1.0" agencyID="SDMX" package="conceptscheme" class="Concept"/>
+              </str:ConceptIdentity>
+            </str:PrimaryMeasure>
+          </str:MeasureList>
+        </str:DataStructureComponents>
+      </str:DataStructure>
+    </str:DataStructures>
+
+    <str:Dataflows>
+      <str:Dataflow id="DF_TEST" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Test Dataflow</com:Name>
+        <str:Structure>
+          <Ref id="DSD_TEST" agencyID="TEST" version="1.0" package="datastructure" class="DataStructure"/>
+        </str:Structure>
+      </str:Dataflow>
+    </str:Dataflows>
+
+    <str:CategorySchemes>
+      <str:CategoryScheme id="CS_TEST" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Test Category Scheme</com:Name>
+        <str:Category id="CAT_A">
+          <com:Name xml:lang="en">Category A</com:Name>
+          <str:Category id="CAT_A1">
+            <com:Name xml:lang="en">Category A1</com:Name>
+          </str:Category>
+        </str:Category>
+      </str:CategoryScheme>
+    </str:CategorySchemes>
+
+    <str:Categorisations>
+      <str:Categorisation id="CAT_DF_TEST" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">DF_TEST categorisation</com:Name>
+        <str:Source>
+          <Ref id="DF_TEST" agencyID="TEST" version="1.0" package="datastructure" class="Dataflow"/>
+        </str:Source>
+        <str:Target>
+          <Ref id="CAT_A" maintainableParentID="CS_TEST" maintainableParentVersion="1.0" agencyID="TEST" package="categoryscheme" class="Category"/>
+        </str:Target>
+      </str:Categorisation>
+    </str:Categorisations>
+
+    <str:ProvisionAgreements>
+      <str:ProvisionAgreement id="PA_TEST" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Test Provision Agreement</com:Name>
+        <str:StructureUsage>
+          <Ref id="DF_TEST" agencyID="TEST" version="1.0" package="datastructure" class="Dataflow"/>
+        </str:StructureUsage>
+        <str:DataProvider>
+          <Ref id="PROV_A" maintainableParentID="DATA_PROVIDERS" maintainableParentVersion="1.0" agencyID="TEST" package="base" class="DataProvider"/>
+        </str:DataProvider>
+      </str:ProvisionAgreement>
+    </str:ProvisionAgreements>
+
+    <str:StructureSets>
+      <str:StructureSet id="SS_TEST" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Test Structure Set</com:Name>
+        <str:CodelistMap id="MAP_FREQ">
+          <com:Name xml:lang="en">Frequency identity map</com:Name>
+          <str:Source>
+            <Ref id="CL_FREQ" agencyID="SDMX" version="1.0" package="codelist" class="Codelist"/>
+          </str:Source>
+          <str:Target>
+            <Ref id="CL_FREQ" agencyID="SDMX" version="1.0" package="codelist" class="Codelist"/>
+          </str:Target>
+          <str:CodeMap>
+            <str:Source><Ref id="A"/></str:Source>
+            <str:Target><Ref id="A"/></str:Target>
+          </str:CodeMap>
+          <str:CodeMap>
+            <str:Source><Ref id="Q"/></str:Source>
+            <str:Target><Ref id="Q"/></str:Target>
+          </str:CodeMap>
+          <str:CodeMap>
+            <str:Source><Ref id="M"/></str:Source>
+            <str:Target><Ref id="M"/></str:Target>
+          </str:CodeMap>
+        </str:CodelistMap>
+      </str:StructureSet>
+    </str:StructureSets>
+
+    <str:Constraints>
+      <str:ContentConstraint id="CC_TEST" agencyID="TEST" version="1.0" type="Allowed">
+        <com:Name xml:lang="en">Test Constraint</com:Name>
+        <str:ConstraintAttachment>
+          <str:Dataflow>
+            <Ref id="DF_TEST" agencyID="TEST" version="1.0" package="datastructure" class="Dataflow"/>
+          </str:Dataflow>
+        </str:ConstraintAttachment>
+        <str:CubeRegion include="true">
+          <com:KeyValue id="FREQ">
+            <com:Value>A</com:Value>
+            <com:Value>Q</com:Value>
+          </com:KeyValue>
+          <com:KeyValue id="REF_AREA">
+            <com:Value>EU</com:Value>
+            <com:Value>US</com:Value>
+          </com:KeyValue>
+        </str:CubeRegion>
+        <!--
+          Per the v2.1 XSD ContentConstraintType sequence: ReleaseCalendar
+          comes BEFORE ReferencePeriod, after the cube regions. SDMX 3.0
+          dropped ReferencePeriod from DataConstraint entirely; the
+          equivalent 3.0 fixture only exercises ReleaseCalendar.
+          Periodicity / Offset / Tolerance are ISO 8601 durations.
+        -->
+        <str:ReleaseCalendar>
+          <str:Periodicity>P1M</str:Periodicity>
+          <str:Offset>P15D</str:Offset>
+          <str:Tolerance>P2D</str:Tolerance>
+        </str:ReleaseCalendar>
+        <str:ReferencePeriod startTime="2020-01-01T00:00:00" endTime="2023-12-31T23:59:59"/>
+      </str:ContentConstraint>
+    </str:Constraints>
+
+  </mes:Structures>
+</mes:Structure>

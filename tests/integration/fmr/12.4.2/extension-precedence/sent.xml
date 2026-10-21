@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message" xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common">
+  <mes:Header>
+    <mes:ID>SDMX_MSG</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2000-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="sdmxlib"/>
+  </mes:Header>
+  <mes:Structures>
+    <str:Codelists>
+      <str:Codelist id="CL_X1" agencyID="AG" version="1.0">
+        <com:Name xml:lang="en">x1</com:Name>
+        <str:Code id="A">
+          <com:Name xml:lang="en">A from X1</com:Name>
+        </str:Code>
+        <str:Code id="B">
+          <com:Name xml:lang="en">B from X1</com:Name>
+        </str:Code>
+      </str:Codelist>
+      <str:Codelist id="CL_X2" agencyID="AG" version="1.0">
+        <com:Name xml:lang="en">x2</com:Name>
+        <str:Code id="A">
+          <com:Name xml:lang="en">A from X2</com:Name>
+        </str:Code>
+        <str:Code id="C">
+          <com:Name xml:lang="en">C from X2</com:Name>
+        </str:Code>
+      </str:Codelist>
+      <str:Codelist id="CL_E12" agencyID="AG" version="1.0">
+        <com:Name xml:lang="en">CL_E12</com:Name>
+        <str:Code id="B">
+          <com:Name xml:lang="en">B own</com:Name>
+        </str:Code>
+        <str:CodelistExtension>
+          <str:Codelist>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_X1(1.0)</str:Codelist>
+        </str:CodelistExtension>
+        <str:CodelistExtension>
+          <str:Codelist>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_X2(1.0)</str:Codelist>
+        </str:CodelistExtension>
+      </str:Codelist>
+      <str:Codelist id="CL_E21" agencyID="AG" version="1.0">
+        <com:Name xml:lang="en">CL_E21</com:Name>
+        <str:CodelistExtension>
+          <str:Codelist>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_X2(1.0)</str:Codelist>
+        </str:CodelistExtension>
+        <str:CodelistExtension>
+          <str:Codelist>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_X1(1.0)</str:Codelist>
+        </str:CodelistExtension>
+      </str:Codelist>
+    </str:Codelists>
+  </mes:Structures>
+</mes:Structure>

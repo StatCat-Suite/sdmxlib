@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Ported from the 3.0 fixture of the same name (#345). The 3.1 corpus had no
+  StructureMap at all, so that whole path was untested here — which is how
+  the *DataType gap in the neighbouring representation-map fixture survived.
+  Namespaces are the only difference; if 3.1 ever diverges, this is the file
+  that should say so.
+-->
+<!--
+  SDMX-ML 3.1 fixture: a StructureMap between two DataStructures (#242).
+
+  The map exists to be *downgraded*. SDMX 3.0 names a mapped component by id
+  alone; 2.1 names it by id, object class and the id of the ComponentList
+  holding it. Those two extra facts are not carried by the map in either
+  version — they are read off the structure the map already names, which is
+  why both structures are in this message.
+
+  One ComponentMap per component kind, so the downgrade has to get each class
+  right: Dimension, TimeDimension, Attribute and PrimaryMeasure, sitting in
+  DimensionDescriptor, DimensionDescriptor, AttributeDescriptor and
+  MeasureDescriptor respectively.
+
+  Conformant to v3.1.0 XSDs (see tests/schemas/sdmx_ml30/).
+-->
+<mes:Structure
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/message"
+  xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/structure"
+  xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/common">
+  <mes:Header>
+    <mes:ID>WITH_STRUCTURE_MAP</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2024-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+
+    <str:Codelists>
+      <str:Codelist id="CL_FREQ" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Frequency</com:Name>
+        <str:Code id="A"><com:Name xml:lang="en">Annual</com:Name></str:Code>
+        <str:Code id="Q"><com:Name xml:lang="en">Quarterly</com:Name></str:Code>
+      </str:Codelist>
+    </str:Codelists>
+
+    <str:ConceptSchemes>
+      <str:ConceptScheme id="CS_MAP" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Concepts for the mapped structures</com:Name>
+        <str:Concept id="FREQ"><com:Name xml:lang="en">Frequency</com:Name></str:Concept>
+        <str:Concept id="REF_AREA"><com:Name xml:lang="en">Reference area</com:Name></str:Concept>
+        <str:Concept id="TIME_PERIOD"><com:Name xml:lang="en">Time period</com:Name></str:Concept>
+        <str:Concept id="OBS_STATUS"><com:Name xml:lang="en">Observation status</com:Name></str:Concept>
+        <str:Concept id="OBS_VALUE"><com:Name xml:lang="en">Observation value</com:Name></str:Concept>
+      </str:ConceptScheme>
+    </str:ConceptSchemes>
+
+    <str:DataStructures>
+      <str:DataStructure id="DSD_SOURCE" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Source structure</com:Name>
+        <str:DataStructureComponents>
+          <str:DimensionList id="DimensionDescriptor">
+            <str:Dimension id="FREQ" position="1">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:CS_MAP(1.0).FREQ</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=TEST:CL_FREQ(1.0)</str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:TimeDimension id="TIME_PERIOD">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:CS_MAP(1.0).TIME_PERIOD</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="ObservationalTimePeriod"/>
+              </str:LocalRepresentation>
+            </str:TimeDimension>
+          </str:DimensionList>
+          <str:AttributeList id="AttributeDescriptor">
+            <str:Attribute id="OBS_STATUS" usage="optional">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:CS_MAP(1.0).OBS_STATUS</str:ConceptIdentity>
+              <str:AttributeRelationship>
+                <str:Observation/>
+              </str:AttributeRelationship>
+            </str:Attribute>
+          </str:AttributeList>
+          <str:MeasureList id="MeasureDescriptor">
+            <str:Measure id="OBS_VALUE">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:CS_MAP(1.0).OBS_VALUE</str:ConceptIdentity>
+            </str:Measure>
+          </str:MeasureList>
+        </str:DataStructureComponents>
+      </str:DataStructure>
+
+      <str:DataStructure id="DSD_TARGET" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Target structure</com:Name>
+        <str:DataStructureComponents>
+          <str:DimensionList id="DimensionDescriptor">
+            <str:Dimension id="REF_AREA" position="1">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:CS_MAP(1.0).REF_AREA</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=TEST:CL_FREQ(1.0)</str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:TimeDimension id="TIME_PERIOD">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:CS_MAP(1.0).TIME_PERIOD</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="ObservationalTimePeriod"/>
+              </str:LocalRepresentation>
+            </str:TimeDimension>
+          </str:DimensionList>
+          <str:AttributeList id="AttributeDescriptor">
+            <str:Attribute id="OBS_STATUS" usage="optional">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:CS_MAP(1.0).OBS_STATUS</str:ConceptIdentity>
+              <str:AttributeRelationship>
+                <str:Observation/>
+              </str:AttributeRelationship>
+            </str:Attribute>
+          </str:AttributeList>
+          <str:MeasureList id="MeasureDescriptor">
+            <str:Measure id="OBS_VALUE">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:CS_MAP(1.0).OBS_VALUE</str:ConceptIdentity>
+            </str:Measure>
+          </str:MeasureList>
+        </str:DataStructureComponents>
+      </str:DataStructure>
+    </str:DataStructures>
+
+    <str:StructureMaps>
+      <str:StructureMap id="SM_SOURCE_TO_TARGET" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Source to target</com:Name>
+        <str:Source>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=TEST:DSD_SOURCE(1.0)</str:Source>
+        <str:Target>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=TEST:DSD_TARGET(1.0)</str:Target>
+        <str:ComponentMap>
+          <str:Source>FREQ</str:Source>
+          <str:Target>REF_AREA</str:Target>
+        </str:ComponentMap>
+        <str:ComponentMap>
+          <str:Source>TIME_PERIOD</str:Source>
+          <str:Target>TIME_PERIOD</str:Target>
+        </str:ComponentMap>
+        <str:ComponentMap>
+          <str:Source>OBS_STATUS</str:Source>
+          <str:Target>OBS_STATUS</str:Target>
+        </str:ComponentMap>
+        <str:ComponentMap>
+          <str:Source>OBS_VALUE</str:Source>
+          <str:Target>OBS_VALUE</str:Target>
+        </str:ComponentMap>
+      </str:StructureMap>
+    </str:StructureMaps>
+
+  </mes:Structures>
+</mes:Structure>

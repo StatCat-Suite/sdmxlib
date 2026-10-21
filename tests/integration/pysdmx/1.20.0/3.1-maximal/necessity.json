@@ -1,0 +1,78 @@
+[
+  {
+    "failure": "TypeError: Unexpected keyword argument 'AnnotationValue'",
+    "xpath": "//*[local-name()='Annotation']/*[local-name()='AnnotationValue']"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'X400'",
+    "xpath": "//*[local-name()='Contact']/*[local-name()='X400']"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'isPartialLanguage'",
+    "xpath": "//@isPartialLanguage"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'CodelistExtension'",
+    "xpath": "//*[local-name()='Codelist']/*[local-name()='CodelistExtension']"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'ISOConceptReference'",
+    "xpath": "//*[local-name()='Concept']/*[local-name()='ISOConceptReference']"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'uri'",
+    "xpath": "//*[local-name()='DimensionList' or local-name()='AttributeList' or local-name()='MeasureList']/*/@uri"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'evolvingstructure'",
+    "xpath": "//@evolvingStructure"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'dimensionconstraint'",
+    "xpath": "//*[local-name()='Dataflow']/*[local-name()='DimensionConstraint']"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'target'",
+    "xpath": "//*[local-name()='MetadataProvisionAgreement']/*[local-name()='Target']"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'Annotations'",
+    "xpath": "//*[local-name()='FixedValueMap' or local-name()='DatePatternMap']/*[local-name()='Annotations']"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'source'",
+    "xpath": "//*[local-name()='FixedValueMap'][*[local-name()='Source']]"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'uri'",
+    "xpath": "//*[local-name()='DatePatternMap']/@uri"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'Link'",
+    "xpath": "//*[local-name()='DatePatternMap']/*[local-name()='Link']"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'MappedFrequencies'",
+    "xpath": "//*[local-name()='DatePatternMap'][*[local-name()='FrequencyDimension']]"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'epochmap'",
+    "xpath": "//*[local-name()='StructureMap']/*[local-name()='EpochMap']"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'frequencyformatmapping'",
+    "xpath": "//*[local-name()='StructureMap']/*[local-name()='FrequencyFormatMapping']"
+  },
+  {
+    "failure": "KeyError: 'Ref'",
+    "xpath": "//*[local-name()='AttributeRelationship']/*[local-name()='Dimension']/@optional"
+  },
+  {
+    "failure": "TypeError: Unexpected keyword argument 'Annotations'",
+    "xpath": "//*[local-name()='Group']/*[local-name()='Annotations']"
+  },
+  {
+    "failure": "Invalid: Name is required for NameableArtefact id= m 2",
+    "xpath": "//*[local-name()='ValueList']/*[local-name()='ValueItem'][not(*[local-name()='Name'])]"
+  }
+]

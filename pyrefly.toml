@@ -1,0 +1,133 @@
+# pyrefly.toml — the project's type checker (`just typecheck`, editor LSP).
+#
+# pyrefly is the only checker (#425). Until then basedpyright was the source
+# of truth and pyrefly a second opinion over `src/` alone; the two disagreed
+# on enough of the typing spec (phantom-parameter variance, overload
+# resolution on an `Any` argument, #399) that every fix had to satisfy both,
+# and suppressions had to be written twice.
+# basedpyright's per-directory subtractions for `tests/` became the
+# `[[sub-config]]` at the bottom of this file.
+#
+# History: through pyrefly 1.1.x this file carried `preset = "off"`, because a
+# full-strength run flagged ~50 attrs-`field(converter=…)` findings — generic
+# converters (`to_itemlist[T]`) leaking an unbound TypeVar into the synthesized
+# `__init__`, and classmethod converters (`Enum.parse`) misread as taking
+# `cls`. This model is converter-heavy, so that would have been permanent
+# noise. pyrefly 1.2.0 fixed attrs modeling: the same run went 58 → 10
+# findings, all converter noise gone. The remaining 10 were 5 genuine defects
+# (a covariance violation masked by an `SdmxUrn[Any]`, a `hasattr` duck-test
+# neither checker could narrow, two dead `attrs.has` TypeGuards, and an
+# invariant `Ref[A|B]` returned as `Ref[A] | Ref[B]`) — all fixed in code, no
+# suppressions — plus 5 `implicit-any-lambda` false positives, which kept that
+# rule off until pyrefly 1.4 fixed them. So the preset went on.
+#
+# Then `preset = "all"` (below) replaced the allow-list. That cost ~60 more code
+# fixes and still no suppressions: 31 missing `@override`, 11 `Any` leaking out
+# of a declared return type, 17 redundant `int()`/`bool()`/`str()` conversions
+# — three of which turned out to be sanitising casts standing in for bind
+# parameters in SQL, now parameterised — a deprecated `@contextmanager` return
+# annotation, and an attribute declared inside `__attrs_post_init__`. Note what
+# the middle group means: a plain `--min-severity error` run was reporting "0
+# findings" while pyrefly's entire warn tier went unread.
+#
+# Keep this at 0 findings. A new one is a real defect, not noise.
+
+# Matches `requires-python` in pyproject.toml.
+python-version = "3.14"
+python-platform = "linux"
+
+# src-layout: make `import sdmxlib` resolve. "." is on the search path so
+# tests can import `tests.support.*`, as they do at runtime under pytest.
+#
+# `tests/` was outside every checker until #347 brought it under basedpyright,
+# and outside pyrefly until #425; both passes found real defects. Its two
+# subtractions are the `[[sub-config]]` at the bottom.
+#
+# `bench/` is included because it was outside every gate and rotted to an
+# ImportError unnoticed — the API moved (`Registry` -> `LocalRegistry`, `urn`
+# -> `urn_for`) and no checker read the directory. It is in `just lint` and
+# `just typecheck` for the same reason. `bench/concurrency` is a search-path
+# entry as well as an include: the bench is run as a script
+# (`python bench/concurrency/bench_concurrency.py`), so its sibling
+# `_harness` resolves off the script's own directory at runtime and pyrefly
+# needs telling where that is.
+search-path = ["src", "bench/concurrency", "."]
+project-includes = ["src", "bench", "tests"]
+project-excludes = ["**/__pycache__", "**/.venv", "**/node_modules"]
+
+# Governance model, deliberately the same one ruff runs under: turn EVERYTHING
+# on, then subtract, with a written reason per subtraction. `preset = "all"`
+# enables every error kind at error severity — including the ones pyrefly ships
+# at `warn`, which `--min-severity error` would otherwise hide (that was how 17
+# `unnecessary-type-conversion` findings and a deprecated `@contextmanager`
+# overload sat unreported under a "0 findings" run). The upside over an
+# allow-list is that a NEW error kind in the next pyrefly release arrives as a
+# visible finding instead of silently not running.
+preset = "all"
+
+[errors]
+# ── Subtractions from `preset = "all"` ────────────────────────────────────
+# Everything below is off on purpose. Measured counts are from the run that
+# introduced this config; they are the argument, not decoration.
+#
+# The four bulk rejections are all the same shape — a house style we hold
+# deliberately, or third-party boundary noise we don't control:
+implicit-bool = false          # 557 — `if not ids:` / `if value_rows:` is idiomatic Python
+unknown-argument-type = false  # 137 — duckdb / lxml / pyarrow call sites
+unknown-variable-type = false  #  20 — same, on the receiving end
+unused-call-result = false     # 106 — mostly `conn.execute(...)`, whose return we do not want
+
+# `explicit-any` (241) flags every literal `Any` token, including the phantom
+# type-args like `SdmxUrn[Any]` that CLAUDE.md specifically endorses, where the
+# object stays concretely typed and body-checking is unaffected. The check we
+# actually want is `implicit-any` — a type *degrading* to Any — and that one is
+# on via the preset; `just check-any` ratchets the explicit ones by count.
+explicit-any = false
+
+# Re-exports through `sdmxlib/__init__.py` and the model package are the public
+# API surface; `implicit-reexport` (13) wants an explicit `as` alias or
+# `__all__` entry for each. Worth revisiting as a deliberate API-surface pass,
+# not as a side effect of a checker change.
+implicit-reexport = false
+
+# `unused-type-ignore` governs the shared `# type: ignore` form; pyrefly's own
+# `# pyrefly: ignore[...]` comments are covered by `unused-ignore`, on via the
+# preset. It was off while two checkers honoured `# type: ignore`, since
+# neither could tell a dead comment from one carrying the *other* tool's error.
+# With one checker that ambiguity is gone, and this replaces basedpyright's
+# `reportUnnecessaryTypeIgnoreComment` as the dead-suppression guard for that
+# form (28 sites remain, all in `tests/`). Measured 0 findings when enabled.
+unused-type-ignore = true
+
+
+# ── tests/ ────────────────────────────────────────────────────────────────
+# The same two subtractions basedpyright carried per test directory (#347),
+# measured again under pyrefly when tests/ joined its scope (#425). Everything
+# else, including Optional member access, is on: the suite narrows with
+# `tests/support/narrow.py:present()` instead.
+[[sub-config]]
+matches = "tests/**"
+
+[sub-config.errors]
+# 1,842 — test functions without `-> None`. A test's return is never consumed,
+# so the annotation documents nothing.
+unannotated-return = false
+# 917 — pytest fixtures arrive by parameter name; annotating each one restates
+# the fixture's own return type at every use and goes stale when it changes.
+implicit-any-parameter = false
+# TEMPORARY — pyrefly 1.4's new implicit-`Any` rules, measured on tests/ when
+# the bump landed with src/ and bench/ at zero. Fixed rule by rule in the MRs
+# that follow it, each removing its line here; none is a standing subtraction.
+# 2,119 — an attribute read whose type is an implicit `Any`, mostly from an
+# untyped fixture parameter (`implicit-any-parameter` is off above).
+unknown-attribute-access = false
+# 371 — a `TypedDict` unpacked with `**` into a call; closing it (PEP 728) is
+# how src/ fixed its 171.
+open-unpacking = false
+# 91 — a lambda or function whose return is an implicit `Any`.
+unknown-return-type = false
+# 134 — a lambda whose parameter type is an implicit `Any`. This was off
+# everywhere as a pyrefly 1.2.0 false positive (`sorted(xs, key=lambda s:
+# s.upper())` reported `s` unknown); 1.4 fixed it — that repro is clean, and
+# src/ and bench/ have none — so the rule is on, and these are real.
+implicit-any-lambda = false

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SDMX-ML 3.0 fixture exercising RepresentationMap variant + validity round-trip.
+
+  Issue #107. The 3.0 ValueMappingType allows three semantic operations
+  per mapping, discriminated by attributes on <SourceValue>:
+    - literal (no attrs)
+    - regex   (isRegEx="true")
+    - index   (startIndex / endIndex)
+  Plus per-mapping @validFrom / @validTo (xs:date).
+-->
+<mes:Structure
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/message"
+  xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/structure"
+  xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/common">
+  <mes:Header>
+    <mes:ID>WITH_REPMAP_VARIANTS</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2024-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+
+    <str:Codelists>
+      <str:Codelist agencyID="TEST" id="CL_SRC" version="1.0">
+        <com:Name xml:lang="en">Source codelist</com:Name>
+        <str:Code id="A"><com:Name xml:lang="en">A</com:Name></str:Code>
+      </str:Codelist>
+      <str:Codelist agencyID="TEST" id="CL_TGT" version="1.0">
+        <com:Name xml:lang="en">Target codelist</com:Name>
+        <str:Code id="ANNUAL"><com:Name xml:lang="en">Annual</com:Name></str:Code>
+      </str:Codelist>
+    </str:Codelists>
+
+    <str:RepresentationMaps>
+      <str:RepresentationMap agencyID="TEST" id="RM_VARIANTS" version="1.0">
+        <com:Name xml:lang="en">Variant exemplar</com:Name>
+        <str:SourceCodelist>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=TEST:CL_SRC(1.0)</str:SourceCodelist>
+        <str:TargetCodelist>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=TEST:CL_TGT(1.0)</str:TargetCodelist>
+
+        <!-- 1. Literal pair, no validity. -->
+        <str:RepresentationMapping>
+          <str:SourceValue>A</str:SourceValue>
+          <str:TargetValue>ANNUAL</str:TargetValue>
+        </str:RepresentationMapping>
+
+        <!-- 2. Literal pair with validity bounds (xs:date, not dateTime). -->
+        <str:RepresentationMapping validFrom="2020-01-01" validTo="2023-12-31">
+          <str:SourceValue>Q</str:SourceValue>
+          <str:TargetValue>QUARTERLY</str:TargetValue>
+        </str:RepresentationMapping>
+
+        <!-- 3. Regex source: any "M-" prefixed value maps to MONTHLY. -->
+        <str:RepresentationMapping>
+          <str:SourceValue isRegEx="true">^M-[0-9]+$</str:SourceValue>
+          <str:TargetValue>MONTHLY</str:TargetValue>
+        </str:RepresentationMapping>
+
+        <!-- 4. Index source: positions 2..3 of the source map to WEEKLY. -->
+        <str:RepresentationMapping>
+          <str:SourceValue startIndex="2" endIndex="3">WK</str:SourceValue>
+          <str:TargetValue>WEEKLY</str:TargetValue>
+        </str:RepresentationMapping>
+      </str:RepresentationMap>
+
+      <!--
+        #131/#345 — RepresentationMap with a primitive dataType endpoint.
+        Present in the 3.0 fixture and absent here, which is why the 3.1
+        reader and writer could both drop `*DataType` and the round-trip
+        still passed: both sides had lost the same thing.
+      -->
+      <str:RepresentationMap agencyID="TEST" id="RM_DATATYPE" version="1.0">
+        <com:Name xml:lang="en">Codelist-to-Integer exemplar</com:Name>
+        <str:SourceCodelist>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=TEST:CL_SRC(1.0)</str:SourceCodelist>
+        <str:TargetDataType>Integer</str:TargetDataType>
+        <str:RepresentationMapping>
+          <str:SourceValue>A</str:SourceValue>
+          <str:TargetValue>1</str:TargetValue>
+        </str:RepresentationMapping>
+      </str:RepresentationMap>
+    </str:RepresentationMaps>
+
+  </mes:Structures>
+</mes:Structure>

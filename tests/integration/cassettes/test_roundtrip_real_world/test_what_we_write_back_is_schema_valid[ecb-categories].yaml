@@ -1,0 +1,314 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      Connection:
+      - close
+      Host:
+      - data-api.ecb.europa.eu
+      User-Agent:
+      - Python-urllib/3.13
+    method: GET
+    uri: https://data-api.ecb.europa.eu/service/categoryscheme/ECB/all/latest?references=all
+  response:
+    body:
+      string: '<?xml version=''1.0'' encoding=''UTF-8''?><mes:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message"
+        xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common"><mes:Header><mes:ID>IREF204527</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2026-08-20T10:07:33Z</mes:Prepared><mes:Sender
+        id="Unknown"/><mes:Receiver id="not_supplied"/></mes:Header><mes:Structures><str:OrganisationSchemes><str:AgencyScheme
+        urn="urn:sdmx:org.sdmx.infomodel.base.AgencyScheme=SDMX:AGENCIES(1.0)" isExternalReference="false"
+        agencyID="SDMX" id="AGENCIES" isFinal="false" version="1.0"><com:Name xml:lang="en">SDMX
+        Agency Scheme</com:Name><str:Agency urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).SDMX"
+        id="SDMX"><com:Name xml:lang="en">SDMX</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).ECB" id="ECB"><com:Name
+        xml:lang="en">European Central Bank</com:Name></str:Agency><str:Agency urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).BIS"
+        id="BIS"><com:Name xml:lang="en">Bank for International Settlements</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).IMF" id="IMF"><com:Name
+        xml:lang="en">International Monetary Fund</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).ESTAT" id="ESTAT"><com:Name
+        xml:lang="en">Eurostat</com:Name></str:Agency><str:Agency urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).EUROSTAT"
+        id="EUROSTAT"><com:Name xml:lang="en">Eurostat</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).OECD" id="OECD"><com:Name
+        xml:lang="en">Organisation for Economic Co-operation and Development</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).DE_BBK" id="DE_BBK"><com:Name
+        xml:lang="en">Bundesbank</com:Name></str:Agency><str:Agency urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).OECD2"
+        id="OECD2"><com:Name xml:lang="en">Organisation for Economic Co-operation
+        and Development (PULL)</com:Name></str:Agency><str:Agency urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).IMF2"
+        id="IMF2"><com:Name xml:lang="en">International Monetary Fund (PULL)</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).ILO" id="ILO"><com:Name
+        xml:lang="en">International Labour Organization</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).EC_ECFIN"
+        id="EC_ECFIN"><com:Name xml:lang="en">Economic and Financial Affairs</com:Name></str:Agency></str:AgencyScheme></str:OrganisationSchemes><str:Dataflows><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EON(1.0)" isExternalReference="false"
+        agencyID="ECB" id="EON" isFinal="false" version="1.0"><com:Name xml:lang="en">EONIA:
+        Euro Interbank Offered Rate</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_EON1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:ILM(1.0)" isExternalReference="false"
+        agencyID="ECB" id="ILM" isFinal="false" version="1.0"><com:Name xml:lang="en">Internal
+        Liquidity Management</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_ILM1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow></str:Dataflows><str:CategorySchemes><str:CategoryScheme
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=ECB:MOBILE_NAVI(1.0)"
+        isExternalReference="false" agencyID="ECB" id="MOBILE_NAVI" isFinal="false"
+        version="1.0"><com:Name xml:lang="en">Economic concepts</com:Name><com:Description
+        xml:lang="en">This category scheme is used for the Data Explorer of the ECB
+        SDW mobile application. It is used for grouping all dataflows following the
+        top-level categories displayed on the SDW portal.</com:Description><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).01"
+        id="01"><com:Name xml:lang="en">Monetary operations</com:Name><com:Description
+        xml:lang="en">This section shows the key ECB interest rates for the euro area
+        as well as statistics on minimum reserves and liquidity factors and conditions.</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).02"
+        id="02"><com:Name xml:lang="en">Prices, output, demand and labour market</com:Name><com:Description
+        xml:lang="en">HICP, national accounts, labour market and survey indicator
+        data.</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).03"
+        id="03"><com:Name xml:lang="en">Monetary and financial statistics</com:Name><com:Description
+        xml:lang="en">Statistics regarding monetary financial institutions (MFIs),
+        investment funds, financial stability and financial markets, and payments
+        within the euro area. This includes the monetary aggregates, their counterparts
+        and other monetary stocks and flows statistics, including minimum reserve
+        and liquidity statistics and all seasonally adjusted statistics; statistics
+        on securities issues (including quoted shares), investment funds and other
+        financial intermediaries, statistics on yields and interest rates, banking
+        statistics, financial market statistics, financial integration indicators,
+        and STEP statistics.</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).04"
+        id="04"><com:Name xml:lang="en">Euro area accounts</com:Name><com:Description
+        xml:lang="en">These statistics present balance sheets (stocks) and financial
+        and non-financial flows of the different sectors of the euro area, and between
+        these sectors and the rest of the world. Selected items for other economic
+        areas are also included.</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).05"
+        id="05"><com:Name xml:lang="en">Government finance</com:Name><com:Description
+        xml:lang="en">These statistics show the general government deficit, debt and
+        deficit-debt adjustment.</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).06"
+        id="06"><com:Name xml:lang="en">External transactions and positions</com:Name><com:Description
+        xml:lang="en">This section provides data on balance of payments (b.o.p.) statistics,
+        euro area external trade in goods, aggregated data on the international investment
+        position (i.i.p.) and the outstanding amounts of the Eurosystem''s international
+        reserves The euro area b.o.p. is compiled by the ECB whereas the main source
+        for trade data is the European Commission (Eurostat).</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).07"
+        id="07"><com:Name xml:lang="en">Exchange rates</com:Name><com:Description
+        xml:lang="en">This section shows the euro foreign exchange reference rates
+        that are based on the regular daily concertation procedure between central
+        banks within and outside the European System of Central Banks, which normally
+        takes place at 2.15 p.m. ECB time (CET). It also shows the nominal effective
+        exchange rates of the euro as calculated by the ECB.</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).08"
+        id="08"><com:Name xml:lang="en">Payments and securities trading, clearing,
+        settlement</com:Name><com:Description xml:lang="en">Covers statistics of:
+        payment instructions processed by TARGET and other selected interbank fund
+        transfer systems, domestic payments in each RTGS system participating in or
+        connected to TARGET, and statistics on cross-border payments. All data are
+        presented both by volume and by value of transactions.</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).09"
+        id="09"><com:Name xml:lang="en">Banknotes and Coins</com:Name></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).10"
+        id="10"><com:Name xml:lang="en">Indicators of Financial Integration</com:Name></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).11"
+        id="11"><com:Name xml:lang="en">Real Time Database (research database)</com:Name><com:Description
+        xml:lang="en">This is an experimental dataset constructed to provide historical
+        vintages of data published in the Monthly Bulletin since January 2001.</com:Description></str:Category></str:CategoryScheme></str:CategorySchemes><str:Categorisations><str:Categorisation
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Categorisation=ECB:146679AB-6A0F-F0EB-D566-6F63CE655365(1.0)"
+        isExternalReference="false" agencyID="ECB" id="146679AB-6A0F-F0EB-D566-6F63CE655365"
+        isFinal="false" version="1.0"><com:Name xml:lang="en">Categorise: DATAFLOWECB:EON(1.0)</com:Name><str:Source><Ref
+        package="datastructure" agencyID="ECB" id="EON" version="1.0" class="Dataflow"/></str:Source><str:Target><Ref
+        maintainableParentID="MOBILE_NAVI" package="categoryscheme" maintainableParentVersion="1.0"
+        agencyID="ECB" id="03" class="Category"/></str:Target></str:Categorisation><str:Categorisation
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Categorisation=ECB:7C64141B-4ECF-99D2-25B3-E2DCEE35A92B(1.0)"
+        isExternalReference="false" agencyID="ECB" id="7C64141B-4ECF-99D2-25B3-E2DCEE35A92B"
+        isFinal="false" version="1.0"><com:Name xml:lang="en">Categorise: DATAFLOWECB:ILM(1.0)</com:Name><str:Source><Ref
+        package="datastructure" agencyID="ECB" id="ILM" version="1.0" class="Dataflow"/></str:Source><str:Target><Ref
+        maintainableParentID="MOBILE_NAVI" package="categoryscheme" maintainableParentVersion="1.0"
+        agencyID="ECB" id="01" class="Category"/></str:Target></str:Categorisation></str:Categorisations></mes:Structures></mes:Structure>
+
+        '
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Connection:
+      - close
+      Content-Disposition:
+      - attachment;filename=data.xml
+      Content-Type:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      Date:
+      - Thu, 20 Aug 2026 10:07:33 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - myracloud
+      Strict-Transport-Security:
+      - max-age=31536000 ; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-Xss-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      Connection:
+      - close
+      Host:
+      - data-api.ecb.europa.eu
+      User-Agent:
+      - sdmxlib-tests
+    method: GET
+    uri: https://data-api.ecb.europa.eu/service/categoryscheme/ECB/all/latest?references=all
+  response:
+    body:
+      string: '<?xml version=''1.0'' encoding=''UTF-8''?><mes:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message"
+        xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common"><mes:Header><mes:ID>IREF205474</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2026-08-20T10:09:04Z</mes:Prepared><mes:Sender
+        id="Unknown"/><mes:Receiver id="not_supplied"/></mes:Header><mes:Structures><str:OrganisationSchemes><str:AgencyScheme
+        urn="urn:sdmx:org.sdmx.infomodel.base.AgencyScheme=SDMX:AGENCIES(1.0)" isExternalReference="false"
+        agencyID="SDMX" id="AGENCIES" isFinal="false" version="1.0"><com:Name xml:lang="en">SDMX
+        Agency Scheme</com:Name><str:Agency urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).SDMX"
+        id="SDMX"><com:Name xml:lang="en">SDMX</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).ECB" id="ECB"><com:Name
+        xml:lang="en">European Central Bank</com:Name></str:Agency><str:Agency urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).BIS"
+        id="BIS"><com:Name xml:lang="en">Bank for International Settlements</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).IMF" id="IMF"><com:Name
+        xml:lang="en">International Monetary Fund</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).ESTAT" id="ESTAT"><com:Name
+        xml:lang="en">Eurostat</com:Name></str:Agency><str:Agency urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).EUROSTAT"
+        id="EUROSTAT"><com:Name xml:lang="en">Eurostat</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).OECD" id="OECD"><com:Name
+        xml:lang="en">Organisation for Economic Co-operation and Development</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).DE_BBK" id="DE_BBK"><com:Name
+        xml:lang="en">Bundesbank</com:Name></str:Agency><str:Agency urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).OECD2"
+        id="OECD2"><com:Name xml:lang="en">Organisation for Economic Co-operation
+        and Development (PULL)</com:Name></str:Agency><str:Agency urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).IMF2"
+        id="IMF2"><com:Name xml:lang="en">International Monetary Fund (PULL)</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).ILO" id="ILO"><com:Name
+        xml:lang="en">International Labour Organization</com:Name></str:Agency><str:Agency
+        urn="urn:sdmx:org.sdmx.infomodel.base.Agency=SDMX:AGENCIES(1.0).EC_ECFIN"
+        id="EC_ECFIN"><com:Name xml:lang="en">Economic and Financial Affairs</com:Name></str:Agency></str:AgencyScheme></str:OrganisationSchemes><str:Dataflows><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EON(1.0)" isExternalReference="false"
+        agencyID="ECB" id="EON" isFinal="false" version="1.0"><com:Name xml:lang="en">EONIA:
+        Euro Interbank Offered Rate</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_EON1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:ILM(1.0)" isExternalReference="false"
+        agencyID="ECB" id="ILM" isFinal="false" version="1.0"><com:Name xml:lang="en">Internal
+        Liquidity Management</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_ILM1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow></str:Dataflows><str:CategorySchemes><str:CategoryScheme
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=ECB:MOBILE_NAVI(1.0)"
+        isExternalReference="false" agencyID="ECB" id="MOBILE_NAVI" isFinal="false"
+        version="1.0"><com:Name xml:lang="en">Economic concepts</com:Name><com:Description
+        xml:lang="en">This category scheme is used for the Data Explorer of the ECB
+        SDW mobile application. It is used for grouping all dataflows following the
+        top-level categories displayed on the SDW portal.</com:Description><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).01"
+        id="01"><com:Name xml:lang="en">Monetary operations</com:Name><com:Description
+        xml:lang="en">This section shows the key ECB interest rates for the euro area
+        as well as statistics on minimum reserves and liquidity factors and conditions.</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).02"
+        id="02"><com:Name xml:lang="en">Prices, output, demand and labour market</com:Name><com:Description
+        xml:lang="en">HICP, national accounts, labour market and survey indicator
+        data.</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).03"
+        id="03"><com:Name xml:lang="en">Monetary and financial statistics</com:Name><com:Description
+        xml:lang="en">Statistics regarding monetary financial institutions (MFIs),
+        investment funds, financial stability and financial markets, and payments
+        within the euro area. This includes the monetary aggregates, their counterparts
+        and other monetary stocks and flows statistics, including minimum reserve
+        and liquidity statistics and all seasonally adjusted statistics; statistics
+        on securities issues (including quoted shares), investment funds and other
+        financial intermediaries, statistics on yields and interest rates, banking
+        statistics, financial market statistics, financial integration indicators,
+        and STEP statistics.</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).04"
+        id="04"><com:Name xml:lang="en">Euro area accounts</com:Name><com:Description
+        xml:lang="en">These statistics present balance sheets (stocks) and financial
+        and non-financial flows of the different sectors of the euro area, and between
+        these sectors and the rest of the world. Selected items for other economic
+        areas are also included.</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).05"
+        id="05"><com:Name xml:lang="en">Government finance</com:Name><com:Description
+        xml:lang="en">These statistics show the general government deficit, debt and
+        deficit-debt adjustment.</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).06"
+        id="06"><com:Name xml:lang="en">External transactions and positions</com:Name><com:Description
+        xml:lang="en">This section provides data on balance of payments (b.o.p.) statistics,
+        euro area external trade in goods, aggregated data on the international investment
+        position (i.i.p.) and the outstanding amounts of the Eurosystem''s international
+        reserves The euro area b.o.p. is compiled by the ECB whereas the main source
+        for trade data is the European Commission (Eurostat).</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).07"
+        id="07"><com:Name xml:lang="en">Exchange rates</com:Name><com:Description
+        xml:lang="en">This section shows the euro foreign exchange reference rates
+        that are based on the regular daily concertation procedure between central
+        banks within and outside the European System of Central Banks, which normally
+        takes place at 2.15 p.m. ECB time (CET). It also shows the nominal effective
+        exchange rates of the euro as calculated by the ECB.</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).08"
+        id="08"><com:Name xml:lang="en">Payments and securities trading, clearing,
+        settlement</com:Name><com:Description xml:lang="en">Covers statistics of:
+        payment instructions processed by TARGET and other selected interbank fund
+        transfer systems, domestic payments in each RTGS system participating in or
+        connected to TARGET, and statistics on cross-border payments. All data are
+        presented both by volume and by value of transactions.</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).09"
+        id="09"><com:Name xml:lang="en">Banknotes and Coins</com:Name></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).10"
+        id="10"><com:Name xml:lang="en">Indicators of Financial Integration</com:Name></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB:MOBILE_NAVI(1.0).11"
+        id="11"><com:Name xml:lang="en">Real Time Database (research database)</com:Name><com:Description
+        xml:lang="en">This is an experimental dataset constructed to provide historical
+        vintages of data published in the Monthly Bulletin since January 2001.</com:Description></str:Category></str:CategoryScheme></str:CategorySchemes><str:Categorisations><str:Categorisation
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Categorisation=ECB:146679AB-6A0F-F0EB-D566-6F63CE655365(1.0)"
+        isExternalReference="false" agencyID="ECB" id="146679AB-6A0F-F0EB-D566-6F63CE655365"
+        isFinal="false" version="1.0"><com:Name xml:lang="en">Categorise: DATAFLOWECB:EON(1.0)</com:Name><str:Source><Ref
+        package="datastructure" agencyID="ECB" id="EON" version="1.0" class="Dataflow"/></str:Source><str:Target><Ref
+        maintainableParentID="MOBILE_NAVI" package="categoryscheme" maintainableParentVersion="1.0"
+        agencyID="ECB" id="03" class="Category"/></str:Target></str:Categorisation><str:Categorisation
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Categorisation=ECB:7C64141B-4ECF-99D2-25B3-E2DCEE35A92B(1.0)"
+        isExternalReference="false" agencyID="ECB" id="7C64141B-4ECF-99D2-25B3-E2DCEE35A92B"
+        isFinal="false" version="1.0"><com:Name xml:lang="en">Categorise: DATAFLOWECB:ILM(1.0)</com:Name><str:Source><Ref
+        package="datastructure" agencyID="ECB" id="ILM" version="1.0" class="Dataflow"/></str:Source><str:Target><Ref
+        maintainableParentID="MOBILE_NAVI" package="categoryscheme" maintainableParentVersion="1.0"
+        agencyID="ECB" id="01" class="Category"/></str:Target></str:Categorisation></str:Categorisations></mes:Structures></mes:Structure>
+
+        '
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Connection:
+      - close
+      Content-Disposition:
+      - attachment;filename=data.xml
+      Content-Type:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      Date:
+      - Thu, 20 Aug 2026 10:09:04 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - myracloud
+      Strict-Transport-Security:
+      - max-age=31536000 ; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-Xss-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1

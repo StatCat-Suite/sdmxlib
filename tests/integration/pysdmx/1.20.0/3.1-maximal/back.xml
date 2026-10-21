@@ -1,0 +1,797 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mes:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/message" xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/common" xsi:schemaLocation="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/message https://registry.sdmx.org/schemas/v3_1/SDMXMessage.xsd">
+	<mes:Header>
+		<mes:ID>37040ac7-4a61-4741-9a23-127d328a8784</mes:ID>
+		<mes:Test>false</mes:Test>
+		<mes:Prepared>2026-10-20T15:12:23Z</mes:Prepared>
+		<mes:Sender id="ZZZ"/>
+	</mes:Header>
+	<mes:Structures>
+		<str:AgencySchemes>
+			<str:AgencyScheme id="AGENCIES" uri="https://example.org/uri/AGENCIES" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG" isPartial="true">
+				<com:Annotations>
+					<com:Annotation id="AGENCIES-ANN">
+						<com:AnnotationTitle>AGENCIES-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>AGENCIES-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/AGENCIES', {'lang': 'fr', '#text': 'https://example.org/AGENCIES/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">AGENCIES-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">AGENCIES-NAME-en</com:Name>
+				<com:Description xml:lang="en">AGENCIES-DESC-en</com:Description>
+				<str:Agency id="A1" uri="https://example.org/uri/agency">
+					<com:Annotations>
+						<com:Annotation id="AGENCY-ANN">
+							<com:AnnotationTitle>AGENCY-TITLE</com:AnnotationTitle>
+							<com:AnnotationType>AGENCY-TYPE</com:AnnotationType>
+							<com:AnnotationURL>['https://example.org/AGENCY', {'lang': 'fr', '#text': 'https://example.org/AGENCY/fr'}]</com:AnnotationURL>
+							<com:AnnotationText xml:lang="en">AGENCY-TEXT-en</com:AnnotationText>
+						</com:Annotation>
+					</com:Annotations>
+					<com:Name xml:lang="en">AGENCY-NAME-en</com:Name>
+					<com:Description xml:lang="en">AGENCY-DESC-en</com:Description>
+					<str:Contact>
+						<com:Name>CONTACT-en</com:Name>
+						<str:Department>DEPT-en</str:Department>
+						<str:Role>ROLE-en</str:Role>
+						<str:Telephone>+1-555-0100</str:Telephone>
+						<str:Fax>+1-555-0101</str:Fax>
+						<str:URI>https://example.org/contact</str:URI>
+						<str:Email>contact@example.org</str:Email>
+					</str:Contact>
+				</str:Agency>
+			</str:AgencyScheme>
+		</str:AgencySchemes>
+		<str:DataProviderSchemes>
+			<str:DataProviderScheme id="DATA_PROVIDERS" uri="https://example.org/uri/DATA_PROVIDERS" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG" isPartial="true">
+				<com:Annotations>
+					<com:Annotation id="DATA_PROVIDERS-ANN">
+						<com:AnnotationTitle>DATA_PROVIDERS-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>DATA_PROVIDERS-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/DATA_PROVIDERS', {'lang': 'fr', '#text': 'https://example.org/DATA_PROVIDERS/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">DATA_PROVIDERS-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">DATA_PROVIDERS-NAME-en</com:Name>
+				<com:Description xml:lang="en">DATA_PROVIDERS-DESC-en</com:Description>
+				<str:DataProvider id="P1" uri="https://example.org/uri/provider">
+					<com:Annotations>
+						<com:Annotation id="PROVIDER-ANN">
+							<com:AnnotationTitle>PROVIDER-TITLE</com:AnnotationTitle>
+							<com:AnnotationType>PROVIDER-TYPE</com:AnnotationType>
+							<com:AnnotationURL>['https://example.org/PROVIDER', {'lang': 'fr', '#text': 'https://example.org/PROVIDER/fr'}]</com:AnnotationURL>
+							<com:AnnotationText xml:lang="en">PROVIDER-TEXT-en</com:AnnotationText>
+						</com:Annotation>
+					</com:Annotations>
+					<com:Name xml:lang="en">PROVIDER-NAME-en</com:Name>
+					<com:Description xml:lang="en">PROVIDER-DESC-en</com:Description>
+					<str:Contact>
+						<com:Name>CONTACT-en</com:Name>
+						<str:Department>DEPT-en</str:Department>
+						<str:Role>ROLE-en</str:Role>
+						<str:Telephone>+1-555-0100</str:Telephone>
+						<str:Fax>+1-555-0101</str:Fax>
+						<str:URI>https://example.org/contact</str:URI>
+						<str:Email>contact@example.org</str:Email>
+					</str:Contact>
+				</str:DataProvider>
+			</str:DataProviderScheme>
+		</str:DataProviderSchemes>
+		<str:DataConsumerSchemes>
+			<str:DataConsumerScheme id="DATA_CONSUMERS" uri="https://example.org/uri/DATA_CONSUMERS" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG" isPartial="true">
+				<com:Annotations>
+					<com:Annotation id="DATA_CONSUMERS-ANN">
+						<com:AnnotationTitle>DATA_CONSUMERS-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>DATA_CONSUMERS-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/DATA_CONSUMERS', {'lang': 'fr', '#text': 'https://example.org/DATA_CONSUMERS/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">DATA_CONSUMERS-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">DATA_CONSUMERS-NAME-en</com:Name>
+				<com:Description xml:lang="en">DATA_CONSUMERS-DESC-en</com:Description>
+				<str:DataConsumer id="C1" uri="https://example.org/uri/consumer">
+					<com:Annotations>
+						<com:Annotation id="CONSUMER-ANN">
+							<com:AnnotationTitle>CONSUMER-TITLE</com:AnnotationTitle>
+							<com:AnnotationType>CONSUMER-TYPE</com:AnnotationType>
+							<com:AnnotationURL>['https://example.org/CONSUMER', {'lang': 'fr', '#text': 'https://example.org/CONSUMER/fr'}]</com:AnnotationURL>
+							<com:AnnotationText xml:lang="en">CONSUMER-TEXT-en</com:AnnotationText>
+						</com:Annotation>
+					</com:Annotations>
+					<com:Name xml:lang="en">CONSUMER-NAME-en</com:Name>
+					<com:Description xml:lang="en">CONSUMER-DESC-en</com:Description>
+					<str:Contact>
+						<com:Name>CONTACT-en</com:Name>
+						<str:Department>DEPT-en</str:Department>
+						<str:Role>ROLE-en</str:Role>
+						<str:Telephone>+1-555-0100</str:Telephone>
+						<str:Fax>+1-555-0101</str:Fax>
+						<str:URI>https://example.org/contact</str:URI>
+						<str:Email>contact@example.org</str:Email>
+					</str:Contact>
+				</str:DataConsumer>
+			</str:DataConsumerScheme>
+		</str:DataConsumerSchemes>
+		<str:MetadataProviderSchemes>
+			<str:MetadataProviderScheme id="METADATA_PROVIDERS" uri="https://example.org/uri/METADATA_PROVIDERS" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG_MD" isPartial="true">
+				<com:Annotations>
+					<com:Annotation id="METADATA_PROVIDERS-ANN">
+						<com:AnnotationTitle>METADATA_PROVIDERS-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>METADATA_PROVIDERS-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/METADATA_PROVIDERS', {'lang': 'fr', '#text': 'https://example.org/METADATA_PROVIDERS/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">METADATA_PROVIDERS-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">METADATA_PROVIDERS-NAME-en</com:Name>
+				<com:Description xml:lang="en">METADATA_PROVIDERS-DESC-en</com:Description>
+				<str:MetadataProvider id="MP1" uri="https://example.org/uri/mdprovider">
+					<com:Annotations>
+						<com:Annotation id="MDPROVIDER-ANN">
+							<com:AnnotationTitle>MDPROVIDER-TITLE</com:AnnotationTitle>
+							<com:AnnotationType>MDPROVIDER-TYPE</com:AnnotationType>
+							<com:AnnotationURL>['https://example.org/MDPROVIDER', {'lang': 'fr', '#text': 'https://example.org/MDPROVIDER/fr'}]</com:AnnotationURL>
+							<com:AnnotationText xml:lang="en">MDPROVIDER-TEXT-en</com:AnnotationText>
+						</com:Annotation>
+					</com:Annotations>
+					<com:Name xml:lang="en">MDPROVIDER-NAME-en</com:Name>
+					<com:Description xml:lang="en">MDPROVIDER-DESC-en</com:Description>
+					<str:Contact>
+						<com:Name>CONTACT-en</com:Name>
+						<str:Department>DEPT-en</str:Department>
+						<str:Role>ROLE-en</str:Role>
+						<str:Telephone>+1-555-0100</str:Telephone>
+						<str:Fax>+1-555-0101</str:Fax>
+						<str:URI>https://example.org/contact</str:URI>
+						<str:Email>contact@example.org</str:Email>
+					</str:Contact>
+				</str:MetadataProvider>
+			</str:MetadataProviderScheme>
+		</str:MetadataProviderSchemes>
+		<str:Categorisations>
+			<str:Categorisation id="CATN" uri="https://example.org/uri/CATN" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="CATN-ANN">
+						<com:AnnotationTitle>CATN-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>CATN-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/CATN', {'lang': 'fr', '#text': 'https://example.org/CATN/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">CATN-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">CATN-NAME-en</com:Name>
+				<com:Description xml:lang="en">CATN-DESC-en</com:Description>
+				<str:Source>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)</str:Source>
+				<str:Target>urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=AG:CATS(1.0).TOP</str:Target>
+			</str:Categorisation>
+		</str:Categorisations>
+		<str:CategorySchemes>
+			<str:CategoryScheme id="CATS" uri="https://example.org/uri/CATS" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG" isPartial="true">
+				<com:Annotations>
+					<com:Annotation id="CATS-ANN">
+						<com:AnnotationTitle>CATS-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>CATS-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/CATS', {'lang': 'fr', '#text': 'https://example.org/CATS/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">CATS-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">CATS-NAME-en</com:Name>
+				<com:Description xml:lang="en">CATS-DESC-en</com:Description>
+				<str:Category id="TOP">
+					<com:Annotations>
+						<com:Annotation id="CAT-TOP-ANN">
+							<com:AnnotationTitle>CAT-TOP-TITLE</com:AnnotationTitle>
+							<com:AnnotationType>CAT-TOP-TYPE</com:AnnotationType>
+							<com:AnnotationURL>['https://example.org/CAT-TOP', {'lang': 'fr', '#text': 'https://example.org/CAT-TOP/fr'}]</com:AnnotationURL>
+							<com:AnnotationText xml:lang="en">CAT-TOP-TEXT-en</com:AnnotationText>
+						</com:Annotation>
+					</com:Annotations>
+					<com:Name xml:lang="en">CAT-TOP-NAME-en</com:Name>
+					<com:Description xml:lang="en">CAT-TOP-DESC-en</com:Description>
+					<str:Category id="SUB">
+						<com:Annotations>
+							<com:Annotation id="CAT-SUB-ANN">
+								<com:AnnotationTitle>CAT-SUB-TITLE</com:AnnotationTitle>
+								<com:AnnotationType>CAT-SUB-TYPE</com:AnnotationType>
+								<com:AnnotationURL>['https://example.org/CAT-SUB', {'lang': 'fr', '#text': 'https://example.org/CAT-SUB/fr'}]</com:AnnotationURL>
+								<com:AnnotationText xml:lang="en">CAT-SUB-TEXT-en</com:AnnotationText>
+							</com:Annotation>
+						</com:Annotations>
+						<com:Name xml:lang="en">CAT-SUB-NAME-en</com:Name>
+						<com:Description xml:lang="en">CAT-SUB-DESC-en</com:Description>
+					</str:Category>
+				</str:Category>
+			</str:CategoryScheme>
+		</str:CategorySchemes>
+		<str:Dataflows>
+			<str:Dataflow id="DF" uri="https://example.org/uri/DF" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="DF-ANN">
+						<com:AnnotationTitle>DF-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>DF-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/DF', {'lang': 'fr', '#text': 'https://example.org/DF/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">DF-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">DF-NAME-en</com:Name>
+				<com:Description xml:lang="en">DF-DESC-en</com:Description>
+				<str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)</str:Structure>
+			</str:Dataflow>
+		</str:Dataflows>
+		<str:Metadataflows>
+			<str:Metadataflow id="MDF" uri="https://example.org/uri/MDF" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="MDF-ANN">
+						<com:AnnotationTitle>MDF-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>MDF-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/MDF', {'lang': 'fr', '#text': 'https://example.org/MDF/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">MDF-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">MDF-NAME-en</com:Name>
+				<com:Description xml:lang="en">MDF-DESC-en</com:Description>
+				<str:Structure>urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD(1.0)</str:Structure>
+				<str:Target>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)</str:Target>
+			</str:Metadataflow>
+		</str:Metadataflows>
+		<str:ProvisionAgreements>
+			<str:ProvisionAgreement id="PA" uri="https://example.org/uri/PA" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="PA-ANN">
+						<com:AnnotationTitle>PA-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>PA-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/PA', {'lang': 'fr', '#text': 'https://example.org/PA/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">PA-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">PA-NAME-en</com:Name>
+				<com:Description xml:lang="en">PA-DESC-en</com:Description>
+				<str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)</str:Dataflow>
+				<str:DataProvider>urn:sdmx:org.sdmx.infomodel.base.DataProvider=AG:DATA_PROVIDERS(1.0).P1</str:DataProvider>
+			</str:ProvisionAgreement>
+		</str:ProvisionAgreements>
+		<str:MetadataProvisionAgreements>
+			<str:MetadataProvisionAgreement id="MPA" uri="https://example.org/uri/MPA" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="MPA-ANN">
+						<com:AnnotationTitle>MPA-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>MPA-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/MPA', {'lang': 'fr', '#text': 'https://example.org/MPA/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">MPA-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">MPA-NAME-en</com:Name>
+				<com:Description xml:lang="en">MPA-DESC-en</com:Description>
+				<str:Metadataflow>urn:sdmx:org.sdmx.infomodel.metadatastructure.Metadataflow=AG:MDF(1.0)</str:Metadataflow>
+				<str:MetadataProvider>urn:sdmx:org.sdmx.infomodel.base.MetadataProvider=AG_MD:METADATA_PROVIDERS(1.0).MP1</str:MetadataProvider>
+			</str:MetadataProvisionAgreement>
+		</str:MetadataProvisionAgreements>
+		<str:MetadataStructures>
+			<str:MetadataStructure id="MSD" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="MSD-ANN">
+						<com:AnnotationTitle>MSD-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>MSD-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/MSD', {'lang': 'fr', '#text': 'https://example.org/MSD/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">MSD-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">MSD-NAME-en</com:Name>
+				<com:Description xml:lang="en">MSD-DESC-en</com:Description>
+				<str:MetadataStructureComponents>
+					<str:MetadataAttributeList id="MetadataAttributeDescriptor">
+						<str:MetadataAttribute id="MA" minOccurs="1" maxOccurs="9" isPresentational="true">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)</str:Enumeration>
+								<str:EnumerationFormat minLength="1" maxLength="10" minValue="1" maxValue="99" startValue="1" endValue="99" interval="2" timeInterval="P1D" pattern="[0-9]+" startTime="2020-01-01T00:00:00Z" endTime="2030-12-31T00:00:00Z" isSequence="true" textType="Integer"/>
+							</str:LocalRepresentation>
+							<str:MetadataAttribute id="MA_CHILD">
+								<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).CHILD</str:ConceptIdentity>
+							</str:MetadataAttribute>
+						</str:MetadataAttribute>
+					</str:MetadataAttributeList>
+				</str:MetadataStructureComponents>
+			</str:MetadataStructure>
+		</str:MetadataStructures>
+		<str:Codelists>
+			<str:Codelist id="CL" uri="https://example.org/uri/CL" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG" isPartial="true">
+				<com:Annotations>
+					<com:Annotation id="CL-ANN">
+						<com:AnnotationTitle>CL-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>CL-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/CL', {'lang': 'fr', '#text': 'https://example.org/CL/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">CL-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">CL-NAME-en</com:Name>
+				<com:Description xml:lang="en">CL-DESC-en</com:Description>
+				<str:Code id="PARENT" uri="https://example.org/uri/code-parent">
+					<com:Annotations>
+						<com:Annotation id="CODE-PARENT-ANN">
+							<com:AnnotationTitle>CODE-PARENT-TITLE</com:AnnotationTitle>
+							<com:AnnotationType>CODE-PARENT-TYPE</com:AnnotationType>
+							<com:AnnotationURL>['https://example.org/CODE-PARENT', {'lang': 'fr', '#text': 'https://example.org/CODE-PARENT/fr'}]</com:AnnotationURL>
+							<com:AnnotationText xml:lang="en">CODE-PARENT-TEXT-en</com:AnnotationText>
+						</com:Annotation>
+					</com:Annotations>
+					<com:Name xml:lang="en">CODE-PARENT-NAME-en</com:Name>
+					<com:Description xml:lang="en">CODE-PARENT-DESC-en</com:Description>
+				</str:Code>
+				<str:Code id="CHILD" uri="https://example.org/uri/code-child">
+					<com:Annotations>
+						<com:Annotation id="CODE-CHILD-ANN">
+							<com:AnnotationTitle>CODE-CHILD-TITLE</com:AnnotationTitle>
+							<com:AnnotationType>CODE-CHILD-TYPE</com:AnnotationType>
+							<com:AnnotationURL>['https://example.org/CODE-CHILD', {'lang': 'fr', '#text': 'https://example.org/CODE-CHILD/fr'}]</com:AnnotationURL>
+							<com:AnnotationText xml:lang="en">CODE-CHILD-TEXT-en</com:AnnotationText>
+						</com:Annotation>
+					</com:Annotations>
+					<com:Name xml:lang="en">CODE-CHILD-NAME-en</com:Name>
+					<com:Description xml:lang="en">CODE-CHILD-DESC-en</com:Description>
+				</str:Code>
+			</str:Codelist>
+			<str:Codelist id="CL_EXT" uri="https://example.org/uri/CL_EXT" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG" isPartial="true">
+				<com:Annotations>
+					<com:Annotation id="CL_EXT-ANN">
+						<com:AnnotationTitle>CL_EXT-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>CL_EXT-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/CL_EXT', {'lang': 'fr', '#text': 'https://example.org/CL_EXT/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">CL_EXT-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">CL_EXT-NAME-en</com:Name>
+				<com:Description xml:lang="en">CL_EXT-DESC-en</com:Description>
+				<str:Code id="X">
+					<com:Name xml:lang="en">X-NAME-en</com:Name>
+				</str:Code>
+			</str:Codelist>
+			<str:ValueList id="VL" uri="https://example.org/uri/VL" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG" isPartial="false">
+				<com:Annotations>
+					<com:Annotation id="VL-ANN">
+						<com:AnnotationTitle>VL-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>VL-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/VL', {'lang': 'fr', '#text': 'https://example.org/VL/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">VL-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">VL-NAME-en</com:Name>
+				<com:Description xml:lang="en">VL-DESC-en</com:Description>
+				<str:ValueItem id="kg">
+					<com:Annotations>
+						<com:Annotation id="VL-KG-ANN">
+							<com:AnnotationTitle>VL-KG-TITLE</com:AnnotationTitle>
+							<com:AnnotationType>VL-KG-TYPE</com:AnnotationType>
+							<com:AnnotationURL>['https://example.org/VL-KG', {'lang': 'fr', '#text': 'https://example.org/VL-KG/fr'}]</com:AnnotationURL>
+							<com:AnnotationText xml:lang="en">VL-KG-TEXT-en</com:AnnotationText>
+						</com:Annotation>
+					</com:Annotations>
+					<com:Name xml:lang="en">VL-KG-NAME-en</com:Name>
+					<com:Description xml:lang="en">VL-KG-DESC-en</com:Description>
+				</str:ValueItem>
+			</str:ValueList>
+		</str:Codelists>
+		<str:Hierarchies>
+			<str:Hierarchy id="H@HCL" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG" hasFormalLevels="true">
+				<com:Annotations>
+					<com:Annotation id="H-ANN">
+						<com:AnnotationTitle>H-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>H-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/H', {'lang': 'fr', '#text': 'https://example.org/H/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">H-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">H-NAME-en</com:Name>
+				<com:Description xml:lang="en">H-DESC-en</com:Description>
+				<str:Level id="L1">
+					<com:Annotations>
+						<com:Annotation id="LEVEL-ANN">
+							<com:AnnotationTitle>LEVEL-TITLE</com:AnnotationTitle>
+							<com:AnnotationType>LEVEL-TYPE</com:AnnotationType>
+							<com:AnnotationURL>['https://example.org/LEVEL', {'lang': 'fr', '#text': 'https://example.org/LEVEL/fr'}]</com:AnnotationURL>
+							<com:AnnotationText xml:lang="en">LEVEL-TEXT-en</com:AnnotationText>
+						</com:Annotation>
+					</com:Annotations>
+					<com:Name xml:lang="en">LEVEL-NAME-en</com:Name>
+					<com:Description xml:lang="en">LEVEL-DESC-en</com:Description>
+					<str:Level id="L2">
+						<com:Annotations>
+							<com:Annotation id="LEVEL-2-ANN">
+								<com:AnnotationTitle>LEVEL-2-TITLE</com:AnnotationTitle>
+								<com:AnnotationType>LEVEL-2-TYPE</com:AnnotationType>
+								<com:AnnotationURL>['https://example.org/LEVEL-2', {'lang': 'fr', '#text': 'https://example.org/LEVEL-2/fr'}]</com:AnnotationURL>
+								<com:AnnotationText xml:lang="en">LEVEL-2-TEXT-en</com:AnnotationText>
+							</com:Annotation>
+						</com:Annotations>
+						<com:Name xml:lang="en">LEVEL-2-NAME-en</com:Name>
+						<com:Description xml:lang="en">LEVEL-2-DESC-en</com:Description>
+					</str:Level>
+				</str:Level>
+				<str:HierarchicalCode id="NODE" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z">
+					<com:Annotations>
+						<com:Annotation id="HCODE-ANN">
+							<com:AnnotationTitle>HCODE-TITLE</com:AnnotationTitle>
+							<com:AnnotationType>HCODE-TYPE</com:AnnotationType>
+							<com:AnnotationURL>['https://example.org/HCODE', {'lang': 'fr', '#text': 'https://example.org/HCODE/fr'}]</com:AnnotationURL>
+							<com:AnnotationText xml:lang="en">HCODE-TEXT-en</com:AnnotationText>
+						</com:Annotation>
+					</com:Annotations>
+					<str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=AG:CL(1.0).PARENT</str:Code>
+					<str:HierarchicalCode id="LEAF">
+						<com:Annotations>
+							<com:Annotation id="HCODE-LEAF-ANN">
+								<com:AnnotationTitle>HCODE-LEAF-TITLE</com:AnnotationTitle>
+								<com:AnnotationType>HCODE-LEAF-TYPE</com:AnnotationType>
+								<com:AnnotationURL>['https://example.org/HCODE-LEAF', {'lang': 'fr', '#text': 'https://example.org/HCODE-LEAF/fr'}]</com:AnnotationURL>
+								<com:AnnotationText xml:lang="en">HCODE-LEAF-TEXT-en</com:AnnotationText>
+							</com:Annotation>
+						</com:Annotations>
+						<str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=AG:CL(1.0).CHILD</str:Code>
+						<str:Level>L2</str:Level>
+					</str:HierarchicalCode>
+					<str:Level>L1</str:Level>
+				</str:HierarchicalCode>
+			</str:Hierarchy>
+		</str:Hierarchies>
+		<str:HierarchyAssociations>
+			<str:HierarchyAssociation id="HA" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="HA-ANN">
+						<com:AnnotationTitle>HA-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>HA-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/HA', {'lang': 'fr', '#text': 'https://example.org/HA/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">HA-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">HA-NAME-en</com:Name>
+				<com:Description xml:lang="en">HA-DESC-en</com:Description>
+				<str:LinkedHierarchy>urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=AG:H@HCL(1.0)</str:LinkedHierarchy>
+				<str:LinkedObject>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)</str:LinkedObject>
+				<str:ContextObject>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)</str:ContextObject>
+			</str:HierarchyAssociation>
+		</str:HierarchyAssociations>
+		<str:ConceptSchemes>
+			<str:ConceptScheme id="CS" uri="https://example.org/uri/CS" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG" isPartial="true">
+				<com:Annotations>
+					<com:Annotation id="CS-ANN">
+						<com:AnnotationTitle>CS-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>CS-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/CS', {'lang': 'fr', '#text': 'https://example.org/CS/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">CS-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">CS-NAME-en</com:Name>
+				<com:Description xml:lang="en">CS-DESC-en</com:Description>
+				<str:Concept id="PARENT" uri="https://example.org/uri/concept-parent">
+					<com:Annotations>
+						<com:Annotation id="CONCEPT-PARENT-ANN">
+							<com:AnnotationTitle>CONCEPT-PARENT-TITLE</com:AnnotationTitle>
+							<com:AnnotationType>CONCEPT-PARENT-TYPE</com:AnnotationType>
+							<com:AnnotationURL>['https://example.org/CONCEPT-PARENT', {'lang': 'fr', '#text': 'https://example.org/CONCEPT-PARENT/fr'}]</com:AnnotationURL>
+							<com:AnnotationText xml:lang="en">CONCEPT-PARENT-TEXT-en</com:AnnotationText>
+						</com:Annotation>
+					</com:Annotations>
+					<com:Name xml:lang="en">CONCEPT-PARENT-NAME-en</com:Name>
+					<com:Description xml:lang="en">CONCEPT-PARENT-DESC-en</com:Description>
+				</str:Concept>
+				<str:Concept id="CHILD" uri="https://example.org/uri/concept-child">
+					<com:Annotations>
+						<com:Annotation id="CONCEPT-CHILD-ANN">
+							<com:AnnotationTitle>CONCEPT-CHILD-TITLE</com:AnnotationTitle>
+							<com:AnnotationType>CONCEPT-CHILD-TYPE</com:AnnotationType>
+							<com:AnnotationURL>['https://example.org/CONCEPT-CHILD', {'lang': 'fr', '#text': 'https://example.org/CONCEPT-CHILD/fr'}]</com:AnnotationURL>
+							<com:AnnotationText xml:lang="en">CONCEPT-CHILD-TEXT-en</com:AnnotationText>
+						</com:Annotation>
+					</com:Annotations>
+					<com:Name xml:lang="en">CONCEPT-CHILD-NAME-en</com:Name>
+					<com:Description xml:lang="en">CONCEPT-CHILD-DESC-en</com:Description>
+					<str:CoreRepresentation>
+						<str:TextFormat minLength="1" maxLength="10" minValue="1" maxValue="99" startValue="1" endValue="99" interval="2" timeInterval="P1D" decimals="2" pattern="[0-9]+" startTime="2020-01-01T00:00:00Z" endTime="2030-12-31T00:00:00Z" isSequence="true" textType="Integer"/>
+					</str:CoreRepresentation>
+				</str:Concept>
+				<str:Concept id="PLAIN">
+					<com:Name xml:lang="en">CONCEPT-PLAIN-NAME-en</com:Name>
+				</str:Concept>
+				<str:Concept id="CODED">
+					<com:Name xml:lang="en">CONCEPT-CODED-NAME-en</com:Name>
+					<str:CoreRepresentation>
+						<str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)</str:Enumeration>
+						<str:EnumerationFormat minLength="1" maxLength="10" minValue="1" maxValue="99" startValue="1" endValue="99" interval="2" timeInterval="P1D" pattern="[0-9]+" startTime="2020-01-01T00:00:00Z" endTime="2030-12-31T00:00:00Z" isSequence="true" textType="Integer"/>
+					</str:CoreRepresentation>
+				</str:Concept>
+			</str:ConceptScheme>
+			<str:ConceptScheme id="CS_VL" uri="https://example.org/uri/CS_VL" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG" isPartial="true">
+				<com:Annotations>
+					<com:Annotation id="CS_VL-ANN">
+						<com:AnnotationTitle>CS_VL-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>CS_VL-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/CS_VL', {'lang': 'fr', '#text': 'https://example.org/CS_VL/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">CS_VL-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">CS_VL-NAME-en</com:Name>
+				<com:Description xml:lang="en">CS_VL-DESC-en</com:Description>
+				<str:Concept id="UNIT">
+					<com:Name xml:lang="en">CONCEPT-UNIT-NAME-en</com:Name>
+					<str:CoreRepresentation>
+						<str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.ValueList=AG:VL(1.0)</str:Enumeration>
+					</str:CoreRepresentation>
+				</str:Concept>
+			</str:ConceptScheme>
+		</str:ConceptSchemes>
+		<str:DataStructures>
+			<str:DataStructure id="DSD" uri="https://example.org/uri/DSD" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="DSD-ANN">
+						<com:AnnotationTitle>DSD-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>DSD-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/DSD', {'lang': 'fr', '#text': 'https://example.org/DSD/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">DSD-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">DSD-NAME-en</com:Name>
+				<com:Description xml:lang="en">DSD-DESC-en</com:Description>
+				<str:DataStructureComponents>
+					<str:DimensionList>
+						<str:Dimension id="DIM" position="1">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)</str:Enumeration>
+								<str:EnumerationFormat minLength="1" maxLength="10" minValue="1" maxValue="99" startValue="1" endValue="99" interval="2" timeInterval="P1D" pattern="[0-9]+" startTime="2020-01-01T00:00:00Z" endTime="2030-12-31T00:00:00Z" isSequence="true" textType="Integer"/>
+							</str:LocalRepresentation>
+						</str:Dimension>
+						<str:TimeDimension id="TIME_PERIOD">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:TextFormat startTime="2020-01" endTime="2030-12"/>
+							</str:LocalRepresentation>
+						</str:TimeDimension>
+					</str:DimensionList>
+					<str:Group urn="urn:sdmx:org.sdmx.infomodel.datastructure.GroupDimensionDescriptor=AG:DSD(1.0).GRP" id="GRP">
+						<str:GroupDimension>
+							<str:DimensionReference>DIM</str:DimensionReference>
+						</str:GroupDimension>
+					</str:Group>
+					<str:AttributeList>
+						<str:Attribute usage="mandatory" id="ATTR">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)</str:Enumeration>
+								<str:EnumerationFormat minLength="1" maxLength="10" minValue="1" maxValue="99" startValue="1" endValue="99" interval="2" timeInterval="P1D" pattern="[0-9]+" startTime="2020-01-01T00:00:00Z" endTime="2030-12-31T00:00:00Z" isSequence="true" textType="Integer"/>
+							</str:LocalRepresentation>
+							<str:AttributeRelationship>
+								<str:Observation/>
+							</str:AttributeRelationship>
+							<str:MeasureRelationship>
+								<str:Measure>OBS_VALUE</str:Measure>
+							</str:MeasureRelationship>
+						</str:Attribute>
+						<str:Attribute usage="mandatory" id="ATTR_MEAS">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:TextFormat/>
+							</str:LocalRepresentation>
+							<str:AttributeRelationship>
+								<str:Observation/>
+							</str:AttributeRelationship>
+							<str:MeasureRelationship>
+								<str:Measure>OBS_VALUE</str:Measure>
+							</str:MeasureRelationship>
+						</str:Attribute>
+						<str:Attribute usage="mandatory" id="ATTR_GRP">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:TextFormat/>
+							</str:LocalRepresentation>
+							<str:AttributeRelationship>
+								<str:Group>GRP</str:Group>
+							</str:AttributeRelationship>
+						</str:Attribute>
+					</str:AttributeList>
+					<str:MeasureList>
+						<str:Measure id="OBS_VALUE">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)</str:Enumeration>
+								<str:EnumerationFormat minLength="1" maxLength="10" minValue="1" maxValue="99" startValue="1" endValue="99" interval="2" timeInterval="P1D" pattern="[0-9]+" startTime="2020-01-01T00:00:00Z" endTime="2030-12-31T00:00:00Z" isSequence="true" textType="Integer"/>
+							</str:LocalRepresentation>
+						</str:Measure>
+					</str:MeasureList>
+				</str:DataStructureComponents>
+			</str:DataStructure>
+		</str:DataStructures>
+		<str:DataConstraints>
+			<str:DataConstraint id="CC" uri="https://example.org/uri/CC" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="CC-ANN">
+						<com:AnnotationTitle>CC-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>CC-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/CC', {'lang': 'fr', '#text': 'https://example.org/CC/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">CC-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">CC-NAME-en</com:Name>
+				<com:Description xml:lang="en">CC-DESC-en</com:Description>
+				<str:ConstraintAttachment>
+					<str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)</str:Dataflow>
+				</str:ConstraintAttachment>
+				<str:CubeRegion include="true">
+					<str:KeyValue id="DIM" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z">
+						<str:Value>PARENT</str:Value>
+					</str:KeyValue>
+					<str:KeyValue id="TIME_PERIOD">
+						<str:TimeRange>
+							<str:StartPeriod isInclusive="false">2020-01-01T00:00:00Z</str:StartPeriod>
+							<str:EndPeriod isInclusive="false">2030-12-31T00:00:00Z</str:EndPeriod>
+						</str:TimeRange>
+					</str:KeyValue>
+				</str:CubeRegion>
+			</str:DataConstraint>
+			<str:DataConstraint id="CC_KEYS" uri="https://example.org/uri/CC_KEYS" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="CC_KEYS-ANN">
+						<com:AnnotationTitle>CC_KEYS-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>CC_KEYS-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/CC_KEYS', {'lang': 'fr', '#text': 'https://example.org/CC_KEYS/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">CC_KEYS-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">CC_KEYS-NAME-en</com:Name>
+				<com:Description xml:lang="en">CC_KEYS-DESC-en</com:Description>
+				<str:ConstraintAttachment>
+					<str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)</str:Dataflow>
+				</str:ConstraintAttachment>
+				<str:DataKeySet isIncluded="true">
+					<str:Key>
+						<str:KeyValue id="DIM">
+							<str:Value>PARENT</str:Value>
+						</str:KeyValue>
+					</str:Key>
+				</str:DataKeySet>
+				<str:DataKeySet isIncluded="false">
+					<str:Key>
+						<str:KeyValue id="DIM">
+							<str:Value>CHILD</str:Value>
+						</str:KeyValue>
+					</str:Key>
+				</str:DataKeySet>
+			</str:DataConstraint>
+			<str:DataConstraint id="CC_data_structures" uri="https://example.org/uri/CC_data_structures" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="CC_data_structures-ANN">
+						<com:AnnotationTitle>CC_data_structures-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>CC_data_structures-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/CC_data_structures', {'lang': 'fr', '#text': 'https://example.org/CC_data_structures/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">CC_data_structures-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">CC_data_structures-NAME-en</com:Name>
+				<com:Description xml:lang="en">CC_data_structures-DESC-en</com:Description>
+				<str:ConstraintAttachment>
+					<str:DataStructure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)</str:DataStructure>
+				</str:ConstraintAttachment>
+				<str:CubeRegion include="true">
+					<str:KeyValue id="DIM">
+						<str:Value>PARENT</str:Value>
+					</str:KeyValue>
+				</str:CubeRegion>
+			</str:DataConstraint>
+			<str:DataConstraint id="CC_provision_agreements" uri="https://example.org/uri/CC_provision_agreements" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="CC_provision_agreements-ANN">
+						<com:AnnotationTitle>CC_provision_agreements-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>CC_provision_agreements-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/CC_provision_agreements', {'lang': 'fr', '#text': 'https://example.org/CC_provision_agreements/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">CC_provision_agreements-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">CC_provision_agreements-NAME-en</com:Name>
+				<com:Description xml:lang="en">CC_provision_agreements-DESC-en</com:Description>
+				<str:ConstraintAttachment>
+					<str:ProvisionAgreement>urn:sdmx:org.sdmx.infomodel.registry.ProvisionAgreement=AG:PA(1.0)</str:ProvisionAgreement>
+				</str:ConstraintAttachment>
+				<str:CubeRegion include="false">
+					<str:KeyValue id="DIM">
+						<str:Value>PARENT</str:Value>
+					</str:KeyValue>
+					<str:KeyValue id="TIME_PERIOD">
+						<str:TimeRange>
+							<str:AfterPeriod isInclusive="false">2020-01-01T00:00:00Z</str:AfterPeriod>
+						</str:TimeRange>
+					</str:KeyValue>
+				</str:CubeRegion>
+			</str:DataConstraint>
+			<str:DataConstraint id="CC_data_provider" uri="https://example.org/uri/CC_data_provider" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="CC_data_provider-ANN">
+						<com:AnnotationTitle>CC_data_provider-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>CC_data_provider-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/CC_data_provider', {'lang': 'fr', '#text': 'https://example.org/CC_data_provider/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">CC_data_provider-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">CC_data_provider-NAME-en</com:Name>
+				<com:Description xml:lang="en">CC_data_provider-DESC-en</com:Description>
+				<str:ConstraintAttachment>
+					<str:DataProvider>urn:sdmx:org.sdmx.infomodel.base.DataProvider=AG:DATA_PROVIDERS(1.0).P1</str:DataProvider>
+				</str:ConstraintAttachment>
+				<str:CubeRegion include="true">
+					<str:KeyValue id="DIM">
+						<str:Value>PARENT</str:Value>
+					</str:KeyValue>
+				</str:CubeRegion>
+			</str:DataConstraint>
+		</str:DataConstraints>
+		<str:RepresentationMaps>
+			<str:RepresentationMap id="RM@SS" uri="https://example.org/uri/RM" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="RM-ANN">
+						<com:AnnotationTitle>RM-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>RM-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/RM', {'lang': 'fr', '#text': 'https://example.org/RM/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">RM-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">RM-NAME-en</com:Name>
+				<com:Description xml:lang="en">RM-DESC-en</com:Description>
+				<str:SourceCodelist>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)</str:SourceCodelist>
+				<str:TargetCodelist>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)</str:TargetCodelist>
+				<str:RepresentationMapping>
+					<str:SourceValue>PARENT</str:SourceValue>
+					<str:TargetValue>CHILD</str:TargetValue>
+				</str:RepresentationMapping>
+			</str:RepresentationMap>
+			<str:RepresentationMap id="SM_VALUE_MAP_2@SS" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation>
+						<com:AnnotationType>sdmxlib:value-map</com:AnnotationType>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">SM-NAME-en</com:Name>
+				<str:SourceDataType>String</str:SourceDataType>
+				<str:TargetDataType>String</str:TargetDataType>
+				<str:RepresentationMapping>
+					<str:SourceValue>1</str:SourceValue>
+					<str:TargetValue>M</str:TargetValue>
+				</str:RepresentationMapping>
+			</str:RepresentationMap>
+		</str:RepresentationMaps>
+		<str:StructureMaps>
+			<str:StructureMap id="SM@SS" uri="https://example.org/uri/SM" version="1.0" validFrom="2020-01-01T00:00:00Z" validTo="2030-12-31T00:00:00Z" isExternalReference="true" agencyID="AG">
+				<com:Annotations>
+					<com:Annotation id="SM-ANN">
+						<com:AnnotationTitle>SM-TITLE</com:AnnotationTitle>
+						<com:AnnotationType>SM-TYPE</com:AnnotationType>
+						<com:AnnotationURL>['https://example.org/SM', {'lang': 'fr', '#text': 'https://example.org/SM/fr'}]</com:AnnotationURL>
+						<com:AnnotationText xml:lang="en">SM-TEXT-en</com:AnnotationText>
+					</com:Annotation>
+				</com:Annotations>
+				<com:Name xml:lang="en">SM-NAME-en</com:Name>
+				<com:Description xml:lang="en">SM-DESC-en</com:Description>
+				<str:Source>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)</str:Source>
+				<str:Target>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)</str:Target>
+				<str:DatePatternMap id="PATTERN" resolvePeriod="endOfPeriod" sourcePattern="yyyyMM" locale="en">
+					<str:Source>TIME_PERIOD</str:Source>
+					<str:Target>TIME_PERIOD</str:Target>
+					<str:TargetFrequencyID>M</str:TargetFrequencyID>
+				</str:DatePatternMap>
+				<str:ComponentMap>
+					<str:Source>DIM</str:Source>
+					<str:Target>DIM</str:Target>
+					<str:RepresentationMap>urn:sdmx:org.sdmx.infomodel.structuremapping.RepresentationMap=AG:RM@SS(1.0)</str:RepresentationMap>
+				</str:ComponentMap>
+				<str:ComponentMap>
+					<str:Source>DIM</str:Source>
+					<str:Target>DIM</str:Target>
+					<str:RepresentationMap>urn:sdmx:org.sdmx.infomodel.structuremapping.RepresentationMap=AG:SM_VALUE_MAP_2@SS(1.0)</str:RepresentationMap>
+				</str:ComponentMap>
+				<str:ComponentMap>
+					<str:Source>DIM</str:Source>
+					<str:Target>DIM</str:Target>
+				</str:ComponentMap>
+				<str:FixedValueMap>
+					<str:Target>ATTR</str:Target>
+					<str:Value>['Y', 'Z']</str:Value>
+				</str:FixedValueMap>
+			</str:StructureMap>
+		</str:StructureMaps>
+	</mes:Structures>
+</mes:Structure>

@@ -1,0 +1,132 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      Accept:
+      - application/vnd.sdmx.metadata+json;version=2.0.0
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Host:
+      - api.imf.org
+      User-Agent:
+      - python-httpx/0.28.1
+    method: GET
+    uri: https://api.imf.org/external/sdmx/3.0/metadata/structure/dataflow/IMF/IFS/1.0.0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/0RPy07EMBD7lzm3ea5YlDMgIXECTqA9hHZoFzZJlZmqSKv+O8mWx83y2B77DL1n
+        D+4MAdlX/IRM4F4Pa3Oh6om6EUNBMDJP5KTMfhHDkcf5bSbMXYqMkUWXgqQ+fLW8DBv4oBRl8MSY
+        5W9+G5DIDyg5pRPJLZukEUqof1f7J98EopLQwLEvNe5vHm/vrNa6EIzE4N79ibCBKePkM1aNUeaq
+        VbvWXD8b5dTe2b2w1iptd0a/FONP6wcfh7nUqZsBIxwaIIw95jr88m2OnzEtEdZ1/QYAAP//AwBw
+        dm+1LgEAAA==
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 28 Apr 2026 20:07:37 GMT
+      Request-Context:
+      - appId=cid-v1:e4518baf-f7f4-42d7-900e-7dd820548dc8
+      Set-Cookie:
+      - ApplicationGatewayAffinityCORS=dca9138616203b0df55300d07b8e6a61; Path=/; SameSite=None;
+        Secure
+      - ApplicationGatewayAffinity=dca9138616203b0df55300d07b8e6a61; Path=/
+      Transfer-Encoding:
+      - chunked
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      content-encoding:
+      - gzip
+      expires:
+      - '0'
+      pragma:
+      - no-cache
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000 ; includeSubDomains
+      vary:
+      - accept-encoding
+      x-content-type-options:
+      - nosniff
+      x-correlation-id:
+      - 32ed3cf4317fd354e426d7034c0dda90
+      x-envoy-upstream-service-time:
+      - '33'
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+- request:
+    body: ''
+    headers:
+      Accept:
+      - application/vnd.sdmx.metadata+json;version=2.0.0
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Host:
+      - api.imf.org
+      User-Agent:
+      - python-httpx/0.28.1
+    method: GET
+    uri: https://api.imf.org/external/sdmx/3.0/metadata/structure/dataflow/IMF/IFS/1.0.0
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/0RPy07DMBD8lz0ntnHaJvgMlZA4ASdQDyZZktLajrwbBanKv2M3PG6j2ZnZmQt0
+        li2YCzhkm/EzMoF5OyzFlconagd0CcHAPJKRMtpZ9EcepveJMLbBM3oWbXCSOvdV8tyv4JOCl84S
+        Y5S/+aVDItuj5BDOJNdsklooof5d5Z98FYhMQgHHLtV4uHu63zc3tU4EIzGYD3smLGCMONqIWaOV
+        3pVqU+rmRSujbk21FdV2V1e13jSvyfjT+tH6fkp18mZAD4cCCH2HMQ+/fpv8yYfZw7Is3wAAAP//
+        AwA1pZmVLgEAAA==
+    headers:
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 28 Apr 2026 20:09:35 GMT
+      Request-Context:
+      - appId=cid-v1:e4518baf-f7f4-42d7-900e-7dd820548dc8
+      Set-Cookie:
+      - ApplicationGatewayAffinityCORS=dca9138616203b0df55300d07b8e6a61; Path=/; SameSite=None;
+        Secure
+      - ApplicationGatewayAffinity=dca9138616203b0df55300d07b8e6a61; Path=/
+      Transfer-Encoding:
+      - chunked
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      content-encoding:
+      - gzip
+      expires:
+      - '0'
+      pragma:
+      - no-cache
+      server:
+      - istio-envoy
+      strict-transport-security:
+      - max-age=31536000 ; includeSubDomains
+      vary:
+      - accept-encoding
+      x-content-type-options:
+      - nosniff
+      x-correlation-id:
+      - d7704b89958e93bba54b9a3a95f2d25c
+      x-envoy-upstream-service-time:
+      - '24'
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1

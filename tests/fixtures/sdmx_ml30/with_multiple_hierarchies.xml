@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SDMX-ML 3.0 fixture exercising MULTIPLE Hierarchy artefacts over a
+  single Codelist, bound to the same Dimension via separate
+  HierarchyAssociations.
+
+  Issue #135. CL_AREA is the flat codelist; two Hierarchy artefacts
+  (H_GEO_ADMIN, H_GEO_STAT) give it two different parent graphs. Each
+  is wired to REF_AREA on DSD_GEO via its own HierarchyAssociation —
+  one dataflow-scoped, one unscoped — so `default_hierarchy()` has
+  something to pick between under the documented precedence rule.
+
+  Models the canonical CL_GEOGRAPHY case: the same set of geographic codes participate
+  in an administrative hierarchy (Country → Province → City) and a
+  statistical hierarchy (Country → Metropolitan area) that picks a
+  different parent for the same city.
+-->
+<mes:Structure
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+  xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure"
+  xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common">
+  <mes:Header>
+    <mes:ID>WITH_MULTIPLE_HIERARCHIES</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2024-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+
+    <str:Codelists>
+      <str:Codelist agencyID="TEST" id="CL_AREA" version="1.0">
+        <com:Name xml:lang="en">Area</com:Name>
+        <str:Code id="CA"><com:Name xml:lang="en">Canada</com:Name></str:Code>
+        <str:Code id="ON"><com:Name xml:lang="en">Ontario</com:Name></str:Code>
+        <str:Code id="QC"><com:Name xml:lang="en">Quebec</com:Name></str:Code>
+        <str:Code id="TOR"><com:Name xml:lang="en">Toronto</com:Name></str:Code>
+      </str:Codelist>
+    </str:Codelists>
+
+    <str:ConceptSchemes>
+      <str:ConceptScheme agencyID="TEST" id="CS_GEO" version="1.0">
+        <com:Name xml:lang="en">Geo concepts</com:Name>
+        <str:Concept id="REF_AREA">
+          <com:Name xml:lang="en">Reference area</com:Name>
+        </str:Concept>
+        <str:Concept id="OBS_VALUE">
+          <com:Name xml:lang="en">Observation value</com:Name>
+        </str:Concept>
+      </str:ConceptScheme>
+    </str:ConceptSchemes>
+
+    <str:DataStructures>
+      <str:DataStructure agencyID="TEST" id="DSD_GEO" version="1.0">
+        <com:Name xml:lang="en">Geo DSD</com:Name>
+        <str:DataStructureComponents>
+          <str:DimensionList id="DimensionDescriptor">
+            <str:Dimension id="REF_AREA" position="1">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:CS_GEO(1.0).REF_AREA</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=TEST:CL_AREA(1.0)</str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+          </str:DimensionList>
+          <str:MeasureList id="MeasureDescriptor">
+            <str:Measure id="OBS_VALUE">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:CS_GEO(1.0).OBS_VALUE</str:ConceptIdentity>
+            </str:Measure>
+          </str:MeasureList>
+        </str:DataStructureComponents>
+      </str:DataStructure>
+    </str:DataStructures>
+
+    <str:Dataflows>
+      <str:Dataflow agencyID="TEST" id="DF_GEO" version="1.0">
+        <com:Name xml:lang="en">Geo dataflow</com:Name>
+        <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=TEST:DSD_GEO(1.0)</str:Structure>
+      </str:Dataflow>
+    </str:Dataflows>
+
+    <str:Hierarchies>
+      <!-- Administrative: TOR is under ON. -->
+      <str:Hierarchy agencyID="TEST" id="H_GEO_ADMIN" version="1.0" hasFormalLevels="false">
+        <com:Name xml:lang="en">Administrative geo hierarchy</com:Name>
+        <str:HierarchicalCode id="CA">
+          <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=TEST:CL_AREA(1.0).CA</str:Code>
+          <str:HierarchicalCode id="ON">
+            <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=TEST:CL_AREA(1.0).ON</str:Code>
+            <str:HierarchicalCode id="TOR">
+              <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=TEST:CL_AREA(1.0).TOR</str:Code>
+            </str:HierarchicalCode>
+          </str:HierarchicalCode>
+          <str:HierarchicalCode id="QC">
+            <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=TEST:CL_AREA(1.0).QC</str:Code>
+          </str:HierarchicalCode>
+        </str:HierarchicalCode>
+      </str:Hierarchy>
+      <!-- Statistical: TOR is a sibling of ON/QC under CA (different parent). -->
+      <str:Hierarchy agencyID="TEST" id="H_GEO_STAT" version="1.0" hasFormalLevels="false">
+        <com:Name xml:lang="en">Statistical geo hierarchy</com:Name>
+        <str:HierarchicalCode id="CA">
+          <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=TEST:CL_AREA(1.0).CA</str:Code>
+          <str:HierarchicalCode id="ON">
+            <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=TEST:CL_AREA(1.0).ON</str:Code>
+          </str:HierarchicalCode>
+          <str:HierarchicalCode id="QC">
+            <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=TEST:CL_AREA(1.0).QC</str:Code>
+          </str:HierarchicalCode>
+          <str:HierarchicalCode id="TOR">
+            <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=TEST:CL_AREA(1.0).TOR</str:Code>
+          </str:HierarchicalCode>
+        </str:HierarchicalCode>
+      </str:Hierarchy>
+    </str:Hierarchies>
+
+    <str:HierarchyAssociations>
+      <!-- Dataflow-scoped: admin hierarchy is DF_GEO's default for REF_AREA. -->
+      <str:HierarchyAssociation agencyID="TEST" id="HA_REF_AREA_ADMIN" version="1.0">
+        <com:Name xml:lang="en">REF_AREA → admin (DF_GEO)</com:Name>
+        <str:LinkedHierarchy>urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=TEST:H_GEO_ADMIN(1.0)</str:LinkedHierarchy>
+        <str:LinkedObject>urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=TEST:DSD_GEO(1.0).REF_AREA</str:LinkedObject>
+        <str:ContextObject>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=TEST:DF_GEO(1.0)</str:ContextObject>
+      </str:HierarchyAssociation>
+      <!-- Unscoped: statistical hierarchy applies wherever no dataflow-scoped
+           association overrides it. -->
+      <str:HierarchyAssociation agencyID="TEST" id="HA_REF_AREA_STAT_GLOBAL" version="1.0">
+        <com:Name xml:lang="en">REF_AREA → statistical (global default)</com:Name>
+        <str:LinkedHierarchy>urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=TEST:H_GEO_STAT(1.0)</str:LinkedHierarchy>
+        <str:LinkedObject>urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=TEST:DSD_GEO(1.0).REF_AREA</str:LinkedObject>
+      </str:HierarchyAssociation>
+    </str:HierarchyAssociations>
+
+  </mes:Structures>
+</mes:Structure>

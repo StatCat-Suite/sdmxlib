@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SDMX-ML 3.0 fixture: DSD with groups, multiple dims, multiple measures.
+
+  Conformant to v3.0.0 XSDs (see tests/schemas/sdmx_ml30/).
+-->
+<mes:Structure
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+  xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure"
+  xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <mes:Header>
+    <mes:ID>IREF000002</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2024-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+
+    <str:Codelists>
+      <str:Codelist id="CL_FREQ" agencyID="SDMX" version="2.0">
+        <com:Name xml:lang="en">Frequency</com:Name>
+        <str:Code id="A"><com:Name xml:lang="en">Annual</com:Name></str:Code>
+        <str:Code id="Q"><com:Name xml:lang="en">Quarterly</com:Name></str:Code>
+        <str:Code id="M"><com:Name xml:lang="en">Monthly</com:Name></str:Code>
+      </str:Codelist>
+      <str:Codelist id="CL_CURRENCY" agencyID="ECB" version="1.0">
+        <com:Name xml:lang="en">Currency</com:Name>
+        <str:Code id="EUR"><com:Name xml:lang="en">Euro</com:Name></str:Code>
+        <str:Code id="USD"><com:Name xml:lang="en">US Dollar</com:Name></str:Code>
+        <str:Code id="GBP"><com:Name xml:lang="en">Pound Sterling</com:Name></str:Code>
+      </str:Codelist>
+    </str:Codelists>
+
+    <str:ConceptSchemes>
+      <str:ConceptScheme id="CROSS_DOMAIN_CONCEPTS" agencyID="SDMX" version="2.0">
+        <com:Name xml:lang="en">SDMX Cross Domain Concepts</com:Name>
+        <str:Concept id="FREQ"><com:Name xml:lang="en">Frequency</com:Name></str:Concept>
+        <str:Concept id="CURRENCY"><com:Name xml:lang="en">Currency</com:Name></str:Concept>
+        <str:Concept id="CURRENCY_DENOM"><com:Name xml:lang="en">Currency denominator</com:Name></str:Concept>
+        <str:Concept id="TIME_PERIOD"><com:Name xml:lang="en">Time Period</com:Name></str:Concept>
+        <str:Concept id="OBS_VALUE"><com:Name xml:lang="en">Observation Value</com:Name></str:Concept>
+        <str:Concept id="OBS_VALUE_ALT"><com:Name xml:lang="en">Alternative Observation Value</com:Name></str:Concept>
+        <str:Concept id="OBS_STATUS"><com:Name xml:lang="en">Observation Status</com:Name></str:Concept>
+        <str:Concept id="CONF_STATUS"><com:Name xml:lang="en">Confidentiality Status</com:Name></str:Concept>
+        <str:Concept id="DECIMALS"><com:Name xml:lang="en">Decimals</com:Name></str:Concept>
+        <str:Concept id="UNIT_MULT"><com:Name xml:lang="en">Unit multiplier</com:Name></str:Concept>
+      </str:ConceptScheme>
+    </str:ConceptSchemes>
+
+    <str:DataStructures>
+      <str:DataStructure id="DSD_FX" agencyID="ECB" version="1.0">
+        <com:Name xml:lang="en">FX Data Structure</com:Name>
+        <str:DataStructureComponents>
+          <str:DimensionList id="DimensionDescriptor">
+            <str:Dimension id="FREQ" position="1">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).FREQ</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(2.0)</str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:Dimension id="CURRENCY" position="2">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).CURRENCY</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=ECB:CL_CURRENCY(1.0)</str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:Dimension id="CURRENCY_DENOM" position="3">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).CURRENCY_DENOM</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=ECB:CL_CURRENCY(1.0)</str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:TimeDimension id="TIME_PERIOD">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).TIME_PERIOD</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="ObservationalTimePeriod"/>
+              </str:LocalRepresentation>
+            </str:TimeDimension>
+          </str:DimensionList>
+          <str:Group id="SiblingGroup">
+            <str:GroupDimension><str:DimensionReference>FREQ</str:DimensionReference></str:GroupDimension>
+            <str:GroupDimension><str:DimensionReference>CURRENCY</str:DimensionReference></str:GroupDimension>
+            <str:GroupDimension><str:DimensionReference>CURRENCY_DENOM</str:DimensionReference></str:GroupDimension>
+          </str:Group>
+          <str:AttributeList id="AttributeDescriptor">
+            <str:Attribute id="OBS_STATUS" usage="optional">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).OBS_STATUS</str:ConceptIdentity>
+              <str:AttributeRelationship>
+                <str:Observation/>
+              </str:AttributeRelationship>
+            </str:Attribute>
+            <str:Attribute id="CONF_STATUS" usage="mandatory">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).CONF_STATUS</str:ConceptIdentity>
+              <str:AttributeRelationship>
+                <str:Dimension>FREQ</str:Dimension>
+                <str:Dimension>CURRENCY</str:Dimension>
+              </str:AttributeRelationship>
+            </str:Attribute>
+            <!-- Group-level attachment: per v3.0 XSD, <Group> is IDType with
+                 the GroupDimension descriptor's id as text content. -->
+            <str:Attribute id="DECIMALS" usage="optional">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).DECIMALS</str:ConceptIdentity>
+              <str:AttributeRelationship>
+                <str:Group>SiblingGroup</str:Group>
+              </str:AttributeRelationship>
+            </str:Attribute>
+            <!-- DATASET-level attachment in 3.0 is expressed as <Dataflow/>:
+                 "the value varies per dataflow". -->
+            <str:Attribute id="UNIT_MULT" usage="optional">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).UNIT_MULT</str:ConceptIdentity>
+              <str:AttributeRelationship>
+                <str:Dataflow/>
+              </str:AttributeRelationship>
+            </str:Attribute>
+          </str:AttributeList>
+          <str:MeasureList id="MeasureDescriptor">
+            <str:Measure id="OBS_VALUE">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).OBS_VALUE</str:ConceptIdentity>
+            </str:Measure>
+            <str:Measure id="OBS_VALUE_ALT">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).OBS_VALUE_ALT</str:ConceptIdentity>
+            </str:Measure>
+          </str:MeasureList>
+        </str:DataStructureComponents>
+      </str:DataStructure>
+    </str:DataStructures>
+
+    <str:Dataflows>
+      <str:Dataflow id="DF_FX" agencyID="ECB" version="1.0">
+        <com:Name xml:lang="en">FX Exchange Rate Dataflow</com:Name>
+        <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=ECB:DSD_FX(1.0)</str:Structure>
+      </str:Dataflow>
+    </str:Dataflows>
+
+  </mes:Structures>
+</mes:Structure>

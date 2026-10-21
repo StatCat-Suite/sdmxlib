@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mes:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/message" xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/common" xsi:schemaLocation="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/message https://registry.sdmx.org/schemas/v3_1/SDMXMessage.xsd">
+	<mes:Header>
+		<mes:ID>b9a4113c-bb93-4b3b-9d3f-ccb93d242027</mes:ID>
+		<mes:Test>false</mes:Test>
+		<mes:Prepared>2026-10-20T15:12:23Z</mes:Prepared>
+		<mes:Sender id="ZZZ"/>
+	</mes:Header>
+	<mes:Structures>
+		<str:CategorySchemes>
+			<str:CategoryScheme id="CAT_S" version="1.0" isExternalReference="false" agencyID="AG" isPartial="false">
+				<com:Name xml:lang="en">S</com:Name>
+				<str:Category id="X">
+					<com:Name xml:lang="en">x</com:Name>
+				</str:Category>
+			</str:CategoryScheme>
+			<str:CategoryScheme id="CAT_T" version="1.0" isExternalReference="false" agencyID="AG" isPartial="false">
+				<com:Name xml:lang="en">T</com:Name>
+				<str:Category id="X">
+					<com:Name xml:lang="en">x</com:Name>
+				</str:Category>
+			</str:CategoryScheme>
+		</str:CategorySchemes>
+		<str:Dataflows>
+			<str:Dataflow id="DF_SHAPES" version="1.0" isExternalReference="false" agencyID="AG">
+				<com:Name xml:lang="en">f</com:Name>
+				<str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD_SHAPES(1.0)</str:Structure>
+			</str:Dataflow>
+			<str:Dataflow id="DF_SHAPES_2" version="1.0" isExternalReference="false" agencyID="AG">
+				<com:Name xml:lang="en">f2</com:Name>
+				<str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD_SHAPES(1.0)</str:Structure>
+			</str:Dataflow>
+		</str:Dataflows>
+		<str:MetadataStructures>
+			<str:MetadataStructure id="MSD_SHAPES" version="1.0" isExternalReference="false" agencyID="AG">
+				<com:Name xml:lang="en">m</com:Name>
+				<str:MetadataStructureComponents>
+					<str:MetadataAttributeList id="MetadataAttributeDescriptor">
+						<str:MetadataAttribute id="NOTE">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS_SHAPES(1.0).NOTE</str:ConceptIdentity>
+						</str:MetadataAttribute>
+					</str:MetadataAttributeList>
+				</str:MetadataStructureComponents>
+			</str:MetadataStructure>
+		</str:MetadataStructures>
+		<str:Codelists>
+			<str:Codelist id="CL_OTHER" version="1.0" isExternalReference="false" agencyID="AG" isPartial="false">
+				<com:Name xml:lang="en">o</com:Name>
+				<str:Code id="A">
+					<com:Name xml:lang="en">a</com:Name>
+				</str:Code>
+			</str:Codelist>
+			<str:Codelist id="CL_SHAPES" version="1.0" isExternalReference="false" agencyID="AG" isPartial="false">
+				<com:Name xml:lang="en">s</com:Name>
+				<str:Code id="A">
+					<com:Name xml:lang="en">a</com:Name>
+				</str:Code>
+			</str:Codelist>
+		</str:Codelists>
+		<str:ConceptSchemes>
+			<str:ConceptScheme id="CS_SHAPES" version="1.0" isExternalReference="false" agencyID="AG" isPartial="false">
+				<com:Name xml:lang="en">c</com:Name>
+				<str:Concept id="DIM">
+					<com:Name xml:lang="en">DIM</com:Name>
+				</str:Concept>
+				<str:Concept id="ATTR">
+					<com:Name xml:lang="en">ATTR</com:Name>
+				</str:Concept>
+				<str:Concept id="OBS_VALUE">
+					<com:Name xml:lang="en">OBS_VALUE</com:Name>
+				</str:Concept>
+				<str:Concept id="NOTE">
+					<com:Name xml:lang="en">NOTE</com:Name>
+				</str:Concept>
+				<str:Concept id="CODED">
+					<com:Name xml:lang="en">coded</com:Name>
+					<str:CoreRepresentation>
+						<str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_OTHER(1.0)</str:Enumeration>
+					</str:CoreRepresentation>
+				</str:Concept>
+			</str:ConceptScheme>
+		</str:ConceptSchemes>
+		<str:DataStructures>
+			<str:DataStructure id="DSD_SHAPES" version="1.0" isExternalReference="false" agencyID="AG">
+				<com:Name xml:lang="en">d</com:Name>
+				<str:DataStructureComponents>
+					<str:DimensionList>
+						<str:Dimension id="DIM" position="1">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS_SHAPES(1.0).DIM</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:TextFormat minLength="1" maxLength="4" minValue="1" maxValue="9999" startValue="1" endValue="9999" interval="1" timeInterval="P1M" decimals="2" pattern="[0-9]+" startTime="2020-01" endTime="2030-12" isSequence="true" textType="Integer"/>
+							</str:LocalRepresentation>
+						</str:Dimension>
+					</str:DimensionList>
+					<str:AttributeList>
+						<str:Attribute usage="mandatory" id="ATTR">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS_SHAPES(1.0).ATTR</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:TextFormat/>
+							</str:LocalRepresentation>
+							<str:AttributeRelationship>
+								<str:Dataflow/>
+							</str:AttributeRelationship>
+						</str:Attribute>
+					</str:AttributeList>
+					<str:MeasureList>
+						<str:Measure id="OBS_VALUE">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS_SHAPES(1.0).OBS_VALUE</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:TextFormat textType="Double"/>
+							</str:LocalRepresentation>
+						</str:Measure>
+					</str:MeasureList>
+				</str:DataStructureComponents>
+			</str:DataStructure>
+		</str:DataStructures>
+		<str:DataConstraints>
+			<str:DataConstraint id="DC_SHAPES" version="1.0" isExternalReference="false" agencyID="AG">
+				<com:Name xml:lang="en">dc</com:Name>
+				<str:ConstraintAttachment>
+					<str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF_SHAPES(1.0)</str:Dataflow>
+				</str:ConstraintAttachment>
+				<str:CubeRegion include="true">
+					<str:KeyValue id="TIME_PERIOD">
+						<str:TimeRange>
+							<str:AfterPeriod isInclusive="true">2020-01</str:AfterPeriod>
+						</str:TimeRange>
+					</str:KeyValue>
+				</str:CubeRegion>
+			</str:DataConstraint>
+		</str:DataConstraints>
+		<str:RepresentationMaps>
+			<str:RepresentationMap id="RM_TYPES" version="1.0" isExternalReference="false" agencyID="AG">
+				<com:Name xml:lang="en">rm</com:Name>
+				<str:SourceDataType>String</str:SourceDataType>
+				<str:TargetDataType>Integer</str:TargetDataType>
+				<str:RepresentationMapping>
+					<str:SourceValue>a</str:SourceValue>
+					<str:TargetValue>1</str:TargetValue>
+				</str:RepresentationMapping>
+			</str:RepresentationMap>
+			<str:RepresentationMap id="RM_VARIANTS" version="1.0" isExternalReference="false" agencyID="AG">
+				<com:Name xml:lang="en">v</com:Name>
+				<str:SourceCodelist>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_SHAPES(1.0)</str:SourceCodelist>
+				<str:TargetCodelist>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_OTHER(1.0)</str:TargetCodelist>
+				<str:RepresentationMapping>
+					<str:SourceValue>{'isRegEx': 'true', '#text': 'F.*'}</str:SourceValue>
+					<str:TargetValue>A</str:TargetValue>
+				</str:RepresentationMapping>
+				<str:RepresentationMapping>
+					<str:SourceValue>{'startIndex': '0', 'endIndex': '1', '#text': 'GX'}</str:SourceValue>
+					<str:TargetValue>A</str:TargetValue>
+				</str:RepresentationMapping>
+			</str:RepresentationMap>
+			<str:RepresentationMap id="RM_N_TO_M" version="1.0" isExternalReference="false" agencyID="AG">
+				<com:Name xml:lang="en">n</com:Name>
+				<str:SourceDataType>String</str:SourceDataType>
+				<str:TargetDataType>Integer</str:TargetDataType>
+				<str:RepresentationMapping>
+					<str:SourceValue>A</str:SourceValue>
+					<str:SourceValue>{'isRegEx': 'true', '#text': '^x'}</str:SourceValue>
+					<str:TargetValue>1</str:TargetValue>
+					<str:TargetValue>A</str:TargetValue>
+				</str:RepresentationMapping>
+				<str:RepresentationMapping>
+					<str:SourceValue>A</str:SourceValue>
+					<str:SourceValue>Y</str:SourceValue>
+				</str:RepresentationMapping>
+			</str:RepresentationMap>
+		</str:RepresentationMaps>
+		<str:StructureMaps>
+			<str:StructureMap id="SM_N_TO_M" version="1.0" isExternalReference="false" agencyID="AG">
+				<com:Name xml:lang="en">n</com:Name>
+				<str:Source>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD_SHAPES(1.0)</str:Source>
+				<str:Target>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD_SHAPES(1.0)</str:Target>
+				<str:ComponentMap>
+					<str:Source>DIM</str:Source>
+					<str:Source>ATTR</str:Source>
+					<str:Target>DIM</str:Target>
+					<str:Target>ATTR</str:Target>
+					<str:RepresentationMap>urn:sdmx:org.sdmx.infomodel.structuremapping.RepresentationMap=AG:RM_N_TO_M(1.0)</str:RepresentationMap>
+				</str:ComponentMap>
+			</str:StructureMap>
+		</str:StructureMaps>
+		<str:AvailabilityConstraints>
+			<str:AvailabilityConstraint seriesCount="12" obsCount="340">
+				<com:Annotations>
+					<com:Annotation id="AVAILABILITY">
+						<com:AnnotationTitle>computed</com:AnnotationTitle>
+					</com:Annotation>
+				</com:Annotations>
+				<str:ConstraintAttachment>
+					<str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF_SHAPES(1.0)</str:Dataflow>
+				</str:ConstraintAttachment>
+				<str:CubeRegion include="true">
+					<str:KeyValue id="FREQ">
+						<str:Value>A</str:Value>
+					</str:KeyValue>
+				</str:CubeRegion>
+			</str:AvailabilityConstraint>
+		</str:AvailabilityConstraints>
+	</mes:Structures>
+</mes:Structure>

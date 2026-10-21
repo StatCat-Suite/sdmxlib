@@ -1,0 +1,276 @@
+{
+  "meta": {
+    "id": "IREF000002",
+    "prepared": "2024-01-01T00:00:00",
+    "sender": {
+      "id": "TEST"
+    }
+  },
+  "data": {
+    "codelists": [
+      {
+        "id": "CL_FREQ",
+        "agencyID": "SDMX",
+        "version": "2.0",
+        "name": "Frequency",
+        "codes": [
+          {
+            "id": "A",
+            "name": "Annual",
+            "names": {
+              "en": "Annual"
+            }
+          },
+          {
+            "id": "Q",
+            "name": "Quarterly",
+            "names": {
+              "en": "Quarterly"
+            }
+          },
+          {
+            "id": "M",
+            "name": "Monthly",
+            "names": {
+              "en": "Monthly"
+            }
+          }
+        ],
+        "names": {
+          "en": "Frequency"
+        }
+      },
+      {
+        "id": "CL_AREA",
+        "agencyID": "SDMX",
+        "version": "1.0",
+        "name": "Reference Area",
+        "codes": [
+          {
+            "id": "EU",
+            "name": "European Union",
+            "names": {
+              "en": "European Union",
+              "fr": "Union européenne"
+            }
+          },
+          {
+            "id": "US",
+            "name": "United States",
+            "names": {
+              "en": "United States"
+            }
+          },
+          {
+            "id": "JP",
+            "name": "Japan",
+            "names": {
+              "en": "Japan"
+            }
+          }
+        ],
+        "names": {
+          "en": "Reference Area",
+          "fr": "Zone de référence"
+        }
+      },
+      {
+        "id": "CL_CONF_STATUS",
+        "agencyID": "SDMX",
+        "version": "1.0",
+        "name": "Confidentiality Status",
+        "codes": [
+          {
+            "id": "F",
+            "name": "Free",
+            "names": {
+              "en": "Free"
+            }
+          },
+          {
+            "id": "C",
+            "name": "Confidential",
+            "names": {
+              "en": "Confidential"
+            }
+          },
+          {
+            "id": "D",
+            "name": "For official use only",
+            "names": {
+              "en": "For official use only"
+            }
+          }
+        ],
+        "names": {
+          "en": "Confidentiality Status"
+        }
+      }
+    ],
+    "conceptSchemes": [
+      {
+        "id": "CROSS_DOMAIN_CONCEPTS",
+        "agencyID": "SDMX",
+        "version": "2.0",
+        "name": "SDMX Cross Domain Concepts",
+        "concepts": [
+          {
+            "id": "FREQ",
+            "name": "Frequency",
+            "names": {
+              "en": "Frequency"
+            }
+          },
+          {
+            "id": "REF_AREA",
+            "name": "Reference Area",
+            "names": {
+              "en": "Reference Area"
+            }
+          },
+          {
+            "id": "TIME_PERIOD",
+            "name": "Time Period",
+            "names": {
+              "en": "Time Period"
+            }
+          },
+          {
+            "id": "OBS_VALUE",
+            "name": "Observation Value",
+            "names": {
+              "en": "Observation Value"
+            }
+          },
+          {
+            "id": "OBS_VALUE2",
+            "name": "Secondary Observation Value",
+            "names": {
+              "en": "Secondary Observation Value"
+            }
+          },
+          {
+            "id": "CONF_STATUS",
+            "name": "Confidentiality Status",
+            "names": {
+              "en": "Confidentiality Status"
+            }
+          },
+          {
+            "id": "DECIMALS",
+            "name": "Decimals",
+            "names": {
+              "en": "Decimals"
+            }
+          }
+        ],
+        "names": {
+          "en": "SDMX Cross Domain Concepts"
+        }
+      }
+    ],
+    "dataStructures": [
+      {
+        "id": "DSD_MULTI",
+        "agencyID": "TEST",
+        "version": "1.0",
+        "name": "Multi-measure Data Structure",
+        "dataStructureComponents": {
+          "dimensionList": {
+            "dimensions": [
+              {
+                "id": "FREQ",
+                "position": 1,
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).FREQ",
+                "localRepresentation": {
+                  "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(2.0)"
+                }
+              },
+              {
+                "id": "REF_AREA",
+                "position": 2,
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).REF_AREA",
+                "localRepresentation": {
+                  "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_AREA(1.0)"
+                }
+              }
+            ],
+            "timeDimension": {
+              "id": "TIME_PERIOD",
+              "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).TIME_PERIOD",
+              "localRepresentation": {
+                "format": {
+                  "dataType": "ObservationalTimePeriod"
+                }
+              }
+            }
+          },
+          "attributeList": {
+            "attributes": [
+              {
+                "id": "CONF_STATUS",
+                "usage": "Conditional",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).CONF_STATUS",
+                "attributeRelationship": {
+                  "observation": {}
+                },
+                "localRepresentation": {
+                  "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_CONF_STATUS(1.0)"
+                }
+              },
+              {
+                "id": "DECIMALS",
+                "usage": "Mandatory",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).DECIMALS",
+                "attributeRelationship": {
+                  "dataflow": {}
+                },
+                "localRepresentation": {
+                  "format": {
+                    "dataType": "Integer"
+                  }
+                }
+              }
+            ]
+          },
+          "measureList": {
+            "measures": [
+              {
+                "id": "OBS_VALUE",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).OBS_VALUE"
+              },
+              {
+                "id": "OBS_VALUE2",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).OBS_VALUE2"
+              }
+            ]
+          },
+          "groups": [
+            {
+              "id": "AreaGroup",
+              "groupDimensions": [
+                "FREQ",
+                "REF_AREA"
+              ]
+            }
+          ]
+        },
+        "names": {
+          "en": "Multi-measure Data Structure"
+        }
+      }
+    ],
+    "dataflows": [
+      {
+        "id": "DF_MULTI",
+        "agencyID": "TEST",
+        "version": "1.0",
+        "name": "Multi-measure Dataflow",
+        "structure": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=TEST:DSD_MULTI(1.0)",
+        "names": {
+          "en": "Multi-measure Dataflow"
+        }
+      }
+    ]
+  }
+}

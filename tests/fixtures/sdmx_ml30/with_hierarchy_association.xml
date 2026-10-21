@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SDMX-ML 3.0 fixture exercising HierarchyAssociation.
+
+  Issue #108. HierarchyAssociation binds a Hierarchy to an identifiable
+  artefact (typically a Dimension) within an optional context
+  (typically a Dataflow). The Hierarchy itself is structure-agnostic;
+  the association declares "this dimension uses this hierarchy in this
+  context."
+
+  Shape per v3.0 / 3.1 HierarchyAssociationType:
+    - Required <LinkedHierarchy> URN-text → Hierarchy
+    - Required <LinkedObject>    URN-text → any identifiable
+    - Optional <ContextObject>   URN-text → any identifiable
+
+  This fixture wires up a small geography hierarchy bound to a
+  REF_AREA dimension within the context of a Dataflow.
+-->
+<mes:Structure
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+  xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure"
+  xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common">
+  <mes:Header>
+    <mes:ID>WITH_HIERARCHY_ASSOCIATION</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2024-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+
+    <str:Codelists>
+      <str:Codelist agencyID="TEST" id="CL_AREA" version="1.0">
+        <com:Name xml:lang="en">Area</com:Name>
+        <str:Code id="CA"><com:Name xml:lang="en">Canada</com:Name></str:Code>
+        <str:Code id="ON"><com:Name xml:lang="en">Ontario</com:Name></str:Code>
+      </str:Codelist>
+    </str:Codelists>
+
+    <str:ConceptSchemes>
+      <str:ConceptScheme agencyID="TEST" id="CS_GEO" version="1.0">
+        <com:Name xml:lang="en">Geo concepts</com:Name>
+        <str:Concept id="REF_AREA">
+          <com:Name xml:lang="en">Reference area</com:Name>
+        </str:Concept>
+        <str:Concept id="OBS_VALUE">
+          <com:Name xml:lang="en">Observation value</com:Name>
+        </str:Concept>
+      </str:ConceptScheme>
+    </str:ConceptSchemes>
+
+    <str:DataStructures>
+      <str:DataStructure agencyID="TEST" id="DSD_GEO" version="1.0">
+        <com:Name xml:lang="en">Geo DSD</com:Name>
+        <str:DataStructureComponents>
+          <str:DimensionList id="DimensionDescriptor">
+            <str:Dimension id="REF_AREA" position="1">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:CS_GEO(1.0).REF_AREA</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=TEST:CL_AREA(1.0)</str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+          </str:DimensionList>
+          <str:MeasureList id="MeasureDescriptor">
+            <str:Measure id="OBS_VALUE">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:CS_GEO(1.0).OBS_VALUE</str:ConceptIdentity>
+            </str:Measure>
+          </str:MeasureList>
+        </str:DataStructureComponents>
+      </str:DataStructure>
+    </str:DataStructures>
+
+    <str:Dataflows>
+      <str:Dataflow agencyID="TEST" id="DF_GEO" version="1.0">
+        <com:Name xml:lang="en">Geo dataflow</com:Name>
+        <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=TEST:DSD_GEO(1.0)</str:Structure>
+      </str:Dataflow>
+    </str:Dataflows>
+
+    <str:Hierarchies>
+      <str:Hierarchy agencyID="TEST" id="H_GEO" version="1.0" hasFormalLevels="true">
+        <com:Name xml:lang="en">Geo hierarchy</com:Name>
+        <!--
+          #345 — a formal Level carrying <CodingFormat> and an annotation.
+          Neither appeared in any fixture in any generation, so the 3.1
+          reader and writer could both drop them and nothing noticed.
+        -->
+        <str:Level id="COUNTRY">
+          <com:Annotations>
+            <com:Annotation id="lvl1">
+              <com:AnnotationTitle>ISO 3166-1 alpha-2</com:AnnotationTitle>
+              <com:AnnotationType>NOTE</com:AnnotationType>
+            </com:Annotation>
+          </com:Annotations>
+          <com:Name xml:lang="en">Country</com:Name>
+          <str:CodingFormat textType="AlphaNumeric" minLength="2" maxLength="2"/>
+        </str:Level>
+        <str:HierarchicalCode id="H_CA">
+          <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=TEST:CL_AREA(1.0).CA</str:Code>
+          <str:HierarchicalCode id="H_ON">
+            <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=TEST:CL_AREA(1.0).ON</str:Code>
+          </str:HierarchicalCode>
+        </str:HierarchicalCode>
+      </str:Hierarchy>
+    </str:Hierarchies>
+
+    <str:HierarchyAssociations>
+      <str:HierarchyAssociation agencyID="TEST" id="HA_GEO_REF_AREA" version="1.0">
+        <com:Name xml:lang="en">REF_AREA → Geo hierarchy</com:Name>
+        <str:LinkedHierarchy>urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=TEST:H_GEO(1.0)</str:LinkedHierarchy>
+        <!-- LinkedObject points at the Dimension within the DSD. -->
+        <str:LinkedObject>urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=TEST:DSD_GEO(1.0).REF_AREA</str:LinkedObject>
+        <!-- ContextObject is the Dataflow within which this binding applies. -->
+        <str:ContextObject>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=TEST:DF_GEO(1.0)</str:ContextObject>
+      </str:HierarchyAssociation>
+    </str:HierarchyAssociations>
+
+  </mes:Structures>
+</mes:Structure>

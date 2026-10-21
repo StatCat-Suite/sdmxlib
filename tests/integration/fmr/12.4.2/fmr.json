@@ -1,0 +1,15 @@
+{
+  "agencies": [
+    "AG",
+    "AG_MD"
+  ],
+  "ml31": {
+    "fetch_status": 406,
+    "submit": {
+      "accepted": [],
+      "refusal": "Unrecognised file format, contents of file are: &lt;?xml version='1.0' encoding='UTF-8'?>\n&lt;mes:Structure xmlns:mes=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_1/message\" xmlns:str=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_1/structure\" xmlns:com=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_1/common\">&lt;mes:Header>&lt;mes:ID>MAXIMAL&lt;/mes:ID>&lt;mes:Test>true&lt;/mes:Test>&lt;mes:Prepared>2026-10-20T12:30:45+00:00&lt;/mes:Prepared>&lt;mes:Sender id=\"SEND",
+      "status": 400
+    }
+  },
+  "version": "12.4.2"
+}

@@ -1,0 +1,415 @@
+# sdmxlib — the path query language
+
+The query language in depth: `sl.q`, `reg.query`, `Query`, `Select`,
+observation queries, and the raw-SQL escape hatch. Companion to `llms.txt`,
+which covers the rest of the library. Every Python block here is executed by
+the test suite.
+
+## 1. The catalogue the examples use
+
+The examples run against this store. Build it the same way to try them.
+
+```python
+area = sl.Codelist(
+    id="CL_AREA",
+    maintainer="SDMX",
+    name={"en": "Reference area", "fr": "Zone de référence"},
+    codes=[
+        sl.Code(id="W", name={"en": "World", "fr": "Monde"}),
+        sl.Code(id="EU", name={"en": "Europe", "fr": "Europe"}, parent_id="W"),
+        sl.Code(id="FR", name={"en": "France", "fr": "France"}, parent_id="EU"),
+        sl.Code(id="DE", name={"en": "Germany", "fr": "Allemagne"}, parent_id="EU"),
+        sl.Code(id="JP", name={"en": "Japan", "fr": "Japon"}, parent_id="W",
+                annotations=[sl.Annotation(type="G20", title="member")]),
+    ],
+)
+freq = sl.Codelist(
+    id="CL_FREQ",
+    maintainer="SDMX",
+    name={"en": "Frequency"},
+    codes=[sl.Code(id="A", name={"en": "Annual"}), sl.Code(id="M", name={"en": "Monthly"})],
+)
+concepts = sl.ConceptScheme(
+    id="CS",
+    maintainer="SDMX",
+    name={"en": "Concepts"},
+    concepts=[sl.Concept(id=c, name={"en": c}) for c in ("FREQ", "REF_AREA", "TIME_PERIOD", "OBS_VALUE")],
+)
+prices = sl.DataStructure(
+    id="DSD_PRICES",
+    maintainer="ECB",
+    name={"en": "Consumer prices"},
+    dimensions=[
+        sl.Dimension(id="FREQ", concept=concepts.ref_to("FREQ"), representation=sl.Ref.to(freq)),
+        sl.Dimension(id="REF_AREA", concept=concepts.ref_to("REF_AREA"), representation=sl.Ref.to(area)),
+    ],
+    time_dimension=sl.TimeDimension(id="TIME_PERIOD", concept=concepts.ref_to("TIME_PERIOD")),
+    measures=[sl.Measure(id="OBS_VALUE", concept=concepts.ref_to("OBS_VALUE"))],
+)
+cpi = sl.Dataflow(id="CPI", maintainer="ECB", name={"en": "Consumer prices"}, structure=sl.Ref.to(prices))
+
+reg = sl.LocalRegistry(":memory:").open()
+reg.add_all([area, freq, concepts, prices, cpi])
+cl = reg.get(area.urn)          # a LazyCodelist; cl.codes is a Query
+```
+
+## 2. Four ways to say "which"
+
+| Accessor | Filters | Runs |
+| -------- | ------- | ---- |
+| `sl.item("attr")` | an `ItemList` — `dsd.dimensions.filter(...)` | in Python |
+| `sl.q.<relation>.<path>` | a `Query` — `reg.query(...)`, `cl.codes` | as one SQL statement |
+| `obs.col("COMPONENT")` | an `ObsQuery` — `reg.obs(flow)` | as SQL, or pushed into a REST data key |
+
+`sl.item` is for objects you already hold:
+
+```python
+prices.dimensions.filter(sl.item("id") == "FREQ")
+prices.dimensions.filter(sl.item("id").is_in(["FREQ", "REF_AREA"]))
+prices.dimensions.filter(~sl.item("is_enumerated"))
+prices.dimensions.first_where(sl.item("id") != "FREQ")
+```
+
+## 3. Where a `Query` comes from
+
+`sl.q` has one lowercase accessor per relation — 48 of them: `artefact`,
+`dataflow`, `dsd`, `codelist`, `code`, `concept_scheme`, `concept`,
+`component`, `group`, `hierarchy`, `hcode`, `category_scheme`, `category`,
+`categorisation`, `msd`, `metadataflow`, `metadata_attribute`,
+`metadata_set`, `reported_attribute`, `metadata_target`, `data_constraint`,
+`cube_region`, `key_value`, `provision_agreement`, `hierarchy_association`,
+`hierarchy_applicability`, the maps (`structure_map`, `representation_map`,
+`item_map`, `component_map`, ...), the organisation schemes and their items
+(`agency`, `data_provider`, `contact`, ...), `annotation`, `annotation_url`.
+
+```python
+reg.query(sl.q.dataflow)          # every dataflow in the store
+cl.codes                          # this codelist's codes
+cl.narrower_transitive("EU")      # a tree walk on a LazyCodelist is a Query too
+reg.artefacts(sl.Codelist)        # maintainables by class (LocalRegistry)
+reg.reported_attributes()         # reference-metadata values (LocalRegistry)
+```
+
+`RestRegistry.query(sl.q.X)` is the same language over HTTP. It plans what
+the endpoint can answer, fetches that, materialises it, and runs the query
+locally. A filter REST cannot express needs an agency on the scan, or the
+terminal raises `PushdownError` naming the column to add:
+
+```python
+with sl.RestRegistry(sl.Provider.ECB) as ecb:
+    exr = ecb.query(sl.q.dataflow).filter(
+        sl.q.dataflow.agency == "ECB",
+        sl.q.dataflow.dsd.dimensions.id == "CURRENCY",
+    )
+    print(exr.ids())  # ['EXR']
+    exr.explain()     # the SQL, run over the rows it fetches first
+```
+
+## 4. A `Query` is a plan
+
+Nothing runs until a terminal. There is no `__iter__`, `__len__` or
+`__contains__` — each would run SQL without saying so.
+
+### Refine (each returns a new `Query`)
+
+```python
+q = cl.codes
+q.filter(sl.q.code.depth == 1)                    # AND; several arguments are ANDed
+q.filter(sl.q.code.depth >= 1, sl.q.code.id != "EU")
+q.order_by(sl.q.code.id.desc())                   # replaces any order; no arguments clears
+q.order_by(sl.q.code.id).limit(2).offset(1)       # a window; q[1:3] is the same
+q.intersect(cl.narrower("EU"))                    # semi-join
+q.difference(cl.narrower("EU"))                   # anti-join
+sl.union(cl.narrower("EU"), cl.roots())           # either
+```
+
+`filter`, `order_by` or `qualify` after `limit`/`offset` raise `SliceError`:
+the clause would run before the slice.
+
+### Run
+
+```python
+print(q.filter(sl.q.code.parent.id == "EU").ids())  # ['FR', 'DE']
+q.urns()                       # list[str]
+q.collect()                    # list[Code] — whole artefacts, annotations included
+q.first()                      # Code | None
+q.filter(sl.q.code.id == "FR").one()              # exactly one, or raises
+q.filter(sl.q.code.id == "XX").one_or_none()      # None
+print(q["FR"].name["fr"])  # France
+q.get("XX")                    # None (q["XX"] raises KeyError)
+print((q.count(), q.filter(sl.q.code.depth == 2).exists()))  # (5, True)
+q.frame()                      # pl.DataFrame of the relation's stored columns
+q.stream()                     # the same rows as Arrow batches
+q.preview()                    # a bounded head, for a REPL
+q.to_sql()                     # compile without running
+```
+
+### Page
+
+```python
+ordered = cl.codes.order_by(sl.q.code.id)
+page = ordered.page(2)                         # Page(urns, cursor)
+print(ordered.after(page.cursor).ids())  # ['FR', 'JP', 'W']
+```
+
+## 5. Projection — `select`, `group_by`, `agg` → `Select`
+
+```python
+cl.codes.select(sl.q.code.id, sl.q.code.name["en"], sl.q.code.name["fr"])
+# columns id, name_en, name_fr — a localised column carries its language
+
+print(cl.codes.group_by(sl.q.code.depth).len().order_by("depth").collect().rows())  # [(0, 1), (1, 2), (2, 2)]
+cl.codes.group_by(sl.q.code.depth).agg(n=sl.len(), first=sl.q.code.id.min())
+
+c = sl.q.codelist.codes
+reg.query(sl.q.codelist).select(
+    sl.q.codelist.id,
+    n=c.count(),
+    roots=c.count(where=sl.q.code.depth == 0),
+    ids=c.list(c.id),
+).order_by("id").collect()
+```
+
+- `Select` refines with `order_by`, `limit`, `offset`, `unique`, `having`;
+  `filter` on a `Select` raises — filter before projecting.
+- `frame.collect()` returns a `pl.DataFrame`; `frame.columns` is known
+  without running anything.
+- Two columns that would share a name (`dataflow.id` and `dataflow.dsd.id`)
+  must be named: `select(flow=..., dsd=...)`.
+- Aggregates: `count`, `n_unique`, `sum`, `mean`, `min`, `max`, `list`, and
+  `sl.len()` for rows. `where=` restricts what one aggregate reads — over a
+  to-many edge, which children; in `agg` or `group_by`, which of the group's
+  rows. Nothing matching gives `0` or `[]`.
+
+```python
+print(cl.codes.agg(n=sl.len(), roots=sl.q.code.id.count(where=sl.q.code.depth == 0)).collect().rows())  # [(5, 1)]
+```
+- A one-column `Select` is an `sl.SqlRelation`, so it splices into `is_in`:
+
+```python
+european = cl.narrower_transitive("EU").select(sl.q.code.id)
+print(cl.codes.filter(sl.q.code.id.is_in(european)).ids())  # ['FR', 'DE']
+```
+
+## 6. Columns
+
+```python
+sl.q.code.id                   # text
+sl.q.code.depth                # int — 0 at a root
+sl.q.code.position             # int — declaration order
+sl.q.code.name["en"]           # a localised label; projects as name_en
+sl.q.dsd.is_final              # bool
+sl.q.dataflow.version
+```
+
+Comparators: `==`, `!=`, `.is_in([...])`, `.is_null()`, `.is_not_null()`;
+numbers add `<`, `<=`, `>`, `>=` and arithmetic. Literals are type-checked:
+`sl.q.code.id == 1` raises, naming the fix.
+
+Text operations live under `.str` and are exact unless a fold is named:
+
+```python
+cl.codes.filter(sl.q.code.id.str.starts_with("E"))
+cl.codes.filter(sl.q.code.id.str.caseless == "eu")
+print(cl.codes.filter(sl.q.code.name["fr"].str.folded.contains("ALLEM")).ids())  # ['DE']
+cl.codes.filter(sl.q.code.name["en"].str.unaccented.contains("zone"))
+```
+
+`unaccented` and `folded` (unaccented, case-folded) are on labels only.
+
+## 7. Edges — the whole of traversal
+
+A path is a hop, then a column. A to-one hop reads as a value; a to-many hop
+compiles to a correlated `EXISTS`, never a join, so it never multiplies rows.
+
+```python
+sl.q.code.parent.id == "EU"                 # to-one
+sl.q.code.children.id == "FR"               # to-many: has a child FR
+sl.q.code.ancestors.id == "W"               # everything under W
+sl.q.code.descendants.id == "FR"            # everything above FR
+sl.q.code.codelist.agency == "SDMX"
+sl.q.dataflow.dsd.dimensions.concept.id == "REF_AREA"
+sl.q.dsd.dimensions.codelist.id == "CL_AREA"
+```
+
+There is no `parent_id` column and no `descendants_of()`: `parent`/`children`
+are one hop, `ancestors`/`descendants` the transitive closure (stored at
+write time, so no recursive CTE).
+
+Several conditions on **one** child need `.any()`; two separate dotted
+conditions may each match a different child:
+
+```python
+cl.codes.filter(sl.q.code.children.any(sl.q.code.id == "FR", sl.q.code.depth == 2))
+cl.codes.filter(sl.q.code.children.every(sl.q.code.depth == 2))   # vacuously true when childless
+print(cl.codes.filter(sl.q.code.children.count() == 0).ids())  # ['FR', 'DE', 'JP']
+```
+
+A hierarchy's placements (`sl.q.hcode`) are keyed by path: `id` is the
+node's own id, `nested_id` its path from the root (`"W.EU.FR"`), and the same
+four edges walk the tree. `sl.q.hcode.level.id` is its level.
+
+## 8. Annotations
+
+A to-many edge like any other:
+
+```python
+print(cl.codes.filter(sl.q.code.annotations.type == "G20").ids())  # ['JP']
+cl.codes.filter(sl.q.code.annotations.any(sl.q.annotation.type == "G20", sl.q.annotation.title == "member"))
+cl.codes.filter(~(sl.q.code.annotations.type == "G20"))              # a true complement
+```
+
+`collect()` returns artefacts with their annotations.
+
+## 9. Windows — `qualify`
+
+```python
+latest = reg.query(sl.q.dataflow).qualify(
+    sl.q.dataflow.version.rank(descending=True).over(sl.q.dataflow.agency, sl.q.dataflow.id) == 1
+)
+print(latest.ids())  # ['CPI']
+```
+
+A comparison on a window is a `WinPred`: `filter()` refuses it, `qualify()`
+takes it.
+
+## 10. Combining predicates
+
+`&`, `|`, `~` — never `and` / `or` / `not`, which raise (they would silently
+drop an operand). Parenthesise each comparison: Python binds `&` tighter than
+`==`.
+
+```python
+cl.codes.filter((sl.q.code.depth == 2) | (sl.q.code.id == "JP"))
+```
+
+`~` is SQL's `NOT`: a row whose column is `NULL` satisfies neither `p` nor
+`~p`. `~` over a to-many edge (`NOT EXISTS`) is a true complement.
+
+## 11. Observations — `reg.obs(flow)` → `ObsQuery`
+
+The same language over a dataflow's observations, on `RestRegistry` and
+`LocalRegistry`. Columns are component ids, named with `obs.col(id)`, and a
+result is typed from the DSD — codes as their codelist's
+`pl.Enum`, values as their `Facet` declares:
+
+```python
+with sl.RestRegistry(sl.Provider.ECB) as ecb:
+    flow = ecb.get(sl.Dataflow.urn_for(agency="ECB", id="EXR"), resolve=True)
+    obs = ecb.obs(flow)
+    print(obs.components[:2])  # ('FREQ', 'CURRENCY')
+    usd = obs.filter(obs.col("CURRENCY") == "USD", obs.col("FREQ") == "M")
+    print(usd.frame().columns[-2:])  # ['TIME_PERIOD', 'OBS_VALUE']
+    usd.frame(labels="en")       # adds CURRENCY_label_en, ... — the language is in the name
+    usd.stream()                 # Arrow batches
+```
+
+Over REST, `==` and `is_in` on a key dimension push into the data key (and
+on an attribute, into SDMX 3.0's `c[...]` filter); everything else runs
+locally on what came back.
+
+`obs.col(id)` is `Untyped` to a checker — one signature for every id — and
+checked when the filter is built: a code or a time period is text, a numeric
+`Facet` a number, and a component the DSD leaves untyped takes its stored
+column's type. `obs.col("CURRENCY") == 1` raises `TypeError` naming the fix
+rather than matching nothing. `obs.text(id)` / `obs.num(id)` give exact
+`Str` / `Num` instead, checked the same way when asked for:
+
+```python
+with sl.RestRegistry(sl.Provider.ECB) as ecb:
+    obs = ecb.obs(sl.Dataflow.urn_for(agency="ECB", id="EXR"))
+    obs.num("OBS_VALUE") > 1.1                  # Num[ObsRow]: .sum(), .mean(), arithmetic
+    obs.text("CURRENCY").str.starts_with("U")   # Str[ObsRow]
+```
+
+A measure the DSD leaves untyped — commonly `OBS_VALUE` — is read as its
+values say: a fetch or a file of numbers stores it as a number.
+
+On a `LocalRegistry`, a `DataflowBinding` says where a dataflow's rows live —
+a table, its column per component:
+
+```python
+reg.connection.execute("CREATE SCHEMA data")
+reg.connection.execute(
+    "CREATE TABLE data.cpi AS SELECT * FROM (VALUES ('A', 'FR', '2024', 2.3::DOUBLE), ('A', 'DE', '2024', 2.5)) "
+    "t(FREQ, REF_AREA, TIME_PERIOD, OBS_VALUE)"
+)
+reg.add(sl.DataflowBinding.from_dsd(prices, dataflow=sl.Ref.to(cpi), schema="data", table="cpi", database_role="memory"))
+obs = reg.obs(cpi)
+print(obs.filter(obs.col("REF_AREA") == "FR").frame().rows())  # [('A', 'FR', '2024', 2.3)]
+```
+
+`obs.filter_components(component_filter)` narrows by an SDMX REST component
+filter (`sl.parse_components`), for code serving SDMX REST.
+
+## 12. Raw SQL — `reg.sql()` and `sl.schema`
+
+```python
+rows = reg.sql("SELECT code_id FROM sdmx.code WHERE code_id LIKE $p ORDER BY 1", p="E%")
+print(rows.collect().to_series().to_list())  # ['EU']
+print(sl.schema.code.code_id)  # sdmx.code.code_id
+```
+
+- `$name` parameters are bound, never interpolated, and checked against
+  DuckDB's own parse. `reg.sql(...)` is lazy; `.collect()` runs it.
+- `sl.schema` names every table and column, reflected from the DDL, so a
+  stale name is an `AttributeError` rather than a SQL error.
+- Raw SQL is a terminal: it does not splice into `sl.q` (it has no row kind
+  to check against). To feed a query, project one column with `select` and
+  pass the `Select`, or pass `.ids()` as a list.
+- A relation from a different registry's database is refused
+  (`CrossSourceError`): it would read this database's rows under the other's
+  names.
+
+### Custom SQL over the data plane
+
+`sl.DuckDBDataStore.from_registry(reg)` shares a registry's connection;
+`store.inspect()` reflects tables and plans a binding's `FROM` side, so SQL
+you write yourself uses the store's naming rather than guessing it:
+
+```python
+store = sl.DuckDBDataStore.from_registry(reg)
+binding = reg.binding_for(cpi)
+plan = store.inspect().plan(binding)
+print(plan.from_clause)  # memory.data.cpi
+store.inspect().columns(plan.main)          # cached DESCRIBE
+sql = f"SELECT REF_AREA, printf('%.1f', OBS_VALUE) AS v FROM {plan.from_clause} WHERE FREQ = ?"
+print(store.connection.execute(sql, ["A"]).fetchall())  # [('FR', '2.3'), ('DE', '2.5')]
+```
+
+`store.obs(binding)` is the same `ObsQuery` as
+`reg.obs(flow)`.
+
+## 13. Which tool
+
+| You want to... | Use |
+| -------------- | --- |
+| filter dimensions, attributes, eager codes | `.filter(sl.item(...))` or a lambda |
+| filter any stored relation | `reg.query(sl.q.X).filter(...)`, `cl.codes.filter(...)` |
+| ask REST the same question | `RestRegistry.query(...)`, with an agency on each scan |
+| find codes under a code | `cl.codes.filter(sl.q.code.ancestors.id == "EU")` |
+| the leaves | `.filter(sl.q.code.children.count() == 0)` |
+| a table of results | `.select(...)` / `.group_by(...).agg(...)` → `.collect()` |
+| the latest version of each | `.qualify(col.rank(descending=True).over(...) == 1)` |
+| a subquery inside `is_in` | a one-column `select(...)` |
+| filter observations | `reg.obs(flow).filter(obs.col(...) == ...)` |
+| reshape, check, or write observations | `obs.pivot(on=)`, `obs.validate()`, `obs.sink_parquet(path)` |
+| SQL the language cannot say | `reg.sql(...)`, with `sl.schema` names |
+
+## 14. Gotchas
+
+- **A `Query` is not a list.** `len`, iteration and `in` raise; use
+  `.count()`, `.collect()`, `.filter(...).exists()`.
+- **`and` / `or` / `not` raise.** Use `&`, `|`, `~`, and parenthesise.
+- **Two dotted conditions on a to-many edge may match different children.**
+  Group them in `.any(...)`.
+- **A localised column projects with its language** — `name["en"]` is
+  `name_en`.
+- **No default language.** `name["en"]`, `frame(labels="en")`: the language
+  is always named.
+- **REST scans that filter need an agency**, or `PushdownError`.
+- **A predicate belongs to its query's root.** On `reg.query(sl.q.dataflow)`,
+  write `sl.q.dataflow.dsd.dimensions.id`, not `sl.q.dsd.dimensions.id` —
+  a predicate built from another relation raises `TypeError`.
+- **Hierarchy placements are paths.** `nested_id` is `"W.EU.FR"`; `id` is
+  `"FR"`, and may repeat across branches.

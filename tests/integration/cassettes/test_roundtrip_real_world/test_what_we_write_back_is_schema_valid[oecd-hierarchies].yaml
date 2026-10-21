@@ -1,0 +1,120 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      Connection:
+      - close
+      Host:
+      - sdmx.oecd.org
+      User-Agent:
+      - sdmxlib-tests
+    method: GET
+    uri: https://sdmx.oecd.org/public/rest/hierarchicalcodelist/OECD.EDU.IMEP/HCL_LF_STATUS/1.0
+  response:
+    body:
+      string: "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<!--NSI Web Service v10.11.8.0-->\r\n<message:Structure
+        xmlns:message=\"http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message\"
+        xmlns:structure=\"http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure\"
+        xmlns:common=\"http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common\">\r\n
+        \ <message:Header>\r\n    <message:ID>IDREF14840</message:ID>\r\n    <message:Test>false</message:Test>\r\n
+        \   <message:Prepared>2026-10-14T19:18:00.7133385+02:00</message:Prepared>\r\n
+        \   <message:Sender id=\"Unknown\" />\r\n    <message:Receiver id=\"Unknown\"
+        />\r\n  </message:Header>\r\n  <message:Structures>\r\n    <structure:HierarchicalCodelists>\r\n
+        \     <structure:HierarchicalCodelist id=\"HCL_LF_STATUS\" agencyID=\"OECD.EDU.IMEP\"
+        version=\"1.0\" isFinal=\"false\">\r\n        <common:Name xml:lang=\"en\">Labour
+        force status hierarchy</common:Name>\r\n        <common:Name xml:lang=\"fr\">Hi\xE9rarchie
+        situation d'activit\xE9</common:Name>\r\n        <structure:IncludedCodelist
+        alias=\"CL_LABOUR_FORCE_STATUS@OECD@10\">\r\n          <Ref id=\"CL_LABOUR_FORCE_STATUS\"
+        version=\"1.0\" agencyID=\"OECD\" package=\"codelist\" class=\"Codelist\"
+        />\r\n        </structure:IncludedCodelist>\r\n        <structure:Hierarchy
+        id=\"H\" leveled=\"false\">\r\n          <common:Name xml:lang=\"en\">Hierarchy
+        for CL_LABOUR_FORCE_STATUS</common:Name>\r\n          <structure:HierarchicalCode
+        id=\"POP\">\r\n            <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \           <structure:CodeID>\r\n              <Ref id=\"POP\" />\r\n            </structure:CodeID>\r\n
+        \         </structure:HierarchicalCode>\r\n          <structure:HierarchicalCode
+        id=\"EMP\">\r\n            <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \           <structure:CodeID>\r\n              <Ref id=\"EMP\" />\r\n            </structure:CodeID>\r\n
+        \         </structure:HierarchicalCode>\r\n          <structure:HierarchicalCode
+        id=\"NE\">\r\n            <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \           <structure:CodeID>\r\n              <Ref id=\"NE\" />\r\n            </structure:CodeID>\r\n
+        \           <structure:HierarchicalCode id=\"UNE\">\r\n              <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \             <structure:CodeID>\r\n                <Ref id=\"UNE\" />\r\n
+        \             </structure:CodeID>\r\n            </structure:HierarchicalCode>\r\n
+        \           <structure:HierarchicalCode id=\"OLF\">\r\n              <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \             <structure:CodeID>\r\n                <Ref id=\"OLF\" />\r\n
+        \             </structure:CodeID>\r\n            </structure:HierarchicalCode>\r\n
+        \         </structure:HierarchicalCode>\r\n        </structure:Hierarchy>\r\n
+        \       <structure:Hierarchy id=\"H_EN\" leveled=\"false\">\r\n          <common:Name
+        xml:lang=\"en\">Hierarchy en for CL_LABOUR_FORCE_STATUS</common:Name>\r\n
+        \         <structure:HierarchicalCode id=\"POP\">\r\n            <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \           <structure:CodeID>\r\n              <Ref id=\"POP\" />\r\n            </structure:CodeID>\r\n
+        \           <structure:HierarchicalCode id=\"POP\">\r\n              <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \             <structure:CodeID>\r\n                <Ref id=\"POP\" />\r\n
+        \             </structure:CodeID>\r\n            </structure:HierarchicalCode>\r\n
+        \         </structure:HierarchicalCode>\r\n          <structure:HierarchicalCode
+        id=\"EMP\">\r\n            <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \           <structure:CodeID>\r\n              <Ref id=\"EMP\" />\r\n            </structure:CodeID>\r\n
+        \           <structure:HierarchicalCode id=\"EMP\">\r\n              <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \             <structure:CodeID>\r\n                <Ref id=\"EMP\" />\r\n
+        \             </structure:CodeID>\r\n            </structure:HierarchicalCode>\r\n
+        \         </structure:HierarchicalCode>\r\n          <structure:HierarchicalCode
+        id=\"NE\">\r\n            <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \           <structure:CodeID>\r\n              <Ref id=\"NE\" />\r\n            </structure:CodeID>\r\n
+        \           <structure:HierarchicalCode id=\"NE\">\r\n              <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \             <structure:CodeID>\r\n                <Ref id=\"NE\" />\r\n
+        \             </structure:CodeID>\r\n            </structure:HierarchicalCode>\r\n
+        \         </structure:HierarchicalCode>\r\n        </structure:Hierarchy>\r\n
+        \       <structure:Hierarchy id=\"H_FR\" leveled=\"false\">\r\n          <common:Name
+        xml:lang=\"fr\">Hierarchy fr for CL_LABOUR_FORCE_STATUS</common:Name>\r\n
+        \         <structure:HierarchicalCode id=\"POP\">\r\n            <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \           <structure:CodeID>\r\n              <Ref id=\"POP\" />\r\n            </structure:CodeID>\r\n
+        \         </structure:HierarchicalCode>\r\n          <structure:HierarchicalCode
+        id=\"EMP\">\r\n            <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \           <structure:CodeID>\r\n              <Ref id=\"EMP\" />\r\n            </structure:CodeID>\r\n
+        \         </structure:HierarchicalCode>\r\n          <structure:HierarchicalCode
+        id=\"NE\">\r\n            <structure:CodelistAliasRef>CL_LABOUR_FORCE_STATUS@OECD@10</structure:CodelistAliasRef>\r\n
+        \           <structure:CodeID>\r\n              <Ref id=\"NE\" />\r\n            </structure:CodeID>\r\n
+        \         </structure:HierarchicalCode>\r\n        </structure:Hierarchy>\r\n
+        \     </structure:HierarchicalCodelist>\r\n    </structure:HierarchicalCodelists>\r\n
+        \ </message:Structures>\r\n</message:Structure>"
+    headers:
+      Age:
+      - '8'
+      CF-RAY:
+      - a4a83dddb9958f26-YUL
+      Cache-Control:
+      - public,max-age=86400
+      Connection:
+      - close
+      Content-Type:
+      - application/vnd.sdmx.structure+xml; version=2.1; charset=utf-8
+      Date:
+      - Wed, 14 Oct 2026 17:18:09 GMT
+      Last-Modified:
+      - '2026-09-28'
+      Server:
+      - cloudflare
+      Strict-Transport-Security:
+      - max-age=2592000
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Accept, Accept-Language, Accept-Encoding, Accept-Charset,Accept,Accept-Encoding,Accept-Encoding
+      X-Server-Node:
+      - Server 1
+      alt-svc:
+      - h3=":443"; ma=86400
+      api-supported-versions:
+      - '1'
+      cf-cache-status:
+      - HIT
+      set-cookie:
+      - __cf_bm=fcWm1GCgr4DJ7GfMl8myaKQ_Cjd7rU8BHcUXdf4xk4I-1791998289.5594091-1.0.1.1-Pce6CQE6plW.21CjA9F3LIC5iFRel.QwqMTicVOmiit0STkCAog8fhWjegDiWQAG8THPReSDiYGbLxfCLmbCMa3cooVpj5oVqRtnfDGAxwVMR6Rc5l6VjsRVSC4eUsC7;
+        HttpOnly; SameSite=None; Secure; Path=/; Domain=oecd.org; Expires=Wed, 14
+        Oct 2026 17:48:09 GMT
+    status:
+      code: 200
+      message: OK
+version: 1

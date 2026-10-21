@@ -1,0 +1,152 @@
+{
+  "meta": {
+    "id": "IREF000001",
+    "prepared": "2024-01-01T00:00:00",
+    "sender": {
+      "id": "TEST"
+    }
+  },
+  "data": {
+    "codelists": [
+      {
+        "id": "CL_FREQ",
+        "agencyID": "SDMX",
+        "version": "1.0",
+        "name": "Frequency",
+        "names": {
+          "en": "Frequency"
+        },
+        "codes": [
+          {
+            "id": "A",
+            "name": "Annual",
+            "names": {
+              "en": "Annual"
+            }
+          },
+          {
+            "id": "Q",
+            "name": "Quarterly",
+            "names": {
+              "en": "Quarterly"
+            }
+          },
+          {
+            "id": "M",
+            "name": "Monthly",
+            "names": {
+              "en": "Monthly"
+            }
+          }
+        ]
+      }
+    ],
+    "conceptSchemes": [
+      {
+        "id": "CROSS_DOMAIN_CONCEPTS",
+        "agencyID": "SDMX",
+        "version": "1.0",
+        "name": "SDMX Cross Domain Concepts",
+        "names": {
+          "en": "SDMX Cross Domain Concepts"
+        },
+        "concepts": [
+          {
+            "id": "FREQ",
+            "name": "Frequency",
+            "names": {
+              "en": "Frequency"
+            }
+          },
+          {
+            "id": "TIME_PERIOD",
+            "name": "Time Period",
+            "names": {
+              "en": "Time Period"
+            }
+          },
+          {
+            "id": "OBS_VALUE",
+            "name": "Observation Value",
+            "names": {
+              "en": "Observation Value"
+            }
+          },
+          {
+            "id": "OBS_STATUS",
+            "name": "Observation Status",
+            "names": {
+              "en": "Observation Status"
+            }
+          }
+        ]
+      }
+    ],
+    "dataStructures": [
+      {
+        "id": "DSD_TEST",
+        "agencyID": "TEST",
+        "version": "1.0",
+        "name": "Test Data Structure",
+        "names": {
+          "en": "Test Data Structure"
+        },
+        "dataStructureComponents": {
+          "dimensionList": {
+            "dimensions": [
+              {
+                "id": "FREQ",
+                "position": 1,
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).FREQ",
+                "localRepresentation": {
+                  "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(1.0)"
+                }
+              }
+            ],
+            "timeDimension": {
+              "id": "TIME_PERIOD",
+              "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).TIME_PERIOD",
+              "localRepresentation": {
+                "format": {
+                  "dataType": "ObservationalTimePeriod"
+                }
+              }
+            }
+          },
+          "attributeList": {
+            "attributes": [
+              {
+                "id": "OBS_STATUS",
+                "usage": "Conditional",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).OBS_STATUS",
+                "attributeRelationship": {
+                  "observation": {}
+                }
+              }
+            ]
+          },
+          "measureList": {
+            "measures": [
+              {
+                "id": "OBS_VALUE",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).OBS_VALUE"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "dataflows": [
+      {
+        "id": "DF_TEST",
+        "agencyID": "TEST",
+        "version": "1.0",
+        "name": "Test Dataflow",
+        "names": {
+          "en": "Test Dataflow"
+        },
+        "structure": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=TEST:DSD_TEST(1.0)"
+      }
+    ]
+  }
+}

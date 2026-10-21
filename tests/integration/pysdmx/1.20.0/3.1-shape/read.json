@@ -1,0 +1,12 @@
+{
+  "AvailabilityConstraint": 1,
+  "CategoryScheme": 2,
+  "Codelist": 2,
+  "ConceptScheme": 1,
+  "DataConstraint": 1,
+  "DataStructureDefinition": 1,
+  "Dataflow": 2,
+  "MetadataStructure": 1,
+  "RepresentationMap": 3,
+  "StructureMap": 1
+}

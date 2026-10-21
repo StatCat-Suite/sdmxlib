@@ -1,0 +1,758 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=3.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - Python-urllib/3.12
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/codelist/SDMX/CL_FREQ/latest
+  response:
+    body:
+      string: "<?xml version='1.0' encoding='UTF-8'?><message:Structure xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
+        xmlns:xml=\"http://www.w3.org/XML/1998/namespace\" xmlns:message=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message\"
+        xmlns:str=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure\"
+        xmlns:com=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common\"><message:Header><message:ID>IREF438508</message:ID><message:Test>false</message:Test><message:Prepared>2026-03-30T04:10:54Z</message:Prepared><message:Sender
+        id=\"Unknown\"/><message:Receiver id=\"not_supplied\"/></message:Header><message:Structures><str:Codelists><str:Codelist
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(2.1)\" isExternalReference=\"false\"
+        agencyID=\"SDMX\" id=\"CL_FREQ\" version=\"2.1\"><com:Name xml:lang=\"en\">Code
+        list for concept \"Frequency\"</com:Name><com:Description xml:lang=\"en\">This
+        code list provides a set of values indicating the\n          \"frequency\"
+        of the data (e.g. weekly, monthly, quarterly). The concept \"frequency\" may\n
+        \         refer to various stages in the production process, e.g. data collection
+        or data\n          dissemination. For example, a time series could be disseminated
+        at annual frequency but\n          the underlying data are compiled monthly.
+        The code list is applicable for all different\n          uses of \"frequency\".</com:Description><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A\" id=\"A\"><com:Name
+        xml:lang=\"en\">Annual</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            year</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A2\" id=\"A2\"><com:Name
+        xml:lang=\"en\">Biennial</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A3\" id=\"A3\"><com:Name
+        xml:lang=\"en\">Triennial</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            three years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A4\" id=\"A4\"><com:Name
+        xml:lang=\"en\">Quadrennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every four\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A5\" id=\"A5\"><com:Name
+        xml:lang=\"en\">Quinquennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every five\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A10\" id=\"A10\"><com:Name
+        xml:lang=\"en\">Decennial</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every ten\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A20\" id=\"A20\"><com:Name
+        xml:lang=\"en\">Bidecennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every\n            twenty years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A30\" id=\"A30\"><com:Name
+        xml:lang=\"en\">Tridecennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every\n            thirty years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A_3\" id=\"A_3\"><com:Name
+        xml:lang=\"en\">Three times a year</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated three\n            times a year</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).S\" id=\"S\"><com:Name
+        xml:lang=\"en\">Half-yearly, semester</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every\n            semester</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).Q\" id=\"Q\"><com:Name
+        xml:lang=\"en\">Quarterly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            quarter</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M\" id=\"M\"><com:Name
+        xml:lang=\"en\">Monthly</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            month</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M2\" id=\"M2\"><com:Name
+        xml:lang=\"en\">Bimonthly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            months</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_2\" id=\"M_2\"><com:Name
+        xml:lang=\"en\">Semimonthly</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated twice a\n            month</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_3\" id=\"M_3\"><com:Name
+        xml:lang=\"en\">Three times a month</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated three\n            times a month</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W\" id=\"W\"><com:Name
+        xml:lang=\"en\">Weekly</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            week</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W2\" id=\"W2\"><com:Name
+        xml:lang=\"en\">Biweekly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            weeks</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W3\" id=\"W3\"><com:Name
+        xml:lang=\"en\">Triweekly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            three weeks</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W4\" id=\"W4\"><com:Name
+        xml:lang=\"en\">Four-weekly</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every four\n            weeks</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_2\" id=\"W_2\"><com:Name
+        xml:lang=\"en\">Semiweekly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated twice a\n            week</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_3\" id=\"W_3\"><com:Name
+        xml:lang=\"en\">Three times a week</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated three\n            times a week</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D\" id=\"D\"><com:Name
+        xml:lang=\"en\">Daily</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            day</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D_2\" id=\"D_2\"><com:Name
+        xml:lang=\"en\">Twice a day</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated twice a\n            day</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H\" id=\"H\"><com:Name
+        xml:lang=\"en\">Hourly</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            hour</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H2\" id=\"H2\"><com:Name
+        xml:lang=\"en\">Bihourly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            hours</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H3\" id=\"H3\"><com:Name
+        xml:lang=\"en\">Trihourly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            three hours</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).B\" id=\"B\"><com:Name
+        xml:lang=\"en\">Daily \u2013 business week</com:Name><com:Description xml:lang=\"en\">Similar
+        to \"daily\", however there are no observations\n            for Saturdays
+        and Sundays (so, neither \u201Cmissing values\u201D nor \u201Cnumeric values\u201D
+        should be\n            provided for Saturday and Sunday)</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).N\" id=\"N\"><com:Name
+        xml:lang=\"en\">Minutely</com:Name><com:Description xml:lang=\"en\">While
+        N denotes \"minutely\", usually, there may be no\n            observations
+        every minute (for several series the frequency is usually \"irregular\"\n
+        \           within a day/days). And though observations may be sparse (not
+        collected or disseminated\n            every minute), missing values do not
+        need to be given for the minutes when no\n            observations exist:
+        in any case the time stamp determines when an observation is\n            observed</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).I\" id=\"I\"><com:Name
+        xml:lang=\"en\">Irregular</com:Name><com:Description xml:lang=\"en\">To be
+        used with irregular time series that stores data\n            for a sequence
+        of arbitrary timepoints. Irregular time series are appropriate when the\n
+        \           data arrives unpredictably, such as when the application records
+        every stock trade or\n            when random events are recorded (the interval
+        between each element can be a different\n            length)</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OA\" id=\"OA\"><com:Name
+        xml:lang=\"en\">Occasional annual</com:Name><com:Description xml:lang=\"en\">The
+        event occurs occasionally with an infrequent update\n            that could
+        span from 1 year to several years between events. It implies a survey that\n
+        \           experiences a gap for several years prior to the next survey update
+        (this is commonly\n            linked to funding available to run a specific
+        survey (i.e. health surveys), whereas a\n            regular annual survey
+        refers typically to \u2018programs\u2019 that are funded regularly and fall\n
+        \           under the Statistics Act, and therefore never experience a gap)</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OM\" id=\"OM\"><com:Name
+        xml:lang=\"en\">Occasional monthly</com:Name><com:Description xml:lang=\"en\">The
+        event occurs occasionally with an infrequent update\n            that could
+        span from 1 month to several months between events. It implies a survey that\n
+        \           experiences a gap for several months prior to the next survey\n
+        \           update</com:Description></str:Code><str:Code urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._O\"
+        id=\"_O\"><com:Name xml:lang=\"en\">Other</com:Name><com:Description xml:lang=\"en\">To
+        be used when the qualitative or quantitative values\n            that a variable
+        takes in a data set is associated to multiple occurrences with frequency\n
+        \           other than the already defined ones (for example every 5 hours
+        and 32 minutes\n            etc.)</com:Description></str:Code><str:Code urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._U\"
+        id=\"_U\"><com:Name xml:lang=\"en\">Unspecified</com:Name><com:Description
+        xml:lang=\"en\">To be used when a set of values are reported within a\n            time
+        range but not associated to sub ranges. Often this could happen in case of
+        missing\n            or sparse information. (Let\u2019s say we have two observations
+        for 2020 but we do not know\n            if they are part of a monthly reporting
+        or quarterly reporting)</com:Description></str:Code><str:Code urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._Z\"
+        id=\"_Z\"><com:Name xml:lang=\"en\">Not applicable</com:Name><com:Description
+        xml:lang=\"en\">To be used when the qualitative or quantitative values\n            that
+        a variable takes in a data set is not associated to multiple occurrences (only\n
+        \           single occurrence exists) one can use the _Z as frequency</com:Description></str:Code></str:Codelist></str:Codelists></message:Structures></message:Structure>"
+    headers:
+      Connection:
+      - close
+      Content-Disposition:
+      - inline; filename="structure.xml"
+      Content-Type:
+      - application/xml;charset=UTF-8
+      Date:
+      - Mon, 30 Mar 2026 04:10:54 GMT
+      ETag:
+      - be3b0a7e69117c4d
+      Server:
+      - Apache/2.4.64 () OpenSSL/1.0.2k-fips
+      Set-Cookie:
+      - AWSALB=10ahlW8OBCIjbU/eLpPH4Doy6O/HHDY8wiBFdW3k9dMUrD6Nhpb6Pxra+cw95t2Wv/tQY1XYJTuNsKEFnllZxg0RBFfYGyaktBYMLyeRx7CsVP3d9NQ1f4AJj67I;
+        Expires=Mon, 06 Apr 2026 04:10:54 GMT; Path=/
+      - AWSALBCORS=10ahlW8OBCIjbU/eLpPH4Doy6O/HHDY8wiBFdW3k9dMUrD6Nhpb6Pxra+cw95t2Wv/tQY1XYJTuNsKEFnllZxg0RBFfYGyaktBYMLyeRx7CsVP3d9NQ1f4AJj67I;
+        Expires=Mon, 06 Apr 2026 04:10:54 GMT; Path=/; SameSite=None; Secure
+      - JSESSIONID=C328990D16995BADF91DF08939B8BA40; Path=/; Secure; HttpOnly
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: '200'
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=3.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - Python-urllib/3.12
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/codelist/SDMX/CL_FREQ/latest
+  response:
+    body:
+      string: "<?xml version='1.0' encoding='UTF-8'?><message:Structure xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
+        xmlns:xml=\"http://www.w3.org/XML/1998/namespace\" xmlns:message=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message\"
+        xmlns:str=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure\"
+        xmlns:com=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common\"><message:Header><message:ID>IREF438935</message:ID><message:Test>false</message:Test><message:Prepared>2026-03-30T04:11:34Z</message:Prepared><message:Sender
+        id=\"Unknown\"/><message:Receiver id=\"not_supplied\"/></message:Header><message:Structures><str:Codelists><str:Codelist
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(2.1)\" isExternalReference=\"false\"
+        agencyID=\"SDMX\" id=\"CL_FREQ\" version=\"2.1\"><com:Name xml:lang=\"en\">Code
+        list for concept \"Frequency\"</com:Name><com:Description xml:lang=\"en\">This
+        code list provides a set of values indicating the\n          \"frequency\"
+        of the data (e.g. weekly, monthly, quarterly). The concept \"frequency\" may\n
+        \         refer to various stages in the production process, e.g. data collection
+        or data\n          dissemination. For example, a time series could be disseminated
+        at annual frequency but\n          the underlying data are compiled monthly.
+        The code list is applicable for all different\n          uses of \"frequency\".</com:Description><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A\" id=\"A\"><com:Name
+        xml:lang=\"en\">Annual</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            year</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A2\" id=\"A2\"><com:Name
+        xml:lang=\"en\">Biennial</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A3\" id=\"A3\"><com:Name
+        xml:lang=\"en\">Triennial</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            three years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A4\" id=\"A4\"><com:Name
+        xml:lang=\"en\">Quadrennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every four\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A5\" id=\"A5\"><com:Name
+        xml:lang=\"en\">Quinquennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every five\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A10\" id=\"A10\"><com:Name
+        xml:lang=\"en\">Decennial</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every ten\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A20\" id=\"A20\"><com:Name
+        xml:lang=\"en\">Bidecennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every\n            twenty years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A30\" id=\"A30\"><com:Name
+        xml:lang=\"en\">Tridecennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every\n            thirty years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A_3\" id=\"A_3\"><com:Name
+        xml:lang=\"en\">Three times a year</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated three\n            times a year</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).S\" id=\"S\"><com:Name
+        xml:lang=\"en\">Half-yearly, semester</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every\n            semester</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).Q\" id=\"Q\"><com:Name
+        xml:lang=\"en\">Quarterly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            quarter</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M\" id=\"M\"><com:Name
+        xml:lang=\"en\">Monthly</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            month</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M2\" id=\"M2\"><com:Name
+        xml:lang=\"en\">Bimonthly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            months</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_2\" id=\"M_2\"><com:Name
+        xml:lang=\"en\">Semimonthly</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated twice a\n            month</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_3\" id=\"M_3\"><com:Name
+        xml:lang=\"en\">Three times a month</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated three\n            times a month</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W\" id=\"W\"><com:Name
+        xml:lang=\"en\">Weekly</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            week</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W2\" id=\"W2\"><com:Name
+        xml:lang=\"en\">Biweekly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            weeks</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W3\" id=\"W3\"><com:Name
+        xml:lang=\"en\">Triweekly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            three weeks</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W4\" id=\"W4\"><com:Name
+        xml:lang=\"en\">Four-weekly</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every four\n            weeks</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_2\" id=\"W_2\"><com:Name
+        xml:lang=\"en\">Semiweekly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated twice a\n            week</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_3\" id=\"W_3\"><com:Name
+        xml:lang=\"en\">Three times a week</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated three\n            times a week</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D\" id=\"D\"><com:Name
+        xml:lang=\"en\">Daily</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            day</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D_2\" id=\"D_2\"><com:Name
+        xml:lang=\"en\">Twice a day</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated twice a\n            day</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H\" id=\"H\"><com:Name
+        xml:lang=\"en\">Hourly</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            hour</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H2\" id=\"H2\"><com:Name
+        xml:lang=\"en\">Bihourly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            hours</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H3\" id=\"H3\"><com:Name
+        xml:lang=\"en\">Trihourly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            three hours</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).B\" id=\"B\"><com:Name
+        xml:lang=\"en\">Daily \u2013 business week</com:Name><com:Description xml:lang=\"en\">Similar
+        to \"daily\", however there are no observations\n            for Saturdays
+        and Sundays (so, neither \u201Cmissing values\u201D nor \u201Cnumeric values\u201D
+        should be\n            provided for Saturday and Sunday)</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).N\" id=\"N\"><com:Name
+        xml:lang=\"en\">Minutely</com:Name><com:Description xml:lang=\"en\">While
+        N denotes \"minutely\", usually, there may be no\n            observations
+        every minute (for several series the frequency is usually \"irregular\"\n
+        \           within a day/days). And though observations may be sparse (not
+        collected or disseminated\n            every minute), missing values do not
+        need to be given for the minutes when no\n            observations exist:
+        in any case the time stamp determines when an observation is\n            observed</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).I\" id=\"I\"><com:Name
+        xml:lang=\"en\">Irregular</com:Name><com:Description xml:lang=\"en\">To be
+        used with irregular time series that stores data\n            for a sequence
+        of arbitrary timepoints. Irregular time series are appropriate when the\n
+        \           data arrives unpredictably, such as when the application records
+        every stock trade or\n            when random events are recorded (the interval
+        between each element can be a different\n            length)</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OA\" id=\"OA\"><com:Name
+        xml:lang=\"en\">Occasional annual</com:Name><com:Description xml:lang=\"en\">The
+        event occurs occasionally with an infrequent update\n            that could
+        span from 1 year to several years between events. It implies a survey that\n
+        \           experiences a gap for several years prior to the next survey update
+        (this is commonly\n            linked to funding available to run a specific
+        survey (i.e. health surveys), whereas a\n            regular annual survey
+        refers typically to \u2018programs\u2019 that are funded regularly and fall\n
+        \           under the Statistics Act, and therefore never experience a gap)</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OM\" id=\"OM\"><com:Name
+        xml:lang=\"en\">Occasional monthly</com:Name><com:Description xml:lang=\"en\">The
+        event occurs occasionally with an infrequent update\n            that could
+        span from 1 month to several months between events. It implies a survey that\n
+        \           experiences a gap for several months prior to the next survey\n
+        \           update</com:Description></str:Code><str:Code urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._O\"
+        id=\"_O\"><com:Name xml:lang=\"en\">Other</com:Name><com:Description xml:lang=\"en\">To
+        be used when the qualitative or quantitative values\n            that a variable
+        takes in a data set is associated to multiple occurrences with frequency\n
+        \           other than the already defined ones (for example every 5 hours
+        and 32 minutes\n            etc.)</com:Description></str:Code><str:Code urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._U\"
+        id=\"_U\"><com:Name xml:lang=\"en\">Unspecified</com:Name><com:Description
+        xml:lang=\"en\">To be used when a set of values are reported within a\n            time
+        range but not associated to sub ranges. Often this could happen in case of
+        missing\n            or sparse information. (Let\u2019s say we have two observations
+        for 2020 but we do not know\n            if they are part of a monthly reporting
+        or quarterly reporting)</com:Description></str:Code><str:Code urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._Z\"
+        id=\"_Z\"><com:Name xml:lang=\"en\">Not applicable</com:Name><com:Description
+        xml:lang=\"en\">To be used when the qualitative or quantitative values\n            that
+        a variable takes in a data set is not associated to multiple occurrences (only\n
+        \           single occurrence exists) one can use the _Z as frequency</com:Description></str:Code></str:Codelist></str:Codelists></message:Structures></message:Structure>"
+    headers:
+      Connection:
+      - close
+      Content-Disposition:
+      - inline; filename="structure.xml"
+      Content-Type:
+      - application/xml;charset=UTF-8
+      Date:
+      - Mon, 30 Mar 2026 04:11:34 GMT
+      ETag:
+      - be3b0a7e69117c4d
+      Server:
+      - Apache/2.4.64 () OpenSSL/1.0.2k-fips
+      Set-Cookie:
+      - AWSALB=T6MvS2BOqYAn7tZQdYU1YVZ8u8FOBGYrqCDEPxxfFmQVEBat9LRYxtPATrZU9cckoyYDNq627NQReQhYzoIpKvFuBCsnIyh+D4zP7M1zPirr+vdiprQXVKaqV38i;
+        Expires=Mon, 06 Apr 2026 04:11:34 GMT; Path=/
+      - AWSALBCORS=T6MvS2BOqYAn7tZQdYU1YVZ8u8FOBGYrqCDEPxxfFmQVEBat9LRYxtPATrZU9cckoyYDNq627NQReQhYzoIpKvFuBCsnIyh+D4zP7M1zPirr+vdiprQXVKaqV38i;
+        Expires=Mon, 06 Apr 2026 04:11:34 GMT; Path=/; SameSite=None; Secure
+      - JSESSIONID=CD79A29E907D5C6A2057943F1471220D; Path=/; Secure; HttpOnly
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: '200'
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=3.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - Python-urllib/3.12
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/codelist/SDMX/CL_FREQ/latest
+  response:
+    body:
+      string: "<?xml version='1.0' encoding='UTF-8'?><message:Structure xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
+        xmlns:xml=\"http://www.w3.org/XML/1998/namespace\" xmlns:message=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message\"
+        xmlns:str=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure\"
+        xmlns:com=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common\"><message:Header><message:ID>IREF445613</message:ID><message:Test>false</message:Test><message:Prepared>2026-03-30T04:22:40Z</message:Prepared><message:Sender
+        id=\"Unknown\"/><message:Receiver id=\"not_supplied\"/></message:Header><message:Structures><str:Codelists><str:Codelist
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(2.1)\" isExternalReference=\"false\"
+        agencyID=\"SDMX\" id=\"CL_FREQ\" version=\"2.1\"><com:Name xml:lang=\"en\">Code
+        list for concept \"Frequency\"</com:Name><com:Description xml:lang=\"en\">This
+        code list provides a set of values indicating the\n          \"frequency\"
+        of the data (e.g. weekly, monthly, quarterly). The concept \"frequency\" may\n
+        \         refer to various stages in the production process, e.g. data collection
+        or data\n          dissemination. For example, a time series could be disseminated
+        at annual frequency but\n          the underlying data are compiled monthly.
+        The code list is applicable for all different\n          uses of \"frequency\".</com:Description><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A\" id=\"A\"><com:Name
+        xml:lang=\"en\">Annual</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            year</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A2\" id=\"A2\"><com:Name
+        xml:lang=\"en\">Biennial</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A3\" id=\"A3\"><com:Name
+        xml:lang=\"en\">Triennial</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            three years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A4\" id=\"A4\"><com:Name
+        xml:lang=\"en\">Quadrennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every four\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A5\" id=\"A5\"><com:Name
+        xml:lang=\"en\">Quinquennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every five\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A10\" id=\"A10\"><com:Name
+        xml:lang=\"en\">Decennial</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every ten\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A20\" id=\"A20\"><com:Name
+        xml:lang=\"en\">Bidecennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every\n            twenty years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A30\" id=\"A30\"><com:Name
+        xml:lang=\"en\">Tridecennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every\n            thirty years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A_3\" id=\"A_3\"><com:Name
+        xml:lang=\"en\">Three times a year</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated three\n            times a year</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).S\" id=\"S\"><com:Name
+        xml:lang=\"en\">Half-yearly, semester</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every\n            semester</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).Q\" id=\"Q\"><com:Name
+        xml:lang=\"en\">Quarterly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            quarter</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M\" id=\"M\"><com:Name
+        xml:lang=\"en\">Monthly</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            month</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M2\" id=\"M2\"><com:Name
+        xml:lang=\"en\">Bimonthly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            months</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_2\" id=\"M_2\"><com:Name
+        xml:lang=\"en\">Semimonthly</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated twice a\n            month</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_3\" id=\"M_3\"><com:Name
+        xml:lang=\"en\">Three times a month</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated three\n            times a month</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W\" id=\"W\"><com:Name
+        xml:lang=\"en\">Weekly</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            week</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W2\" id=\"W2\"><com:Name
+        xml:lang=\"en\">Biweekly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            weeks</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W3\" id=\"W3\"><com:Name
+        xml:lang=\"en\">Triweekly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            three weeks</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W4\" id=\"W4\"><com:Name
+        xml:lang=\"en\">Four-weekly</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every four\n            weeks</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_2\" id=\"W_2\"><com:Name
+        xml:lang=\"en\">Semiweekly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated twice a\n            week</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_3\" id=\"W_3\"><com:Name
+        xml:lang=\"en\">Three times a week</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated three\n            times a week</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D\" id=\"D\"><com:Name
+        xml:lang=\"en\">Daily</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            day</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D_2\" id=\"D_2\"><com:Name
+        xml:lang=\"en\">Twice a day</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated twice a\n            day</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H\" id=\"H\"><com:Name
+        xml:lang=\"en\">Hourly</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            hour</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H2\" id=\"H2\"><com:Name
+        xml:lang=\"en\">Bihourly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            hours</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H3\" id=\"H3\"><com:Name
+        xml:lang=\"en\">Trihourly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            three hours</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).B\" id=\"B\"><com:Name
+        xml:lang=\"en\">Daily \u2013 business week</com:Name><com:Description xml:lang=\"en\">Similar
+        to \"daily\", however there are no observations\n            for Saturdays
+        and Sundays (so, neither \u201Cmissing values\u201D nor \u201Cnumeric values\u201D
+        should be\n            provided for Saturday and Sunday)</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).N\" id=\"N\"><com:Name
+        xml:lang=\"en\">Minutely</com:Name><com:Description xml:lang=\"en\">While
+        N denotes \"minutely\", usually, there may be no\n            observations
+        every minute (for several series the frequency is usually \"irregular\"\n
+        \           within a day/days). And though observations may be sparse (not
+        collected or disseminated\n            every minute), missing values do not
+        need to be given for the minutes when no\n            observations exist:
+        in any case the time stamp determines when an observation is\n            observed</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).I\" id=\"I\"><com:Name
+        xml:lang=\"en\">Irregular</com:Name><com:Description xml:lang=\"en\">To be
+        used with irregular time series that stores data\n            for a sequence
+        of arbitrary timepoints. Irregular time series are appropriate when the\n
+        \           data arrives unpredictably, such as when the application records
+        every stock trade or\n            when random events are recorded (the interval
+        between each element can be a different\n            length)</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OA\" id=\"OA\"><com:Name
+        xml:lang=\"en\">Occasional annual</com:Name><com:Description xml:lang=\"en\">The
+        event occurs occasionally with an infrequent update\n            that could
+        span from 1 year to several years between events. It implies a survey that\n
+        \           experiences a gap for several years prior to the next survey update
+        (this is commonly\n            linked to funding available to run a specific
+        survey (i.e. health surveys), whereas a\n            regular annual survey
+        refers typically to \u2018programs\u2019 that are funded regularly and fall\n
+        \           under the Statistics Act, and therefore never experience a gap)</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OM\" id=\"OM\"><com:Name
+        xml:lang=\"en\">Occasional monthly</com:Name><com:Description xml:lang=\"en\">The
+        event occurs occasionally with an infrequent update\n            that could
+        span from 1 month to several months between events. It implies a survey that\n
+        \           experiences a gap for several months prior to the next survey\n
+        \           update</com:Description></str:Code><str:Code urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._O\"
+        id=\"_O\"><com:Name xml:lang=\"en\">Other</com:Name><com:Description xml:lang=\"en\">To
+        be used when the qualitative or quantitative values\n            that a variable
+        takes in a data set is associated to multiple occurrences with frequency\n
+        \           other than the already defined ones (for example every 5 hours
+        and 32 minutes\n            etc.)</com:Description></str:Code><str:Code urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._U\"
+        id=\"_U\"><com:Name xml:lang=\"en\">Unspecified</com:Name><com:Description
+        xml:lang=\"en\">To be used when a set of values are reported within a\n            time
+        range but not associated to sub ranges. Often this could happen in case of
+        missing\n            or sparse information. (Let\u2019s say we have two observations
+        for 2020 but we do not know\n            if they are part of a monthly reporting
+        or quarterly reporting)</com:Description></str:Code><str:Code urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._Z\"
+        id=\"_Z\"><com:Name xml:lang=\"en\">Not applicable</com:Name><com:Description
+        xml:lang=\"en\">To be used when the qualitative or quantitative values\n            that
+        a variable takes in a data set is not associated to multiple occurrences (only\n
+        \           single occurrence exists) one can use the _Z as frequency</com:Description></str:Code></str:Codelist></str:Codelists></message:Structures></message:Structure>"
+    headers:
+      Connection:
+      - close
+      Content-Disposition:
+      - inline; filename="structure.xml"
+      Content-Type:
+      - application/xml;charset=UTF-8
+      Date:
+      - Mon, 30 Mar 2026 04:22:40 GMT
+      ETag:
+      - be3b0a7e69117c4d
+      Server:
+      - Apache/2.4.64 () OpenSSL/1.0.2k-fips
+      Set-Cookie:
+      - AWSALB=+rVQV9RA+j7CLpzeGm98qp0ZAa0OaGSkHGcd4dbgjrONF059ydbjVEUZ8jZILaZqRPAAXFXavaNXeJ+mcLeFffc07zzMw7bDJnSVDIxx8d59g4XDmRrIhGYpMAzK;
+        Expires=Mon, 06 Apr 2026 04:22:40 GMT; Path=/
+      - AWSALBCORS=+rVQV9RA+j7CLpzeGm98qp0ZAa0OaGSkHGcd4dbgjrONF059ydbjVEUZ8jZILaZqRPAAXFXavaNXeJ+mcLeFffc07zzMw7bDJnSVDIxx8d59g4XDmRrIhGYpMAzK;
+        Expires=Mon, 06 Apr 2026 04:22:40 GMT; Path=/; SameSite=None; Secure
+      - JSESSIONID=4096DD43645864086108DEF36401043E; Path=/; Secure; HttpOnly
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: '200'
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=3.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - Python-urllib/3.12
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/codelist/SDMX/CL_FREQ/latest
+  response:
+    body:
+      string: "<?xml version='1.0' encoding='UTF-8'?><message:Structure xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"
+        xmlns:xml=\"http://www.w3.org/XML/1998/namespace\" xmlns:message=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message\"
+        xmlns:str=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure\"
+        xmlns:com=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common\"><message:Header><message:ID>IREF727546</message:ID><message:Test>false</message:Test><message:Prepared>2026-04-01T19:45:54Z</message:Prepared><message:Sender
+        id=\"Unknown\"/><message:Receiver id=\"not_supplied\"/></message:Header><message:Structures><str:Codelists><str:Codelist
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(2.1)\" isExternalReference=\"false\"
+        agencyID=\"SDMX\" id=\"CL_FREQ\" version=\"2.1\"><com:Name xml:lang=\"en\">Code
+        list for concept \"Frequency\"</com:Name><com:Description xml:lang=\"en\">This
+        code list provides a set of values indicating the\n          \"frequency\"
+        of the data (e.g. weekly, monthly, quarterly). The concept \"frequency\" may\n
+        \         refer to various stages in the production process, e.g. data collection
+        or data\n          dissemination. For example, a time series could be disseminated
+        at annual frequency but\n          the underlying data are compiled monthly.
+        The code list is applicable for all different\n          uses of \"frequency\".</com:Description><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A\" id=\"A\"><com:Name
+        xml:lang=\"en\">Annual</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            year</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A2\" id=\"A2\"><com:Name
+        xml:lang=\"en\">Biennial</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A3\" id=\"A3\"><com:Name
+        xml:lang=\"en\">Triennial</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            three years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A4\" id=\"A4\"><com:Name
+        xml:lang=\"en\">Quadrennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every four\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A5\" id=\"A5\"><com:Name
+        xml:lang=\"en\">Quinquennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every five\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A10\" id=\"A10\"><com:Name
+        xml:lang=\"en\">Decennial</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every ten\n            years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A20\" id=\"A20\"><com:Name
+        xml:lang=\"en\">Bidecennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every\n            twenty years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A30\" id=\"A30\"><com:Name
+        xml:lang=\"en\">Tridecennial</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every\n            thirty years</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A_3\" id=\"A_3\"><com:Name
+        xml:lang=\"en\">Three times a year</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated three\n            times a year</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).S\" id=\"S\"><com:Name
+        xml:lang=\"en\">Half-yearly, semester</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every\n            semester</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).Q\" id=\"Q\"><com:Name
+        xml:lang=\"en\">Quarterly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            quarter</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M\" id=\"M\"><com:Name
+        xml:lang=\"en\">Monthly</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            month</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M2\" id=\"M2\"><com:Name
+        xml:lang=\"en\">Bimonthly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            months</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_2\" id=\"M_2\"><com:Name
+        xml:lang=\"en\">Semimonthly</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated twice a\n            month</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_3\" id=\"M_3\"><com:Name
+        xml:lang=\"en\">Three times a month</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated three\n            times a month</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W\" id=\"W\"><com:Name
+        xml:lang=\"en\">Weekly</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            week</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W2\" id=\"W2\"><com:Name
+        xml:lang=\"en\">Biweekly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            weeks</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W3\" id=\"W3\"><com:Name
+        xml:lang=\"en\">Triweekly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            three weeks</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W4\" id=\"W4\"><com:Name
+        xml:lang=\"en\">Four-weekly</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated every four\n            weeks</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_2\" id=\"W_2\"><com:Name
+        xml:lang=\"en\">Semiweekly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated twice a\n            week</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_3\" id=\"W_3\"><com:Name
+        xml:lang=\"en\">Three times a week</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated three\n            times a week</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D\" id=\"D\"><com:Name
+        xml:lang=\"en\">Daily</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            day</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D_2\" id=\"D_2\"><com:Name
+        xml:lang=\"en\">Twice a day</com:Name><com:Description xml:lang=\"en\">To
+        be used for data collected or disseminated twice a\n            day</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H\" id=\"H\"><com:Name
+        xml:lang=\"en\">Hourly</com:Name><com:Description xml:lang=\"en\">To be used
+        for data collected or disseminated every\n            hour</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H2\" id=\"H2\"><com:Name
+        xml:lang=\"en\">Bihourly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every two\n            hours</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H3\" id=\"H3\"><com:Name
+        xml:lang=\"en\">Trihourly</com:Name><com:Description xml:lang=\"en\">To be
+        used for data collected or disseminated every\n            three hours</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).B\" id=\"B\"><com:Name
+        xml:lang=\"en\">Daily \u2013 business week</com:Name><com:Description xml:lang=\"en\">Similar
+        to \"daily\", however there are no observations\n            for Saturdays
+        and Sundays (so, neither \u201Cmissing values\u201D nor \u201Cnumeric values\u201D
+        should be\n            provided for Saturday and Sunday)</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).N\" id=\"N\"><com:Name
+        xml:lang=\"en\">Minutely</com:Name><com:Description xml:lang=\"en\">While
+        N denotes \"minutely\", usually, there may be no\n            observations
+        every minute (for several series the frequency is usually \"irregular\"\n
+        \           within a day/days). And though observations may be sparse (not
+        collected or disseminated\n            every minute), missing values do not
+        need to be given for the minutes when no\n            observations exist:
+        in any case the time stamp determines when an observation is\n            observed</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).I\" id=\"I\"><com:Name
+        xml:lang=\"en\">Irregular</com:Name><com:Description xml:lang=\"en\">To be
+        used with irregular time series that stores data\n            for a sequence
+        of arbitrary timepoints. Irregular time series are appropriate when the\n
+        \           data arrives unpredictably, such as when the application records
+        every stock trade or\n            when random events are recorded (the interval
+        between each element can be a different\n            length)</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OA\" id=\"OA\"><com:Name
+        xml:lang=\"en\">Occasional annual</com:Name><com:Description xml:lang=\"en\">The
+        event occurs occasionally with an infrequent update\n            that could
+        span from 1 year to several years between events. It implies a survey that\n
+        \           experiences a gap for several years prior to the next survey update
+        (this is commonly\n            linked to funding available to run a specific
+        survey (i.e. health surveys), whereas a\n            regular annual survey
+        refers typically to \u2018programs\u2019 that are funded regularly and fall\n
+        \           under the Statistics Act, and therefore never experience a gap)</com:Description></str:Code><str:Code
+        urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OM\" id=\"OM\"><com:Name
+        xml:lang=\"en\">Occasional monthly</com:Name><com:Description xml:lang=\"en\">The
+        event occurs occasionally with an infrequent update\n            that could
+        span from 1 month to several months between events. It implies a survey that\n
+        \           experiences a gap for several months prior to the next survey\n
+        \           update</com:Description></str:Code><str:Code urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._O\"
+        id=\"_O\"><com:Name xml:lang=\"en\">Other</com:Name><com:Description xml:lang=\"en\">To
+        be used when the qualitative or quantitative values\n            that a variable
+        takes in a data set is associated to multiple occurrences with frequency\n
+        \           other than the already defined ones (for example every 5 hours
+        and 32 minutes\n            etc.)</com:Description></str:Code><str:Code urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._U\"
+        id=\"_U\"><com:Name xml:lang=\"en\">Unspecified</com:Name><com:Description
+        xml:lang=\"en\">To be used when a set of values are reported within a\n            time
+        range but not associated to sub ranges. Often this could happen in case of
+        missing\n            or sparse information. (Let\u2019s say we have two observations
+        for 2020 but we do not know\n            if they are part of a monthly reporting
+        or quarterly reporting)</com:Description></str:Code><str:Code urn=\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._Z\"
+        id=\"_Z\"><com:Name xml:lang=\"en\">Not applicable</com:Name><com:Description
+        xml:lang=\"en\">To be used when the qualitative or quantitative values\n            that
+        a variable takes in a data set is not associated to multiple occurrences (only\n
+        \           single occurrence exists) one can use the _Z as frequency</com:Description></str:Code></str:Codelist></str:Codelists></message:Structures></message:Structure>"
+    headers:
+      Connection:
+      - close
+      Content-Disposition:
+      - inline; filename="structure.xml"
+      Content-Type:
+      - application/xml;charset=UTF-8
+      Date:
+      - Wed, 01 Apr 2026 19:45:54 GMT
+      ETag:
+      - be3b0a7e69117c4d
+      Server:
+      - Apache/2.4.64 () OpenSSL/1.0.2k-fips
+      Set-Cookie:
+      - AWSALB=t15CRSPP/acqBLIktZVRYrdCBw3nuPo7f642gi5ahK9bg+ZgihOQyAaSopwkmZT3cTBSbNF+A/ckl6yC1n7dTAZ7Qa0P6pB8HVdOHsdfhHE6vRGaLA8p7ICntnuf;
+        Expires=Wed, 08 Apr 2026 19:45:54 GMT; Path=/
+      - AWSALBCORS=t15CRSPP/acqBLIktZVRYrdCBw3nuPo7f642gi5ahK9bg+ZgihOQyAaSopwkmZT3cTBSbNF+A/ckl6yC1n7dTAZ7Qa0P6pB8HVdOHsdfhHE6vRGaLA8p7ICntnuf;
+        Expires=Wed, 08 Apr 2026 19:45:54 GMT; Path=/; SameSite=None; Secure
+      - JSESSIONID=B24787B2891FC2B70245D66F6EA0F7CC; Path=/; Secure; HttpOnly
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: '200'
+version: 1

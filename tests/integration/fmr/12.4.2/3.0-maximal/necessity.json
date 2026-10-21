@@ -1,0 +1,145 @@
+[
+  {
+    "accepted": [],
+    "refusal": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0): Can not submit a partial codelist: urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+    "status": 400,
+    "xpath": "//*[local-name()='Codelist'][@isPartial='true']/@isPartial"
+  },
+  {
+    "accepted": [],
+    "refusal": "Error while creating structure: urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD(1.0)\nStructure Fails Validation: urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=AG:MSD(1.0).MA\nMetadata Attribute 'MA' is presentational so can not have coded representation",
+    "status": 400,
+    "xpath": "//*[local-name()='MetadataAttribute'][@isPresentational='true']/*[local-name()='LocalRepresentation']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Constraint with Release Calendar must not contain Cube Region restrictions",
+    "status": 501,
+    "xpath": "//*[local-name()='ContentConstraint' or local-name()='DataConstraint'][*[local-name()='CubeRegion']]/*[local-name()='ReleaseCalendar']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Error while creating structure: urn:sdmx:org.sdmx.infomodel.structuremapping.StructureMap=AG:SM@SS(1.0)\nDuplicate Mapping for Components: DIM-DIM",
+    "status": 400,
+    "xpath": "//*[local-name()='StructureMap']/*[local-name()='ComponentMap'][preceding-sibling::*[local-name()='ComponentMap']]"
+  },
+  {
+    "accepted": [
+      "urn:sdmx:org.sdmx.infomodel.base.AgencyScheme=AG:AGENCIES(1.0)",
+      "urn:sdmx:org.sdmx.infomodel.base.DataConsumerScheme=AG:DATA_CONSUMERS(1.0)",
+      "urn:sdmx:org.sdmx.infomodel.base.DataProviderScheme=AG:DATA_PROVIDERS(1.0)",
+      "urn:sdmx:org.sdmx.infomodel.base.MetadataProviderScheme=AG_MD:METADATA_PROVIDERS(1.0)",
+      "urn:sdmx:org.sdmx.infomodel.base.OrganisationUnitScheme=AG:UNITS(1.0)",
+      "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+      "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_EXT(1.0)",
+      "urn:sdmx:org.sdmx.infomodel.codelist.GeoGridCodelist=AG:CL_GRID(1.0)",
+      "urn:sdmx:org.sdmx.infomodel.codelist.GeographicCodelist=AG:CL_GEO(1.0)",
+      "urn:sdmx:org.sdmx.infomodel.codelist.ValueList=AG:VL(1.0)"
+    ],
+    "refusal": null,
+    "status": 200,
+    "xpath": "//*[local-name()='ValueList']/*[local-name()='ValueItem'][not(*[local-name()='Name'])]"
+  },
+  {
+    "accepted": [],
+    "refusal": "Error while creating structure: urn:sdmx:org.sdmx.infomodel.codelist.GeoGridCodelist=AG:CL_GRID(1.0)\nError while creating structure: urn:sdmx:org.sdmx.infomodel.codelist.Code=AG:CL_GRID(1.0).SUB\nGeogrid Code is missing required Geo Cell",
+    "status": 400,
+    "xpath": "//*[local-name()='GeoGridCodelist']/*[local-name()='GeoGridCode']/*[local-name()='Parent']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/DataStructures/DataStructure/DataStructureComponents/AttributeList/Attribute/AttributeRelationship",
+    "status": 400,
+    "xpath": "//*[local-name()='DataStructureComponents']//*[local-name()='ConceptRole']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/StructureMaps/StructureMap/DatePatternMap/Link",
+    "status": 400,
+    "xpath": "//*[local-name()='StructureMap']/*[local-name()='DatePatternMap']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/DataConstraints/DataConstraint/DataKeySet/Key/Annotations. Expected XML element: KeyValue or Component",
+    "status": 400,
+    "xpath": "//*[local-name()='DataKeySet']/*[local-name()='Key']/*[local-name()='Annotations']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/DataConstraints/DataConstraint/DataKeySet/Key/Component/TimeRange. Expected XML element: Value",
+    "status": 400,
+    "xpath": "//*[local-name()='DataKeySet']/*[local-name()='Key']/*[local-name()='Component'][*[local-name()='TimeRange']]"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/GeographicCodelists/GeographicCodelist/CodelistExtension",
+    "status": 400,
+    "xpath": "//*[local-name()='GeographicCodelist']/*[local-name()='CodelistExtension']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/GeoGridCodelists/GeoGridCodelist/CodelistExtension",
+    "status": 400,
+    "xpath": "//*[local-name()='GeoGridCodelist']/*[local-name()='CodelistExtension']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/ConceptSchemes/ConceptScheme/Concept/CoreRepresentation/TextFormat/SentinelValue",
+    "status": 400,
+    "xpath": "//*[local-name()='SentinelValue']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/DataStructures/DataStructure/DataStructureComponents/DimensionList/Link",
+    "status": 400,
+    "xpath": "//*[local-name()='DataStructureComponents']//*[local-name()='Link']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/MetadataStructures/MetadataStructure/MetadataStructureComponents/MetadataAttributeList/Link",
+    "status": 400,
+    "xpath": "//*[local-name()='MetadataStructureComponents']//*[local-name()='Link']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/Hierarchies/Hierarchy/HierarchicalCode/Link",
+    "status": 400,
+    "xpath": "//*[local-name()='Hierarchy']/*//*[local-name()='Link']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/DataConstraints/DataConstraint/CubeRegion/Annotations",
+    "status": 400,
+    "xpath": "//*[local-name()='CubeRegion']/*[local-name()='Annotations']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Could not resolve reference from structure Concept 'AG:CS(1.0).CODED' to structure Concept 'urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=ISO:ISO_SCHEME(1.0).ISO_CONCEPT'",
+    "status": 404,
+    "xpath": "//*[local-name()='Concept']/*[local-name()='ISOConceptReference']"
+  },
+  {
+    "accepted": [],
+    "refusal": "No support for reading structure 'ConceptSchemeMaps' in version '3.0'",
+    "status": 501,
+    "xpath": "//*[local-name()='ConceptSchemeMaps']"
+  },
+  {
+    "accepted": [],
+    "refusal": "No support for reading structure 'OrganisationSchemeMaps' in version '3.0'",
+    "status": 501,
+    "xpath": "//*[local-name()='OrganisationSchemeMaps']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/StructureMaps/StructureMap/EpochMap/Link",
+    "status": 400,
+    "xpath": "//*[local-name()='StructureMap']/*[local-name()='EpochMap']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/DataStructures/DataStructure/DataStructureComponents/AttributeList/MetadataAttributeUsage",
+    "status": 400,
+    "xpath": "//*[local-name()='AttributeList']/*[local-name()='MetadataAttributeUsage']"
+  }
+]

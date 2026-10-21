@@ -1,0 +1,299 @@
+{
+  "meta": {
+    "id": "IREF000003",
+    "prepared": "2024-01-01T00:00:00",
+    "sender": {
+      "id": "TEST"
+    }
+  },
+  "data": {
+    "codelists": [
+      {
+        "id": "CL_FREQ",
+        "agencyID": "SDMX",
+        "version": "2.0",
+        "name": "Frequency",
+        "codes": [
+          {
+            "id": "A",
+            "name": "Annual",
+            "names": {
+              "en": "Annual"
+            }
+          },
+          {
+            "id": "Q",
+            "name": "Quarterly",
+            "names": {
+              "en": "Quarterly"
+            }
+          },
+          {
+            "id": "M",
+            "name": "Monthly",
+            "names": {
+              "en": "Monthly"
+            }
+          }
+        ],
+        "names": {
+          "en": "Frequency"
+        }
+      },
+      {
+        "id": "CL_AREA",
+        "agencyID": "SDMX",
+        "version": "1.0",
+        "name": "Reference Area",
+        "codes": [
+          {
+            "id": "EU",
+            "name": "European Union",
+            "names": {
+              "en": "European Union",
+              "fr": "Union européenne"
+            }
+          },
+          {
+            "id": "US",
+            "name": "United States",
+            "names": {
+              "en": "United States"
+            }
+          },
+          {
+            "id": "JP",
+            "name": "Japan",
+            "names": {
+              "en": "Japan"
+            }
+          }
+        ],
+        "names": {
+          "en": "Reference Area",
+          "fr": "Zone de référence"
+        }
+      }
+    ],
+    "conceptSchemes": [
+      {
+        "id": "CROSS_DOMAIN_CONCEPTS",
+        "agencyID": "SDMX",
+        "version": "2.0",
+        "name": "SDMX Cross Domain Concepts",
+        "concepts": [
+          {
+            "id": "FREQ",
+            "name": "Frequency",
+            "names": {
+              "en": "Frequency"
+            }
+          },
+          {
+            "id": "REF_AREA",
+            "name": "Reference Area",
+            "names": {
+              "en": "Reference Area"
+            }
+          },
+          {
+            "id": "TIME_PERIOD",
+            "name": "Time Period",
+            "names": {
+              "en": "Time Period"
+            }
+          },
+          {
+            "id": "OBS_VALUE",
+            "name": "Observation Value",
+            "names": {
+              "en": "Observation Value"
+            }
+          },
+          {
+            "id": "OBS_STATUS",
+            "name": "Observation Status",
+            "names": {
+              "en": "Observation Status"
+            }
+          },
+          {
+            "id": "DECIMALS",
+            "name": "Decimals",
+            "names": {
+              "en": "Decimals"
+            }
+          }
+        ],
+        "names": {
+          "en": "SDMX Cross Domain Concepts"
+        }
+      }
+    ],
+    "categorySchemes": [
+      {
+        "id": "DATAFLOWS",
+        "agencyID": "TEST",
+        "version": "1.0",
+        "name": "Dataflow catalogue",
+        "categories": [
+          {
+            "id": "MACRO",
+            "name": "Macroeconomic Statistics",
+            "categories": [
+              {
+                "id": "PRICES",
+                "name": "Prices",
+                "names": {
+                  "en": "Prices"
+                }
+              },
+              {
+                "id": "OUTPUT",
+                "name": "Output and Demand",
+                "names": {
+                  "en": "Output and Demand"
+                }
+              }
+            ],
+            "names": {
+              "en": "Macroeconomic Statistics"
+            }
+          },
+          {
+            "id": "FINANCIAL",
+            "name": "Financial Statistics",
+            "names": {
+              "en": "Financial Statistics"
+            }
+          }
+        ],
+        "names": {
+          "en": "Dataflow catalogue"
+        }
+      }
+    ],
+    "dataStructures": [
+      {
+        "id": "DSD_MACRO",
+        "agencyID": "TEST",
+        "version": "1.0",
+        "name": "Macroeconomic Data Structure",
+        "dataStructureComponents": {
+          "dimensionList": {
+            "dimensions": [
+              {
+                "id": "FREQ",
+                "position": 1,
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).FREQ",
+                "localRepresentation": {
+                  "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(2.0)"
+                }
+              },
+              {
+                "id": "REF_AREA",
+                "position": 2,
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).REF_AREA",
+                "localRepresentation": {
+                  "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_AREA(1.0)"
+                }
+              }
+            ],
+            "timeDimension": {
+              "id": "TIME_PERIOD",
+              "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).TIME_PERIOD",
+              "localRepresentation": {
+                "format": {
+                  "dataType": "ObservationalTimePeriod"
+                }
+              }
+            }
+          },
+          "attributeList": {
+            "attributes": [
+              {
+                "id": "OBS_STATUS",
+                "usage": "Conditional",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).OBS_STATUS",
+                "attributeRelationship": {
+                  "observation": {}
+                }
+              },
+              {
+                "id": "DECIMALS",
+                "usage": "Mandatory",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).DECIMALS",
+                "attributeRelationship": {
+                  "dataflow": {}
+                },
+                "localRepresentation": {
+                  "format": {
+                    "dataType": "Integer"
+                  }
+                }
+              }
+            ]
+          },
+          "measureList": {
+            "measures": [
+              {
+                "id": "OBS_VALUE",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).OBS_VALUE"
+              }
+            ]
+          }
+        },
+        "names": {
+          "en": "Macroeconomic Data Structure"
+        }
+      }
+    ],
+    "dataflows": [
+      {
+        "id": "DF_PRICES",
+        "agencyID": "TEST",
+        "version": "1.0",
+        "name": "Price Statistics Dataflow",
+        "structure": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=TEST:DSD_MACRO(1.0)",
+        "names": {
+          "en": "Price Statistics Dataflow",
+          "fr": "Statistiques des prix"
+        }
+      },
+      {
+        "id": "DF_OUTPUT",
+        "agencyID": "TEST",
+        "version": "1.0",
+        "name": "Output and Demand Dataflow",
+        "structure": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=TEST:DSD_MACRO(1.0)",
+        "names": {
+          "en": "Output and Demand Dataflow"
+        }
+      }
+    ],
+    "categorisations": [
+      {
+        "id": "CAT_PRICES",
+        "agencyID": "TEST",
+        "version": "1.0",
+        "name": "Price Statistics categorisation",
+        "source": "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=TEST:DF_PRICES(1.0)",
+        "target": "urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=TEST:DATAFLOWS(1.0).PRICES",
+        "names": {
+          "en": "Price Statistics categorisation"
+        }
+      },
+      {
+        "id": "CAT_OUTPUT",
+        "agencyID": "TEST",
+        "version": "1.0",
+        "name": "Output categorisation",
+        "source": "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=TEST:DF_OUTPUT(1.0)",
+        "target": "urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=TEST:DATAFLOWS(1.0).OUTPUT",
+        "names": {
+          "en": "Output categorisation"
+        }
+      }
+    ]
+  }
+}

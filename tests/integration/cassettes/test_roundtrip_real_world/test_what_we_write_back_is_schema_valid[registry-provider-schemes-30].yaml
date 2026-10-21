@@ -1,0 +1,134 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=3.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - Python-urllib/3.13
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/dataproviderscheme/*/*/*
+  response:
+    body:
+      string: <?xml version='1.0' encoding='UTF-8'?><message:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+        xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><message:Header><message:ID>IREF204539</message:ID><message:Test>false</message:Test><message:Prepared>2026-08-20T10:07:39Z</message:Prepared><message:Sender
+        id="Unknown"/><message:Receiver id="not_supplied"/></message:Header><message:Structures><str:DataProviderSchemes><str:DataProviderScheme
+        urn="urn:sdmx:org.sdmx.infomodel.base.DataProviderScheme=ESTAT:DATA_PROVIDERS(1.0)"
+        isExternalReference="false" agencyID="ESTAT" id="DATA_PROVIDERS"><com:Name
+        xml:lang="en">Data Proivders</com:Name><str:DataProvider urn="urn:sdmx:org.sdmx.infomodel.base.DataProvider=ESTAT:DATA_PROVIDERS(1.0).ESTAT"
+        id="ESTAT"><com:Name xml:lang="en">Eurostat</com:Name></str:DataProvider><str:DataProvider
+        urn="urn:sdmx:org.sdmx.infomodel.base.DataProvider=ESTAT:DATA_PROVIDERS(1.0).IMF"
+        id="IMF"><com:Name xml:lang="en">IMF</com:Name></str:DataProvider><str:DataProvider
+        urn="urn:sdmx:org.sdmx.infomodel.base.DataProvider=ESTAT:DATA_PROVIDERS(1.0).UNSD"
+        id="UNSD"><com:Name xml:lang="en">UNSD</com:Name></str:DataProvider><str:DataProvider
+        urn="urn:sdmx:org.sdmx.infomodel.base.DataProvider=ESTAT:DATA_PROVIDERS(1.0).OECD"
+        id="OECD"><com:Name xml:lang="en">OECD</com:Name></str:DataProvider></str:DataProviderScheme><str:DataProviderScheme
+        urn="urn:sdmx:org.sdmx.infomodel.base.DataProviderScheme=SDMX:DATA_PROVIDERS(1.0)"
+        isExternalReference="false" agencyID="SDMX" id="DATA_PROVIDERS"><com:Name
+        xml:lang="en">DATA_PROVIDERS</com:Name><str:DataProvider urn="urn:sdmx:org.sdmx.infomodel.base.DataProvider=SDMX:DATA_PROVIDERS(1.0).ECB"
+        id="ECB"><com:Name xml:lang="en">European Central Bank</com:Name><com:Description
+        xml:lang="en">European Central Bank</com:Description></str:DataProvider></str:DataProviderScheme></str:DataProviderSchemes></message:Structures></message:Structure>
+    headers:
+      cache-control:
+      - private
+      connection:
+      - close
+      content-disposition:
+      - inline; filename="structure.xml"
+      content-length:
+      - '2137'
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 20 Aug 2026 10:07:39 GMT
+      etag:
+      - 0e1f27287f5f0284
+      set-cookie:
+      - JSESSIONID=8BE3A034F8D1CC0C5812CEFFCFAE0F2E; Path=/; Secure; HttpOnly
+      - 7fd38c8cd85a70a9027a63339d2c9c92=eaeb66c45f2b478c26b73fa2c3ef8c89; path=/;
+        HttpOnly; Secure; SameSite=None
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: ''
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=3.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - sdmxlib-tests
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/dataproviderscheme/*/*/*
+  response:
+    body:
+      string: <?xml version='1.0' encoding='UTF-8'?><message:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+        xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><message:Header><message:ID>IREF205549</message:ID><message:Test>false</message:Test><message:Prepared>2026-08-20T10:09:13Z</message:Prepared><message:Sender
+        id="Unknown"/><message:Receiver id="not_supplied"/></message:Header><message:Structures><str:DataProviderSchemes><str:DataProviderScheme
+        urn="urn:sdmx:org.sdmx.infomodel.base.DataProviderScheme=ESTAT:DATA_PROVIDERS(1.0)"
+        isExternalReference="false" agencyID="ESTAT" id="DATA_PROVIDERS"><com:Name
+        xml:lang="en">Data Proivders</com:Name><str:DataProvider urn="urn:sdmx:org.sdmx.infomodel.base.DataProvider=ESTAT:DATA_PROVIDERS(1.0).ESTAT"
+        id="ESTAT"><com:Name xml:lang="en">Eurostat</com:Name></str:DataProvider><str:DataProvider
+        urn="urn:sdmx:org.sdmx.infomodel.base.DataProvider=ESTAT:DATA_PROVIDERS(1.0).IMF"
+        id="IMF"><com:Name xml:lang="en">IMF</com:Name></str:DataProvider><str:DataProvider
+        urn="urn:sdmx:org.sdmx.infomodel.base.DataProvider=ESTAT:DATA_PROVIDERS(1.0).UNSD"
+        id="UNSD"><com:Name xml:lang="en">UNSD</com:Name></str:DataProvider><str:DataProvider
+        urn="urn:sdmx:org.sdmx.infomodel.base.DataProvider=ESTAT:DATA_PROVIDERS(1.0).OECD"
+        id="OECD"><com:Name xml:lang="en">OECD</com:Name></str:DataProvider></str:DataProviderScheme><str:DataProviderScheme
+        urn="urn:sdmx:org.sdmx.infomodel.base.DataProviderScheme=SDMX:DATA_PROVIDERS(1.0)"
+        isExternalReference="false" agencyID="SDMX" id="DATA_PROVIDERS"><com:Name
+        xml:lang="en">DATA_PROVIDERS</com:Name><str:DataProvider urn="urn:sdmx:org.sdmx.infomodel.base.DataProvider=SDMX:DATA_PROVIDERS(1.0).ECB"
+        id="ECB"><com:Name xml:lang="en">European Central Bank</com:Name><com:Description
+        xml:lang="en">European Central Bank</com:Description></str:DataProvider></str:DataProviderScheme></str:DataProviderSchemes></message:Structures></message:Structure>
+    headers:
+      cache-control:
+      - private
+      connection:
+      - close
+      content-disposition:
+      - inline; filename="structure.xml"
+      content-length:
+      - '2137'
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 20 Aug 2026 10:09:14 GMT
+      etag:
+      - 0e1f27287f5f0284
+      set-cookie:
+      - JSESSIONID=2C0A07EB8564DD464624EE16C630905E; Path=/; Secure; HttpOnly
+      - 7fd38c8cd85a70a9027a63339d2c9c92=eaeb66c45f2b478c26b73fa2c3ef8c89; path=/;
+        HttpOnly; Secure; SameSite=None
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: ''
+version: 1

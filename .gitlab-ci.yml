@@ -1,0 +1,53 @@
+# GitLab CI runs no tests. The quality gate is local: `just ci`.
+#
+# The four quality jobs (check / test / test-docs / test-integration) were
+# removed because each paid a full apt-get + pip install uv + install just +
+# `uv sync --group dev` before running anything, and each was triggered by hand
+# per merge request anyway — so they spent shared-runner minutes without adding
+# a check that `just ci` had not already made locally.
+#
+# This is a *hosting* decision, not a design one. Nothing about the test suite
+# is shaped to fit a runner budget: Hypothesis explores at full width, mutation
+# testing runs whatever scope is useful, and the suite is free to grow. If
+# hosted compute is bought later, restore these jobs from git history.
+#
+# `pages` is kept because it publishes the docs site, and made manual because
+# it was the only job that ran automatically — once per push to the default
+# branch, which on an active day is most of the spend.
+
+default:
+  image: python:3.14-slim
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq curl
+    - pip install uv --quiet
+    - curl -fsSL https://just.systems/install.sh | bash -s -- --to /usr/local/bin --tag 1.46.0
+    - uv sync --group dev
+
+variables:
+  UV_CACHE_DIR: "$CI_PROJECT_DIR/.uv-cache"
+
+cache:
+  key:
+    prefix: "v3"
+    files:
+      - pyproject.toml
+  paths:
+    - .uv-cache/
+
+stages:
+  - deploy
+
+# Publish the mkdocs site. Manual: click it when the docs have changed, rather
+# than rebuilding on every merge.
+pages:
+  stage: deploy
+  script:
+    - just docs-build
+    - mkdir -p public
+    - cp -r site/* public/
+  artifacts:
+    paths:
+      - public
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

@@ -1,0 +1,21 @@
+{
+  "AgencyScheme": 1,
+  "Categorisation": 1,
+  "CategoryScheme": 1,
+  "Codelist": 3,
+  "ConceptScheme": 2,
+  "DataConstraint": 5,
+  "DataConsumerScheme": 1,
+  "DataProviderScheme": 1,
+  "DataStructureDefinition": 1,
+  "Dataflow": 1,
+  "Hierarchy": 1,
+  "HierarchyAssociation": 1,
+  "MetadataProviderScheme": 1,
+  "MetadataProvisionAgreement": 1,
+  "MetadataStructure": 1,
+  "Metadataflow": 1,
+  "ProvisionAgreement": 1,
+  "RepresentationMap": 2,
+  "StructureMap": 1
+}

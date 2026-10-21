@@ -1,0 +1,292 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=3.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - Python-urllib/3.13
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/metadatastructure/*/*/*
+  response:
+    body:
+      string: <?xml version='1.0' encoding='UTF-8'?><message:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+        xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><message:Header><message:ID>IREF204535</message:ID><message:Test>false</message:Test><message:Prepared>2026-08-20T10:07:30Z</message:Prepared><message:Sender
+        id="Unknown"/><message:Receiver id="not_supplied"/></message:Header><message:Structures><str:MetadataStructures><str:MetadataStructure
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=IAEG-SDGs:SDG_MSD(1.0)"
+        isExternalReference="false" agencyID="IAEG-SDGs" id="SDG_MSD" version="1.0"><com:Name
+        xml:lang="en">SDG Metadata Structure Definition</com:Name><com:Description
+        xml:lang="en">Metadata Structure Definition for Sustainable Development Goals
+        Indicators.</com:Description><str:MetadataStructureComponents><str:MetadataAttributeList><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).ADJUSTMENT"
+        minOccurs="0" maxOccurs="1" id="ADJUSTMENT"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).ADJUSTMENT</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CLASS_SYSTEM"
+        minOccurs="0" maxOccurs="1" id="CLASS_SYSTEM"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CLASS_SYSTEM</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).COLL_METHOD"
+        minOccurs="0" maxOccurs="1" id="COLL_METHOD"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).COLL_METHOD</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).COMPARABILITY"
+        minOccurs="0" maxOccurs="1" id="COMPARABILITY"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).COMPARABILITY</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).COMPILING_ORG"
+        minOccurs="0" maxOccurs="1" id="COMPILING_ORG"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).COMPILING_ORG</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT"
+        minOccurs="0" maxOccurs="1" id="CONTACT"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT_EMAIL"
+        minOccurs="0" maxOccurs="1" id="CONTACT_EMAIL"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT_EMAIL</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT_FUNCT"
+        minOccurs="0" maxOccurs="1" id="CONTACT_FUNCT"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT_FUNCT</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT_MAIL"
+        minOccurs="0" maxOccurs="1" id="CONTACT_MAIL"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT_MAIL</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT_NAME"
+        minOccurs="0" maxOccurs="1" id="CONTACT_NAME"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT_NAME</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT_ORGANISATION"
+        minOccurs="0" maxOccurs="1" id="CONTACT_ORGANISATION"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT_ORGANISATION</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT_PHONE"
+        minOccurs="0" maxOccurs="1" id="CONTACT_PHONE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT_PHONE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).COVERAGE"
+        minOccurs="0" maxOccurs="1" id="COVERAGE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).COVERAGE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).DATA_COMP"
+        minOccurs="0" maxOccurs="1" id="DATA_COMP"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).DATA_COMP</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).DATA_SOURCE"
+        minOccurs="0" maxOccurs="1" id="DATA_SOURCE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).DATA_SOURCE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).DATA_VALIDATION"
+        minOccurs="0" maxOccurs="1" id="DATA_VALIDATION"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).DATA_VALIDATION</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).DOC_METHOD"
+        minOccurs="0" maxOccurs="1" id="DOC_METHOD"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).DOC_METHOD</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).FREQ_COLL"
+        minOccurs="0" maxOccurs="1" id="FREQ_COLL"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).FREQ_COLL</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).IMPUTATION"
+        minOccurs="0" maxOccurs="1" id="IMPUTATION"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).IMPUTATION</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).IND_DEF_CON_CLASS"
+        minOccurs="0" maxOccurs="1" id="IND_DEF_CON_CLASS"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).IND_DEF_CON_CLASS</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).INST_MANDATE"
+        minOccurs="0" maxOccurs="1" id="INST_MANDATE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).INST_MANDATE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).META_LAST_UPDATE"
+        minOccurs="0" maxOccurs="1" id="META_LAST_UPDATE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).META_LAST_UPDATE</str:ConceptIdentity><str:LocalRepresentation><str:TextFormat
+        isSequence="false" textType="GregorianDay"/></str:LocalRepresentation></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).ORGANISATION_UNIT"
+        minOccurs="0" maxOccurs="1" id="ORGANISATION_UNIT"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).ORGANISATION_UNIT</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).OTHER_DOC"
+        minOccurs="0" maxOccurs="1" id="OTHER_DOC"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).OTHER_DOC</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).OTHER_METHOD"
+        minOccurs="0" maxOccurs="1" id="OTHER_METHOD"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).OTHER_METHOD</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).QUALITY_ASSMNT"
+        minOccurs="0" maxOccurs="1" id="QUALITY_ASSMNT"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).QUALITY_ASSMNT</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).QUALITY_ASSURE"
+        minOccurs="0" maxOccurs="1" id="QUALITY_ASSURE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).QUALITY_ASSURE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).QUALITY_MGMNT"
+        minOccurs="0" maxOccurs="1" id="QUALITY_MGMNT"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).QUALITY_MGMNT</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).RATIONALE"
+        minOccurs="0" maxOccurs="1" id="RATIONALE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).RATIONALE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).REC_USE_LIM"
+        minOccurs="0" maxOccurs="1" id="REC_USE_LIM"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).REC_USE_LIM</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).REG_AGG"
+        minOccurs="0" maxOccurs="1" id="REG_AGG"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).REG_AGG</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).REL_CAL_POLICY"
+        minOccurs="0" maxOccurs="1" id="REL_CAL_POLICY"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).REL_CAL_POLICY</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_CUSTODIAN_AGENCIES"
+        minOccurs="0" maxOccurs="1" id="SDG_CUSTODIAN_AGENCIES"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_CUSTODIAN_AGENCIES</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_GOAL"
+        minOccurs="0" maxOccurs="1" id="SDG_GOAL"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_GOAL</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_INDICATOR"
+        minOccurs="0" maxOccurs="1" id="SDG_INDICATOR"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_INDICATOR</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_INDICATOR_INFO"
+        minOccurs="0" maxOccurs="1" id="SDG_INDICATOR_INFO"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_INDICATOR_INFO</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_RELATED_INDICATORS"
+        minOccurs="0" maxOccurs="1" id="SDG_RELATED_INDICATORS"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_RELATED_INDICATORS</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_SERIES_DESCR"
+        minOccurs="0" maxOccurs="1" id="SDG_SERIES_DESCR"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_SERIES_DESCR</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_TARGET"
+        minOccurs="0" maxOccurs="1" id="SDG_TARGET"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_TARGET</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SOURCE_TYPE"
+        minOccurs="0" maxOccurs="1" id="SOURCE_TYPE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SOURCE_TYPE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SRC_TYPE_COLL_METHOD"
+        minOccurs="0" maxOccurs="1" id="SRC_TYPE_COLL_METHOD"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SRC_TYPE_COLL_METHOD</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).STAT_CONC_DEF"
+        minOccurs="0" maxOccurs="1" id="STAT_CONC_DEF"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).STAT_CONC_DEF</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).UNIT_MEASURE"
+        minOccurs="0" maxOccurs="1" id="UNIT_MEASURE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).UNIT_MEASURE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).TRANSLATIONS"
+        minOccurs="0" maxOccurs="1" id="TRANSLATIONS"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).TRANSLATIONS</str:ConceptIdentity></str:MetadataAttribute></str:MetadataAttributeList></str:MetadataStructureComponents></str:MetadataStructure></str:MetadataStructures></message:Structures></message:Structure>
+    headers:
+      cache-control:
+      - private
+      connection:
+      - close
+      content-disposition:
+      - inline; filename="structure.xml"
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 20 Aug 2026 10:07:30 GMT
+      etag:
+      - 63eda3db01896c7c
+      set-cookie:
+      - JSESSIONID=E4CD90A8B6E2C3F28CA77C5ADDB003B1; Path=/; Secure; HttpOnly
+      - 7fd38c8cd85a70a9027a63339d2c9c92=eaeb66c45f2b478c26b73fa2c3ef8c89; path=/;
+        HttpOnly; Secure; SameSite=None
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: ''
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=3.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - sdmxlib-tests
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/metadatastructure/*/*/*
+  response:
+    body:
+      string: <?xml version='1.0' encoding='UTF-8'?><message:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+        xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><message:Header><message:ID>IREF205345</message:ID><message:Test>false</message:Test><message:Prepared>2026-08-20T10:08:56Z</message:Prepared><message:Sender
+        id="Unknown"/><message:Receiver id="not_supplied"/></message:Header><message:Structures><str:MetadataStructures><str:MetadataStructure
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=IAEG-SDGs:SDG_MSD(1.0)"
+        isExternalReference="false" agencyID="IAEG-SDGs" id="SDG_MSD" version="1.0"><com:Name
+        xml:lang="en">SDG Metadata Structure Definition</com:Name><com:Description
+        xml:lang="en">Metadata Structure Definition for Sustainable Development Goals
+        Indicators.</com:Description><str:MetadataStructureComponents><str:MetadataAttributeList><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).ADJUSTMENT"
+        minOccurs="0" maxOccurs="1" id="ADJUSTMENT"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).ADJUSTMENT</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CLASS_SYSTEM"
+        minOccurs="0" maxOccurs="1" id="CLASS_SYSTEM"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CLASS_SYSTEM</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).COLL_METHOD"
+        minOccurs="0" maxOccurs="1" id="COLL_METHOD"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).COLL_METHOD</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).COMPARABILITY"
+        minOccurs="0" maxOccurs="1" id="COMPARABILITY"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).COMPARABILITY</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).COMPILING_ORG"
+        minOccurs="0" maxOccurs="1" id="COMPILING_ORG"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).COMPILING_ORG</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT"
+        minOccurs="0" maxOccurs="1" id="CONTACT"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT_EMAIL"
+        minOccurs="0" maxOccurs="1" id="CONTACT_EMAIL"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT_EMAIL</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT_FUNCT"
+        minOccurs="0" maxOccurs="1" id="CONTACT_FUNCT"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT_FUNCT</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT_MAIL"
+        minOccurs="0" maxOccurs="1" id="CONTACT_MAIL"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT_MAIL</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT_NAME"
+        minOccurs="0" maxOccurs="1" id="CONTACT_NAME"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT_NAME</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT_ORGANISATION"
+        minOccurs="0" maxOccurs="1" id="CONTACT_ORGANISATION"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT_ORGANISATION</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).CONTACT_PHONE"
+        minOccurs="0" maxOccurs="1" id="CONTACT_PHONE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).CONTACT_PHONE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).COVERAGE"
+        minOccurs="0" maxOccurs="1" id="COVERAGE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).COVERAGE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).DATA_COMP"
+        minOccurs="0" maxOccurs="1" id="DATA_COMP"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).DATA_COMP</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).DATA_SOURCE"
+        minOccurs="0" maxOccurs="1" id="DATA_SOURCE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).DATA_SOURCE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).DATA_VALIDATION"
+        minOccurs="0" maxOccurs="1" id="DATA_VALIDATION"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).DATA_VALIDATION</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).DOC_METHOD"
+        minOccurs="0" maxOccurs="1" id="DOC_METHOD"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).DOC_METHOD</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).FREQ_COLL"
+        minOccurs="0" maxOccurs="1" id="FREQ_COLL"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).FREQ_COLL</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).IMPUTATION"
+        minOccurs="0" maxOccurs="1" id="IMPUTATION"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).IMPUTATION</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).IND_DEF_CON_CLASS"
+        minOccurs="0" maxOccurs="1" id="IND_DEF_CON_CLASS"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).IND_DEF_CON_CLASS</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).INST_MANDATE"
+        minOccurs="0" maxOccurs="1" id="INST_MANDATE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).INST_MANDATE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).META_LAST_UPDATE"
+        minOccurs="0" maxOccurs="1" id="META_LAST_UPDATE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).META_LAST_UPDATE</str:ConceptIdentity><str:LocalRepresentation><str:TextFormat
+        isSequence="false" textType="GregorianDay"/></str:LocalRepresentation></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).ORGANISATION_UNIT"
+        minOccurs="0" maxOccurs="1" id="ORGANISATION_UNIT"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).ORGANISATION_UNIT</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).OTHER_DOC"
+        minOccurs="0" maxOccurs="1" id="OTHER_DOC"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).OTHER_DOC</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).OTHER_METHOD"
+        minOccurs="0" maxOccurs="1" id="OTHER_METHOD"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).OTHER_METHOD</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).QUALITY_ASSMNT"
+        minOccurs="0" maxOccurs="1" id="QUALITY_ASSMNT"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).QUALITY_ASSMNT</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).QUALITY_ASSURE"
+        minOccurs="0" maxOccurs="1" id="QUALITY_ASSURE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).QUALITY_ASSURE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).QUALITY_MGMNT"
+        minOccurs="0" maxOccurs="1" id="QUALITY_MGMNT"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).QUALITY_MGMNT</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).RATIONALE"
+        minOccurs="0" maxOccurs="1" id="RATIONALE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).RATIONALE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).REC_USE_LIM"
+        minOccurs="0" maxOccurs="1" id="REC_USE_LIM"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).REC_USE_LIM</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).REG_AGG"
+        minOccurs="0" maxOccurs="1" id="REG_AGG"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).REG_AGG</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).REL_CAL_POLICY"
+        minOccurs="0" maxOccurs="1" id="REL_CAL_POLICY"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).REL_CAL_POLICY</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_CUSTODIAN_AGENCIES"
+        minOccurs="0" maxOccurs="1" id="SDG_CUSTODIAN_AGENCIES"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_CUSTODIAN_AGENCIES</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_GOAL"
+        minOccurs="0" maxOccurs="1" id="SDG_GOAL"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_GOAL</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_INDICATOR"
+        minOccurs="0" maxOccurs="1" id="SDG_INDICATOR"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_INDICATOR</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_INDICATOR_INFO"
+        minOccurs="0" maxOccurs="1" id="SDG_INDICATOR_INFO"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_INDICATOR_INFO</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_RELATED_INDICATORS"
+        minOccurs="0" maxOccurs="1" id="SDG_RELATED_INDICATORS"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_RELATED_INDICATORS</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_SERIES_DESCR"
+        minOccurs="0" maxOccurs="1" id="SDG_SERIES_DESCR"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_SERIES_DESCR</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SDG_TARGET"
+        minOccurs="0" maxOccurs="1" id="SDG_TARGET"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SDG_TARGET</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SOURCE_TYPE"
+        minOccurs="0" maxOccurs="1" id="SOURCE_TYPE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SOURCE_TYPE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).SRC_TYPE_COLL_METHOD"
+        minOccurs="0" maxOccurs="1" id="SRC_TYPE_COLL_METHOD"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).SRC_TYPE_COLL_METHOD</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).STAT_CONC_DEF"
+        minOccurs="0" maxOccurs="1" id="STAT_CONC_DEF"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).STAT_CONC_DEF</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).UNIT_MEASURE"
+        minOccurs="0" maxOccurs="1" id="UNIT_MEASURE"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).UNIT_MEASURE</str:ConceptIdentity></str:MetadataAttribute><str:MetadataAttribute
+        urn="urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=IAEG-SDGs:SDG_MSD(1.0).TRANSLATIONS"
+        minOccurs="0" maxOccurs="1" id="TRANSLATIONS"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=IAEG-SDGs:SDG_META_CONCEPTS(1.0).TRANSLATIONS</str:ConceptIdentity></str:MetadataAttribute></str:MetadataAttributeList></str:MetadataStructureComponents></str:MetadataStructure></str:MetadataStructures></message:Structures></message:Structure>
+    headers:
+      cache-control:
+      - private
+      connection:
+      - close
+      content-disposition:
+      - inline; filename="structure.xml"
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 20 Aug 2026 10:08:56 GMT
+      etag:
+      - 63eda3db01896c7c
+      set-cookie:
+      - JSESSIONID=CC36A2D742815C155E5E8BABFCED5477; Path=/; Secure; HttpOnly
+      - 7fd38c8cd85a70a9027a63339d2c9c92=eaeb66c45f2b478c26b73fa2c3ef8c89; path=/;
+        HttpOnly; Secure; SameSite=None
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: ''
+version: 1

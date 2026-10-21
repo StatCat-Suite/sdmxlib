@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SDMX-ML 3.0 fixture: multiple dataflows, category schemes, categorisations.
+  Conformant to v3.0.0 XSDs.
+-->
+<mes:Structure
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+  xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure"
+  xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <mes:Header>
+    <mes:ID>IREF000003</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2024-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+
+    <str:Codelists>
+      <str:Codelist id="CL_FREQ" agencyID="SDMX" version="2.0">
+        <com:Name xml:lang="en">Frequency</com:Name>
+        <str:Code id="A"><com:Name xml:lang="en">Annual</com:Name></str:Code>
+        <str:Code id="Q"><com:Name xml:lang="en">Quarterly</com:Name></str:Code>
+        <str:Code id="M"><com:Name xml:lang="en">Monthly</com:Name></str:Code>
+      </str:Codelist>
+      <str:Codelist id="CL_AREA" agencyID="SDMX" version="1.0">
+        <com:Name xml:lang="en">Reference Area</com:Name>
+        <com:Name xml:lang="fr">Zone de référence</com:Name>
+        <str:Code id="EU">
+          <com:Name xml:lang="en">European Union</com:Name>
+          <com:Name xml:lang="fr">Union européenne</com:Name>
+        </str:Code>
+        <str:Code id="US"><com:Name xml:lang="en">United States</com:Name></str:Code>
+        <str:Code id="JP"><com:Name xml:lang="en">Japan</com:Name></str:Code>
+      </str:Codelist>
+    </str:Codelists>
+
+    <str:ConceptSchemes>
+      <str:ConceptScheme id="CROSS_DOMAIN_CONCEPTS" agencyID="SDMX" version="2.0">
+        <com:Name xml:lang="en">SDMX Cross Domain Concepts</com:Name>
+        <str:Concept id="FREQ"><com:Name xml:lang="en">Frequency</com:Name></str:Concept>
+        <str:Concept id="REF_AREA"><com:Name xml:lang="en">Reference Area</com:Name></str:Concept>
+        <str:Concept id="TIME_PERIOD"><com:Name xml:lang="en">Time Period</com:Name></str:Concept>
+        <str:Concept id="OBS_VALUE"><com:Name xml:lang="en">Observation Value</com:Name></str:Concept>
+        <str:Concept id="OBS_STATUS"><com:Name xml:lang="en">Observation Status</com:Name></str:Concept>
+        <str:Concept id="DECIMALS"><com:Name xml:lang="en">Decimals</com:Name></str:Concept>
+      </str:ConceptScheme>
+    </str:ConceptSchemes>
+
+    <str:CategorySchemes>
+      <str:CategoryScheme id="DATAFLOWS" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Dataflow catalogue</com:Name>
+        <str:Category id="MACRO">
+          <com:Name xml:lang="en">Macroeconomic Statistics</com:Name>
+          <str:Category id="PRICES"><com:Name xml:lang="en">Prices</com:Name></str:Category>
+          <str:Category id="OUTPUT"><com:Name xml:lang="en">Output and Demand</com:Name></str:Category>
+        </str:Category>
+        <str:Category id="FINANCIAL"><com:Name xml:lang="en">Financial Statistics</com:Name></str:Category>
+      </str:CategoryScheme>
+    </str:CategorySchemes>
+
+    <str:DataStructures>
+      <str:DataStructure id="DSD_MACRO" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Macroeconomic Data Structure</com:Name>
+        <str:DataStructureComponents>
+          <str:DimensionList id="DimensionDescriptor">
+            <str:Dimension id="FREQ" position="1">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).FREQ</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(2.0)</str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:Dimension id="REF_AREA" position="2">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).REF_AREA</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_AREA(1.0)</str:Enumeration>
+              </str:LocalRepresentation>
+            </str:Dimension>
+            <str:TimeDimension id="TIME_PERIOD">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).TIME_PERIOD</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="ObservationalTimePeriod"/>
+              </str:LocalRepresentation>
+            </str:TimeDimension>
+          </str:DimensionList>
+          <str:AttributeList id="AttributeDescriptor">
+            <str:Attribute id="OBS_STATUS" usage="optional">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).OBS_STATUS</str:ConceptIdentity>
+              <str:AttributeRelationship>
+                <str:Observation/>
+              </str:AttributeRelationship>
+            </str:Attribute>
+            <str:Attribute id="DECIMALS" usage="mandatory">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).DECIMALS</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="Integer"/>
+              </str:LocalRepresentation>
+              <str:AttributeRelationship>
+                <str:Dataflow/>
+              </str:AttributeRelationship>
+            </str:Attribute>
+          </str:AttributeList>
+          <str:MeasureList id="MeasureDescriptor">
+            <str:Measure id="OBS_VALUE">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(2.0).OBS_VALUE</str:ConceptIdentity>
+            </str:Measure>
+          </str:MeasureList>
+        </str:DataStructureComponents>
+      </str:DataStructure>
+    </str:DataStructures>
+
+    <str:Dataflows>
+      <str:Dataflow id="DF_PRICES" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Price Statistics Dataflow</com:Name>
+        <com:Name xml:lang="fr">Statistiques des prix</com:Name>
+        <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=TEST:DSD_MACRO(1.0)</str:Structure>
+      </str:Dataflow>
+      <str:Dataflow id="DF_OUTPUT" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Output and Demand Dataflow</com:Name>
+        <str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=TEST:DSD_MACRO(1.0)</str:Structure>
+      </str:Dataflow>
+    </str:Dataflows>
+
+    <str:Categorisations>
+      <str:Categorisation id="CAT_PRICES" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Price Statistics categorisation</com:Name>
+        <str:Source>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=TEST:DF_PRICES(1.0)</str:Source>
+        <str:Target>urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=TEST:DATAFLOWS(1.0).MACRO.PRICES</str:Target>
+      </str:Categorisation>
+      <str:Categorisation id="CAT_OUTPUT" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Output categorisation</com:Name>
+        <str:Source>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=TEST:DF_OUTPUT(1.0)</str:Source>
+        <str:Target>urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=TEST:DATAFLOWS(1.0).MACRO.OUTPUT</str:Target>
+      </str:Categorisation>
+    </str:Categorisations>
+
+  </mes:Structures>
+</mes:Structure>

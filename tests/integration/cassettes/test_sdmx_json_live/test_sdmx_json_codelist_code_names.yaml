@@ -1,0 +1,790 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+json;version=2.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - Python-urllib/3.12
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/codelist/SDMX/CL_FREQ/latest
+  response:
+    body:
+      string: "{\"meta\":{\"id\":\"IREF482436\",\"test\":false,\"schema\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"prepared\":\"2026-03-30T05:24:03Z\",\"contentLanguages\":[\"en\"],\"sender\":{\"id\":\"Unknown\"}},\"data\":{\"codelists\":[{\"links\":[{\"rel\":\"self\",\"type\":\"codelist\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(2.1)\"}],\"id\":\"CL_FREQ\",\"name\":\"Code
+        list for concept \\\"Frequency\\\"\",\"names\":{\"en\":\"Code list for concept
+        \\\"Frequency\\\"\"},\"description\":\"This code list provides a set of values
+        indicating the\\n          \\\"frequency\\\" of the data (e.g. weekly, monthly,
+        quarterly). The concept \\\"frequency\\\" may\\n          refer to various
+        stages in the production process, e.g. data collection or data\\n          dissemination.
+        For example, a time series could be disseminated at annual frequency but\\n
+        \         the underlying data are compiled monthly. The code list is applicable
+        for all different\\n          uses of \\\"frequency\\\".\",\"descriptions\":{\"en\":\"This
+        code list provides a set of values indicating the\\n          \\\"frequency\\\"
+        of the data (e.g. weekly, monthly, quarterly). The concept \\\"frequency\\\"
+        may\\n          refer to various stages in the production process, e.g. data
+        collection or data\\n          dissemination. For example, a time series could
+        be disseminated at annual frequency but\\n          the underlying data are
+        compiled monthly. The code list is applicable for all different\\n          uses
+        of \\\"frequency\\\".\"},\"version\":\"2.1\",\"agencyID\":\"SDMX\",\"isExternalReference\":false,\"isPartial\":false,\"codes\":[{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A\"}],\"id\":\"A\",\"name\":\"Annual\",\"names\":{\"en\":\"Annual\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            year\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            year\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A2\"}],\"id\":\"A2\",\"name\":\"Biennial\",\"names\":{\"en\":\"Biennial\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A3\"}],\"id\":\"A3\",\"name\":\"Triennial\",\"names\":{\"en\":\"Triennial\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            three years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            three years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A4\"}],\"id\":\"A4\",\"name\":\"Quadrennial\",\"names\":{\"en\":\"Quadrennial\"},\"description\":\"To
+        be used for data collected or disseminated every four\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every four\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A5\"}],\"id\":\"A5\",\"name\":\"Quinquennial\",\"names\":{\"en\":\"Quinquennial\"},\"description\":\"To
+        be used for data collected or disseminated every five\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every five\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A10\"}],\"id\":\"A10\",\"name\":\"Decennial\",\"names\":{\"en\":\"Decennial\"},\"description\":\"To
+        be used for data collected or disseminated every ten\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every ten\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A20\"}],\"id\":\"A20\",\"name\":\"Bidecennial\",\"names\":{\"en\":\"Bidecennial\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            twenty years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            twenty years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A30\"}],\"id\":\"A30\",\"name\":\"Tridecennial\",\"names\":{\"en\":\"Tridecennial\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            thirty years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            thirty years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A_3\"}],\"id\":\"A_3\",\"name\":\"Three
+        times a year\",\"names\":{\"en\":\"Three times a year\"},\"description\":\"To
+        be used for data collected or disseminated three\\n            times a year\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated three\\n            times a year\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).S\"}],\"id\":\"S\",\"name\":\"Half-yearly,
+        semester\",\"names\":{\"en\":\"Half-yearly, semester\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            semester\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            semester\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).Q\"}],\"id\":\"Q\",\"name\":\"Quarterly\",\"names\":{\"en\":\"Quarterly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            quarter\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            quarter\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M\"}],\"id\":\"M\",\"name\":\"Monthly\",\"names\":{\"en\":\"Monthly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            month\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            month\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M2\"}],\"id\":\"M2\",\"name\":\"Bimonthly\",\"names\":{\"en\":\"Bimonthly\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            months\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            months\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_2\"}],\"id\":\"M_2\",\"name\":\"Semimonthly\",\"names\":{\"en\":\"Semimonthly\"},\"description\":\"To
+        be used for data collected or disseminated twice a\\n            month\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated twice a\\n            month\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_3\"}],\"id\":\"M_3\",\"name\":\"Three
+        times a month\",\"names\":{\"en\":\"Three times a month\"},\"description\":\"To
+        be used for data collected or disseminated three\\n            times a month\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated three\\n            times a month\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W\"}],\"id\":\"W\",\"name\":\"Weekly\",\"names\":{\"en\":\"Weekly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            week\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            week\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W2\"}],\"id\":\"W2\",\"name\":\"Biweekly\",\"names\":{\"en\":\"Biweekly\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            weeks\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            weeks\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W3\"}],\"id\":\"W3\",\"name\":\"Triweekly\",\"names\":{\"en\":\"Triweekly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            three weeks\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            three weeks\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W4\"}],\"id\":\"W4\",\"name\":\"Four-weekly\",\"names\":{\"en\":\"Four-weekly\"},\"description\":\"To
+        be used for data collected or disseminated every four\\n            weeks\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every four\\n            weeks\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_2\"}],\"id\":\"W_2\",\"name\":\"Semiweekly\",\"names\":{\"en\":\"Semiweekly\"},\"description\":\"To
+        be used for data collected or disseminated twice a\\n            week\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated twice a\\n            week\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_3\"}],\"id\":\"W_3\",\"name\":\"Three
+        times a week\",\"names\":{\"en\":\"Three times a week\"},\"description\":\"To
+        be used for data collected or disseminated three\\n            times a week\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated three\\n            times a week\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D\"}],\"id\":\"D\",\"name\":\"Daily\",\"names\":{\"en\":\"Daily\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            day\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            day\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D_2\"}],\"id\":\"D_2\",\"name\":\"Twice
+        a day\",\"names\":{\"en\":\"Twice a day\"},\"description\":\"To be used for
+        data collected or disseminated twice a\\n            day\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated twice a\\n            day\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H\"}],\"id\":\"H\",\"name\":\"Hourly\",\"names\":{\"en\":\"Hourly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            hour\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            hour\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H2\"}],\"id\":\"H2\",\"name\":\"Bihourly\",\"names\":{\"en\":\"Bihourly\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            hours\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            hours\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H3\"}],\"id\":\"H3\",\"name\":\"Trihourly\",\"names\":{\"en\":\"Trihourly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            three hours\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            three hours\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).B\"}],\"id\":\"B\",\"name\":\"Daily
+        \u2013 business week\",\"names\":{\"en\":\"Daily \u2013 business week\"},\"description\":\"Similar
+        to \\\"daily\\\", however there are no observations\\n            for Saturdays
+        and Sundays (so, neither \u201Cmissing values\u201D nor \u201Cnumeric values\u201D
+        should be\\n            provided for Saturday and Sunday)\",\"descriptions\":{\"en\":\"Similar
+        to \\\"daily\\\", however there are no observations\\n            for Saturdays
+        and Sundays (so, neither \u201Cmissing values\u201D nor \u201Cnumeric values\u201D
+        should be\\n            provided for Saturday and Sunday)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).N\"}],\"id\":\"N\",\"name\":\"Minutely\",\"names\":{\"en\":\"Minutely\"},\"description\":\"While
+        N denotes \\\"minutely\\\", usually, there may be no\\n            observations
+        every minute (for several series the frequency is usually \\\"irregular\\\"\\n
+        \           within a day/days). And though observations may be sparse (not
+        collected or disseminated\\n            every minute), missing values do not
+        need to be given for the minutes when no\\n            observations exist:
+        in any case the time stamp determines when an observation is\\n            observed\",\"descriptions\":{\"en\":\"While
+        N denotes \\\"minutely\\\", usually, there may be no\\n            observations
+        every minute (for several series the frequency is usually \\\"irregular\\\"\\n
+        \           within a day/days). And though observations may be sparse (not
+        collected or disseminated\\n            every minute), missing values do not
+        need to be given for the minutes when no\\n            observations exist:
+        in any case the time stamp determines when an observation is\\n            observed\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).I\"}],\"id\":\"I\",\"name\":\"Irregular\",\"names\":{\"en\":\"Irregular\"},\"description\":\"To
+        be used with irregular time series that stores data\\n            for a sequence
+        of arbitrary timepoints. Irregular time series are appropriate when the\\n
+        \           data arrives unpredictably, such as when the application records
+        every stock trade or\\n            when random events are recorded (the interval
+        between each element can be a different\\n            length)\",\"descriptions\":{\"en\":\"To
+        be used with irregular time series that stores data\\n            for a sequence
+        of arbitrary timepoints. Irregular time series are appropriate when the\\n
+        \           data arrives unpredictably, such as when the application records
+        every stock trade or\\n            when random events are recorded (the interval
+        between each element can be a different\\n            length)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OA\"}],\"id\":\"OA\",\"name\":\"Occasional
+        annual\",\"names\":{\"en\":\"Occasional annual\"},\"description\":\"The event
+        occurs occasionally with an infrequent update\\n            that could span
+        from 1 year to several years between events. It implies a survey that\\n            experiences
+        a gap for several years prior to the next survey update (this is commonly\\n
+        \           linked to funding available to run a specific survey (i.e. health
+        surveys), whereas a\\n            regular annual survey refers typically to
+        \u2018programs\u2019 that are funded regularly and fall\\n            under
+        the Statistics Act, and therefore never experience a gap)\",\"descriptions\":{\"en\":\"The
+        event occurs occasionally with an infrequent update\\n            that could
+        span from 1 year to several years between events. It implies a survey that\\n
+        \           experiences a gap for several years prior to the next survey update
+        (this is commonly\\n            linked to funding available to run a specific
+        survey (i.e. health surveys), whereas a\\n            regular annual survey
+        refers typically to \u2018programs\u2019 that are funded regularly and fall\\n
+        \           under the Statistics Act, and therefore never experience a gap)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OM\"}],\"id\":\"OM\",\"name\":\"Occasional
+        monthly\",\"names\":{\"en\":\"Occasional monthly\"},\"description\":\"The
+        event occurs occasionally with an infrequent update\\n            that could
+        span from 1 month to several months between events. It implies a survey that\\n
+        \           experiences a gap for several months prior to the next survey\\n
+        \           update\",\"descriptions\":{\"en\":\"The event occurs occasionally
+        with an infrequent update\\n            that could span from 1 month to several
+        months between events. It implies a survey that\\n            experiences
+        a gap for several months prior to the next survey\\n            update\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._O\"}],\"id\":\"_O\",\"name\":\"Other\",\"names\":{\"en\":\"Other\"},\"description\":\"To
+        be used when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is associated to multiple occurrences with frequency\\n
+        \           other than the already defined ones (for example every 5 hours
+        and 32 minutes\\n            etc.)\",\"descriptions\":{\"en\":\"To be used
+        when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is associated to multiple occurrences with frequency\\n
+        \           other than the already defined ones (for example every 5 hours
+        and 32 minutes\\n            etc.)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._U\"}],\"id\":\"_U\",\"name\":\"Unspecified\",\"names\":{\"en\":\"Unspecified\"},\"description\":\"To
+        be used when a set of values are reported within a\\n            time range
+        but not associated to sub ranges. Often this could happen in case of missing\\n
+        \           or sparse information. (Let\u2019s say we have two observations
+        for 2020 but we do not know\\n            if they are part of a monthly reporting
+        or quarterly reporting)\",\"descriptions\":{\"en\":\"To be used when a set
+        of values are reported within a\\n            time range but not associated
+        to sub ranges. Often this could happen in case of missing\\n            or
+        sparse information. (Let\u2019s say we have two observations for 2020 but
+        we do not know\\n            if they are part of a monthly reporting or quarterly
+        reporting)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._Z\"}],\"id\":\"_Z\",\"name\":\"Not
+        applicable\",\"names\":{\"en\":\"Not applicable\"},\"description\":\"To be
+        used when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is not associated to multiple occurrences (only\\n            single
+        occurrence exists) one can use the _Z as frequency\",\"descriptions\":{\"en\":\"To
+        be used when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is not associated to multiple occurrences (only\\n            single
+        occurrence exists) one can use the _Z as frequency\"}}]}]}}"
+    headers:
+      Connection:
+      - close
+      Content-Disposition:
+      - inline; filename="structure.json"
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Mon, 30 Mar 2026 05:24:03 GMT
+      ETag:
+      - 3e1721847d25fa8e
+      Server:
+      - Apache/2.4.64 () OpenSSL/1.0.2k-fips
+      Set-Cookie:
+      - AWSALB=hy9oI11MYBG/ZmKcpoez8o5hQB4bQlP/zPduhYNcobyNTPsZ3M1PAK4YtKH+NBWxq/MGkLqrb/TwOBIy35Egf3d7OB1Do7cxldQnulM5w7skv9M+k2ThtdqoFuLp;
+        Expires=Mon, 06 Apr 2026 05:24:03 GMT; Path=/
+      - AWSALBCORS=hy9oI11MYBG/ZmKcpoez8o5hQB4bQlP/zPduhYNcobyNTPsZ3M1PAK4YtKH+NBWxq/MGkLqrb/TwOBIy35Egf3d7OB1Do7cxldQnulM5w7skv9M+k2ThtdqoFuLp;
+        Expires=Mon, 06 Apr 2026 05:24:03 GMT; Path=/; SameSite=None; Secure
+      - JSESSIONID=94653C408E186B5A2F8C68D6A0435ED7; Path=/; Secure; HttpOnly
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: '200'
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+json;version=2.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - Python-urllib/3.12
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/codelist/SDMX/CL_FREQ/latest
+  response:
+    body:
+      string: "{\"meta\":{\"id\":\"IREF485152\",\"test\":false,\"schema\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"prepared\":\"2026-03-30T05:28:30Z\",\"contentLanguages\":[\"en\"],\"sender\":{\"id\":\"Unknown\"}},\"data\":{\"codelists\":[{\"links\":[{\"rel\":\"self\",\"type\":\"codelist\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(2.1)\"}],\"id\":\"CL_FREQ\",\"name\":\"Code
+        list for concept \\\"Frequency\\\"\",\"names\":{\"en\":\"Code list for concept
+        \\\"Frequency\\\"\"},\"description\":\"This code list provides a set of values
+        indicating the\\n          \\\"frequency\\\" of the data (e.g. weekly, monthly,
+        quarterly). The concept \\\"frequency\\\" may\\n          refer to various
+        stages in the production process, e.g. data collection or data\\n          dissemination.
+        For example, a time series could be disseminated at annual frequency but\\n
+        \         the underlying data are compiled monthly. The code list is applicable
+        for all different\\n          uses of \\\"frequency\\\".\",\"descriptions\":{\"en\":\"This
+        code list provides a set of values indicating the\\n          \\\"frequency\\\"
+        of the data (e.g. weekly, monthly, quarterly). The concept \\\"frequency\\\"
+        may\\n          refer to various stages in the production process, e.g. data
+        collection or data\\n          dissemination. For example, a time series could
+        be disseminated at annual frequency but\\n          the underlying data are
+        compiled monthly. The code list is applicable for all different\\n          uses
+        of \\\"frequency\\\".\"},\"version\":\"2.1\",\"agencyID\":\"SDMX\",\"isExternalReference\":false,\"isPartial\":false,\"codes\":[{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A\"}],\"id\":\"A\",\"name\":\"Annual\",\"names\":{\"en\":\"Annual\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            year\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            year\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A2\"}],\"id\":\"A2\",\"name\":\"Biennial\",\"names\":{\"en\":\"Biennial\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A3\"}],\"id\":\"A3\",\"name\":\"Triennial\",\"names\":{\"en\":\"Triennial\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            three years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            three years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A4\"}],\"id\":\"A4\",\"name\":\"Quadrennial\",\"names\":{\"en\":\"Quadrennial\"},\"description\":\"To
+        be used for data collected or disseminated every four\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every four\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A5\"}],\"id\":\"A5\",\"name\":\"Quinquennial\",\"names\":{\"en\":\"Quinquennial\"},\"description\":\"To
+        be used for data collected or disseminated every five\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every five\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A10\"}],\"id\":\"A10\",\"name\":\"Decennial\",\"names\":{\"en\":\"Decennial\"},\"description\":\"To
+        be used for data collected or disseminated every ten\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every ten\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A20\"}],\"id\":\"A20\",\"name\":\"Bidecennial\",\"names\":{\"en\":\"Bidecennial\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            twenty years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            twenty years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A30\"}],\"id\":\"A30\",\"name\":\"Tridecennial\",\"names\":{\"en\":\"Tridecennial\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            thirty years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            thirty years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A_3\"}],\"id\":\"A_3\",\"name\":\"Three
+        times a year\",\"names\":{\"en\":\"Three times a year\"},\"description\":\"To
+        be used for data collected or disseminated three\\n            times a year\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated three\\n            times a year\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).S\"}],\"id\":\"S\",\"name\":\"Half-yearly,
+        semester\",\"names\":{\"en\":\"Half-yearly, semester\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            semester\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            semester\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).Q\"}],\"id\":\"Q\",\"name\":\"Quarterly\",\"names\":{\"en\":\"Quarterly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            quarter\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            quarter\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M\"}],\"id\":\"M\",\"name\":\"Monthly\",\"names\":{\"en\":\"Monthly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            month\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            month\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M2\"}],\"id\":\"M2\",\"name\":\"Bimonthly\",\"names\":{\"en\":\"Bimonthly\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            months\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            months\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_2\"}],\"id\":\"M_2\",\"name\":\"Semimonthly\",\"names\":{\"en\":\"Semimonthly\"},\"description\":\"To
+        be used for data collected or disseminated twice a\\n            month\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated twice a\\n            month\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_3\"}],\"id\":\"M_3\",\"name\":\"Three
+        times a month\",\"names\":{\"en\":\"Three times a month\"},\"description\":\"To
+        be used for data collected or disseminated three\\n            times a month\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated three\\n            times a month\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W\"}],\"id\":\"W\",\"name\":\"Weekly\",\"names\":{\"en\":\"Weekly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            week\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            week\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W2\"}],\"id\":\"W2\",\"name\":\"Biweekly\",\"names\":{\"en\":\"Biweekly\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            weeks\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            weeks\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W3\"}],\"id\":\"W3\",\"name\":\"Triweekly\",\"names\":{\"en\":\"Triweekly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            three weeks\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            three weeks\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W4\"}],\"id\":\"W4\",\"name\":\"Four-weekly\",\"names\":{\"en\":\"Four-weekly\"},\"description\":\"To
+        be used for data collected or disseminated every four\\n            weeks\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every four\\n            weeks\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_2\"}],\"id\":\"W_2\",\"name\":\"Semiweekly\",\"names\":{\"en\":\"Semiweekly\"},\"description\":\"To
+        be used for data collected or disseminated twice a\\n            week\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated twice a\\n            week\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_3\"}],\"id\":\"W_3\",\"name\":\"Three
+        times a week\",\"names\":{\"en\":\"Three times a week\"},\"description\":\"To
+        be used for data collected or disseminated three\\n            times a week\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated three\\n            times a week\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D\"}],\"id\":\"D\",\"name\":\"Daily\",\"names\":{\"en\":\"Daily\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            day\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            day\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D_2\"}],\"id\":\"D_2\",\"name\":\"Twice
+        a day\",\"names\":{\"en\":\"Twice a day\"},\"description\":\"To be used for
+        data collected or disseminated twice a\\n            day\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated twice a\\n            day\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H\"}],\"id\":\"H\",\"name\":\"Hourly\",\"names\":{\"en\":\"Hourly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            hour\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            hour\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H2\"}],\"id\":\"H2\",\"name\":\"Bihourly\",\"names\":{\"en\":\"Bihourly\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            hours\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            hours\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H3\"}],\"id\":\"H3\",\"name\":\"Trihourly\",\"names\":{\"en\":\"Trihourly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            three hours\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            three hours\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).B\"}],\"id\":\"B\",\"name\":\"Daily
+        \u2013 business week\",\"names\":{\"en\":\"Daily \u2013 business week\"},\"description\":\"Similar
+        to \\\"daily\\\", however there are no observations\\n            for Saturdays
+        and Sundays (so, neither \u201Cmissing values\u201D nor \u201Cnumeric values\u201D
+        should be\\n            provided for Saturday and Sunday)\",\"descriptions\":{\"en\":\"Similar
+        to \\\"daily\\\", however there are no observations\\n            for Saturdays
+        and Sundays (so, neither \u201Cmissing values\u201D nor \u201Cnumeric values\u201D
+        should be\\n            provided for Saturday and Sunday)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).N\"}],\"id\":\"N\",\"name\":\"Minutely\",\"names\":{\"en\":\"Minutely\"},\"description\":\"While
+        N denotes \\\"minutely\\\", usually, there may be no\\n            observations
+        every minute (for several series the frequency is usually \\\"irregular\\\"\\n
+        \           within a day/days). And though observations may be sparse (not
+        collected or disseminated\\n            every minute), missing values do not
+        need to be given for the minutes when no\\n            observations exist:
+        in any case the time stamp determines when an observation is\\n            observed\",\"descriptions\":{\"en\":\"While
+        N denotes \\\"minutely\\\", usually, there may be no\\n            observations
+        every minute (for several series the frequency is usually \\\"irregular\\\"\\n
+        \           within a day/days). And though observations may be sparse (not
+        collected or disseminated\\n            every minute), missing values do not
+        need to be given for the minutes when no\\n            observations exist:
+        in any case the time stamp determines when an observation is\\n            observed\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).I\"}],\"id\":\"I\",\"name\":\"Irregular\",\"names\":{\"en\":\"Irregular\"},\"description\":\"To
+        be used with irregular time series that stores data\\n            for a sequence
+        of arbitrary timepoints. Irregular time series are appropriate when the\\n
+        \           data arrives unpredictably, such as when the application records
+        every stock trade or\\n            when random events are recorded (the interval
+        between each element can be a different\\n            length)\",\"descriptions\":{\"en\":\"To
+        be used with irregular time series that stores data\\n            for a sequence
+        of arbitrary timepoints. Irregular time series are appropriate when the\\n
+        \           data arrives unpredictably, such as when the application records
+        every stock trade or\\n            when random events are recorded (the interval
+        between each element can be a different\\n            length)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OA\"}],\"id\":\"OA\",\"name\":\"Occasional
+        annual\",\"names\":{\"en\":\"Occasional annual\"},\"description\":\"The event
+        occurs occasionally with an infrequent update\\n            that could span
+        from 1 year to several years between events. It implies a survey that\\n            experiences
+        a gap for several years prior to the next survey update (this is commonly\\n
+        \           linked to funding available to run a specific survey (i.e. health
+        surveys), whereas a\\n            regular annual survey refers typically to
+        \u2018programs\u2019 that are funded regularly and fall\\n            under
+        the Statistics Act, and therefore never experience a gap)\",\"descriptions\":{\"en\":\"The
+        event occurs occasionally with an infrequent update\\n            that could
+        span from 1 year to several years between events. It implies a survey that\\n
+        \           experiences a gap for several years prior to the next survey update
+        (this is commonly\\n            linked to funding available to run a specific
+        survey (i.e. health surveys), whereas a\\n            regular annual survey
+        refers typically to \u2018programs\u2019 that are funded regularly and fall\\n
+        \           under the Statistics Act, and therefore never experience a gap)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OM\"}],\"id\":\"OM\",\"name\":\"Occasional
+        monthly\",\"names\":{\"en\":\"Occasional monthly\"},\"description\":\"The
+        event occurs occasionally with an infrequent update\\n            that could
+        span from 1 month to several months between events. It implies a survey that\\n
+        \           experiences a gap for several months prior to the next survey\\n
+        \           update\",\"descriptions\":{\"en\":\"The event occurs occasionally
+        with an infrequent update\\n            that could span from 1 month to several
+        months between events. It implies a survey that\\n            experiences
+        a gap for several months prior to the next survey\\n            update\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._O\"}],\"id\":\"_O\",\"name\":\"Other\",\"names\":{\"en\":\"Other\"},\"description\":\"To
+        be used when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is associated to multiple occurrences with frequency\\n
+        \           other than the already defined ones (for example every 5 hours
+        and 32 minutes\\n            etc.)\",\"descriptions\":{\"en\":\"To be used
+        when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is associated to multiple occurrences with frequency\\n
+        \           other than the already defined ones (for example every 5 hours
+        and 32 minutes\\n            etc.)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._U\"}],\"id\":\"_U\",\"name\":\"Unspecified\",\"names\":{\"en\":\"Unspecified\"},\"description\":\"To
+        be used when a set of values are reported within a\\n            time range
+        but not associated to sub ranges. Often this could happen in case of missing\\n
+        \           or sparse information. (Let\u2019s say we have two observations
+        for 2020 but we do not know\\n            if they are part of a monthly reporting
+        or quarterly reporting)\",\"descriptions\":{\"en\":\"To be used when a set
+        of values are reported within a\\n            time range but not associated
+        to sub ranges. Often this could happen in case of missing\\n            or
+        sparse information. (Let\u2019s say we have two observations for 2020 but
+        we do not know\\n            if they are part of a monthly reporting or quarterly
+        reporting)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._Z\"}],\"id\":\"_Z\",\"name\":\"Not
+        applicable\",\"names\":{\"en\":\"Not applicable\"},\"description\":\"To be
+        used when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is not associated to multiple occurrences (only\\n            single
+        occurrence exists) one can use the _Z as frequency\",\"descriptions\":{\"en\":\"To
+        be used when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is not associated to multiple occurrences (only\\n            single
+        occurrence exists) one can use the _Z as frequency\"}}]}]}}"
+    headers:
+      Connection:
+      - close
+      Content-Disposition:
+      - inline; filename="structure.json"
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Mon, 30 Mar 2026 05:28:30 GMT
+      ETag:
+      - 3e1721847d25fa8e
+      Server:
+      - Apache/2.4.64 () OpenSSL/1.0.2k-fips
+      Set-Cookie:
+      - AWSALB=Iuwx+2wkeU40So3aG1VRYW+ytHm94wGufOJCzDfvQ59RCNhyrpt2lcEiqrBbZAmdjspz+vRJAn9liTKnh11Kdd6zyHAgRctpCJWBRFKEJgn/AZFKS3YsL6SLnFH0;
+        Expires=Mon, 06 Apr 2026 05:28:30 GMT; Path=/
+      - AWSALBCORS=Iuwx+2wkeU40So3aG1VRYW+ytHm94wGufOJCzDfvQ59RCNhyrpt2lcEiqrBbZAmdjspz+vRJAn9liTKnh11Kdd6zyHAgRctpCJWBRFKEJgn/AZFKS3YsL6SLnFH0;
+        Expires=Mon, 06 Apr 2026 05:28:30 GMT; Path=/; SameSite=None; Secure
+      - JSESSIONID=09CF487945F3A94F9902B21A516E6AD6; Path=/; Secure; HttpOnly
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: '200'
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+json;version=2.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - Python-urllib/3.12
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/codelist/SDMX/CL_FREQ/latest
+  response:
+    body:
+      string: "{\"meta\":{\"id\":\"IREF727341\",\"test\":false,\"schema\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"prepared\":\"2026-04-01T19:45:36Z\",\"contentLanguages\":[\"en\"],\"sender\":{\"id\":\"Unknown\"}},\"data\":{\"codelists\":[{\"links\":[{\"rel\":\"self\",\"type\":\"codelist\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(2.1)\"}],\"id\":\"CL_FREQ\",\"name\":\"Code
+        list for concept \\\"Frequency\\\"\",\"names\":{\"en\":\"Code list for concept
+        \\\"Frequency\\\"\"},\"description\":\"This code list provides a set of values
+        indicating the\\n          \\\"frequency\\\" of the data (e.g. weekly, monthly,
+        quarterly). The concept \\\"frequency\\\" may\\n          refer to various
+        stages in the production process, e.g. data collection or data\\n          dissemination.
+        For example, a time series could be disseminated at annual frequency but\\n
+        \         the underlying data are compiled monthly. The code list is applicable
+        for all different\\n          uses of \\\"frequency\\\".\",\"descriptions\":{\"en\":\"This
+        code list provides a set of values indicating the\\n          \\\"frequency\\\"
+        of the data (e.g. weekly, monthly, quarterly). The concept \\\"frequency\\\"
+        may\\n          refer to various stages in the production process, e.g. data
+        collection or data\\n          dissemination. For example, a time series could
+        be disseminated at annual frequency but\\n          the underlying data are
+        compiled monthly. The code list is applicable for all different\\n          uses
+        of \\\"frequency\\\".\"},\"version\":\"2.1\",\"agencyID\":\"SDMX\",\"isExternalReference\":false,\"isPartial\":false,\"codes\":[{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A\"}],\"id\":\"A\",\"name\":\"Annual\",\"names\":{\"en\":\"Annual\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            year\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            year\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A2\"}],\"id\":\"A2\",\"name\":\"Biennial\",\"names\":{\"en\":\"Biennial\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A3\"}],\"id\":\"A3\",\"name\":\"Triennial\",\"names\":{\"en\":\"Triennial\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            three years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            three years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A4\"}],\"id\":\"A4\",\"name\":\"Quadrennial\",\"names\":{\"en\":\"Quadrennial\"},\"description\":\"To
+        be used for data collected or disseminated every four\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every four\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A5\"}],\"id\":\"A5\",\"name\":\"Quinquennial\",\"names\":{\"en\":\"Quinquennial\"},\"description\":\"To
+        be used for data collected or disseminated every five\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every five\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A10\"}],\"id\":\"A10\",\"name\":\"Decennial\",\"names\":{\"en\":\"Decennial\"},\"description\":\"To
+        be used for data collected or disseminated every ten\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every ten\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A20\"}],\"id\":\"A20\",\"name\":\"Bidecennial\",\"names\":{\"en\":\"Bidecennial\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            twenty years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            twenty years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A30\"}],\"id\":\"A30\",\"name\":\"Tridecennial\",\"names\":{\"en\":\"Tridecennial\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            thirty years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            thirty years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A_3\"}],\"id\":\"A_3\",\"name\":\"Three
+        times a year\",\"names\":{\"en\":\"Three times a year\"},\"description\":\"To
+        be used for data collected or disseminated three\\n            times a year\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated three\\n            times a year\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).S\"}],\"id\":\"S\",\"name\":\"Half-yearly,
+        semester\",\"names\":{\"en\":\"Half-yearly, semester\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            semester\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            semester\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).Q\"}],\"id\":\"Q\",\"name\":\"Quarterly\",\"names\":{\"en\":\"Quarterly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            quarter\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            quarter\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M\"}],\"id\":\"M\",\"name\":\"Monthly\",\"names\":{\"en\":\"Monthly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            month\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            month\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M2\"}],\"id\":\"M2\",\"name\":\"Bimonthly\",\"names\":{\"en\":\"Bimonthly\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            months\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            months\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_2\"}],\"id\":\"M_2\",\"name\":\"Semimonthly\",\"names\":{\"en\":\"Semimonthly\"},\"description\":\"To
+        be used for data collected or disseminated twice a\\n            month\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated twice a\\n            month\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_3\"}],\"id\":\"M_3\",\"name\":\"Three
+        times a month\",\"names\":{\"en\":\"Three times a month\"},\"description\":\"To
+        be used for data collected or disseminated three\\n            times a month\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated three\\n            times a month\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W\"}],\"id\":\"W\",\"name\":\"Weekly\",\"names\":{\"en\":\"Weekly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            week\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            week\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W2\"}],\"id\":\"W2\",\"name\":\"Biweekly\",\"names\":{\"en\":\"Biweekly\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            weeks\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            weeks\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W3\"}],\"id\":\"W3\",\"name\":\"Triweekly\",\"names\":{\"en\":\"Triweekly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            three weeks\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            three weeks\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W4\"}],\"id\":\"W4\",\"name\":\"Four-weekly\",\"names\":{\"en\":\"Four-weekly\"},\"description\":\"To
+        be used for data collected or disseminated every four\\n            weeks\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every four\\n            weeks\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_2\"}],\"id\":\"W_2\",\"name\":\"Semiweekly\",\"names\":{\"en\":\"Semiweekly\"},\"description\":\"To
+        be used for data collected or disseminated twice a\\n            week\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated twice a\\n            week\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_3\"}],\"id\":\"W_3\",\"name\":\"Three
+        times a week\",\"names\":{\"en\":\"Three times a week\"},\"description\":\"To
+        be used for data collected or disseminated three\\n            times a week\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated three\\n            times a week\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D\"}],\"id\":\"D\",\"name\":\"Daily\",\"names\":{\"en\":\"Daily\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            day\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            day\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D_2\"}],\"id\":\"D_2\",\"name\":\"Twice
+        a day\",\"names\":{\"en\":\"Twice a day\"},\"description\":\"To be used for
+        data collected or disseminated twice a\\n            day\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated twice a\\n            day\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H\"}],\"id\":\"H\",\"name\":\"Hourly\",\"names\":{\"en\":\"Hourly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            hour\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            hour\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H2\"}],\"id\":\"H2\",\"name\":\"Bihourly\",\"names\":{\"en\":\"Bihourly\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            hours\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            hours\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H3\"}],\"id\":\"H3\",\"name\":\"Trihourly\",\"names\":{\"en\":\"Trihourly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            three hours\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            three hours\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).B\"}],\"id\":\"B\",\"name\":\"Daily
+        \u2013 business week\",\"names\":{\"en\":\"Daily \u2013 business week\"},\"description\":\"Similar
+        to \\\"daily\\\", however there are no observations\\n            for Saturdays
+        and Sundays (so, neither \u201Cmissing values\u201D nor \u201Cnumeric values\u201D
+        should be\\n            provided for Saturday and Sunday)\",\"descriptions\":{\"en\":\"Similar
+        to \\\"daily\\\", however there are no observations\\n            for Saturdays
+        and Sundays (so, neither \u201Cmissing values\u201D nor \u201Cnumeric values\u201D
+        should be\\n            provided for Saturday and Sunday)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).N\"}],\"id\":\"N\",\"name\":\"Minutely\",\"names\":{\"en\":\"Minutely\"},\"description\":\"While
+        N denotes \\\"minutely\\\", usually, there may be no\\n            observations
+        every minute (for several series the frequency is usually \\\"irregular\\\"\\n
+        \           within a day/days). And though observations may be sparse (not
+        collected or disseminated\\n            every minute), missing values do not
+        need to be given for the minutes when no\\n            observations exist:
+        in any case the time stamp determines when an observation is\\n            observed\",\"descriptions\":{\"en\":\"While
+        N denotes \\\"minutely\\\", usually, there may be no\\n            observations
+        every minute (for several series the frequency is usually \\\"irregular\\\"\\n
+        \           within a day/days). And though observations may be sparse (not
+        collected or disseminated\\n            every minute), missing values do not
+        need to be given for the minutes when no\\n            observations exist:
+        in any case the time stamp determines when an observation is\\n            observed\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).I\"}],\"id\":\"I\",\"name\":\"Irregular\",\"names\":{\"en\":\"Irregular\"},\"description\":\"To
+        be used with irregular time series that stores data\\n            for a sequence
+        of arbitrary timepoints. Irregular time series are appropriate when the\\n
+        \           data arrives unpredictably, such as when the application records
+        every stock trade or\\n            when random events are recorded (the interval
+        between each element can be a different\\n            length)\",\"descriptions\":{\"en\":\"To
+        be used with irregular time series that stores data\\n            for a sequence
+        of arbitrary timepoints. Irregular time series are appropriate when the\\n
+        \           data arrives unpredictably, such as when the application records
+        every stock trade or\\n            when random events are recorded (the interval
+        between each element can be a different\\n            length)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OA\"}],\"id\":\"OA\",\"name\":\"Occasional
+        annual\",\"names\":{\"en\":\"Occasional annual\"},\"description\":\"The event
+        occurs occasionally with an infrequent update\\n            that could span
+        from 1 year to several years between events. It implies a survey that\\n            experiences
+        a gap for several years prior to the next survey update (this is commonly\\n
+        \           linked to funding available to run a specific survey (i.e. health
+        surveys), whereas a\\n            regular annual survey refers typically to
+        \u2018programs\u2019 that are funded regularly and fall\\n            under
+        the Statistics Act, and therefore never experience a gap)\",\"descriptions\":{\"en\":\"The
+        event occurs occasionally with an infrequent update\\n            that could
+        span from 1 year to several years between events. It implies a survey that\\n
+        \           experiences a gap for several years prior to the next survey update
+        (this is commonly\\n            linked to funding available to run a specific
+        survey (i.e. health surveys), whereas a\\n            regular annual survey
+        refers typically to \u2018programs\u2019 that are funded regularly and fall\\n
+        \           under the Statistics Act, and therefore never experience a gap)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OM\"}],\"id\":\"OM\",\"name\":\"Occasional
+        monthly\",\"names\":{\"en\":\"Occasional monthly\"},\"description\":\"The
+        event occurs occasionally with an infrequent update\\n            that could
+        span from 1 month to several months between events. It implies a survey that\\n
+        \           experiences a gap for several months prior to the next survey\\n
+        \           update\",\"descriptions\":{\"en\":\"The event occurs occasionally
+        with an infrequent update\\n            that could span from 1 month to several
+        months between events. It implies a survey that\\n            experiences
+        a gap for several months prior to the next survey\\n            update\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._O\"}],\"id\":\"_O\",\"name\":\"Other\",\"names\":{\"en\":\"Other\"},\"description\":\"To
+        be used when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is associated to multiple occurrences with frequency\\n
+        \           other than the already defined ones (for example every 5 hours
+        and 32 minutes\\n            etc.)\",\"descriptions\":{\"en\":\"To be used
+        when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is associated to multiple occurrences with frequency\\n
+        \           other than the already defined ones (for example every 5 hours
+        and 32 minutes\\n            etc.)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._U\"}],\"id\":\"_U\",\"name\":\"Unspecified\",\"names\":{\"en\":\"Unspecified\"},\"description\":\"To
+        be used when a set of values are reported within a\\n            time range
+        but not associated to sub ranges. Often this could happen in case of missing\\n
+        \           or sparse information. (Let\u2019s say we have two observations
+        for 2020 but we do not know\\n            if they are part of a monthly reporting
+        or quarterly reporting)\",\"descriptions\":{\"en\":\"To be used when a set
+        of values are reported within a\\n            time range but not associated
+        to sub ranges. Often this could happen in case of missing\\n            or
+        sparse information. (Let\u2019s say we have two observations for 2020 but
+        we do not know\\n            if they are part of a monthly reporting or quarterly
+        reporting)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._Z\"}],\"id\":\"_Z\",\"name\":\"Not
+        applicable\",\"names\":{\"en\":\"Not applicable\"},\"description\":\"To be
+        used when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is not associated to multiple occurrences (only\\n            single
+        occurrence exists) one can use the _Z as frequency\",\"descriptions\":{\"en\":\"To
+        be used when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is not associated to multiple occurrences (only\\n            single
+        occurrence exists) one can use the _Z as frequency\"}}]}]}}"
+    headers:
+      Connection:
+      - close
+      Content-Disposition:
+      - inline; filename="structure.json"
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Wed, 01 Apr 2026 19:45:36 GMT
+      ETag:
+      - 3e1721847d25fa8e
+      Server:
+      - Apache/2.4.64 () OpenSSL/1.0.2k-fips
+      Set-Cookie:
+      - AWSALB=MgiaaEFiZB3NIBeVnw0cXPU9gUQXu+YhBeHiTxjfx9qENY9DLQe/uglNLEbxatM0+7H82rSO8Y30F1dDKpGdgEp0BFuCSWNyIVkApfZmv7rpaUL10z8/54sN+6UY;
+        Expires=Wed, 08 Apr 2026 19:45:36 GMT; Path=/
+      - AWSALBCORS=MgiaaEFiZB3NIBeVnw0cXPU9gUQXu+YhBeHiTxjfx9qENY9DLQe/uglNLEbxatM0+7H82rSO8Y30F1dDKpGdgEp0BFuCSWNyIVkApfZmv7rpaUL10z8/54sN+6UY;
+        Expires=Wed, 08 Apr 2026 19:45:36 GMT; Path=/; SameSite=None; Secure
+      - JSESSIONID=0FF8A36CA4C433FAD0D32778132FDA9A; Path=/; Secure; HttpOnly
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: '200'
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+json;version=2.0.0
+      Connection:
+      - close
+      Host:
+      - registry.sdmx.org
+      User-Agent:
+      - Python-urllib/3.13
+    method: GET
+    uri: https://registry.sdmx.org/sdmx/v2/structure/codelist/SDMX/CL_FREQ/latest
+  response:
+    body:
+      string: "{\"meta\":{\"id\":\"IREF072496\",\"test\":false,\"schema\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"prepared\":\"2026-04-28T20:14:03Z\",\"contentLanguages\":[\"en\"],\"sender\":{\"id\":\"Unknown\"}},\"data\":{\"codelists\":[{\"links\":[{\"rel\":\"self\",\"type\":\"codelist\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(2.1)\"}],\"id\":\"CL_FREQ\",\"name\":\"Code
+        list for concept \\\"Frequency\\\"\",\"names\":{\"en\":\"Code list for concept
+        \\\"Frequency\\\"\"},\"description\":\"This code list provides a set of values
+        indicating the\\n          \\\"frequency\\\" of the data (e.g. weekly, monthly,
+        quarterly). The concept \\\"frequency\\\" may\\n          refer to various
+        stages in the production process, e.g. data collection or data\\n          dissemination.
+        For example, a time series could be disseminated at annual frequency but\\n
+        \         the underlying data are compiled monthly. The code list is applicable
+        for all different\\n          uses of \\\"frequency\\\".\",\"descriptions\":{\"en\":\"This
+        code list provides a set of values indicating the\\n          \\\"frequency\\\"
+        of the data (e.g. weekly, monthly, quarterly). The concept \\\"frequency\\\"
+        may\\n          refer to various stages in the production process, e.g. data
+        collection or data\\n          dissemination. For example, a time series could
+        be disseminated at annual frequency but\\n          the underlying data are
+        compiled monthly. The code list is applicable for all different\\n          uses
+        of \\\"frequency\\\".\"},\"version\":\"2.1\",\"agencyID\":\"SDMX\",\"isExternalReference\":false,\"isPartial\":false,\"codes\":[{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A\"}],\"id\":\"A\",\"name\":\"Annual\",\"names\":{\"en\":\"Annual\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            year\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            year\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A2\"}],\"id\":\"A2\",\"name\":\"Biennial\",\"names\":{\"en\":\"Biennial\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A3\"}],\"id\":\"A3\",\"name\":\"Triennial\",\"names\":{\"en\":\"Triennial\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            three years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            three years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A4\"}],\"id\":\"A4\",\"name\":\"Quadrennial\",\"names\":{\"en\":\"Quadrennial\"},\"description\":\"To
+        be used for data collected or disseminated every four\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every four\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A5\"}],\"id\":\"A5\",\"name\":\"Quinquennial\",\"names\":{\"en\":\"Quinquennial\"},\"description\":\"To
+        be used for data collected or disseminated every five\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every five\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A10\"}],\"id\":\"A10\",\"name\":\"Decennial\",\"names\":{\"en\":\"Decennial\"},\"description\":\"To
+        be used for data collected or disseminated every ten\\n            years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every ten\\n            years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A20\"}],\"id\":\"A20\",\"name\":\"Bidecennial\",\"names\":{\"en\":\"Bidecennial\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            twenty years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            twenty years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A30\"}],\"id\":\"A30\",\"name\":\"Tridecennial\",\"names\":{\"en\":\"Tridecennial\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            thirty years\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            thirty years\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).A_3\"}],\"id\":\"A_3\",\"name\":\"Three
+        times a year\",\"names\":{\"en\":\"Three times a year\"},\"description\":\"To
+        be used for data collected or disseminated three\\n            times a year\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated three\\n            times a year\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).S\"}],\"id\":\"S\",\"name\":\"Half-yearly,
+        semester\",\"names\":{\"en\":\"Half-yearly, semester\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            semester\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            semester\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).Q\"}],\"id\":\"Q\",\"name\":\"Quarterly\",\"names\":{\"en\":\"Quarterly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            quarter\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            quarter\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M\"}],\"id\":\"M\",\"name\":\"Monthly\",\"names\":{\"en\":\"Monthly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            month\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            month\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M2\"}],\"id\":\"M2\",\"name\":\"Bimonthly\",\"names\":{\"en\":\"Bimonthly\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            months\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            months\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_2\"}],\"id\":\"M_2\",\"name\":\"Semimonthly\",\"names\":{\"en\":\"Semimonthly\"},\"description\":\"To
+        be used for data collected or disseminated twice a\\n            month\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated twice a\\n            month\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).M_3\"}],\"id\":\"M_3\",\"name\":\"Three
+        times a month\",\"names\":{\"en\":\"Three times a month\"},\"description\":\"To
+        be used for data collected or disseminated three\\n            times a month\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated three\\n            times a month\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W\"}],\"id\":\"W\",\"name\":\"Weekly\",\"names\":{\"en\":\"Weekly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            week\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            week\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W2\"}],\"id\":\"W2\",\"name\":\"Biweekly\",\"names\":{\"en\":\"Biweekly\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            weeks\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            weeks\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W3\"}],\"id\":\"W3\",\"name\":\"Triweekly\",\"names\":{\"en\":\"Triweekly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            three weeks\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            three weeks\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W4\"}],\"id\":\"W4\",\"name\":\"Four-weekly\",\"names\":{\"en\":\"Four-weekly\"},\"description\":\"To
+        be used for data collected or disseminated every four\\n            weeks\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every four\\n            weeks\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_2\"}],\"id\":\"W_2\",\"name\":\"Semiweekly\",\"names\":{\"en\":\"Semiweekly\"},\"description\":\"To
+        be used for data collected or disseminated twice a\\n            week\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated twice a\\n            week\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).W_3\"}],\"id\":\"W_3\",\"name\":\"Three
+        times a week\",\"names\":{\"en\":\"Three times a week\"},\"description\":\"To
+        be used for data collected or disseminated three\\n            times a week\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated three\\n            times a week\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D\"}],\"id\":\"D\",\"name\":\"Daily\",\"names\":{\"en\":\"Daily\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            day\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            day\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).D_2\"}],\"id\":\"D_2\",\"name\":\"Twice
+        a day\",\"names\":{\"en\":\"Twice a day\"},\"description\":\"To be used for
+        data collected or disseminated twice a\\n            day\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated twice a\\n            day\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H\"}],\"id\":\"H\",\"name\":\"Hourly\",\"names\":{\"en\":\"Hourly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            hour\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            hour\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H2\"}],\"id\":\"H2\",\"name\":\"Bihourly\",\"names\":{\"en\":\"Bihourly\"},\"description\":\"To
+        be used for data collected or disseminated every two\\n            hours\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every two\\n            hours\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).H3\"}],\"id\":\"H3\",\"name\":\"Trihourly\",\"names\":{\"en\":\"Trihourly\"},\"description\":\"To
+        be used for data collected or disseminated every\\n            three hours\",\"descriptions\":{\"en\":\"To
+        be used for data collected or disseminated every\\n            three hours\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).B\"}],\"id\":\"B\",\"name\":\"Daily
+        \u2013 business week\",\"names\":{\"en\":\"Daily \u2013 business week\"},\"description\":\"Similar
+        to \\\"daily\\\", however there are no observations\\n            for Saturdays
+        and Sundays (so, neither \u201Cmissing values\u201D nor \u201Cnumeric values\u201D
+        should be\\n            provided for Saturday and Sunday)\",\"descriptions\":{\"en\":\"Similar
+        to \\\"daily\\\", however there are no observations\\n            for Saturdays
+        and Sundays (so, neither \u201Cmissing values\u201D nor \u201Cnumeric values\u201D
+        should be\\n            provided for Saturday and Sunday)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).N\"}],\"id\":\"N\",\"name\":\"Minutely\",\"names\":{\"en\":\"Minutely\"},\"description\":\"While
+        N denotes \\\"minutely\\\", usually, there may be no\\n            observations
+        every minute (for several series the frequency is usually \\\"irregular\\\"\\n
+        \           within a day/days). And though observations may be sparse (not
+        collected or disseminated\\n            every minute), missing values do not
+        need to be given for the minutes when no\\n            observations exist:
+        in any case the time stamp determines when an observation is\\n            observed\",\"descriptions\":{\"en\":\"While
+        N denotes \\\"minutely\\\", usually, there may be no\\n            observations
+        every minute (for several series the frequency is usually \\\"irregular\\\"\\n
+        \           within a day/days). And though observations may be sparse (not
+        collected or disseminated\\n            every minute), missing values do not
+        need to be given for the minutes when no\\n            observations exist:
+        in any case the time stamp determines when an observation is\\n            observed\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).I\"}],\"id\":\"I\",\"name\":\"Irregular\",\"names\":{\"en\":\"Irregular\"},\"description\":\"To
+        be used with irregular time series that stores data\\n            for a sequence
+        of arbitrary timepoints. Irregular time series are appropriate when the\\n
+        \           data arrives unpredictably, such as when the application records
+        every stock trade or\\n            when random events are recorded (the interval
+        between each element can be a different\\n            length)\",\"descriptions\":{\"en\":\"To
+        be used with irregular time series that stores data\\n            for a sequence
+        of arbitrary timepoints. Irregular time series are appropriate when the\\n
+        \           data arrives unpredictably, such as when the application records
+        every stock trade or\\n            when random events are recorded (the interval
+        between each element can be a different\\n            length)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OA\"}],\"id\":\"OA\",\"name\":\"Occasional
+        annual\",\"names\":{\"en\":\"Occasional annual\"},\"description\":\"The event
+        occurs occasionally with an infrequent update\\n            that could span
+        from 1 year to several years between events. It implies a survey that\\n            experiences
+        a gap for several years prior to the next survey update (this is commonly\\n
+        \           linked to funding available to run a specific survey (i.e. health
+        surveys), whereas a\\n            regular annual survey refers typically to
+        \u2018programs\u2019 that are funded regularly and fall\\n            under
+        the Statistics Act, and therefore never experience a gap)\",\"descriptions\":{\"en\":\"The
+        event occurs occasionally with an infrequent update\\n            that could
+        span from 1 year to several years between events. It implies a survey that\\n
+        \           experiences a gap for several years prior to the next survey update
+        (this is commonly\\n            linked to funding available to run a specific
+        survey (i.e. health surveys), whereas a\\n            regular annual survey
+        refers typically to \u2018programs\u2019 that are funded regularly and fall\\n
+        \           under the Statistics Act, and therefore never experience a gap)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1).OM\"}],\"id\":\"OM\",\"name\":\"Occasional
+        monthly\",\"names\":{\"en\":\"Occasional monthly\"},\"description\":\"The
+        event occurs occasionally with an infrequent update\\n            that could
+        span from 1 month to several months between events. It implies a survey that\\n
+        \           experiences a gap for several months prior to the next survey\\n
+        \           update\",\"descriptions\":{\"en\":\"The event occurs occasionally
+        with an infrequent update\\n            that could span from 1 month to several
+        months between events. It implies a survey that\\n            experiences
+        a gap for several months prior to the next survey\\n            update\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._O\"}],\"id\":\"_O\",\"name\":\"Other\",\"names\":{\"en\":\"Other\"},\"description\":\"To
+        be used when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is associated to multiple occurrences with frequency\\n
+        \           other than the already defined ones (for example every 5 hours
+        and 32 minutes\\n            etc.)\",\"descriptions\":{\"en\":\"To be used
+        when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is associated to multiple occurrences with frequency\\n
+        \           other than the already defined ones (for example every 5 hours
+        and 32 minutes\\n            etc.)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._U\"}],\"id\":\"_U\",\"name\":\"Unspecified\",\"names\":{\"en\":\"Unspecified\"},\"description\":\"To
+        be used when a set of values are reported within a\\n            time range
+        but not associated to sub ranges. Often this could happen in case of missing\\n
+        \           or sparse information. (Let\u2019s say we have two observations
+        for 2020 but we do not know\\n            if they are part of a monthly reporting
+        or quarterly reporting)\",\"descriptions\":{\"en\":\"To be used when a set
+        of values are reported within a\\n            time range but not associated
+        to sub ranges. Often this could happen in case of missing\\n            or
+        sparse information. (Let\u2019s say we have two observations for 2020 but
+        we do not know\\n            if they are part of a monthly reporting or quarterly
+        reporting)\"}},{\"links\":[{\"rel\":\"self\",\"type\":\"code\",\"uri\":\"https://raw.githubusercontent.com/sdmx-twg/sdmx-json/develop/structure-message/tools/schemas/2.0.0/sdmx-json-structure-schema.json\",\"urn\":\"urn:sdmx:org.sdmx.infomodel.codelist.Code=SDMX:CL_FREQ(2.1)._Z\"}],\"id\":\"_Z\",\"name\":\"Not
+        applicable\",\"names\":{\"en\":\"Not applicable\"},\"description\":\"To be
+        used when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is not associated to multiple occurrences (only\\n            single
+        occurrence exists) one can use the _Z as frequency\",\"descriptions\":{\"en\":\"To
+        be used when the qualitative or quantitative values\\n            that a variable
+        takes in a data set is not associated to multiple occurrences (only\\n            single
+        occurrence exists) one can use the _Z as frequency\"}}]}]}}"
+    headers:
+      Connection:
+      - close
+      Content-Disposition:
+      - inline; filename="structure.json"
+      Content-Type:
+      - application/json;charset=UTF-8
+      Date:
+      - Tue, 28 Apr 2026 20:14:03 GMT
+      ETag:
+      - 3e1721847d25fa8e
+      Server:
+      - Apache/2.4.64 () OpenSSL/1.0.2k-fips
+      Set-Cookie:
+      - AWSALB=rbyHERcPWTTsXVXTiF6YlMn8I8p2ZwQUh3Paxq9RctgCpzCF1MvV+EX9vodPKLNq0dq9u1z/5+FEzG1J6WJCFOErWHes0sEgLWt8bTya0qZRUu1Oubs6QX9ZDLvv;
+        Expires=Tue, 05 May 2026 20:14:03 GMT; Path=/
+      - AWSALBCORS=rbyHERcPWTTsXVXTiF6YlMn8I8p2ZwQUh3Paxq9RctgCpzCF1MvV+EX9vodPKLNq0dq9u1z/5+FEzG1J6WJCFOErWHes0sEgLWt8bTya0qZRUu1Oubs6QX9ZDLvv;
+        Expires=Tue, 05 May 2026 20:14:03 GMT; Path=/; SameSite=None; Secure
+      - JSESSIONID=2A5B702E65DAC3518A2C4A704DE538B3; Path=/; Secure; HttpOnly
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - Origin,Access-Control-Request-Method,Access-Control-Request-Headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-XSS-Protection:
+      - 1; mode=block
+    status:
+      code: 200
+      message: '200'
+version: 1

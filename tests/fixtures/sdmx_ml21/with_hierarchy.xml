@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SDMX-ML 2.1 fixture exercising HierarchicalCodelist.
+
+  Coverage gap closed (audit issue #95): the 2.1 writer has
+  `_write_hierarchy` since landing, but no fixture exercised it. The
+  XSD-validation work surfaced two latent v2.1 conformance bugs in the
+  writer as a result:
+    - HierarchicalCode emitted <Name> and <Description> children
+      (HierarchicalCodeType only allows Annotations + Code|CodeID +
+      nested HierarchicalCode).
+    - Used <CodeID> without its required <CodelistAliasRef> partner —
+      that's the alias-form sequence; the full-ref form is <Code>.
+
+  Section order per v2.1 StructuresType: OrganisationSchemes →
+  Dataflows → CategorySchemes → Categorisations → Codelists →
+  HierarchicalCodelists → Concepts → DataStructures → ...
+-->
+<mes:Structure
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message"
+  xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure"
+  xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <mes:Header>
+    <mes:ID>WITH_HIERARCHY</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2024-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+
+    <str:Codelists>
+      <str:Codelist id="CL_AREA" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Area</com:Name>
+        <str:Code id="CA">
+          <com:Name xml:lang="en">Canada</com:Name>
+        </str:Code>
+        <str:Code id="ON">
+          <com:Name xml:lang="en">Ontario</com:Name>
+        </str:Code>
+        <str:Code id="QC">
+          <com:Name xml:lang="en">Quebec</com:Name>
+        </str:Code>
+        <str:Code id="TO">
+          <com:Name xml:lang="en">Toronto</com:Name>
+        </str:Code>
+        <str:Code id="MTL">
+          <com:Name xml:lang="en">Montréal</com:Name>
+        </str:Code>
+      </str:Codelist>
+    </str:Codelists>
+
+    <str:HierarchicalCodelists>
+      <str:HierarchicalCodelist id="HCL_GEO" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Geographic hierarchy</com:Name>
+        <!--
+          @leveled="true" makes this a formally-leveled hierarchy.
+          The Level chain below names the three depths
+          (COUNTRY → PROVINCE → CITY); @hasFormalLevels in 3.1 carries
+          the same flag. Codes carry validFrom/validTo to exercise
+          per-node temporal validity (HierarchicalCode validity is
+          tracked separately from the underlying Code's own validity).
+        -->
+        <str:Hierarchy id="HCL_GEO" leveled="true">
+          <com:Name xml:lang="en">Canada → provinces → cities</com:Name>
+          <str:HierarchicalCode id="H_CA" validFrom="1867-07-01T00:00:00">
+            <str:Code>
+              <Ref agencyID="TEST" maintainableParentID="CL_AREA" maintainableParentVersion="1.0" id="CA" package="codelist" class="Code"/>
+            </str:Code>
+            <str:HierarchicalCode id="H_ON" validFrom="1867-07-01T00:00:00">
+              <str:Code>
+                <Ref agencyID="TEST" maintainableParentID="CL_AREA" maintainableParentVersion="1.0" id="ON" package="codelist" class="Code"/>
+              </str:Code>
+              <str:HierarchicalCode id="H_TO">
+                <str:Code>
+                  <Ref agencyID="TEST" maintainableParentID="CL_AREA" maintainableParentVersion="1.0" id="TO" package="codelist" class="Code"/>
+                </str:Code>
+              </str:HierarchicalCode>
+            </str:HierarchicalCode>
+            <str:HierarchicalCode id="H_QC" validFrom="1867-07-01T00:00:00">
+              <str:Code>
+                <Ref agencyID="TEST" maintainableParentID="CL_AREA" maintainableParentVersion="1.0" id="QC" package="codelist" class="Code"/>
+              </str:Code>
+              <str:HierarchicalCode id="H_MTL">
+                <str:Code>
+                  <Ref agencyID="TEST" maintainableParentID="CL_AREA" maintainableParentVersion="1.0" id="MTL" package="codelist" class="Code"/>
+                </str:Code>
+              </str:HierarchicalCode>
+            </str:HierarchicalCode>
+          </str:HierarchicalCode>
+          <!--
+            Recursive Level chain: the XSD encodes the level depth as
+            nested <Level><Level>...; sdmxlib flattens this into the
+            ordered Hierarchy.levels list on read and re-nests on write.
+            The COUNTRY level declares a CodingFormat (textType=String,
+            length 2) to exercise that round-trip too.
+          -->
+          <str:Level id="COUNTRY">
+            <com:Name xml:lang="en">Country</com:Name>
+            <str:CodingFormat textType="Alpha"/>
+            <str:Level id="PROVINCE">
+              <com:Name xml:lang="en">Province</com:Name>
+              <str:Level id="CITY">
+                <com:Name xml:lang="en">City</com:Name>
+              </str:Level>
+            </str:Level>
+          </str:Level>
+        </str:Hierarchy>
+      </str:HierarchicalCodelist>
+    </str:HierarchicalCodelists>
+
+  </mes:Structures>
+</mes:Structure>

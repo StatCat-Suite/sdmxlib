@@ -1,0 +1,228 @@
+[project]
+name = "sdmxlib"
+version = "0.69.0"
+description = "SDMX structural metadata library for Python"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [{ name = "gabrielgellner", email = "gabrielgellner@gmail.com" }]
+requires-python = ">=3.14"
+keywords = ["sdmx", "statistics", "metadata", "datastructure"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "attrs>=26.1.0",
+    # >=1.5.3: ducklake extension must support DuckLake catalog format 1.0,
+    # which is what a bundle built with duckdb 1.5.3 carries. duckdb 1.5.1's
+    # ducklake tops out at format 0.4 and fails to ATTACH such bundles with "DuckLake catalog version mismatch".
+    #
+    # Moved to >=1.5.5 while investigating #400 — two patch releases of fixes,
+    # taken on their own merits. It is **not** a fix for #400: 1.5.0, 1.5.1,
+    # 1.5.2, 1.5.3, 1.5.4, 1.5.5 and 1.6.0.dev379 all read the affected bundle
+    # identically, so that defect is in the file rather than in the reader.
+    #
+    # >=1.5.6: test_annotation_subtree_read (#426) asserts the annotation
+    # subtree read uses the owner index. 1.5.5's planner chooses a SEQ_SCAN
+    # over `owner_artefact_urn = ?` (502 rows read) and 1.5.6 uses the index,
+    # so on 1.5.5 the read scans every annotation row.
+    "duckdb>=1.5.6",
+    "httpx>=0.28.1",
+    "lxml>=6.0.2",
+    "msgspec>=0.19",
+    "polars>=1.39.3",
+    "pyarrow>=18.0.0",
+    # PEP 728's `closed=True` TypedDict, which `typing` gains only in 3.15: a
+    # TypedDict unpacked into a constructor (`**read_reference_attrs(el)`) must
+    # be closed for a checker to know it holds no other key. httpx already
+    # brings it in, through anyio; declared because we now import it.
+    "typing-extensions>=4.13",
+]
+
+[project.urls]
+Homepage      = "https://gitlab.com/pinax-suite/sdmxlib"
+Repository    = "https://gitlab.com/pinax-suite/sdmxlib"
+Documentation = "https://pinax-suite.gitlab.io/sdmxlib"
+Changelog     = "https://gitlab.com/pinax-suite/sdmxlib/-/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["uv_build>=0.13.0,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# `--strict-markers` turns an unregistered mark into a collection *error*.
+# Without it a typo silently deselects: `pytestmark = pytest.mark.uint` makes
+# a whole file vanish from `just test` (which selects `-m unit`), and an
+# always-failing test in it passes the gate by never running. pytest does warn
+# — `PytestUnknownMarkWarning` — but that is the exact shape CLAUDE.md
+# describes for the two ruff warnings that survived three milestones: a
+# finding that cannot fail is a finding nobody acts on.
+# `--strict-config` does the same for a typo in this table.
+strict = true
+# A warning that cannot fail is a warning nobody reads. Same argument as the
+# ruff one in CLAUDE.md — two `# noqa`-in-a-doc-comment warnings survived three
+# milestones there precisely because they were routine noise in the output.
+#
+# The cost of turning this on was measured, not assumed: the whole suite raised
+# exactly two distinct warnings. One was a stub artefact (see
+# `tests/docs/pages/_registrations._federation`, which scopes it to the one
+# setup that provokes it); the other was Starlette telling us to install
+# `httpx2`, so we did. Zero entries below, and that is the point — an ignore
+# list is where this decays.
+filterwarnings = ["error"]
+markers = [
+  "unit: fast unit tests (no I/O)",
+  "docs: tests that verify documentation examples",
+  "integration: end-to-end tests replayed from VCR cassettes; no network",
+  "slow: tests that dominate suite wall-time; deselect for tight loops",
+  "serial: thread-heavy tests `just test` runs alone, after the parallel phase; under -n they starve",
+  "bench: performance benchmarks; excluded from default test runs",
+  # The bundle tier (#379) reads a real 2.6 GB SDMX bundle that is not, and
+  # cannot be, in the repo. Split from `bench` so `just bench` means the same
+  # thing on every machine and `bench/baselines/` stays comparable across them.
+  "bundle: benchmarks against a real SDMX bundle; need $SDMXLIB_BENCH_BUNDLE",
+]
+
+[tool.coverage.run]
+source = ["src/sdmxlib"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 80
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+  "@overload",
+]
+
+[dependency-groups]
+dev = [
+  # Checker versions carry UPPER bounds. uv.lock is gitignored (published
+  # library), so CI resolves the dev group fresh on every pipeline — an
+  # unbounded floor means a checker release lands in CI unannounced. With
+  # ruff on `select = ["ALL"]` that is not hypothetical: ruff 0.16.0
+  # stabilised 12 preview rules and would have turned CI red with no commit
+  # of ours in between. Bump these deliberately, in their own MR.
+  "catppuccin[pygments]>=2.5.0",
+  "types-lxml>=2025.3.30",
+  # Stubs for the two untyped test-only imports, so pyrefly checks tests/ without
+  # `untyped-import` findings (#425): jsonschema (tests/support/json_schema.py)
+  # and PyYAML (test_query_closure). Dev group only — nothing published needs them.
+  "types-jsonschema>=4.21.0",
+  "types-PyYAML>=6.0.12",
+  "mkdocs-material>=9.7.6",
+  "mkdocstrings[python]>=1.0.3",
+  "polars>=1.39.3",
+  "pytest>=9.0.2",
+  "jsonschema[format-nongpl]>=4.21.0",
+  "pytest-benchmark>=4.0.0",
+  "pytest-cov>=7.1.0",
+  "pytest-xdist>=3.8.0",
+  "pytest-memray>=1.7.0",
+  "pytest-recording>=0.13.4",
+  "pydoclint>=0.11.1,<0.12",
+  "pyrefly>=1.4.0,<1.5",
+  "ruff>=0.17.1,<0.18",
+  # 3.8: `process_isolation = "forkserver"`, which `tools/mutmut_forksafe.py`
+  # builds on, and the `state()` its import-time credit reads.
+  "mutmut>=3.8,<4",
+  "hypothesis>=6.140,<7",
+  # Test-only, and must stay that way: the SQL-AST invariants in
+  # tests/support/sql_ast.py parse emitted statements to assert structural
+  # properties (#257). A runtime dependency on a SQL parser would be a large
+  # cost for a check that belongs in the suite — `test_sqlglot_is_test_only`
+  # enforces the boundary.
+  "sqlglot>=27.0",
+  # Test-only, for one documentation block: `docs/cookbook/rest_facade.md`
+  # ends on the FastAPI handler the whole page builds toward, and that block
+  # is the only place the kit composes end to end. Without the import it is
+  # the one example on the page nothing checks — and it *was* wrong, naming
+  # an undefined `Request` and an undefined `parse_c_params`. Not a runtime
+  # dependency and must not become one: sdmxlib has no web framework.
+  "fastapi>=0.115",
+  # Starlette's TestClient asks for this by name — on plain `httpx` it emits a
+  # StarletteDeprecationWarning, which `filterwarnings = ["error"]` turns into
+  # a failure. Taking the fix it names beats ignoring the warning it raises.
+  # Test-only, like fastapi; sdmxlib's own client stays on httpx.
+  "httpx2>=2.12",
+]
+# Optional: third-party SDMX libraries for the competitive benchmarks
+# (tests/bench/test_compete.py, and `just bench-compete` — bench/compete/).
+# Install via `uv sync --group bench-compete`.
+# Kept out of `dev` so default contributor sync stays lean.
+bench-compete = [
+  "sdmx1>=2.27.0",
+  "pysdmx[xml,json]>=1.20.0",
+]
+
+[tool.mutmut]
+# Mutation-testing pilot (#213). Coverage says a line ran; mutation says a test
+# would have noticed if it were wrong. We are at ~92% line coverage with no
+# evidence about the second claim, and this measures it.
+#
+# Scoped deliberately. `src/` is ~12.8k statements, and mutants run 2-4x that,
+# so a whole-codebase run is a five-figure mutant count and would simply never
+# finish. These six modules are pure, fast, and already claim high coverage --
+# urn.py and representation.py are at 100%, which makes them the sharpest
+# question available: is a fully covered module actually pinned?
+# The *import root*, not the package directory. mutmut inserts this path into
+# sys.path, so "src/sdmxlib" would put the package contents at top level and
+# sdmxlib/_duckdb.py would shadow duckdb's own _duckdb C extension.
+source_paths = ["src"]
+only_mutate = [
+    "src/sdmxlib/model/urn.py",
+    "src/sdmxlib/model/istring.py",
+    "src/sdmxlib/model/expr.py",
+    "src/sdmxlib/model/representation.py",
+    "src/sdmxlib/model/collections.py",
+    "src/sdmxlib/model/validation.py",
+    # The query compilers (#304). #304 named `code_query.py`,
+    # `hierarchy_query.py` and `_query_common.py`; #306 deleted all three, and
+    # these four are what the work moved into — the predicate surface, the
+    # predicate-to-SQL compiler, the path-to-join-tree planner, and the
+    # refinement laws every query routes through. 1,332 statements against the
+    # issue's 1,402, so the scope it asked for survived the migration nearly
+    # intact under different names. `just mutate-scope` prints the split.
+    #
+    # Deliberately not here: `accessors.py` (533) is generated-shaped surface,
+    # `query.py` (399) and `_pushdown.py` (221) are worth their own decision
+    # rather than riding in on this one.
+    "src/sdmxlib/query/_expr.py",
+    "src/sdmxlib/query/_compile.py",
+    "src/sdmxlib/query/_joins.py",
+    "src/sdmxlib/query/_common.py",
+]
+# `slow` excludes the two concurrency tests that were 33s of a 50s suite (#212);
+# they exercise threading, not these modules. mutmut supplies its own -q and
+# plugin-disabling flags, so passing them again here makes pytest fail to start.
+pytest_add_cli_args = ["-m", "unit and not slow"]
+pytest_add_cli_args_test_selection = ["tests/unit"]
+# Only mutate lines the test suite actually reaches: an unreached line produces
+# a mutant that survives for an uninteresting reason and drowns the signal.
+# Must stay false. With it on, mutmut's coverage-gathering pass runs pytest
+# in-process first, and by the time the stats pass runs, `sys.modules` has an
+# entry that makes duckdb's `_duckdb` extension unimportable:
+#   ModuleNotFoundError: No module named '_duckdb._sqltypes'; '_duckdb' is not a package
+# The cost of leaving it off is that uncovered lines also get mutants, which
+# survive for an uninteresting reason -- factor that into any score.
+mutate_only_covered_lines = false
+# Keep pytest out of the forking parent (#314). In the default `fork` mode
+# mutmut runs the suite in-process before forking the mutants. One polars
+# operation there makes every later child hang until its CPU limit, and the
+# hang is booked as a timeout. `tools/mutmut_forksafe.py` refuses to run
+# without this.
+process_isolation = "forkserver"
+# And nothing imported before the mutant is chosen. The default warm-up
+# collects the suite once in the fork server, before any mutant is active, and
+# every child inherits those modules. Code that runs at import (the 3.x
+# readers' and writers' module-level instances, `gaps.py`'s table) is then
+# never mutated. Its mutants are booked as survivors: 282 for `_v3_writer.py`,
+# where a fresh process kills `__init__`'s outright (#458).
+forkserver_warmup = "none"

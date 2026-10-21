@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SDMX-ML 3.0 fixture exercising Codelist composition via CodelistExtension.
+
+  3.0 added <CodelistExtension> as the final child element of CodelistType
+  (after all <Code> children). It models "this codelist extends N other
+  codelists with these inclusion/exclusion rules". See issue #109.
+
+  This fixture has:
+    - CL_AREA_BASE: a small base codelist (CA, US)
+    - CL_AREA_ARCH: an archived codelist of historical codes (DE_OLD)
+    - CL_AREA_ALL:  the extending codelist, composed from
+        * inclusive selection from CL_AREA_BASE (just CA)
+        * exclusive selection from CL_AREA_ARCH (everything except DE_OLD)
+        * with prefix "ARCH_" applied to the second extension
+-->
+<mes:Structure
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/message"
+  xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/structure"
+  xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/common"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <mes:Header>
+    <mes:ID>WITH_CODELIST_EXTENSION</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2024-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+
+    <str:Codelists>
+      <str:Codelist agencyID="TEST" id="CL_AREA_BASE" version="1.0">
+        <com:Name xml:lang="en">Areas (base)</com:Name>
+        <str:Code id="CA">
+          <com:Name xml:lang="en">Canada</com:Name>
+        </str:Code>
+        <str:Code id="US">
+          <com:Name xml:lang="en">United States</com:Name>
+        </str:Code>
+      </str:Codelist>
+      <str:Codelist agencyID="TEST" id="CL_AREA_ARCH" version="1.0">
+        <com:Name xml:lang="en">Areas (archived)</com:Name>
+        <str:Code id="DE_OLD">
+          <com:Name xml:lang="en">East Germany (historical)</com:Name>
+        </str:Code>
+      </str:Codelist>
+      <str:Codelist agencyID="TEST" id="CL_AREA_ALL" version="1.0">
+        <com:Name xml:lang="en">Areas (composed)</com:Name>
+        <!-- First extension: inclusive selection from CL_AREA_BASE, no prefix. -->
+        <str:CodelistExtension>
+          <str:Codelist>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=TEST:CL_AREA_BASE(1.0)</str:Codelist>
+          <str:InclusiveCodeSelection>
+            <str:MemberValue>CA</str:MemberValue>
+          </str:InclusiveCodeSelection>
+        </str:CodelistExtension>
+        <!-- Second extension: exclusive selection from CL_AREA_ARCH, with prefix. -->
+        <str:CodelistExtension prefix="ARCH_">
+          <str:Codelist>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=TEST:CL_AREA_ARCH(1.0)</str:Codelist>
+          <str:ExclusiveCodeSelection>
+            <str:MemberValue cascadeValues="excluderoot">DE_OLD</str:MemberValue>
+          </str:ExclusiveCodeSelection>
+        </str:CodelistExtension>
+      </str:Codelist>
+    </str:Codelists>
+
+  </mes:Structures>
+</mes:Structure>

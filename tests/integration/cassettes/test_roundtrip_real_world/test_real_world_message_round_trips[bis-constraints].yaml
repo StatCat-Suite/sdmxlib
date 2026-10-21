@@ -1,0 +1,674 @@
+interactions:
+- request:
+    body: null
+    headers:
+      Accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      Connection:
+      - close
+      Host:
+      - stats.bis.org
+      User-Agent:
+      - sdmxlib-tests
+    method: GET
+    uri: https://stats.bis.org/api/v1/contentconstraint/BIS/all/latest
+  response:
+    body:
+      string: '<?xml version="1.0" ?><mes:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message" xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure"
+        xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common"><mes:Header><mes:ID>IDREF40680504-e617-4e3e-ae74-0243dced830b</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2026-08-20T10:50:27Z</mes:Prepared><mes:Sender
+        id="UNKNOWN"></mes:Sender><mes:Receiver id="not_supplied"></mes:Receiver></mes:Header><mes:Structures><str:Constraints><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:AT2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="AT2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for AT2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="AT2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>AT</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:AU2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="AU2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for AU2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="AU2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>AU</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>AU</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:BE2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="BE2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for BE2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="BE2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>BE</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:BH2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="BH2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for BH2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="BH2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>BH</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:BM2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="BM2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for BM2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="BM2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>BM</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:BR2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="BR2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for BR2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="BR2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>BR</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>BR</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:BS2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="BS2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for BS2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="BS2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>BS</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CA2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CA2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for CA2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="CA2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>CA</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>CA</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CBS_C_AND_OTH_EXP_UR(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CBS_C_AND_OTH_EXP_UR" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>11~10,5,6~0,0,0~name</com:AnnotationType></com:Annotation><com:Annotation
+        id="lastNPeriods"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>Q_6</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Claims and other exposure, ultimate risk basis</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_CBS_PUB" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>5A</com:Value></com:KeyValue><com:KeyValue
+        id="CBS_BANK_TYPE"><com:Value>4R</com:Value></com:KeyValue><com:KeyValue id="CBS_BASIS"><com:Value>U</com:Value></com:KeyValue><com:KeyValue
+        id="L_POSITION"><com:Value>B</com:Value><com:Value>C</com:Value><com:Value>D</com:Value><com:Value>W</com:Value><com:Value>X</com:Value></com:KeyValue><com:KeyValue
+        id="L_INSTR"><com:Value>A</com:Value><com:Value>V</com:Value></com:KeyValue><com:KeyValue
+        id="REM_MATURITY"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="CURR_TYPE_BOOK"><com:Value>TO1</com:Value></com:KeyValue><com:KeyValue
+        id="L_CP_SECTOR"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="L_CP_COUNTRY"><com:Value>3P</com:Value><com:Value>AT</com:Value><com:Value>AU</com:Value><com:Value>BE</com:Value><com:Value>BR</com:Value><com:Value>CA</com:Value><com:Value>CH</com:Value><com:Value>CN</com:Value><com:Value>DE</com:Value><com:Value>ES</com:Value><com:Value>GB</com:Value><com:Value>GR</com:Value><com:Value>IN</com:Value><com:Value>IT</com:Value><com:Value>MX</com:Value><com:Value>NL</com:Value><com:Value>SG</com:Value><com:Value>US</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CBS_FORMER_TBL_9B(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CBS_FORMER_TBL_9B" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="lastNPeriods"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>Q_1</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>2~10~0,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Former Table 9B: Consolidated foreign claims of reporting banks
+        - immediate borrower basis. On individual countries by nationality of reporting
+        banks.</com:Name><str:ConstraintAttachment><str:Dataflow><Ref package="datastructure"
+        agencyID="BIS" id="WS_CBS_PUB" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>5A</com:Value><com:Value>AT</com:Value><com:Value>AU</com:Value><com:Value>BE</com:Value><com:Value>BR</com:Value><com:Value>CA</com:Value><com:Value>CH</com:Value><com:Value>CL</com:Value><com:Value>DE</com:Value><com:Value>DK</com:Value><com:Value>ES</com:Value><com:Value>FI</com:Value><com:Value>FR</com:Value><com:Value>GB</com:Value><com:Value>GR</com:Value><com:Value>IE</com:Value><com:Value>IN</com:Value><com:Value>IT</com:Value><com:Value>KR</com:Value><com:Value>LU</com:Value><com:Value>MX</com:Value><com:Value>NL</com:Value><com:Value>PA</com:Value><com:Value>PT</com:Value><com:Value>SE</com:Value><com:Value>SG</com:Value><com:Value>TR</com:Value><com:Value>TW</com:Value><com:Value>US</com:Value></com:KeyValue><com:KeyValue
+        id="CBS_BANK_TYPE"><com:Value>4R</com:Value></com:KeyValue><com:KeyValue id="CBS_BASIS"><com:Value>F</com:Value></com:KeyValue><com:KeyValue
+        id="L_POSITION"><com:Value>C</com:Value></com:KeyValue><com:KeyValue id="L_INSTR"><com:Value>A</com:Value></com:KeyValue><com:KeyValue
+        id="REM_MATURITY"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="CURR_TYPE_BOOK"><com:Value>TO1</com:Value></com:KeyValue><com:KeyValue
+        id="L_CP_SECTOR"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="L_CP_COUNTRY"><com:Value>1C</com:Value><com:Value>1E</com:Value><com:Value>1N</com:Value><com:Value>1W</com:Value><com:Value>1Z</com:Value><com:Value>2B</com:Value><com:Value>2C</com:Value><com:Value>2D</com:Value><com:Value>2H</com:Value><com:Value>2N</com:Value><com:Value>2O</com:Value><com:Value>2R</com:Value><com:Value>2S</com:Value><com:Value>2T</com:Value><com:Value>2U</com:Value><com:Value>2W</com:Value><com:Value>3C</com:Value><com:Value>3P</com:Value><com:Value>4T</com:Value><com:Value>4U</com:Value><com:Value>4W</com:Value><com:Value>4Y</com:Value><com:Value>5K</com:Value><com:Value>5R</com:Value><com:Value>AD</com:Value><com:Value>AE</com:Value><com:Value>AF</com:Value><com:Value>AL</com:Value><com:Value>AM</com:Value><com:Value>AN</com:Value><com:Value>AO</com:Value><com:Value>AR</com:Value><com:Value>AT</com:Value><com:Value>AU</com:Value><com:Value>AW</com:Value><com:Value>AZ</com:Value><com:Value>BA</com:Value><com:Value>BB</com:Value><com:Value>BD</com:Value><com:Value>BE</com:Value><com:Value>BF</com:Value><com:Value>BG</com:Value><com:Value>BH</com:Value><com:Value>BI</com:Value><com:Value>BJ</com:Value><com:Value>BM</com:Value><com:Value>BN</com:Value><com:Value>BO</com:Value><com:Value>BQ</com:Value><com:Value>BR</com:Value><com:Value>BS</com:Value><com:Value>BT</com:Value><com:Value>BW</com:Value><com:Value>BY</com:Value><com:Value>BZ</com:Value><com:Value>C9</com:Value><com:Value>CA</com:Value><com:Value>CD</com:Value><com:Value>CF</com:Value><com:Value>CG</com:Value><com:Value>CH</com:Value><com:Value>CI</com:Value><com:Value>CM</com:Value><com:Value>CN</com:Value><com:Value>CO</com:Value><com:Value>CR</com:Value><com:Value>CS</com:Value><com:Value>CU</com:Value><com:Value>CV</com:Value><com:Value>CW</com:Value><com:Value>CY</com:Value><com:Value>CZ</com:Value><com:Value>DE</com:Value><com:Value>DJ</com:Value><com:Value>DK</com:Value><com:Value>DM</com:Value><com:Value>DO</com:Value><com:Value>DZ</com:Value><com:Value>EC</com:Value><com:Value>EE</com:Value><com:Value>EG</com:Value><com:Value>ER</com:Value><com:Value>ES</com:Value><com:Value>ET</com:Value><com:Value>FI</com:Value><com:Value>FJ</com:Value><com:Value>FK</com:Value><com:Value>FM</com:Value><com:Value>FR</com:Value><com:Value>GA</com:Value><com:Value>GB</com:Value><com:Value>GD</com:Value><com:Value>GE</com:Value><com:Value>GG</com:Value><com:Value>GH</com:Value><com:Value>GI</com:Value><com:Value>GM</com:Value><com:Value>GN</com:Value><com:Value>GQ</com:Value><com:Value>GR</com:Value><com:Value>GT</com:Value><com:Value>GW</com:Value><com:Value>GY</com:Value><com:Value>HK</com:Value><com:Value>HN</com:Value><com:Value>HR</com:Value><com:Value>HT</com:Value><com:Value>HU</com:Value><com:Value>ID</com:Value><com:Value>IE</com:Value><com:Value>IL</com:Value><com:Value>IM</com:Value><com:Value>IN</com:Value><com:Value>IQ</com:Value><com:Value>IR</com:Value><com:Value>IS</com:Value><com:Value>IT</com:Value><com:Value>JE</com:Value><com:Value>JM</com:Value><com:Value>JO</com:Value><com:Value>JP</com:Value><com:Value>KE</com:Value><com:Value>KG</com:Value><com:Value>KH</com:Value><com:Value>KI</com:Value><com:Value>KM</com:Value><com:Value>KP</com:Value><com:Value>KR</com:Value><com:Value>KW</com:Value><com:Value>KY</com:Value><com:Value>KZ</com:Value><com:Value>LA</com:Value><com:Value>LB</com:Value><com:Value>LC</com:Value><com:Value>LI</com:Value><com:Value>LK</com:Value><com:Value>LR</com:Value><com:Value>LS</com:Value><com:Value>LT</com:Value><com:Value>LU</com:Value><com:Value>LV</com:Value><com:Value>LY</com:Value><com:Value>MA</com:Value><com:Value>MD</com:Value><com:Value>ME</com:Value><com:Value>MG</com:Value><com:Value>MH</com:Value><com:Value>MK</com:Value><com:Value>ML</com:Value><com:Value>MM</com:Value><com:Value>MN</com:Value><com:Value>MO</com:Value><com:Value>MR</com:Value><com:Value>MT</com:Value><com:Value>MU</com:Value><com:Value>MV</com:Value><com:Value>MW</com:Value><com:Value>MX</com:Value><com:Value>MY</com:Value><com:Value>MZ</com:Value><com:Value>NA</com:Value><com:Value>NC</com:Value><com:Value>NE</com:Value><com:Value>NG</com:Value><com:Value>NI</com:Value><com:Value>NL</com:Value><com:Value>NO</com:Value><com:Value>NP</com:Value><com:Value>NR</com:Value><com:Value>NZ</com:Value><com:Value>OM</com:Value><com:Value>PA</com:Value><com:Value>PE</com:Value><com:Value>PF</com:Value><com:Value>PG</com:Value><com:Value>PH</com:Value><com:Value>PK</com:Value><com:Value>PL</com:Value><com:Value>PS</com:Value><com:Value>PT</com:Value><com:Value>PU</com:Value><com:Value>PW</com:Value><com:Value>PY</com:Value><com:Value>QA</com:Value><com:Value>RO</com:Value><com:Value>RS</com:Value><com:Value>RU</com:Value><com:Value>RW</com:Value><com:Value>SA</com:Value><com:Value>SB</com:Value><com:Value>SC</com:Value><com:Value>SD</com:Value><com:Value>SE</com:Value><com:Value>SG</com:Value><com:Value>SH</com:Value><com:Value>SI</com:Value><com:Value>SK</com:Value><com:Value>SL</com:Value><com:Value>SN</com:Value><com:Value>SO</com:Value><com:Value>SR</com:Value><com:Value>ST</com:Value><com:Value>SU</com:Value><com:Value>SV</com:Value><com:Value>SX</com:Value><com:Value>SY</com:Value><com:Value>SZ</com:Value><com:Value>TC</com:Value><com:Value>TD</com:Value><com:Value>TG</com:Value><com:Value>TH</com:Value><com:Value>TJ</com:Value><com:Value>TL</com:Value><com:Value>TM</com:Value><com:Value>TN</com:Value><com:Value>TO</com:Value><com:Value>TR</com:Value><com:Value>TT</com:Value><com:Value>TV</com:Value><com:Value>TW</com:Value><com:Value>TZ</com:Value><com:Value>UA</com:Value><com:Value>UG</com:Value><com:Value>US</com:Value><com:Value>UY</com:Value><com:Value>UZ</com:Value><com:Value>VA</com:Value><com:Value>VC</com:Value><com:Value>VE</com:Value><com:Value>VN</com:Value><com:Value>VU</com:Value><com:Value>WF</com:Value><com:Value>WS</com:Value><com:Value>YE</com:Value><com:Value>YU</com:Value><com:Value>ZA</com:Value><com:Value>ZM</com:Value><com:Value>ZW</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CBS_FORMER_TBL_9D(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CBS_FORMER_TBL_9D" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="lastNPeriods"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>Q_1</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>2~10~0,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Former Table 9D: Consolidated foreign claims of reporting banks
+        - ultimate risk basis. On individual countries by nationality of reporting
+        banks.</com:Name><str:ConstraintAttachment><str:Dataflow><Ref package="datastructure"
+        agencyID="BIS" id="WS_CBS_PUB" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>5A</com:Value><com:Value>AT</com:Value><com:Value>AU</com:Value><com:Value>BE</com:Value><com:Value>BR</com:Value><com:Value>CA</com:Value><com:Value>CH</com:Value><com:Value>CL</com:Value><com:Value>DE</com:Value><com:Value>DK</com:Value><com:Value>ES</com:Value><com:Value>FI</com:Value><com:Value>FR</com:Value><com:Value>GB</com:Value><com:Value>GR</com:Value><com:Value>IE</com:Value><com:Value>IN</com:Value><com:Value>IT</com:Value><com:Value>JP</com:Value><com:Value>KR</com:Value><com:Value>LU</com:Value><com:Value>MX</com:Value><com:Value>NL</com:Value><com:Value>PA</com:Value><com:Value>PT</com:Value><com:Value>SE</com:Value><com:Value>SG</com:Value><com:Value>TR</com:Value><com:Value>TW</com:Value><com:Value>US</com:Value></com:KeyValue><com:KeyValue
+        id="CBS_BANK_TYPE"><com:Value>4R</com:Value></com:KeyValue><com:KeyValue id="CBS_BASIS"><com:Value>U</com:Value></com:KeyValue><com:KeyValue
+        id="L_POSITION"><com:Value>C</com:Value></com:KeyValue><com:KeyValue id="L_INSTR"><com:Value>A</com:Value></com:KeyValue><com:KeyValue
+        id="REM_MATURITY"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="CURR_TYPE_BOOK"><com:Value>TO1</com:Value></com:KeyValue><com:KeyValue
+        id="L_CP_SECTOR"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="L_CP_COUNTRY"><com:Value>1C</com:Value><com:Value>1E</com:Value><com:Value>1N</com:Value><com:Value>1W</com:Value><com:Value>1Z</com:Value><com:Value>2B</com:Value><com:Value>2C</com:Value><com:Value>2D</com:Value><com:Value>2H</com:Value><com:Value>2N</com:Value><com:Value>2O</com:Value><com:Value>2R</com:Value><com:Value>2S</com:Value><com:Value>2T</com:Value><com:Value>2U</com:Value><com:Value>2W</com:Value><com:Value>3C</com:Value><com:Value>3P</com:Value><com:Value>4T</com:Value><com:Value>4U</com:Value><com:Value>4W</com:Value><com:Value>4Y</com:Value><com:Value>5K</com:Value><com:Value>5R</com:Value><com:Value>AD</com:Value><com:Value>AE</com:Value><com:Value>AF</com:Value><com:Value>AL</com:Value><com:Value>AM</com:Value><com:Value>AN</com:Value><com:Value>AO</com:Value><com:Value>AR</com:Value><com:Value>AT</com:Value><com:Value>AU</com:Value><com:Value>AW</com:Value><com:Value>AZ</com:Value><com:Value>BA</com:Value><com:Value>BB</com:Value><com:Value>BD</com:Value><com:Value>BE</com:Value><com:Value>BF</com:Value><com:Value>BG</com:Value><com:Value>BH</com:Value><com:Value>BI</com:Value><com:Value>BJ</com:Value><com:Value>BM</com:Value><com:Value>BN</com:Value><com:Value>BO</com:Value><com:Value>BQ</com:Value><com:Value>BR</com:Value><com:Value>BS</com:Value><com:Value>BT</com:Value><com:Value>BW</com:Value><com:Value>BY</com:Value><com:Value>BZ</com:Value><com:Value>C9</com:Value><com:Value>CA</com:Value><com:Value>CD</com:Value><com:Value>CF</com:Value><com:Value>CG</com:Value><com:Value>CH</com:Value><com:Value>CI</com:Value><com:Value>CL</com:Value><com:Value>CM</com:Value><com:Value>CN</com:Value><com:Value>CO</com:Value><com:Value>CR</com:Value><com:Value>CS</com:Value><com:Value>CU</com:Value><com:Value>CV</com:Value><com:Value>CW</com:Value><com:Value>CY</com:Value><com:Value>CZ</com:Value><com:Value>DE</com:Value><com:Value>DJ</com:Value><com:Value>DK</com:Value><com:Value>DM</com:Value><com:Value>DO</com:Value><com:Value>DZ</com:Value><com:Value>EC</com:Value><com:Value>EE</com:Value><com:Value>EG</com:Value><com:Value>ER</com:Value><com:Value>ES</com:Value><com:Value>ET</com:Value><com:Value>FI</com:Value><com:Value>FJ</com:Value><com:Value>FK</com:Value><com:Value>FM</com:Value><com:Value>FR</com:Value><com:Value>GA</com:Value><com:Value>GB</com:Value><com:Value>GD</com:Value><com:Value>GE</com:Value><com:Value>GG</com:Value><com:Value>GH</com:Value><com:Value>GI</com:Value><com:Value>GM</com:Value><com:Value>GN</com:Value><com:Value>GQ</com:Value><com:Value>GR</com:Value><com:Value>GT</com:Value><com:Value>GW</com:Value><com:Value>GY</com:Value><com:Value>HK</com:Value><com:Value>HN</com:Value><com:Value>HR</com:Value><com:Value>HT</com:Value><com:Value>HU</com:Value><com:Value>ID</com:Value><com:Value>IE</com:Value><com:Value>IL</com:Value><com:Value>IM</com:Value><com:Value>IN</com:Value><com:Value>IQ</com:Value><com:Value>IR</com:Value><com:Value>IS</com:Value><com:Value>IT</com:Value><com:Value>JE</com:Value><com:Value>JM</com:Value><com:Value>JO</com:Value><com:Value>JP</com:Value><com:Value>KE</com:Value><com:Value>KG</com:Value><com:Value>KH</com:Value><com:Value>KI</com:Value><com:Value>KM</com:Value><com:Value>KP</com:Value><com:Value>KR</com:Value><com:Value>KW</com:Value><com:Value>KY</com:Value><com:Value>KZ</com:Value><com:Value>LA</com:Value><com:Value>LB</com:Value><com:Value>LC</com:Value><com:Value>LI</com:Value><com:Value>LK</com:Value><com:Value>LR</com:Value><com:Value>LS</com:Value><com:Value>LT</com:Value><com:Value>LU</com:Value><com:Value>LV</com:Value><com:Value>LY</com:Value><com:Value>MA</com:Value><com:Value>MD</com:Value><com:Value>ME</com:Value><com:Value>MG</com:Value><com:Value>MH</com:Value><com:Value>MK</com:Value><com:Value>ML</com:Value><com:Value>MM</com:Value><com:Value>MN</com:Value><com:Value>MO</com:Value><com:Value>MR</com:Value><com:Value>MT</com:Value><com:Value>MU</com:Value><com:Value>MV</com:Value><com:Value>MW</com:Value><com:Value>MX</com:Value><com:Value>MY</com:Value><com:Value>MZ</com:Value><com:Value>NA</com:Value><com:Value>NC</com:Value><com:Value>NE</com:Value><com:Value>NG</com:Value><com:Value>NI</com:Value><com:Value>NL</com:Value><com:Value>NO</com:Value><com:Value>NP</com:Value><com:Value>NR</com:Value><com:Value>NZ</com:Value><com:Value>OM</com:Value><com:Value>PA</com:Value><com:Value>PE</com:Value><com:Value>PF</com:Value><com:Value>PG</com:Value><com:Value>PH</com:Value><com:Value>PK</com:Value><com:Value>PL</com:Value><com:Value>PS</com:Value><com:Value>PT</com:Value><com:Value>PU</com:Value><com:Value>PW</com:Value><com:Value>PY</com:Value><com:Value>QA</com:Value><com:Value>RO</com:Value><com:Value>RS</com:Value><com:Value>RU</com:Value><com:Value>RW</com:Value><com:Value>SA</com:Value><com:Value>SB</com:Value><com:Value>SC</com:Value><com:Value>SD</com:Value><com:Value>SE</com:Value><com:Value>SG</com:Value><com:Value>SH</com:Value><com:Value>SI</com:Value><com:Value>SK</com:Value><com:Value>SL</com:Value><com:Value>SN</com:Value><com:Value>SO</com:Value><com:Value>SR</com:Value><com:Value>ST</com:Value><com:Value>SU</com:Value><com:Value>SV</com:Value><com:Value>SX</com:Value><com:Value>SY</com:Value><com:Value>SZ</com:Value><com:Value>TC</com:Value><com:Value>TD</com:Value><com:Value>TG</com:Value><com:Value>TH</com:Value><com:Value>TJ</com:Value><com:Value>TL</com:Value><com:Value>TM</com:Value><com:Value>TN</com:Value><com:Value>TO</com:Value><com:Value>TR</com:Value><com:Value>TT</com:Value><com:Value>TV</com:Value><com:Value>TW</com:Value><com:Value>TZ</com:Value><com:Value>UA</com:Value><com:Value>UG</com:Value><com:Value>US</com:Value><com:Value>UY</com:Value><com:Value>UZ</com:Value><com:Value>VA</com:Value><com:Value>VC</com:Value><com:Value>VE</com:Value><com:Value>VN</com:Value><com:Value>VU</com:Value><com:Value>WF</com:Value><com:Value>WS</com:Value><com:Value>YE</com:Value><com:Value>YU</com:Value><com:Value>ZA</com:Value><com:Value>ZM</com:Value><com:Value>ZW</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CBS_IB_INT_C_BY_SEC_TYP_IB(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CBS_IB_INT_C_BY_SEC_TYP_IB"
+        isFinal="false" type="Actual" version="1.0"><com:Annotations><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>11~10,9~0,0,0~name</com:AnnotationType></com:Annotation><com:Annotation
+        id="lastNPeriods"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>Q_6</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">International claims by sector and type, immediate counterparty
+        basis</com:Name><str:ConstraintAttachment><str:Dataflow><Ref package="datastructure"
+        agencyID="BIS" id="WS_CBS_PUB" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>5A</com:Value></com:KeyValue><com:KeyValue
+        id="CBS_BANK_TYPE"><com:Value>4O</com:Value></com:KeyValue><com:KeyValue id="CBS_BASIS"><com:Value>F</com:Value></com:KeyValue><com:KeyValue
+        id="L_POSITION"><com:Value>I</com:Value></com:KeyValue><com:KeyValue id="L_INSTR"><com:Value>A</com:Value></com:KeyValue><com:KeyValue
+        id="REM_MATURITY"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="CURR_TYPE_BOOK"><com:Value>TO1</com:Value></com:KeyValue><com:KeyValue
+        id="L_CP_SECTOR"><com:Value>A</com:Value><com:Value>B</com:Value><com:Value>F</com:Value><com:Value>O</com:Value><com:Value>R</com:Value></com:KeyValue><com:KeyValue
+        id="L_CP_COUNTRY"><com:Value>3P</com:Value><com:Value>AT</com:Value><com:Value>AU</com:Value><com:Value>BE</com:Value><com:Value>BR</com:Value><com:Value>CA</com:Value><com:Value>CH</com:Value><com:Value>CN</com:Value><com:Value>DE</com:Value><com:Value>ES</com:Value><com:Value>GB</com:Value><com:Value>GR</com:Value><com:Value>IN</com:Value><com:Value>IT</com:Value><com:Value>MX</com:Value><com:Value>NL</com:Value><com:Value>SG</com:Value><com:Value>US</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CH2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CH2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for CH2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="CH2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>CH</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>CH</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CL2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CL2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for CL2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="CL2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>CL</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CN3_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CN3_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for CN3</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="CN3" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>CN</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CPI_A_YOYCHG_FROM1950(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CPI_A_YOYCHG_FROM1950" isFinal="false"
+        validFrom="1950-01-01T00:00:00" type="Actual" version="1.0"><com:Annotations><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1~3~0,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Consumer prices, % changes, annual data, from 1950</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_LONG_CPI" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="FREQ"><com:Value>A</com:Value></com:KeyValue><com:KeyValue
+        id="UNIT_MEASURE"><com:Value>771</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CPI_IDX(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CPI_IDX" isFinal="false" type="Actual"
+        version="1.0"><com:Annotations><com:Annotation id="lastNPeriods"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>M_24</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1~3~1,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Consumer price indices, last 24 months</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_LONG_CPI" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="FREQ"><com:Value>M</com:Value></com:KeyValue><com:KeyValue
+        id="UNIT_MEASURE"><com:Value>628</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CPI_YOYCHG(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CPI_YOYCHG" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="lastNPeriods"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>M_24</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1~3~1,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Consumer prices, year-on-year pct changes, last 24 months</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_LONG_CPI" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="FREQ"><com:Value>M</com:Value></com:KeyValue><com:KeyValue
+        id="UNIT_MEASURE"><com:Value>771</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CRE_BNK_TO_PRIV_NF(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CRE_BNK_TO_PRIV_NF" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="lastNObservations"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>24</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1~7~1,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Bank credit to the private non-financial sector, % of GDP, last
+        24 quarters</com:Name><str:ConstraintAttachment><str:Dataflow><Ref package="datastructure"
+        agencyID="BIS" id="WS_TC" version="2.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="TC_BORROWERS"><com:Value>P</com:Value></com:KeyValue><com:KeyValue
+        id="TC_LENDERS"><com:Value>B</com:Value></com:KeyValue><com:KeyValue id="VALUATION"><com:Value>M</com:Value><com:Value>N</com:Value></com:KeyValue><com:KeyValue
+        id="UNIT_TYPE"><com:Value>770</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CRE_TC_TO_GOV(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CRE_TC_TO_GOV" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="lastNObservations"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>24</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1,4~7~1,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Total credit to the government sector, all valuation, % of GDP,
+        last 24 quarters</com:Name><str:ConstraintAttachment><str:Dataflow><Ref package="datastructure"
+        agencyID="BIS" id="WS_TC" version="2.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="TC_BORROWERS"><com:Value>G</com:Value></com:KeyValue><com:KeyValue
+        id="TC_LENDERS"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="UNIT_TYPE"><com:Value>770</com:Value></com:KeyValue><com:KeyValue
+        id="VALUATION"><com:Value>M</com:Value><com:Value>N</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CRE_TC_TO_HAUS(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CRE_TC_TO_HAUS" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="lastNObservations"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>24</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1~7~1,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Total credit to households, % of GDP, last 24 quarters</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_TC" version="2.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="TC_BORROWERS"><com:Value>H</com:Value></com:KeyValue><com:KeyValue
+        id="TC_LENDERS"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="VALUATION"><com:Value>M</com:Value><com:Value>N</com:Value></com:KeyValue><com:KeyValue
+        id="UNIT_TYPE"><com:Value>770</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CRE_TC_TO_NF_CORP(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CRE_TC_TO_NF_CORP" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="lastNObservations"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>24</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1~7~1,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Total credit to non-financial corporations, % of GDP, last 24
+        quarters</com:Name><str:ConstraintAttachment><str:Dataflow><Ref package="datastructure"
+        agencyID="BIS" id="WS_TC" version="2.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="TC_BORROWERS"><com:Value>N</com:Value></com:KeyValue><com:KeyValue
+        id="TC_LENDERS"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="VALUATION"><com:Value>M</com:Value><com:Value>N</com:Value></com:KeyValue><com:KeyValue
+        id="UNIT_TYPE"><com:Value>770</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CRE_TC_TO_PRIV_NF(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CRE_TC_TO_PRIV_NF" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="lastNObservations"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>24</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1~7~1,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Total credit to the private non-financial sector, % of GDP,
+        last 24 quarters</com:Name><str:ConstraintAttachment><str:Dataflow><Ref package="datastructure"
+        agencyID="BIS" id="WS_TC" version="2.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="TC_BORROWERS"><com:Value>P</com:Value></com:KeyValue><com:KeyValue
+        id="TC_LENDERS"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="UNIT_TYPE"><com:Value>770</com:Value></com:KeyValue><com:KeyValue
+        id="VALUATION"><com:Value>M</com:Value><com:Value>N</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CTG_GAPS(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CTG_GAPS" isFinal="false" type="Actual"
+        version="1.0"><com:Annotations><com:Annotation id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1~5~1,0,0~name</com:AnnotationType></com:Annotation><com:Annotation
+        id="lastNObservations"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>24</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Credit-to-GDP gaps, last 24 quarters</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_CREDIT_GAP" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="CG_DTYPE"><com:Value>C</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CTG_GAPS_ADV_ECON(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CTG_GAPS_ADV_ECON" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="lastNObservations"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>24</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1,4~5~1,0,0~name</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Credit-to-GDP gaps and underlying input, advanced economies,
+        last 24 quarters</com:Name><str:ConstraintAttachment><str:Dataflow><Ref package="datastructure"
+        agencyID="BIS" id="WS_CREDIT_GAP" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="BORROWERS_CTY"><com:Value>AT</com:Value><com:Value>AU</com:Value><com:Value>BE</com:Value><com:Value>CA</com:Value><com:Value>DE</com:Value><com:Value>DK</com:Value><com:Value>ES</com:Value><com:Value>FI</com:Value><com:Value>FR</com:Value><com:Value>GB</com:Value><com:Value>GR</com:Value><com:Value>IE</com:Value><com:Value>IT</com:Value><com:Value>JP</com:Value><com:Value>LU</com:Value><com:Value>NL</com:Value><com:Value>NO</com:Value><com:Value>PT</com:Value><com:Value>SE</com:Value><com:Value>US</com:Value><com:Value>XM</com:Value></com:KeyValue><com:KeyValue
+        id="CG_DTYPE"><com:Value>A</com:Value><com:Value>B</com:Value><com:Value>C</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CW2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CW2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for CW2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="CW2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>CW</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:CY2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="CY2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for CY2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="CY2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>CY</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:DE2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="DE2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for DE2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="DE2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>DE</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>DE</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:DER_FOR_XCH_TRNOV(1.0)"
+        isExternalReference="false" agencyID="BIS" id="DER_FOR_XCH_TRNOV" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>14~2~0,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Foreign exchange turnover</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_DER_OTC_TOV" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="DER_BASIS"><com:Value>C</com:Value></com:KeyValue><com:KeyValue
+        id="DER_RISK"><com:Value>B</com:Value></com:KeyValue><com:KeyValue id="DER_CURR_LEG2"><com:Value>TO1</com:Value></com:KeyValue><com:KeyValue
+        id="DER_REP_CTY"><com:Value>5J</com:Value></com:KeyValue><com:KeyValue id="DER_SECTOR_CPY"><com:Value>A</com:Value></com:KeyValue><com:KeyValue
+        id="DER_CURR_LEG1"><com:Value>TO1</com:Value></com:KeyValue><com:KeyValue
+        id="DER_ISSUE_MAT"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="DER_EX_METHOD"><com:Value>3</com:Value></com:KeyValue><com:KeyValue
+        id="DER_CPC"><com:Value>5J</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:DER_INTR_RATE_DER_TRNOV(1.0)"
+        isExternalReference="false" agencyID="BIS" id="DER_INTR_RATE_DER_TRNOV" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="lastNObservations"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>12</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>14~2~0,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Interest rate derivatives turnover</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_DER_OTC_TOV" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="DER_BASIS"><com:Value>C</com:Value></com:KeyValue><com:KeyValue
+        id="DER_RISK"><com:Value>D</com:Value></com:KeyValue><com:KeyValue id="DER_REP_CTY"><com:Value>5J</com:Value></com:KeyValue><com:KeyValue
+        id="DER_CPC"><com:Value>5J</com:Value></com:KeyValue><com:KeyValue id="DER_CURR_LEG1"><com:Value>TO1</com:Value></com:KeyValue><com:KeyValue
+        id="DER_CURR_LEG2"><com:Value>TO1</com:Value></com:KeyValue><com:KeyValue
+        id="DER_ISSUE_MAT"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="DER_EX_METHOD"><com:Value>3</com:Value></com:KeyValue><com:KeyValue
+        id="DER_SECTOR_CPY"><com:Value>A</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:DK2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="DK2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for DK2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="DK2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>DK</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:DSR_PRIV_NF_SEC_32CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="DSR_PRIV_NF_SEC_32CTY" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="lastNObservations"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>24</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1~3~1,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Debt service ratios for private non-financial sector, 32 countries,
+        last 24 quarters</com:Name><str:ConstraintAttachment><str:Dataflow><Ref package="datastructure"
+        agencyID="BIS" id="WS_DSR" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="DSR_BORROWERS"><com:Value>P</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:DSR_PRIV_NF_SEC_BRKDWN_17CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="DSR_PRIV_NF_SEC_BRKDWN_17CTY"
+        isFinal="false" type="Actual" version="1.0"><com:Annotations><com:Annotation
+        id="lastNObservations"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>24</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1,2~3~1,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Debt service ratios for private non-financial sector (with breakdown),
+        17 countries, last 24 quarters</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_DSR" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="BORROWERS_CTY"><com:Value>AU</com:Value><com:Value>BE</com:Value><com:Value>CA</com:Value><com:Value>DE</com:Value><com:Value>DK</com:Value><com:Value>ES</com:Value><com:Value>FI</com:Value><com:Value>FR</com:Value><com:Value>IT</com:Value><com:Value>JP</com:Value><com:Value>KR</com:Value><com:Value>NL</com:Value><com:Value>NO</com:Value><com:Value>PT</com:Value><com:Value>SE</com:Value><com:Value>US</com:Value></com:KeyValue><com:KeyValue
+        id="DSR_BORROWERS"><com:Value>H</com:Value><com:Value>N</com:Value><com:Value>P</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:ES2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="ES2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for ES2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="ES2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>ES</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>ES</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:FI2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="FI2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for FI2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="FI2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>FI</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:FR2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="FR2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for FR2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="FR2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>FR</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>FR</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:GB2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="GB2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for GB2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="GB2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>GB</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>GB</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:GG6_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="GG6_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for GG6</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="GG6" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>GG</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:GLI_USD_CRED_NONBNK_BORR(1.0)"
+        isExternalReference="false" agencyID="BIS" id="GLI_USD_CRED_NONBNK_BORR" isFinal="false"
+        validFrom="2000-01-01T00:00:00" type="Actual" version="1.0"><com:Annotations><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>2~8~0,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">US dollar credit to non-bank borrowers</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_GLI" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="BORROWERS_CTY"><com:Value>3P</com:Value><com:Value>4T</com:Value><com:Value>BR</com:Value><com:Value>CN</com:Value><com:Value>IN</com:Value><com:Value>RU</com:Value><com:Value>ZA</com:Value></com:KeyValue><com:KeyValue
+        id="LENDERS_SECTOR"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="BORROWERS_SECTOR"><com:Value>N</com:Value></com:KeyValue><com:KeyValue
+        id="CURR_DENOM"><com:Value>USD</com:Value></com:KeyValue><com:KeyValue id="FREQ"><com:Value>Q</com:Value></com:KeyValue><com:KeyValue
+        id="L_INSTR"><com:Value>B</com:Value></com:KeyValue><com:KeyValue id="L_POS_TYPE"><com:Value>I</com:Value></com:KeyValue><com:KeyValue
+        id="UNIT_MEASURE"><com:Value>USD</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:GR2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="GR2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for GR2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="GR2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>GR</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:HK2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="HK2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for HK2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="HK2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>HK</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>HK</com:Value></com:KeyValue><com:KeyValue id="RTBL"><com:Value>T02</com:Value><com:Value>T03</com:Value><com:Value>T04</com:Value><com:Value>T05</com:Value><com:Value>T06</com:Value><com:Value>T07</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:ID2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="ID2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for ID2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="ID2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>ID</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>ID</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:IE2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="IE2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for IE2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="IE2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>IE</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:IM6_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="IM6_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for IM6</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="IM6" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>IM</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:IN2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="IN2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for IN2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="IN2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>IN</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>IN</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:IT2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="IT2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for IT2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="IT2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>IT</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>IT</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:JE6_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="JE6_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for JE6</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="JE6" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>JE</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:JP2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="JP2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for JP2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="JP2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>J1</com:Value><com:Value>J2</com:Value><com:Value>JP</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>JP</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:KR2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="KR2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for KR2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="KR2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>KR</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>KR</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:KY2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="KY2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for KY2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="KY2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>KY</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:LBS_DE_BANKS_IN_ALLRC_XB_C_L(1.0)"
+        isExternalReference="false" agencyID="BIS" id="LBS_DE_BANKS_IN_ALLRC_XB_C_L"
+        isFinal="false" type="Actual" version="1.0"><com:Annotations><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>2,9~1,12~</com:AnnotationType></com:Annotation><com:Annotation
+        id="lastNPeriods"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>Q_6</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">German banks in all reporting countries, Cross-border claims
+        and liabilities</com:Name><str:ConstraintAttachment><str:Dataflow><Ref package="datastructure"
+        agencyID="BIS" id="WS_LBS_D_PUB" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_MEASURE"><com:Value>F</com:Value><com:Value>S</com:Value></com:KeyValue><com:KeyValue
+        id="L_POSITION"><com:Value>C</com:Value><com:Value>L</com:Value></com:KeyValue><com:KeyValue
+        id="L_INSTR"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="L_DENOM"><com:Value>TO1</com:Value></com:KeyValue><com:KeyValue
+        id="L_CURR_TYPE"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="L_PARENT_CTY"><com:Value>DE</com:Value></com:KeyValue><com:KeyValue
+        id="L_REP_BANK_TYPE"><com:Value>A</com:Value></com:KeyValue><com:KeyValue
+        id="L_REP_CTY"><com:Value>5A</com:Value></com:KeyValue><com:KeyValue id="L_CP_SECTOR"><com:Value>A</com:Value><com:Value>B</com:Value><com:Value>I</com:Value><com:Value>N</com:Value><com:Value>U</com:Value></com:KeyValue><com:KeyValue
+        id="L_CP_COUNTRY"><com:Value>5J</com:Value></com:KeyValue><com:KeyValue id="L_POS_TYPE"><com:Value>N</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:LBS_REP_BANKS_IN_DE_XB_C_L(1.0)"
+        isExternalReference="false" agencyID="BIS" id="LBS_REP_BANKS_IN_DE_XB_C_L"
+        isFinal="false" type="Actual" version="1.0"><com:Annotations><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>2,9~1,12~0,0,0~name</com:AnnotationType></com:Annotation><com:Annotation
+        id="lastNObservations"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>6</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Reporting banks in Germany, Cross-border claims and liabilities</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_LBS_D_PUB" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_POSITION"><com:Value>C</com:Value><com:Value>L</com:Value></com:KeyValue><com:KeyValue
+        id="L_INSTR"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="L_DENOM"><com:Value>TO1</com:Value></com:KeyValue><com:KeyValue
+        id="L_CURR_TYPE"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="L_PARENT_CTY"><com:Value>5J</com:Value></com:KeyValue><com:KeyValue
+        id="L_REP_BANK_TYPE"><com:Value>A</com:Value></com:KeyValue><com:KeyValue
+        id="L_REP_CTY"><com:Value>DE</com:Value></com:KeyValue><com:KeyValue id="L_CP_SECTOR"><com:Value>A</com:Value><com:Value>B</com:Value><com:Value>N</com:Value><com:Value>U</com:Value></com:KeyValue><com:KeyValue
+        id="L_CP_COUNTRY"><com:Value>5J</com:Value></com:KeyValue><com:KeyValue id="L_POS_TYPE"><com:Value>N</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:LU2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="LU2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for LU2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="LU2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>LU</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:MO2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="MO2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for MO2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="MO2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>MO</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:MX2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="MX2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for MX2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="MX2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>MX</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>MX</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:MY2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="MY2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for MY2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="MY2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>MY</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:NL2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="NL2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for NL2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="NL2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>NL</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>NL</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:NO2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="NO2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for NO2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="NO2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>NO</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:OTCDO_NA_R(1.0)"
+        isExternalReference="false" agencyID="BIS" id="OTCDO_NA_R" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>14~3~0,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Notional amounts, by risk category</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_OTC_DERIV2" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="DER_CPC"><com:Value>5J</com:Value></com:KeyValue><com:KeyValue
+        id="DER_TYPE"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="DER_CURR_LEG1"><com:Value>TO1</com:Value></com:KeyValue><com:KeyValue
+        id="DER_CURR_LEG2"><com:Value>TO1</com:Value></com:KeyValue><com:KeyValue
+        id="DER_INSTR"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="DER_SECTOR_CPY"><com:Value>A</com:Value></com:KeyValue><com:KeyValue
+        id="DER_ISSUE_MAT"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="DER_RISK"><com:Value>A</com:Value><com:Value>B</com:Value><com:Value>D</com:Value><com:Value>E</com:Value><com:Value>J</com:Value><com:Value>T</com:Value><com:Value>U</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:PA6_CONSTRAINTS(1.0)"
+        isExternalReference="false" agencyID="BIS" id="PA6_CONSTRAINTS" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">PA6 constraints</com:Name><str:ConstraintAttachment><str:DataProvider><Ref
+        maintainableParentID="DATA_PROVIDERS" package="base" maintainableParentVersion="1.0"
+        agencyID="BIS" id="PA6" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>PA</com:Value></com:KeyValue><com:KeyValue
+        id="REP_CTY"><com:Value>PA</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:PA6_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="PA6_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for PA6</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="PA6" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>PA</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:PH2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="PH2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for PH2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="PH2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>PH</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:PL2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="PL2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for PL2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="PL2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>PL</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:PT2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="PT2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for PT2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="PT2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>PT</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:RU2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="RU2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for RU2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="RU2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>RU</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>RU</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:SA2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="SA2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for SA2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="SA2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>SA</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>SA</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:SE2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="SE2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for SE2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="SE2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>SE</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:SEC_DDS_IDS_ISSUED_BY_JP_RESID(1.0)"
+        isExternalReference="false" agencyID="BIS" id="SEC_DDS_IDS_ISSUED_BY_JP_RESID"
+        isFinal="false" type="Actual" version="1.0"><com:Annotations><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>5,9,10,14~15~0,0,0~both</com:AnnotationType></com:Annotation><com:Annotation
+        id="lastNPeriods"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>Q_6</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Domestic and international debt securities issued by financial
+        issuers resident in Japan</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_DEBT_SEC2_PUB" version="1.0"
+        class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="ISSUE_CUR"><com:Value>TO1</com:Value></com:KeyValue><com:KeyValue
+        id="ISSUER_RES"><com:Value>JP</com:Value></com:KeyValue><com:KeyValue id="ISSUER_NAT"><com:Value>3P</com:Value></com:KeyValue><com:KeyValue
+        id="ISSUER_BUS_IMM"><com:Value>B</com:Value></com:KeyValue><com:KeyValue id="ISSUER_BUS_ULT"><com:Value>1</com:Value></com:KeyValue><com:KeyValue
+        id="MARKET"><com:Value>A</com:Value><com:Value>C</com:Value></com:KeyValue><com:KeyValue
+        id="ISSUE_CUR_GROUP"><com:Value>A</com:Value></com:KeyValue><com:KeyValue
+        id="ISSUE_RE_MAT"><com:Value>A</com:Value><com:Value>U</com:Value></com:KeyValue><com:KeyValue
+        id="MEASURE"><com:Value>C</com:Value><com:Value>G</com:Value><com:Value>I</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:SEC_OUTST_IDS_BY_CUR(1.0)"
+        isExternalReference="false" agencyID="BIS" id="SEC_OUTST_IDS_BY_CUR" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="lastNPeriods"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>Q_24</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>15~8~0,0,0~both</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Outstanding international debt securities by currency of denomination</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_DEBT_SEC2_PUB" version="1.0"
+        class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="ISSUE_CUR"><com:Value>AED</com:Value><com:Value>ARS</com:Value><com:Value>ATS</com:Value><com:Value>AUD</com:Value><com:Value>BEF</com:Value><com:Value>BGN</com:Value><com:Value>BHD</com:Value><com:Value>BRL</com:Value><com:Value>BSD</com:Value><com:Value>BYR</com:Value><com:Value>CAD</com:Value><com:Value>CHF</com:Value><com:Value>CLP</com:Value><com:Value>CNY</com:Value><com:Value>COP</com:Value><com:Value>CYP</com:Value><com:Value>CZK</com:Value><com:Value>DEM</com:Value><com:Value>DKK</com:Value><com:Value>EEK</com:Value><com:Value>EGP</com:Value><com:Value>ESP</com:Value><com:Value>EUR</com:Value><com:Value>FIM</com:Value><com:Value>FRF</com:Value><com:Value>GBP</com:Value><com:Value>GRD</com:Value><com:Value>HKD</com:Value><com:Value>HRK</com:Value><com:Value>HUF</com:Value><com:Value>IDR</com:Value><com:Value>IEP</com:Value><com:Value>ILS</com:Value><com:Value>INR</com:Value><com:Value>ISK</com:Value><com:Value>ITL</com:Value><com:Value>JPY</com:Value><com:Value>KRW</com:Value><com:Value>LBP</com:Value><com:Value>LTL</com:Value><com:Value>LUF</com:Value><com:Value>LVL</com:Value><com:Value>MTL</com:Value><com:Value>MXN</com:Value><com:Value>MYR</com:Value><com:Value>NOK</com:Value><com:Value>NZD</com:Value><com:Value>PHP</com:Value><com:Value>PKR</com:Value><com:Value>PLN</com:Value><com:Value>PTE</com:Value><com:Value>RUB</com:Value><com:Value>SAR</com:Value><com:Value>SEK</com:Value><com:Value>SGD</com:Value><com:Value>SIT</com:Value><com:Value>SKK</com:Value><com:Value>THB</com:Value><com:Value>TO1</com:Value><com:Value>TRY</com:Value><com:Value>TWD</com:Value><com:Value>USD</com:Value><com:Value>VEF</com:Value></com:KeyValue><com:KeyValue
+        id="ISSUER_RES"><com:Value>3P</com:Value></com:KeyValue><com:KeyValue id="ISSUER_NAT"><com:Value>3P</com:Value></com:KeyValue><com:KeyValue
+        id="ISSUER_BUS_IMM"><com:Value>1</com:Value></com:KeyValue><com:KeyValue id="ISSUER_BUS_ULT"><com:Value>1</com:Value></com:KeyValue><com:KeyValue
+        id="MARKET"><com:Value>A</com:Value><com:Value>C</com:Value></com:KeyValue><com:KeyValue
+        id="ISSUE_CUR_GROUP"><com:Value>A</com:Value></com:KeyValue><com:KeyValue
+        id="ISSUE_OR_MAT"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="ISSUE_RE_MAT"><com:Value>A</com:Value></com:KeyValue><com:KeyValue
+        id="ISSUE_RATE"><com:Value>A</com:Value></com:KeyValue><com:KeyValue id="MEASURE"><com:Value>I</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:SG2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="SG2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for SG2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="SG2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>SG</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>SG</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:SPP_NOM_IDX(1.0)"
+        isExternalReference="false" agencyID="BIS" id="SPP_NOM_IDX" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1~4~1,0,0~both</com:AnnotationType></com:Annotation><com:Annotation
+        id="lastNObservations"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>24</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Nominal residential property prices (selected series), indices,
+        all economies, last 24 quarters</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_SPP" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="UNIT_MEASURE"><com:Value>628</com:Value></com:KeyValue><com:KeyValue
+        id="VALUE"><com:Value>N</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:SPP_REAL_YOYCHG(1.0)"
+        isExternalReference="false" agencyID="BIS" id="SPP_REAL_YOYCHG" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1~4~1,0,0~both</com:AnnotationType></com:Annotation><com:Annotation
+        id="lastNObservations"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>24</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Real residential property prices (selected series), year-on-year
+        % changes, all economies, last 24 quarters</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_SPP" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="UNIT_MEASURE"><com:Value>771</com:Value></com:KeyValue><com:KeyValue
+        id="VALUE"><com:Value>R</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:TH2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="TH2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for TH2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="TH2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>TH</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:TR2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="TR2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for TR2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="TR2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>TR</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>TR</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:TW2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="TW2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for TW2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="TW2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>TW</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:US3_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="US3_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for US3</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="US3" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>US</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:XRU_M_AVG_BISSH_24M(1.0)"
+        isExternalReference="false" agencyID="BIS" id="XRU_M_AVG_BISSH_24M" isFinal="false"
+        type="Actual" version="1.0"><com:Annotations><com:Annotation id="lastNPeriods"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>M_24</com:AnnotationType></com:Annotation><com:Annotation
+        id="pv"><com:AnnotationTitle>PPQ</com:AnnotationTitle><com:AnnotationType>1,2~4~1,0,0~name</com:AnnotationType></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">USD XR monthly averages, BIS shareholders, last 24 months</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_XRU" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="FREQ"><com:Value>M</com:Value></com:KeyValue><com:KeyValue
+        id="REF_AREA"><com:Value>AE</com:Value><com:Value>AR</com:Value><com:Value>AT</com:Value><com:Value>AU</com:Value><com:Value>BA</com:Value><com:Value>BE</com:Value><com:Value>BG</com:Value><com:Value>BR</com:Value><com:Value>CA</com:Value><com:Value>CH</com:Value><com:Value>CL</com:Value><com:Value>CN</com:Value><com:Value>CO</com:Value><com:Value>CZ</com:Value><com:Value>DE</com:Value><com:Value>DK</com:Value><com:Value>EE</com:Value><com:Value>ES</com:Value><com:Value>FI</com:Value><com:Value>FR</com:Value><com:Value>GB</com:Value><com:Value>GR</com:Value><com:Value>HK</com:Value><com:Value>HR</com:Value><com:Value>HU</com:Value><com:Value>ID</com:Value><com:Value>IE</com:Value><com:Value>IL</com:Value><com:Value>IN</com:Value><com:Value>IS</com:Value><com:Value>IT</com:Value><com:Value>JP</com:Value><com:Value>KR</com:Value><com:Value>LT</com:Value><com:Value>LU</com:Value><com:Value>LV</com:Value><com:Value>MK</com:Value><com:Value>MX</com:Value><com:Value>MY</com:Value><com:Value>NL</com:Value><com:Value>NO</com:Value><com:Value>PE</com:Value><com:Value>PH</com:Value><com:Value>PL</com:Value><com:Value>PT</com:Value><com:Value>RO</com:Value><com:Value>RS</com:Value><com:Value>RU</com:Value><com:Value>SA</com:Value><com:Value>SE</com:Value><com:Value>SG</com:Value><com:Value>SI</com:Value><com:Value>SK</com:Value><com:Value>TH</com:Value><com:Value>TR</com:Value><com:Value>US</com:Value><com:Value>XM</com:Value><com:Value>ZA</com:Value></com:KeyValue><com:KeyValue
+        id="COLLECTION"><com:Value>A</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:XTD_FXD_CCY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="XTD_FXD_CCY" isFinal="false"
+        type="Actual" version="1.0"><com:Name xml:lang="en">Foreign exchange derivatives
+        by currency, open interest</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_XTD_DERIV" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="FREQ"><com:Value>Q</com:Value></com:KeyValue><com:KeyValue
+        id="OD_RISK_CAT"><com:Value>B</com:Value></com:KeyValue><com:KeyValue id="OD_TYPE"><com:Value>A</com:Value></com:KeyValue><com:KeyValue
+        id="XD_EXCHANGE"><com:Value>8A</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:XTD_IRD_CCY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="XTD_IRD_CCY" isFinal="false"
+        type="Actual" version="1.0"><com:Name xml:lang="en">Interest rate derivatives
+        by currency, open interest</com:Name><str:ConstraintAttachment><str:Dataflow><Ref
+        package="datastructure" agencyID="BIS" id="WS_XTD_DERIV" version="1.0" class="Dataflow"></Ref></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="FREQ"><com:Value>Q</com:Value></com:KeyValue><com:KeyValue
+        id="OD_RISK_CAT"><com:Value>C</com:Value></com:KeyValue><com:KeyValue id="OD_TYPE"><com:Value>A</com:Value></com:KeyValue><com:KeyValue
+        id="XD_EXCHANGE"><com:Value>8A</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=BIS:ZA2_REP_CTY(1.0)"
+        isExternalReference="false" agencyID="BIS" id="ZA2_REP_CTY" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Allowed reporting country
+        codes for ZA2</com:Name><str:ConstraintAttachment><str:DataProvider><Ref maintainableParentID="DATA_PROVIDERS"
+        package="base" maintainableParentVersion="1.0" agencyID="BIS" id="ZA2" class="DataProvider"></Ref></str:DataProvider></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="L_REP_CTY"><com:Value>ZA</com:Value></com:KeyValue><com:KeyValue
+        id="REJURI"><com:Value>ZA</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint></str:Constraints></mes:Structures></mes:Structure>'
+    headers:
+      connection:
+      - close
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 20 Aug 2026 10:50:27 GMT
+      set-cookie:
+      - JSESSIONID=545880AB8CBF90049B50E70A283430DC; Path=/FusionEdgeServer; Secure;
+        HttpOnly
+      - c7433a849bcd78486014ee1ceaae0775=8a4397c8a97e79837dbaf635bb129d1e; path=/;
+        HttpOnly; Secure; SameSite=None
+      transfer-encoding:
+      - chunked
+      vary:
+      - Accept,Accept-Language
+    status:
+      code: 200
+      message: ''
+version: 1

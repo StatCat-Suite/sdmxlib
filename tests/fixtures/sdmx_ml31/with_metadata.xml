@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SDMX-ML 3.0 fixture exercising MetadataStructure (MSD) + Metadataflow.
+
+  Coverage gap closed (audit issue #94): the 3.0 writer had `_write_metadata_structure`
+  and `_write_metadataflow` since landing, but no fixture exercised them. The
+  XSD-validation work surfaced two latent bugs as a result:
+    - Writer emitted `<str:Structure>` wrapped-Ref for Metadataflow.structure
+      (must be URN-text in 3.0).
+    - Writer never emitted `<str:Target>` (required, unbounded per the XSD).
+
+  Shape exercised:
+    - MSD with a small concept scheme + codelist for representation
+    - MetadataAttribute tree: one root with two children (one coded, one text)
+    - min_occurs / max_occurs explicit non-default values
+    - isPresentational on a grouping attribute
+    - Metadataflow → MSD via Structure URN-text + one Target URN
+-->
+<mes:Structure
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/message"
+  xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/structure"
+  xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/common"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <mes:Header>
+    <mes:ID>WITH_METADATA</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2024-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="TEST"/>
+  </mes:Header>
+  <mes:Structures>
+
+    <str:Codelists>
+      <str:Codelist id="CL_LANG" agencyID="SDMX" version="1.0">
+        <com:Name xml:lang="en">Languages</com:Name>
+        <str:Code id="EN">
+          <com:Name xml:lang="en">English</com:Name>
+        </str:Code>
+        <str:Code id="FR">
+          <com:Name xml:lang="en">French</com:Name>
+        </str:Code>
+      </str:Codelist>
+    </str:Codelists>
+
+    <str:ConceptSchemes>
+      <str:ConceptScheme id="META_CONCEPTS" agencyID="TEST" version="1.0">
+        <com:Name xml:lang="en">Metadata concepts</com:Name>
+        <str:Concept id="CONTACT">
+          <com:Name xml:lang="en">Contact info</com:Name>
+        </str:Concept>
+        <str:Concept id="CONTACT_NAME">
+          <com:Name xml:lang="en">Contact name</com:Name>
+        </str:Concept>
+        <str:Concept id="CONTACT_LANG">
+          <com:Name xml:lang="en">Contact language</com:Name>
+        </str:Concept>
+        <str:Concept id="FOOTNOTE_TEXT">
+          <com:Name xml:lang="en">Footnote text</com:Name>
+        </str:Concept>
+      </str:ConceptScheme>
+    </str:ConceptSchemes>
+
+    <str:MetadataStructures>
+      <str:MetadataStructure agencyID="TEST" id="MSD_TEST" version="1.0">
+        <com:Name xml:lang="en">Test reference-metadata schema</com:Name>
+        <str:MetadataStructureComponents>
+          <str:MetadataAttributeList id="MetadataAttributeDescriptor">
+            <!-- Presentational grouping attribute holding children only. -->
+            <str:MetadataAttribute id="CONTACT" minOccurs="0" maxOccurs="1" isPresentational="true">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:META_CONCEPTS(1.0).CONTACT</str:ConceptIdentity>
+              <!-- Free-text child: required exactly once. -->
+              <str:MetadataAttribute id="CONTACT_NAME">
+                <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:META_CONCEPTS(1.0).CONTACT_NAME</str:ConceptIdentity>
+                <str:LocalRepresentation>
+                  <str:TextFormat textType="String" maxLength="200"/>
+                </str:LocalRepresentation>
+              </str:MetadataAttribute>
+              <!-- Coded child: optional, unbounded (per-language). -->
+              <str:MetadataAttribute id="CONTACT_LANG" minOccurs="0" maxOccurs="unbounded">
+                <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:META_CONCEPTS(1.0).CONTACT_LANG</str:ConceptIdentity>
+                <str:LocalRepresentation>
+                  <str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_LANG(1.0)</str:Enumeration>
+                </str:LocalRepresentation>
+              </str:MetadataAttribute>
+            </str:MetadataAttribute>
+            <!-- Top-level optional free-text attribute, unbounded. -->
+            <str:MetadataAttribute id="FOOTNOTE_TEXT" minOccurs="0" maxOccurs="unbounded">
+              <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=TEST:META_CONCEPTS(1.0).FOOTNOTE_TEXT</str:ConceptIdentity>
+              <str:LocalRepresentation>
+                <str:TextFormat textType="String"/>
+              </str:LocalRepresentation>
+            </str:MetadataAttribute>
+          </str:MetadataAttributeList>
+        </str:MetadataStructureComponents>
+      </str:MetadataStructure>
+    </str:MetadataStructures>
+
+    <str:Metadataflows>
+      <str:Metadataflow agencyID="TEST" id="MDF_TEST" version="1.0">
+        <com:Name xml:lang="en">Test metadataflow</com:Name>
+        <str:Structure>urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=TEST:MSD_TEST(1.0)</str:Structure>
+        <!-- WildcardUrnType target: applies to any version of TEST:CPI dataflow. -->
+        <str:Target>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=TEST:CPI(*)</str:Target>
+      </str:Metadataflow>
+    </str:Metadataflows>
+
+  </mes:Structures>
+</mes:Structure>

@@ -1,0 +1,4 @@
+# Occurrences of the type `Any` in src/, excluding comments,
+# docstrings and imports. Lowered by the issues in %16; raising it
+# needs a reason in the commit message. See tools/count_any.py.
+33

@@ -1,0 +1,453 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      Accept:
+      - application/xml
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Host:
+      - data-api.ecb.europa.eu
+      User-Agent:
+      - python-httpx/0.28.1
+    method: GET
+    uri: https://data-api.ecb.europa.eu/service/dataflow/ECB?detail=full
+  response:
+    body:
+      string: '<?xml version=''1.0'' encoding=''UTF-8''?><mes:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message"
+        xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common"><mes:Header><mes:ID>IREF558903</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2026-08-19T16:11:36Z</mes:Prepared><mes:Sender
+        id="Unknown"/><mes:Receiver id="not_supplied"/></mes:Header><mes:Structures><str:Dataflows><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:AGR(1.0)" isExternalReference="false"
+        agencyID="ECB" id="AGR" isFinal="false" version="1.0"><com:Name xml:lang="en">AGR</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_BCS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:AME(1.0)" isExternalReference="false"
+        agencyID="ECB" id="AME" isFinal="false" version="1.0"><com:Name xml:lang="en">AMECO</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_AME1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:BKN(1.0)" isExternalReference="false"
+        agencyID="ECB" id="BKN" isFinal="false" version="1.0"><com:Name xml:lang="en">Banknotes
+        statistics</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_BKN1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:BLS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="BLS" isFinal="false" version="1.0"><com:Name xml:lang="en">Bank
+        Lending Survey Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_BLS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:BNT(1.0)" isExternalReference="false"
+        agencyID="ECB" id="BNT" isFinal="false" version="1.0"><com:Name xml:lang="en">Shipments
+        of Euro Banknotes Statistics (ESCB)</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_BOP_BNT" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:BOP(1.0)" isExternalReference="false"
+        agencyID="ECB" id="BOP" isFinal="false" version="1.0"><com:Name xml:lang="en">Euro
+        Area Balance of Payments and International Investment Position Statistics</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_BOP1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:BSI(1.0)" isExternalReference="false"
+        agencyID="ECB" id="BSI" isFinal="false" version="1.0"><com:Name xml:lang="en">Balance
+        Sheet Items</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_BSI1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:BSP(1.0)" isExternalReference="false"
+        agencyID="ECB" id="BSP" isFinal="false" version="1.0"><com:Name xml:lang="en">Balance
+        Sheet Items Statistics (tables 2 to 5 of the Blue Book)</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_BSI1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:CAR(1.0)" isExternalReference="false"
+        agencyID="ECB" id="CAR" isFinal="false" version="1.0"><com:Name xml:lang="en">CAR</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_CAR1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:CBD(1.0)" isExternalReference="false"
+        agencyID="ECB" id="CBD" isFinal="false" version="1.0"><com:Name xml:lang="en">Statistics
+        on Consolidated Banking Data</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_CBD1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:CBD2(1.0)" isExternalReference="false"
+        agencyID="ECB" id="CBD2" isFinal="false" version="1.0"><com:Name xml:lang="en">Consolidated
+        Banking data</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_CBD2" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:CCP(1.0)" isExternalReference="false"
+        agencyID="ECB" id="CCP" isFinal="false" version="1.0"><com:Name xml:lang="en">Central
+        Counterparty Clearing Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_CCP1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:CES(1.0)" isExternalReference="false"
+        agencyID="ECB" id="CES" isFinal="false" version="1.0"><com:Name xml:lang="en">Consumer
+        Expectations Survey</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_CES1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:CISS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="CISS" isFinal="false" version="1.0"><com:Name xml:lang="en">Composite
+        Indicator of Systemic Stress</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_FMD2" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:CLIFS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="CLIFS" isFinal="false" version="1.0"><com:Name xml:lang="en">Country-Level
+        Index of Financial Stress (CLIFS)</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_FMD2" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:CPP(1.0)" isExternalReference="false"
+        agencyID="ECB" id="CPP" isFinal="false" version="1.0"><com:Name xml:lang="en">Commercial
+        Property Price Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_CPP3" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:CSEC(1.0)" isExternalReference="false"
+        agencyID="ECB" id="CSEC" isFinal="false" version="1.0"><com:Name xml:lang="en">CSEC</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ESTAT" id="NA_SEC" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:DCM(1.0)" isExternalReference="false"
+        agencyID="ECB" id="DCM" isFinal="false" version="1.0"><com:Name xml:lang="en">Dealogic
+        DCM analytics data</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_DCM1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:DD(1.0)" isExternalReference="false"
+        agencyID="ECB" id="DD" isFinal="false" version="1.0"><com:Name xml:lang="en">Derived
+        Data</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_DD1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:DWA(1.0)" isExternalReference="false"
+        agencyID="ECB" id="DWA" isFinal="false" version="1.0"><com:Name xml:lang="en">DWA</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_DWA1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:ECS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="ECS" isFinal="false" version="1.0"><com:Name xml:lang="en">ECS</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_SUR2" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EFS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="EFS" isFinal="false" version="1.0"><com:Name xml:lang="en">ECB
+        Financial Statements</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_EFS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EMMS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="EMMS" isFinal="false" version="1.0"><com:Name xml:lang="en">Extended
+        Money Market Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_EMMS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EON(1.0)" isExternalReference="false"
+        agencyID="ECB" id="EON" isFinal="false" version="1.0"><com:Name xml:lang="en">EONIA:
+        Euro Interbank Offered Rate</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_EON1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:ESA(1.0)" isExternalReference="false"
+        agencyID="ECB" id="ESA" isFinal="false" version="1.0"><com:Annotations><com:Annotation><com:AnnotationTitle>DISCONTINUED</com:AnnotationTitle></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">ESA95 National Accounts</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_ESA1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:ESB(1.0)" isExternalReference="false"
+        agencyID="ECB" id="ESB" isFinal="false" version="1.0"><com:Name xml:lang="en">European
+        Union Balance of Payments (Source Eurostat)</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="EUROSTAT_BOP_01" version="1.0"
+        class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EST(1.0)"
+        isExternalReference="false" agencyID="ECB" id="EST" isFinal="false" version="1.0"><com:Name
+        xml:lang="en">Euro Short-Term Rate</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_EST1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EWT(1.0)" isExternalReference="false"
+        agencyID="ECB" id="EWT" isFinal="false" version="1.0"><com:Name xml:lang="en">ECB
+        wage tracker</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_EWT1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EXR(1.0)" isExternalReference="false"
+        agencyID="ECB" id="EXR" isFinal="false" version="1.0"><com:Name xml:lang="en">Exchange
+        Rates</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_EXR1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:FM(1.0)" isExternalReference="false"
+        agencyID="ECB" id="FM" isFinal="false" version="1.0"><com:Name xml:lang="en">Financial
+        market data</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_FMD2" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:FVC(1.0)" isExternalReference="false"
+        agencyID="ECB" id="FVC" isFinal="false" version="1.0"><com:Name xml:lang="en">Financial
+        Vehicle Corporation</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_FVC1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:FXI(1.0)" isExternalReference="false"
+        agencyID="ECB" id="FXI" isFinal="false" version="1.0"><com:Name xml:lang="en">Foreign
+        Exchange Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_FXS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:GST(1.0)" isExternalReference="false"
+        agencyID="ECB" id="GST" isFinal="false" version="1.0"><com:Annotations><com:Annotation><com:AnnotationTitle>DISCONTINUED</com:AnnotationTitle></com:Annotation></com:Annotations><com:Name
+        xml:lang="en">Government Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_GST1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:HICP(1.0)" isExternalReference="false"
+        agencyID="ECB" id="HICP" isFinal="false" version="1.0"><com:Name xml:lang="en">Indices
+        of Consumer Prices</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_ICP3" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:ICB(1.0)" isExternalReference="false"
+        agencyID="ECB" id="ICB" isFinal="false" version="1.0"><com:Name xml:lang="en">Insurance
+        Corporations Assets and Liabilities</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_ICPF1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:ICO(1.0)" isExternalReference="false"
+        agencyID="ECB" id="ICO" isFinal="false" version="1.0"><com:Name xml:lang="en">Insurance
+        Corporations Operations</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_ICO1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:ICP(1.0)" isExternalReference="false"
+        agencyID="ECB" id="ICP" isFinal="false" version="1.0"><com:Name xml:lang="en">Indices
+        of Consumer prices</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_ICP1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:IFI(1.0)" isExternalReference="false"
+        agencyID="ECB" id="IFI" isFinal="false" version="1.0"><com:Name xml:lang="en">Indicators
+        of Financial Integration</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_IFI1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:ILM(1.0)" isExternalReference="false"
+        agencyID="ECB" id="ILM" isFinal="false" version="1.0"><com:Name xml:lang="en">Internal
+        Liquidity Management</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_ILM1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:INW(1.0)" isExternalReference="false"
+        agencyID="ECB" id="INW" isFinal="false" version="1.0"><com:Name xml:lang="en">Indicator
+        of negotiated wage rates</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_BCS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:IRS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="IRS" isFinal="false" version="1.0"><com:Name xml:lang="en">Interest
+        rate statistics</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_IRS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:IVF(1.0)" isExternalReference="false"
+        agencyID="ECB" id="IVF" isFinal="false" version="1.0"><com:Name xml:lang="en">Investment
+        Funds Balance Sheet Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_IVF1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:KRI(1.0)" isExternalReference="false"
+        agencyID="ECB" id="KRI" isFinal="false" version="1.0"><com:Name xml:lang="en">EBA
+        Key Risk Indicators</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_CBD1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:LIG(1.0)" isExternalReference="false"
+        agencyID="ECB" id="LIG" isFinal="false" version="1.0"><com:Name xml:lang="en">Large
+        Insurance Groups Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_LIG1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:MFI(1.0)" isExternalReference="false"
+        agencyID="ECB" id="MFI" isFinal="false" version="1.0"><com:Name xml:lang="en">List
+        of MFIs</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_MFI1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:MIR(1.0)" isExternalReference="false"
+        agencyID="ECB" id="MIR" isFinal="false" version="1.0"><com:Name xml:lang="en">MFI
+        Interest Rate Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_MIR1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:MMS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="MMS" isFinal="false" version="1.0"><com:Name xml:lang="en">Money
+        Market Survey</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_MMS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:MMSR(1.0)" isExternalReference="false"
+        agencyID="ECB" id="MMSR" isFinal="false" version="1.0"><com:Name xml:lang="en">Money
+        Market Statistical Reporting</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_MMSR1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:MPD(1.0)" isExternalReference="false"
+        agencyID="ECB" id="MPD" isFinal="false" version="1.0"><com:Name xml:lang="en">Macroeconomic
+        Projection Database</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_MPD1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:NEC(1.0)" isExternalReference="false"
+        agencyID="ECB" id="NEC" isFinal="false" version="1.0"><com:Name xml:lang="en">NEC</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_BCS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:OFI(1.0)" isExternalReference="false"
+        agencyID="ECB" id="OFI" isFinal="false" version="1.0"><com:Name xml:lang="en">Other
+        Financial Intermediaries</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_OFI1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:OMO(1.0)" isExternalReference="false"
+        agencyID="ECB" id="OMO" isFinal="false" version="1.0"><com:Name xml:lang="en">Open
+        market operations</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_OMO1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PAY(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PAY" isFinal="false" version="1.0"><com:Name xml:lang="en">PAY</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_PAY1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PCN(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PCN" isFinal="false" version="1.0"><com:Name xml:lang="en">PCN</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_PAY11" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PCP(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PCP" isFinal="false" version="1.0"><com:Name xml:lang="en">PCP</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_PAY5" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PCT(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PCT" isFinal="false" version="1.0"><com:Name xml:lang="en">PCT</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_PAY2" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PDD(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PDD" isFinal="false" version="1.0"><com:Name xml:lang="en">PDD</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_PAY3" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PEM(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PEM" isFinal="false" version="1.0"><com:Name xml:lang="en">PEM</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_PAY4" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PFB(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PFB" isFinal="false" version="1.0"><com:Name xml:lang="en">Pension
+        Fund Assets and Liabilities</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_ICPF1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PFBM(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PFBM" isFinal="false" version="1.0"><com:Name xml:lang="en">Pension
+        funds number of members</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_PFM1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PFBR(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PFBR" isFinal="false" version="1.0"><com:Name xml:lang="en">Pension
+        funds Regulation</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_ICPF1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PIS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PIS" isFinal="false" version="1.0"><com:Name xml:lang="en">PIS</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_PAY6" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PLB(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PLB" isFinal="false" version="1.0"><com:Name xml:lang="en">Losses
+        due to fraud by liability bearer</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_PAY7" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PMC(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PMC" isFinal="false" version="1.0"><com:Name xml:lang="en">PMC</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_PAY10" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PPC(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PPC" isFinal="false" version="1.0"><com:Name xml:lang="en">PPC</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_PAY9" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PSN(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PSN" isFinal="false" version="1.0"><com:Name xml:lang="en">PSN</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_PAY13" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PSS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PSS" isFinal="false" version="1.0"><com:Name xml:lang="en">Payments
+        and Settlement Systems Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_PSS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PST(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PST" isFinal="false" version="1.0"><com:Name xml:lang="en">PST</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_PAY14" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PTN(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PTN" isFinal="false" version="1.0"><com:Name xml:lang="en">PTN</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_PAY12" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:PTT(1.0)" isExternalReference="false"
+        agencyID="ECB" id="PTT" isFinal="false" version="1.0"><com:Name xml:lang="en">PTT</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_PAY8" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:RA(1.0)" isExternalReference="false"
+        agencyID="ECB" id="RA" isFinal="false" version="1.0"><com:Name xml:lang="en">International
+        Reserves of the Eurosystem</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_BOP1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:RAI(1.0)" isExternalReference="false"
+        agencyID="ECB" id="RAI" isFinal="false" version="1.0"><com:Name xml:lang="en">Risk
+        Assessment Indicators</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_RAI1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:RDE(1.0)" isExternalReference="false"
+        agencyID="ECB" id="RDE" isFinal="false" version="1.0"><com:Name xml:lang="en">Risk
+        Dashboard data</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_FMD2" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:RDF(1.0)" isExternalReference="false"
+        agencyID="ECB" id="RDF" isFinal="false" version="1.0"><com:Name xml:lang="en">Risk
+        Dashboard data</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_FMD2" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:RESC(1.0)" isExternalReference="false"
+        agencyID="ECB" id="RESC" isFinal="false" version="1.0"><com:Name xml:lang="en">Commercial
+        Property Prices</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_RES1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:RESH(1.0)" isExternalReference="false"
+        agencyID="ECB" id="RESH" isFinal="false" version="1.0"><com:Name xml:lang="en">Structural
+        Housing Indicators</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_RES1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:RESR(1.0)" isExternalReference="false"
+        agencyID="ECB" id="RESR" isFinal="false" version="1.0"><com:Name xml:lang="en">Real
+        Estate Statistics</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_RES1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:RESV(1.0)" isExternalReference="false"
+        agencyID="ECB" id="RESV" isFinal="false" version="1.0"><com:Name xml:lang="en">Residential
+        Property Valuation</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_RES1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:RIR(1.0)" isExternalReference="false"
+        agencyID="ECB" id="RIR" isFinal="false" version="1.0"><com:Name xml:lang="en">Retail
+        Interest Rates</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_RIR2" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:RPP(1.0)" isExternalReference="false"
+        agencyID="ECB" id="RPP" isFinal="false" version="1.0"><com:Name xml:lang="en">Residential
+        Property Price Index Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_RPP1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:RPV(1.0)" isExternalReference="false"
+        agencyID="ECB" id="RPV" isFinal="false" version="1.0"><com:Name xml:lang="en">Residential
+        Property Valuation</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_RPP1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:RTD(1.0)" isExternalReference="false"
+        agencyID="ECB" id="RTD" isFinal="false" version="1.0"><com:Name xml:lang="en">Real
+        Time Database (research database)</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_RTD1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:SAFE(1.0)" isExternalReference="false"
+        agencyID="ECB" id="SAFE" isFinal="false" version="1.0"><com:Name xml:lang="en">Survey
+        on the Access to Finance of SMEs</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_SAFE" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:SEC(1.0)" isExternalReference="false"
+        agencyID="ECB" id="SEC" isFinal="false" version="1.0"><com:Name xml:lang="en">Securities</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ECB" id="ECB_SEC1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:SEE(1.0)" isExternalReference="false"
+        agencyID="ECB" id="SEE" isFinal="false" version="1.0"><com:Name xml:lang="en">Securities
+        exchange - Trading Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_SEE1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:SESFOD(1.0)" isExternalReference="false"
+        agencyID="ECB" id="SESFOD" isFinal="false" version="1.0"><com:Name xml:lang="en">Survey
+        on credit terms and conditions in euro-denominated securities financing and
+        over-the-counter derivatives markets</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_SESFOD" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:SHI(1.0)" isExternalReference="false"
+        agencyID="ECB" id="SHI" isFinal="false" version="1.0"><com:Name xml:lang="en">Structural
+        Housing Indicators Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_SHI1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:SHS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="SHS" isFinal="false" version="1.0"><com:Name xml:lang="en">Securities
+        Holding Statistics</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_SHS6" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:SHSS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="SHSS" isFinal="false" version="1.0"><com:Name xml:lang="en">SHSS</com:Name><str:Structure><Ref
+        package="datastructure" agencyID="ESTAT" id="NA_SEC" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:SPF(1.0)" isExternalReference="false"
+        agencyID="ECB" id="SPF" isFinal="false" version="1.0"><com:Name xml:lang="en">Survey
+        of Professional Forecasters</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_FCT1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:SSI(1.0)" isExternalReference="false"
+        agencyID="ECB" id="SSI" isFinal="false" version="1.0"><com:Name xml:lang="en">Banking
+        structural statistical indicators</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_SSI1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:SSP(1.0)" isExternalReference="false"
+        agencyID="ECB" id="SSP" isFinal="false" version="1.0"><com:Name xml:lang="en">Structural
+        Financial Indicators for Payments</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_SSI1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:SST(1.0)" isExternalReference="false"
+        agencyID="ECB" id="SST" isFinal="false" version="1.0"><com:Name xml:lang="en">Securities
+        Settlement Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_SSS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:ST1(1.0)" isExternalReference="false"
+        agencyID="ECB" id="ST1" isFinal="false" version="1.0"><com:Name xml:lang="en">Balance
+        of Payments statistics, national data</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_BOP1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:ST3(1.0)" isExternalReference="false"
+        agencyID="ECB" id="ST3" isFinal="false" version="1.0"><com:Name xml:lang="en">Euro
+        Area Balance of Payments and International Investment Position Statistics,
+        Geographical Breakdown</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_BOP1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:STBS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="STBS" isFinal="false" version="1.0"><com:Name xml:lang="en">Short-Term
+        Business Statistics</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_BCS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:STP(1.0)" isExternalReference="false"
+        agencyID="ECB" id="STP" isFinal="false" version="1.0"><com:Name xml:lang="en">STEP
+        data</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_STP1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:STS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="STS" isFinal="false" version="1.0"><com:Name xml:lang="en">Short-Term
+        Statistics</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_STS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:SUP(1.0)" isExternalReference="false"
+        agencyID="ECB" id="SUP" isFinal="false" version="1.0"><com:Name xml:lang="en">Supervisory
+        Banking Statistics</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_SUP1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:SUR(1.0)" isExternalReference="false"
+        agencyID="ECB" id="SUR" isFinal="false" version="1.0"><com:Name xml:lang="en">Opinion
+        Surveys</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_SUR1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:TGB(1.0)" isExternalReference="false"
+        agencyID="ECB" id="TGB" isFinal="false" version="1.0"><com:Name xml:lang="en">Target
+        Balances</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_TGB1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:TRD(1.0)" isExternalReference="false"
+        agencyID="ECB" id="TRD" isFinal="false" version="1.0"><com:Name xml:lang="en">External
+        Trade</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_TRD1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:WTS(1.0)" isExternalReference="false"
+        agencyID="ECB" id="WTS" isFinal="false" version="1.0"><com:Name xml:lang="en">Trade
+        weights</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
+        id="ECB_WTS1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow><str:Dataflow
+        urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:YC(1.0)" isExternalReference="false"
+        agencyID="ECB" id="YC" isFinal="false" version="1.0"><com:Name xml:lang="en">Financial
+        market data - yield curve</com:Name><str:Structure><Ref package="datastructure"
+        agencyID="ECB" id="ECB_FMD2" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow></str:Dataflows></mes:Structures></mes:Structure>
+
+        '
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Disposition:
+      - attachment;filename=data.xml
+      Content-Type:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      Date:
+      - Wed, 19 Aug 2026 16:11:36 GMT
+      Expires:
+      - '0'
+      Pragma:
+      - no-cache
+      Server:
+      - myracloud
+      Strict-Transport-Security:
+      - max-age=31536000 ; includeSubDomains
+      Transfer-Encoding:
+      - chunked
+      Vary:
+      - origin, access-control-request-method, access-control-request-headers
+      X-Content-Type-Options:
+      - nosniff
+      X-Frame-Options:
+      - DENY
+      X-Xss-Protection:
+      - '0'
+    status:
+      code: 200
+      message: OK
+version: 1
