@@ -779,7 +779,9 @@ def _read_data_structure(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineR
     links = _links_of(conn, urn, meta)
 
     comp_rows = conn.execute(
-        """
+        parsed(
+            conn,
+            """
         SELECT component_id, component_type, position, concept_urn,
                repr_kind, codelist_urn, text_type, min_length, max_length,
                min_value, max_value, decimals, pattern, is_sequence,
@@ -801,6 +803,7 @@ def _read_data_structure(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineR
         WHERE dsd_urn = ?
         ORDER BY position
         """,
+        ),
         [urn],
     ).fetchall()
 
@@ -849,7 +852,9 @@ def _read_data_structure(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineR
     # which is every 2.1 one, should not pay a round trip each.
     # And what the DSD holds of itself (#422), in the same round trip.
     msd_urn, usage_rows, dim_list_uri, attr_list_uri, measure_list_uri, evolving = conn.execute(
-        """
+        parsed(
+            conn,
+            """
         SELECT
             (SELECT target_urn FROM artefact_ref WHERE source_urn = $urn AND role = 'metadata'),
             (SELECT list(
@@ -861,6 +866,7 @@ def _read_data_structure(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineR
             (SELECT measure_descriptor_uri FROM data_structure WHERE urn = $urn),
             (SELECT evolving_structure FROM data_structure WHERE urn = $urn)
         """,
+        ),
         {"urn": urn},
     ).fetchone() or (None, None, None, None, None, None)
     usages = [

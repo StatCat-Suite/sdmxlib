@@ -18,6 +18,7 @@ import sdmxlib
 from sdmxlib.local import LocalRegistry
 from sdmxlib.model.annotations import Annotation
 from sdmxlib.model.codelist import Code, Codelist
+from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.session import VALUES_RELATION_PREFIX
 from sdmxlib.storage import _parsed
 from sdmxlib.storage._parsed import ParsedStatements
@@ -49,6 +50,22 @@ def test_reading_many_artefacts_parses_each_text_once(
             assert reg.get(codelist.urn, eager=True) is not None
     assert cache.parses == len(cache)
     assert len(cache) == 4, "the spine, name/description and both annotation reads"
+
+
+def test_reading_many_dsds_parses_their_own_reads_once(
+    cache: ParsedStatements, make_dsd: Callable[..., DataStructure]
+) -> None:
+    """The two DSD reads (components; metadata usage and descriptor URIs) join
+    the shared ones: ten DSDs, each read once, parse every text once."""
+    structures = [make_dsd(id=f"DSD_{i}") for i in range(10)]
+    with LocalRegistry(":memory:") as reg:
+        reg.add_all(structures)
+        for dsd in structures:
+            assert reg.get(dsd.urn) is not None
+    assert cache.parses == len(cache)
+    texts = list(cache._statements)
+    assert sum("FROM dsd_component" in t for t in texts) == 1
+    assert sum("FROM dsd_metadata_attribute" in t for t in texts) == 1
 
 
 def test_a_text_is_parsed_once_however_many_threads_race_for_it() -> None:
@@ -119,7 +136,7 @@ def test_the_opted_in_reads_are_exactly_these() -> None:
     """An inventory: a new call site is a decision someone should see.
 
     Exact on purpose. The call sites were chosen by measurement (the texts
-    that were 73% of every character parsed on a bundle browse); one added
+    that were 78% of every character parsed on a bundle browse); one added
     without measuring, or one that silently went away, both fail here.
     """
     root = Path(sdmxlib.__file__).parent
@@ -128,7 +145,7 @@ def test_the_opted_in_reads_are_exactly_these() -> None:
         for node in ast.walk(ast.parse(path.read_text())):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "parsed":
                 sites[path.relative_to(root).as_posix()] += 1
-    assert sites == Counter({"storage/readers.py": 2, "storage/resolve.py": 2})
+    assert sites == Counter({"storage/readers.py": 4, "storage/resolve.py": 2})
 
 
 def test_the_module_cache_is_one_shared_instance() -> None:
