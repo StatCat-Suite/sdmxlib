@@ -543,6 +543,7 @@ release-3-pr:
         exit 1
     fi
     VER="${BRANCH#release/}"
+    just release-check-upgrading "${VER}"
     uv version "${VER#v}"
     git add CHANGELOG.md pyproject.toml
     git commit -m "chore(release): ${VER}"
@@ -586,6 +587,31 @@ release-4-merge:
     git switch --detach "${VER}"
     echo "Released ${VER} on GitHub; checked out at the tag"
     echo "Next: just release-5-pypi"
+
+# Run by release-3-pr before anything is committed or pushed. A release whose
+# CHANGELOG.md section has "### Breaking Changes" must have changed
+# docs/upgrading.md since the previous tag, the page that promises to cover
+# every breaking change. 0.68.0 moved the store schema without a word there,
+# and a bundle built by 0.67 was then emptied on open (GH-57)
+#
+# Refuse a breaking release whose upgrade guide is unchanged since the last tag
+[group('release')]
+release-check-upgrading VERSION:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    RAW="{{ VERSION }}"
+    VER="v${RAW#v}"
+    if ! just release-notes "${VER}" | grep -q '^### Breaking Changes'; then
+        echo "${VER} has no breaking changes; docs/upgrading.md need not change"
+        exit 0
+    fi
+    PREV=$(git describe --tags --abbrev=0 --exclude "${VER}" HEAD)
+    if git diff --quiet "${PREV}" HEAD -- docs/upgrading.md; then
+        echo "error: ${VER} has breaking changes, but docs/upgrading.md is unchanged since ${PREV}." >&2
+        echo "       Add a section for each one on main first, then rerun this step." >&2
+        exit 1
+    fi
+    echo "${VER} has breaking changes, and docs/upgrading.md changed since ${PREV}"
 
 # Steps 3 and 4 take their text from here, not from git-cliff's regeneration
 # from commits, which would drop what was written by hand after step 2.
