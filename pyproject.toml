@@ -23,15 +23,23 @@ dependencies = [
     # The tests assert 2.0's profile JSON, error text and sort costs.
     "duckdb>=2.0.0",
     "httpx>=0.28.1",
-    "lxml>=6.0.2",
-    "msgspec>=0.19",
-    "polars>=1.39.3",
-    "pyarrow>=18.0.0",
+    # >=6.1: `resolve_entities` defaults to 'internal' (CVE-2026-41066), so no
+    # parse expands an external entity.
+    "lxml>=6.1.3",
+    # >=0.22: on 3.14 an older msgspec cannot resolve a Struct field's forward
+    # reference (`list[SentinelValueJson]` in `_structure_dto`), and importing
+    # sdmxlib raises NameError.
+    "msgspec>=0.22.0",
+    # >=2.0: a cast no longer parses text into a date, so `_typed` parses it
+    # (`query._converted`); and `collect()` streams, so an order is sorted for.
+    "polars>=2.0.0",
+    # >=22 is the first with Python 3.14 wheels; 26 is what the suite runs.
+    "pyarrow>=26.0.0",
     # PEP 728's `closed=True` TypedDict, which `typing` gains only in 3.15: a
     # TypedDict unpacked into a constructor (`**read_reference_attrs(el)`) must
     # be closed for a checker to know it holds no other key. httpx already
     # brings it in, through anyio; declared because we now import it.
-    "typing-extensions>=4.13",
+    "typing-extensions>=4.16.0",
 ]
 
 [project.urls]
@@ -110,7 +118,7 @@ dev = [
   "types-PyYAML>=6.0.12",
   "mkdocs-material>=9.7.6",
   "mkdocstrings[python]>=1.0.3",
-  "polars>=1.39.3",
+  "polars>=2.0.0",
   "pytest>=9.0.2",
   "jsonschema[format-nongpl]>=4.21.0",
   "pytest-benchmark>=4.0.0",

@@ -174,9 +174,9 @@ def _typed(frame: pl.DataFrame, root: AnyCols, columns: Mapping[str, str] | None
 
     Raises:
         ValueError: If a value cannot take its component's type — a code its
-            codelist does not list, text where the DSD declares a number. Fail
-            fast; the message names the way to the raw rows and to the report
-            of every bad value.
+            codelist does not list, text where the DSD declares a number or
+            a date. Fail fast; the message names the way to the raw rows and
+            to the report of every bad value.
     """
     dsd = getattr(root, "dsd", None)
     if not isinstance(dsd, DataStructure):
@@ -193,7 +193,7 @@ def _typed(frame: pl.DataFrame, root: AnyCols, columns: Mapping[str, str] | None
     if not casts:
         return frame
     try:
-        return frame.with_columns(pl.col(name).cast(dtype) for name, dtype in casts.items())
+        return frame.with_columns(_converted(name, frame.schema[name], dtype) for name, dtype in casts.items())
     except pl.exceptions.PolarsError as exc:
         msg = (
             f"an observation column does not fit its component's type in {dsd.id}: {exc}. Results are "
@@ -201,6 +201,35 @@ def _typed(frame: pl.DataFrame, root: AnyCols, columns: Mapping[str, str] | None
             "or sdmxlib.polars.validation_report(dsd, frame), names every value that does not fit."
         )
         raise ValueError(msg) from exc
+
+
+#: `xs:boolean`'s lexical forms.
+_BOOLEANS = {"true": True, "false": False, "1": True, "0": False}
+
+
+def _converted(name: str, stored: pl.DataType, dtype: pl.DataType) -> pl.Expr:
+    """Column `name`, stored as `stored`, as `dtype` — parsed when it is text.
+
+    A cast is not a parse: polars 2.0 casts no text to a date, a datetime or a
+    time (1.x did dates only), and no version casts text to a boolean. A value
+    stored as ``VARCHAR`` — every observation column is — is parsed instead. A
+    datetime with an offset lands in UTC, and every datetime is naive UTC, the
+    store's convention (`sdmxlib._time`).
+    """
+    column = pl.col(name)
+    if stored != pl.String():
+        return column.cast(dtype)
+    match dtype:
+        case pl.Date():
+            return column.str.to_date()
+        case pl.Datetime():
+            return column.str.to_datetime(time_unit=dtype.time_unit, time_zone="UTC").dt.replace_time_zone(None)
+        case pl.Time():
+            return column.str.to_time()
+        case pl.Boolean():
+            return column.replace_strict(_BOOLEANS, return_dtype=pl.Boolean)
+        case _:
+            return column.cast(dtype)
 
 
 def _declared_components(dsd: DataStructure) -> frozenset[str]:
