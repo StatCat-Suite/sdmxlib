@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.71.0] - 2026-10-22
+
+### Breaking Changes
+
+- **storage**: Opening a store that holds artefacts on another store schema version raises the new `sl.StoreSchemaError` instead of emptying it (GH-57). From 0.68 to 0.70.1, `LocalRegistry` and `LocalRegistry.bundle()` dropped and rebuilt the schema on a version mismatch, so a bundle built by 0.67 (schema 2.19) lost every artefact the moment a newer sdmxlib (schema 2.48) opened it, even to read, and the sdmxlib that built it then read it empty too. A cache that can be fetched again opts back in with `LocalRegistry(path, rebuild=True)`; `bundle()` never rebuilds; an empty store or a new file is created or migrated as before. `ReadOnlySchemaError` is now a `StoreSchemaError`
+- **storage**: Stores and bundles written by sdmxlib 0.67 or earlier must be rebuilt from their source to be read by 0.68 or later; the store schema moved from 2.19 to 2.48 in 0.68.0, which its changelog did not say. See `docs/upgrading.md`
+
 ## [0.70.1] - 2026-10-22
 
 ### Bug Fixes
