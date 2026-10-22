@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.70.1] - 2026-10-22
+
+### Bug Fixes
+
+- **api**: `RestRegistry.obs()` asks each provider for CSV the way it answers: Eurostat refused the old `Accept: text/csv` with 406, so no observations could be fetched from it, and BIS answered it with SDMX-ML, which was read as CSV. The media type is per provider (`ProviderInfo.csv_media_type`; ECB's is `text/csv`), else the SDMX-CSV the API version defines, and `RestRegistry(csv_media_type=)` overrides it. A response that is not CSV is refused (GH-50)
+- **api**: `RestRegistry.obs()` with an unpinned dataflow URN fetches at the version the dataflow resolved to: BIS and OECD refused `latest` in a data URL with 400 (GH-51)
+
+### Documentation
+
+- **query**: Say why pivot returns a DataFrame
+- Pinaxlib is statcatlib, and its schema is statcat.*
+
 ## [0.70.0] - 2026-10-22
 
 ### Breaking Changes
