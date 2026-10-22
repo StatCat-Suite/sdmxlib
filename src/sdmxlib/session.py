@@ -63,6 +63,11 @@ import pyarrow as pa
 #: module that calls `sql`, `register` or `unregister` on a handle; `frame_of` too.
 __all__ = ["Session", "SessionFactory", "SessionHook", "ValueSet"]
 
+#: What every per-call value relation's name starts with (`value_match`,
+#: `Session.value_set`). Each name is random, so a SQL text naming one never
+#: repeats — `storage._parsed` keys on the prefix to keep such texts out.
+VALUES_RELATION_PREFIX = "_sl_values_"
+
 #: Per-thread, per-connection handle cache. Weak keys so closing a store lets
 #: the entry go without an explicit cleanup hook — no stale handles after id
 #: reuse.
@@ -120,7 +125,7 @@ def value_match(cur: duckdb.DuckDBPyConnection, values: Sequence[object]) -> Gen
     if len(listed) <= _REGISTER_ABOVE:
         yield "= ANY(?)", [listed]
         return
-    name = f"_sl_values_{uuid4().hex[:12]}"
+    name = f"{VALUES_RELATION_PREFIX}{uuid4().hex[:12]}"
     completed(cur).register(name, pa.table({"v": listed}))
     try:
         yield f"IN (SELECT v FROM {name})", []
@@ -384,7 +389,7 @@ class Session:
         Yields:
             A `ValueSet` to pass to `is_in`.
         """
-        name = f"_sl_values_{uuid4().hex[:12]}"
+        name = f"{VALUES_RELATION_PREFIX}{uuid4().hex[:12]}"
         completed(self._handle).register(name, pa.table({"value": list(values)}))
         try:
             yield ValueSet(name)

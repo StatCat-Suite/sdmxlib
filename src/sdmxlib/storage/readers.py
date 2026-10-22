@@ -132,6 +132,7 @@ from sdmxlib.storage._checked import checked
 from sdmxlib.storage._kinds import (
     CLASS_TO_NAME as _CLASS_TO_NAME,
 )
+from sdmxlib.storage._parsed import parsed
 from sdmxlib.storage._projections import _thread_cursor
 from sdmxlib.storage._projections import code_map as code_map  # noqa: PLC0414  # re-export
 from sdmxlib.storage.lazy import LazyCodelist, LazyHierarchy
@@ -192,7 +193,10 @@ def _read_name_and_description(
     grows with the plan, so simple statements beat one wide one.
     """
     rows = conn.execute(
-        "SELECT field, lang, text FROM localized_text WHERE owner_urn = ? AND field IN ('name', 'description')",
+        parsed(
+            conn,
+            "SELECT field, lang, text FROM localized_text WHERE owner_urn = ? AND field IN ('name', 'description')",
+        ),
         [owner_urn],
     ).fetchall()
     texts: dict[str, dict[str, str]] = {"name": {}, "description": {}}
@@ -313,7 +317,9 @@ def _read_spine(conn: duckdb.DuckDBPyConnection, urn: str) -> SpineRow | None:
     import (`project_duckdb_pandas_probe`).
     """
     row = conn.execute(
-        """
+        parsed(
+            conn,
+            """
         WITH own AS (
             SELECT list({'rel': rel, 'url': url, 'urn': urn, 'type': link_type, 'hreflang': hreflang}
                         ORDER BY position) AS links
@@ -327,6 +333,7 @@ def _read_spine(conn: duckdb.DuckDBPyConnection, urn: str) -> SpineRow | None:
                is_partial_language, own.links, items.n
         FROM artefact, own, items WHERE artefact.urn = $urn
         """,
+        ),
         {"urn": urn},
     ).fetchone()
     if row is None:
@@ -772,7 +779,9 @@ def _read_data_structure(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineR
     links = _links_of(conn, urn, meta)
 
     comp_rows = conn.execute(
-        """
+        parsed(
+            conn,
+            """
         SELECT component_id, component_type, position, concept_urn,
                repr_kind, codelist_urn, text_type, min_length, max_length,
                min_value, max_value, decimals, pattern, is_sequence,
@@ -794,6 +803,7 @@ def _read_data_structure(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineR
         WHERE dsd_urn = ?
         ORDER BY position
         """,
+        ),
         [urn],
     ).fetchall()
 
@@ -842,7 +852,9 @@ def _read_data_structure(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineR
     # which is every 2.1 one, should not pay a round trip each.
     # And what the DSD holds of itself (#422), in the same round trip.
     msd_urn, usage_rows, dim_list_uri, attr_list_uri, measure_list_uri, evolving = conn.execute(
-        """
+        parsed(
+            conn,
+            """
         SELECT
             (SELECT target_urn FROM artefact_ref WHERE source_urn = $urn AND role = 'metadata'),
             (SELECT list(
@@ -854,6 +866,7 @@ def _read_data_structure(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineR
             (SELECT measure_descriptor_uri FROM data_structure WHERE urn = $urn),
             (SELECT evolving_structure FROM data_structure WHERE urn = $urn)
         """,
+        ),
         {"urn": urn},
     ).fetchone() or (None, None, None, None, None, None)
     usages = [

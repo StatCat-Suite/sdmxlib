@@ -36,6 +36,7 @@ from sdmxlib.model.ref import Ref
 from sdmxlib.model.representation import Facet, Representation, SentinelValue, enumeration_ref
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.session import cursor_for, value_match
+from sdmxlib.storage._parsed import parsed
 from sdmxlib.storage.schema import FACET_COLUMN_NAMES
 
 #: Decodes what `istring_sql` selects. Built once — a `msgspec.json.Decoder`
@@ -107,7 +108,9 @@ def annotation_rows(cur: duckdb.DuckDBPyConnection, where: str, params: Sequence
         duckdb.Error: If `where` is not a predicate on ``a``.
     """
     rows = cur.execute(
-        f"""
+        parsed(
+            cur,
+            f"""
         SELECT a.owner_urn, a.id, a.annotation_id, a.title, a.annotation_type, a.value, atxt.lang, atxt.text
         FROM sdmx.annotation a
         LEFT JOIN sdmx.annotation_text atxt ON atxt.annotation_id = a.id
@@ -120,18 +123,22 @@ def annotation_rows(cur: duckdb.DuckDBPyConnection, where: str, params: Sequence
         -- order, so a canonical order is the only reproducible answer.
         ORDER BY a.owner_urn, a.ordinal, a.id, atxt.lang
         """,
+        ),
         params,
     ).fetchall()
     if not rows:
         return {}
     url_rows = cur.execute(
-        f"""
+        parsed(
+            cur,
+            f"""
         SELECT u.annotation_id, u.url, u.lang, u.link_urn, u.link_type
         FROM sdmx.annotation_url u
         JOIN sdmx.annotation a ON a.id = u.annotation_id
         WHERE {where}
         ORDER BY u.annotation_id, u.position
         """,
+        ),
         params,
     ).fetchall()
     urls: dict[object, list[AnnotationURL]] = {}

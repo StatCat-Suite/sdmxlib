@@ -98,7 +98,9 @@ def _statements(reg: sl.LocalRegistry, urn: SdmxUrn[object]) -> list[str]:
     def counting(
         self: duckdb.DuckDBPyConnection, query: duckdb.Statement | str, parameters: object = None
     ) -> duckdb.DuckDBPyConnection:
-        seen.append(" ".join(str(query).split()))
+        # A cached store read arrives parsed (GH-39); its text is `.query`.
+        text = query.query if isinstance(query, duckdb.Statement) else query
+        seen.append(" ".join(text.split()))
         return real(self, query, parameters)
 
     with pytest.MonkeyPatch.context() as patch:
