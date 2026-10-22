@@ -207,9 +207,13 @@ class RestRegistry:
     store — inherit the local `LocalRegistry`'s rule and remain single-threaded.
 
     Example:
-        # Cache-mode federation: structural reads cached locally.
-        local = sl.LocalRegistry("cache.duckdb")
-        with sl.RestRegistry(sl.Provider.ECB, store=local) as reg:
+        # Cache-mode federation: structural reads cached locally. A cache can
+        # be fetched again, so it may be rebuilt when sdmxlib's store schema
+        # moves; any other store on an old schema is refused instead (GH-57).
+        with (
+            sl.LocalRegistry("cache.duckdb", rebuild=True) as local,
+            sl.RestRegistry(sl.Provider.ECB, store=local) as reg,
+        ):
             dsd = reg.get(sl.DataStructure.urn_for(agency="ECB", id="ECB_EXR1"), resolve=True)
 
         # Single-source ad-hoc.

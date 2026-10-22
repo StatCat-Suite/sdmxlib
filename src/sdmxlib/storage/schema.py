@@ -1571,12 +1571,25 @@ def check_scan_integrity(conn: duckdb.DuckDBPyConnection) -> None:
     raise ScanIntegrityError(msg)
 
 
-class ReadOnlySchemaError(Exception):
+class StoreSchemaError(Exception):
+    """A store holds artefacts on a schema version this build does not read (GH-57).
+
+    Migration is *drop and rebuild*, which is only right for a cache that can
+    be fetched again. A bundle's ``meta.duckdb`` is the published record, and a
+    store filled with ``add`` may have no source to fetch from, so a populated
+    store on another version is refused rather than emptied: sdmxlib 0.68 to
+    0.70 opened a 0.67 bundle read-write and deleted every artefact in it,
+    silently, for the reader and for the older sdmxlib that built it.
+    ``LocalRegistry(path, rebuild=True)`` asks for the rebuild.
+    """
+
+
+class ReadOnlySchemaError(StoreSchemaError):
     """A read-only store is not on this build's schema version.
 
-    Migration here is *drop and rebuild* — correct for a cache, impossible on
-    a connection opened read-only. Raised in place of DuckDB's own
-    ``Cannot execute statement of type "DROP" on database … read-only``,
+    Raised when a rebuild would otherwise run, but the connection is read-only:
+    an empty store to create, or ``rebuild=True``. Raised in place of DuckDB's
+    own ``Cannot execute statement of type "DROP" on database … read-only``,
     which names neither version and reads as a bug in the caller.
 
     First hit when 2.19 landed (#145): the bundle-assertion tier opens
@@ -1591,11 +1604,27 @@ def connection_is_read_only(conn: duckdb.DuckDBPyConnection) -> bool:
     return bool(row[0]) if row else False
 
 
+def holds_rows(conn: duckdb.DuckDBPyConnection) -> bool:
+    """Whether any ``sdmx`` table but ``_meta`` has a row — what a rebuild would lose.
+
+    Asks every table rather than ``artefact`` alone, because the store being
+    asked about is on *another* schema version, whose tables this build does
+    not know.
+    """
+    tables = conn.execute(
+        """
+        SELECT table_name FROM duckdb_tables()
+        WHERE database_name = current_database() AND schema_name = 'sdmx' AND table_name <> '_meta'
+        """
+    ).fetchall()
+    return any(conn.execute(f'SELECT EXISTS (SELECT 1 FROM sdmx."{name}")').fetchone() == (True,) for (name,) in tables)
+
+
 def migrate(conn: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyConnection:
     """Drop and rebuild the ``sdmx`` schema.
 
-    This is a cache — the migration strategy is *drop and rebuild*.
-    Users repopulate from remote registries.
+    Everything in it is lost. `LocalRegistry` calls this only for a store with
+    nothing in it, or when opened with ``rebuild=True`` (GH-57).
 
     Returns a fresh cursor with ``search_path = 'sdmx'``.
     """

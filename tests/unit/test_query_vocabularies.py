@@ -111,9 +111,9 @@ def test_the_vocabulary_matches_what_the_writer_can_emit() -> None:
 
     `artefact_type` holds SDMX IM class names, and the IM is fixed — so a value
     outside the vocabulary is a bug, not a variant to accommodate. The store
-    cannot hold a stale one either: `LocalRegistry._initialise_schema` drops and
-    rebuilds whenever `SCHEMA_VERSION` moves, so a store never outlives the
-    build that wrote it.
+    cannot hold a stale one either: `LocalRegistry._initialise_schema` refuses a
+    populated store on another `SCHEMA_VERSION` unless asked to rebuild it
+    (GH-57), so no build reads a store another build wrote.
 
     That leaves exactly one way for this check to refuse a *legitimate* query:
     sdmxlib grows a writer for an artefact and `ARTEFACT_KINDS` does not learn
