@@ -495,7 +495,7 @@ release-1-preview:
     @echo ""
     @git-cliff --bump --unreleased
 
-# Step 2 — Write CHANGELOG.md (auto-version; pass VERSION to override)
+# Step 2 — Start release/vX from origin/main and write CHANGELOG.md (pass VERSION to override)
 [group('release')]
 release-2-changelog VERSION='':
     #!/usr/bin/env bash
@@ -504,55 +504,87 @@ release-2-changelog VERSION='':
     # an unwanted major bump):
     #   just release-2-changelog              # auto
     #   just release-2-changelog 0.14.0       # pin
+    #
+    # Prepend the unreleased section, never regenerate the file: GitHub's
+    # history starts at a single "sdmxlib 0.69.0" commit, so every entry
+    # before 0.69.1 exists only in CHANGELOG.md.
     set -euo pipefail
+    if [[ -n "$(git status --porcelain)" ]]; then
+        echo "error: the working tree has changes; commit or stash them first" >&2
+        exit 1
+    fi
+    git fetch origin --tags
+    git switch --detach origin/main
     OVERRIDE="{{ VERSION }}"
     if [[ -n "${OVERRIDE}" ]]; then
         NEXT="v${OVERRIDE#v}"
+        git switch -c "release/${NEXT}"
         echo "Writing changelog pinned to ${NEXT}..."
-        git-cliff --tag "${NEXT}" -o CHANGELOG.md
-        NEXT_HINT=" ${NEXT#v}"
+        git-cliff --unreleased --tag "${NEXT}" --prepend CHANGELOG.md
     else
         NEXT=$(git-cliff --bumped-version)
+        git switch -c "release/${NEXT}"
         echo "Writing changelog for ${NEXT}..."
-        git-cliff --bump -o CHANGELOG.md
-        NEXT_HINT=""
+        git-cliff --unreleased --bump --prepend CHANGELOG.md
     fi
     echo ""
-    echo "Review CHANGELOG.md, then run: just release-3-tag${NEXT_HINT}"
+    echo "Review CHANGELOG.md, then run: just release-3-pr"
 
-# Step 3 — Bump version + commit + tag (auto-version; pass VERSION to override)
+# Step 3 — Bump the version, commit, push release/vX and open its PR
 [group('release')]
-release-3-tag VERSION='':
+release-3-pr:
     #!/usr/bin/env bash
-    # Pass VERSION to pin (must match whatever was passed to
-    # release-2-changelog):
-    #   just release-3-tag                    # auto
-    #   just release-3-tag 0.14.0             # pin
+    # The version comes from the branch release-2-changelog started, so a
+    # pinned version is given once.
     set -euo pipefail
-    OVERRIDE="{{ VERSION }}"
-    if [[ -n "${OVERRIDE}" ]]; then
-        VER="${OVERRIDE#v}"
-    else
-        VER=$(git-cliff --bumped-version)
-        VER="${VER#v}"
+    BRANCH=$(git branch --show-current)
+    if [[ "${BRANCH}" != release/v* ]]; then
+        echo "error: not on a release/vX branch (run just release-2-changelog)" >&2
+        exit 1
     fi
-    uv version "${VER}"
+    VER="${BRANCH#release/}"
+    uv version "${VER#v}"
     git add CHANGELOG.md pyproject.toml
-    git commit -m "chore(release): v${VER}"
-    git tag -a "v${VER}" -m "v${VER}"
-    echo "Tagged v${VER} — run: just release-4-push"
+    git commit -m "chore(release): ${VER}"
+    git push -u origin "${BRANCH}"
+    NOTES=$(git-cliff --unreleased --tag "${VER}" --strip all)
+    gh pr create --base main --head "${BRANCH}" --title "chore(release): ${VER}" --body "${NOTES}"
+    echo "Run just ci on this branch; when it is green, run: just release-4-merge"
 
-# Step 4 — Push commits + tags to GitLab and mint a release, then publish to PyPI
+# Step 4 — Merge the release PR, tag its merge commit, mint the GitHub release
 [group('release')]
-release-4-push:
+release-4-merge:
     #!/usr/bin/env bash
+    # Run from the release/vX branch, only after a green `just ci` on it:
+    # hosted CI runs no tests, so nothing else stands between this and main.
     set -euo pipefail
-    VER=$(git describe --tags --abbrev=0)
-    git push
-    git push --tags
+    BRANCH=$(git branch --show-current)
+    if [[ "${BRANCH}" != release/v* ]]; then
+        echo "error: not on a release/vX branch" >&2
+        exit 1
+    fi
+    VER="${BRANCH#release/}"
+    if [[ "$(gh pr view "${BRANCH}" --json state --jq .state)" != MERGED ]]; then
+        gh pr merge "${BRANCH}" --merge
+    fi
+    # `gh pr merge` has exited 0 without merging; trust the state, not the exit.
+    STATE=$(gh pr view "${BRANCH}" --json state --jq .state)
+    if [[ "${STATE}" != MERGED ]]; then
+        echo "error: the ${BRANCH} PR is ${STATE}, not merged" >&2
+        exit 1
+    fi
+    MERGE=$(gh pr view "${BRANCH}" --json mergeCommit --jq .mergeCommit.oid)
+    git fetch origin
+    git switch main
+    git merge --ff-only origin/main
+    git tag -a "${VER}" -m "${VER}" "${MERGE}"
+    git push origin "${VER}"
     NOTES=$(git-cliff --latest --strip all)
-    glab release create "${VER}" --name "${VER}" --notes "${NOTES}"
-    echo "Released ${VER} on GitLab"
+    gh release create "${VER}" --verify-tag --title "${VER}" --notes "${NOTES}"
+    git branch -D "${BRANCH}"
+    git push origin --delete "${BRANCH}"
+    git switch --detach "${VER}"
+    echo "Released ${VER} on GitHub; checked out at the tag"
     echo "Next: just release-5-pypi"
 
 # Step 5 — Build and publish to PyPI (requires UV_PUBLISH_TOKEN env var)
@@ -564,7 +596,11 @@ release-5-pypi:
         echo "error: UV_PUBLISH_TOKEN is not set" >&2
         exit 1
     fi
-    VER=$(git describe --tags --abbrev=0)
+    # Build from a checked-out tag, never from a branch that has moved past it.
+    if ! VER=$(git describe --tags --exact-match HEAD 2>/dev/null); then
+        echo "error: HEAD is not a release tag; run git switch --detach vX.Y.Z" >&2
+        exit 1
+    fi
     # `uv publish` defaults to public PyPI, but a shell configured for a
     # private mirror redirects it silently. Check the target by allow-list,
     # for the same reason `just check-indexes` does.
