@@ -54,3 +54,9 @@ skip_tags = ""
 ignore_tags = ""
 topo_order = false
 sort_commits = "oldest"
+
+[bump]
+# Pre-1.0, a breaking change bumps the minor, not the major: 0.71.0 + a
+# `fix!` is 0.72.0. git-cliff's default proposed 1.0.0 for 0.71.0's release,
+# which had to be pinned by hand (`just release-2-changelog 0.71.0`).
+breaking_always_bump_major = false
