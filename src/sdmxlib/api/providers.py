@@ -22,11 +22,18 @@ class ProviderInfo:
             tag when a `RestRegistry` materialises through to a
             local store. Required for federation; ``None`` for ad-hoc
             URLs without a known label.
+        csv_media_type: The ``Accept`` an observation fetch sends, when the
+            API version's SDMX-CSV media type is not what this provider
+            answers (GH-50). None means that default: SDMX-CSV 1.0 for a
+            2.1 API, 2.0 for a 3.0 one. Set per provider because two 2.1
+            providers want opposite headers, and a header listing both gets
+            SDMX-ML back from each.
     """
 
     url: str
     api: str = "2.1"
     id: str | None = None
+    csv_media_type: str | None = None
 
 
 class Provider:
@@ -48,8 +55,13 @@ class Provider:
         sl.Provider.ECB.api  # "2.1"
     """
 
+    # The data `Accept` each answers, checked live 2026-10-22 (GH-50): ECB
+    # serves CSV for `text/csv` alone (406 for either SDMX-CSV type); ESTAT
+    # the reverse (406 for `text/csv`); BIS answers `text/csv` with SDMX-ML;
+    # OECD serves all three. IMF's is unchecked, so it takes the default.
+
     #: European Central Bank
-    ECB = ProviderInfo("https://data-api.ecb.europa.eu/service", api="2.1", id="ECB")
+    ECB = ProviderInfo("https://data-api.ecb.europa.eu/service", api="2.1", id="ECB", csv_media_type="text/csv")
     #: Bank for International Settlements
     BIS = ProviderInfo("https://stats.bis.org/api/v1", api="2.1", id="BIS")
     #: Eurostat

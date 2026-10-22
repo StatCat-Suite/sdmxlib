@@ -178,6 +178,11 @@ class RestRegistry:
             whose `no-store` is appliance boilerplate, and cannot shorten a
             generous one. Defaults to 0 — obey the provider exactly. Wanting
             *less* is spelled with a pinned URN, which is not a pointer.
+        csv_media_type: The ``Accept`` `obs` fetches observations with
+            (GH-50). Defaults to the `ProviderInfo`'s, else the SDMX-CSV the
+            API version defines: 1.0 for 2.1, 2.0 for 3.0. Providers differ —
+            ECB serves CSV only for ``text/csv``, Eurostat only for SDMX-CSV
+            1.0 — so pass one when a bare URL's provider refuses the default.
 
     **Thread safety: concurrent reads are safe and do not duplicate work.**
 
@@ -226,6 +231,7 @@ class RestRegistry:
         store: LocalRegistry | None = None,
         fetch_cache_size: int = 256,
         latest_ttl: int = 0,
+        csv_media_type: str | None = None,
         **httpx_kwargs: Unpack[HttpxOptions],
     ) -> None:
         if isinstance(endpoint, ProviderInfo):
@@ -233,6 +239,8 @@ class RestRegistry:
             api = endpoint.api
             if id is None:
                 id = endpoint.id
+            if csv_media_type is None:
+                csv_media_type = endpoint.csv_media_type
         else:
             url = endpoint
 
@@ -278,6 +286,7 @@ class RestRegistry:
             timeout=timeout,
             headers=headers,
             latest_ttl=latest_ttl,
+            csv_media_type=csv_media_type,
             **httpx_kwargs,
         )
         self._session = Session()
