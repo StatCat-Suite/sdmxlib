@@ -53,6 +53,13 @@ def _dsd() -> DataStructure:
     )
 
 
+def _resolved(_urn: object) -> tuple[sl.Dataflow, DataStructure]:
+    """What `_resolve_data_structure` returns: the dataflow at the version the
+    provider resolved it to, which is ``1.0`` whatever was asked for."""
+    dsd = _dsd()
+    return sl.Dataflow(id="EXR", maintainer="ECB", version="1.0", name={"en": "f"}, structure=Ref.to(dsd)), dsd
+
+
 @pytest.fixture
 def reg(monkeypatch: pytest.MonkeyPatch):
     """A registry whose structure is local and whose `/data` calls are recorded.
@@ -62,7 +69,7 @@ def reg(monkeypatch: pytest.MonkeyPatch):
     """
     requests: list[tuple[str, dict[str, str]]] = []
     with sl.RestRegistry("https://example.test/service", id="ECB") as registry:
-        monkeypatch.setattr(registry, "_resolve_data_structure", lambda _urn: _dsd())
+        monkeypatch.setattr(registry, "_resolve_data_structure", _resolved)
 
         def _stream(path: str, params, *, to) -> None:
             """Stands in for the HTTP stream — writes the body to the file the
@@ -130,6 +137,16 @@ def test_an_unfiltered_query_asks_for_everything_and_gets_it(reg) -> None:
     """Not refused: nothing was filtered, so nothing is filtered after a whole-flow fetch."""
     assert reg.obs(_FLOW).frame().height == 3
     assert reg.requests[-1] == ("data/ECB,EXR,1.0/all", {})
+
+
+def test_an_unpinned_dataflow_is_fetched_at_the_version_it_resolved_to(reg) -> None:
+    """GH-51: the data URL named ``latest``, which BIS and OECD refuse with a
+    400 (ECB and Eurostat let it pass). The dataflow was fetched to read its
+    structure, so its version is known; the request names it."""
+    latest = sl.Dataflow.urn_for(agency="ECB", id="EXR")
+    assert reg.obs(latest).frame().height == 3
+    assert reg.requests[-1] == ("data/ECB,EXR,1.0/all", {})
+    assert reg.obs(latest).plan.root.__table__.endswith("sdmx_data.obs_ECB_EXR_1_0")
 
 
 # ── what the query returns ────────────────────────────────────────────────
