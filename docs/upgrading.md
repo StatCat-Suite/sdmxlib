@@ -44,6 +44,25 @@ A bundle is never rebuilt: `bundle()` has no `rebuild=`, because its
 
 ---
 
+## DuckDB 2.0, and the latest runtime dependencies
+
+0.70.0 requires `duckdb>=2.0`, `polars>=2.0`, `pyarrow>=26`, `msgspec>=0.22`,
+`lxml>=6.1.3` and `typing-extensions>=4.16`, the versions the suite runs.
+Older pins in a project that depends on sdmxlib will no longer resolve.
+
+**A store written by 0.70 cannot be opened by 0.69 or by DuckDB 1.5.**
+DuckDB 2.0 writes a newer storage format. A store 0.69 wrote still opens in
+0.70, and opening it only to read leaves it readable by 0.69. A store 0.70
+creates is not. So upgrade every reader of a shared store or bundle before
+any writer, or keep a 0.69 copy for readers that cannot move yet.
+
+Nothing in sdmxlib's own API changed for this. Code that calls DuckDB
+directly through `reg.connection` or `reg.session()` meets DuckDB 2.0's
+changes itself. In particular, an `execute()` result has no `.pl()`; take a
+frame from a relation (`conn.sql(...).pl()`) instead.
+
+---
+
 ## Registry naming
 
 `sl.Registry` is now `sl.LocalRegistry`, and `materialise_to=` is `store=`.
