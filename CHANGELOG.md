@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.70.0] - 2026-10-22
+
+### Breaking Changes
+
+- **storage**: Move to DuckDB 2.0. A store this version writes cannot be opened by sdmxlib 0.69.x or DuckDB 1.5; a store 0.69.x wrote opens here
+- **deps**: Require the latest runtime dependencies: duckdb >=2.0, polars >=2.0, pyarrow >=26, msgspec >=0.22, lxml >=6.1.3, typing-extensions >=4.16 (GH-33). msgspec <0.22 could not import sdmxlib on Python 3.14
+
+### Bug Fixes
+
+- **query**: An observation column whose DSD declares a `Date`, `GregorianDay`, `DateTime`, `Time` or `Boolean` facet is parsed from its text. Every typed result over one failed with "does not fit its component's type", from polars 2.0 for dates and always for the rest
+- **formats**: `parse` raises the new `sl.SdmxErrorMessage`, carrying each `(code, text)`, on an SDMX error message instead of reading it as an empty message (GH-31)
+- **formats**: Read SDMX-JSON 1.0's attribute and format spellings: `none`, `primaryMeasure`, `textFormat` (GH-30)
+
+### Documentation
+
+- GitHub issues are written GH-N; a bare #N means GitLab
+
+### Performance
+
+- **storage**: Parse the hottest store reads once (GH-39)
+- **storage**: Parse the DSD's own reads once too (GH-39)
+
+### Testing
+
+- The fork probe reaps its own hung child (GH-34)
+
 ## [0.69.1] - 2026-10-21
 
 ### Bug Fixes
