@@ -220,7 +220,7 @@ decisions an IR would not deliver:
 | --- | --- | --- |
 | `COALESCE(name[?], id) AS label` | expression-valued projection | not built; label in polars after `collect()` |
 | `list(annotation.title)` per code | array aggregation over a side table | `c.list(...)` — a correlated list subquery, no join, no grouping |
-| cross-schema join (`pinax.dataset ⋈ sdmx.code`) | joins over caller tables | not in the language; `reg.sql()`, or a `SqlRelation` into `is_in` |
+| cross-schema join (`statcat.dataset ⋈ sdmx.code`) | joins over caller tables | not in the language; `reg.sql()`, or a `SqlRelation` into `is_in` |
 | `PIVOT` | a reshaping node | not built; pivot in polars |
 | `ROW_NUMBER() OVER` | window functions | `qualify(col.rank(...).over(...) == 1)` |
 

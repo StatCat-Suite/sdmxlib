@@ -179,7 +179,7 @@ def test_one_registry_still_crosses_its_own_planes(two_registries) -> None:
 
 
 def test_a_relation_that_cannot_name_its_source_is_trusted(two_registries) -> None:
-    """Foreign producers — pinaxlib's builders, `reg.sql(...)` — need not
+    """Foreign producers — statcatlib's builders, `reg.sql(...)` — need not
     implement `HasSource`, and Topology B makes their composition legitimate.
     So "cannot say" means trusted, which is the behaviour before this existed.
     """

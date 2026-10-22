@@ -3,7 +3,7 @@
 Package-internal: plain names in a private module, per CLAUDE.md rule 4. It is
 deliberately *not* in `sdmxlib.sql`, which is the public cross-library seam —
 these fragments are an implementation detail of `code_query` and
-`hierarchy_query`, not part of the contract pinaxlib composes against.
+`hierarchy_query`, not part of the contract statcatlib composes against.
 
 Four matching strengths, exposed on the DSLs as the plain string ops plus
 three namespaces:

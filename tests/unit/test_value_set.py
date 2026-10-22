@@ -168,7 +168,7 @@ def test_inside_the_block_to_sql_is_self_contained(reg, codes) -> None:
     wanted = [f"C{i:04d}" for i in range(20)]
     with reg.session() as active, active.value_set(wanted) as registered:
         sql, params = codes.filter(q.code.id.is_in(registered)).to_sql()
-        # Standing in for pinaxlib: a third party holding only our compiled
+        # Standing in for statcatlib: a third party holding only our compiled
         # string and binds, running them on the connection it shares with us.
         rows = active.execute(sql, params).fetchall()
     assert len(rows) == len(wanted)

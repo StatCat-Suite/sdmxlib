@@ -16,12 +16,12 @@ there is nothing for a foreign predicate to be assignable to.
 That is a real narrowing and worth naming rather than burying: a downstream
 library can no longer inject a *predicate*. It can still inject a *relation*,
 which is the composition that was actually used — `SqlRelation` has consumers
-in `rest.py`, `is_in`, and pinaxlib — and which works precisely because a
+in `rest.py`, `is_in`, and statcatlib — and which works precisely because a
 single-column subquery carries no row kind to disagree about.
 
 A bundle laid out as a single DuckDB file co-locating ``sdmx.*``,
-``pinax.*``, and the DuckLake catalog tables is what makes `SqlRelation`
-composition routinely useful across sdmxlib + pinaxlib: subquery tables are
+``statcat.*``, and the DuckLake catalog tables is what makes `SqlRelation`
+composition routinely useful across sdmxlib + statcatlib: subquery tables are
 always visible on the same connection.
 """
 
@@ -34,7 +34,7 @@ __all__ = ["HasSource", "SqlRelation"]
 class SqlRelation(Protocol):
     """A lazy relation usable inside ``WHERE col IN (...)`` or as a join input.
 
-    Producers — `sdmxlib.query.query.Select`, `AncestorMap`, and the pinaxlib
+    Producers — `sdmxlib.query.query.Select`, `AncestorMap`, and the statcatlib
     query builders — expose their compiled SELECT as a ``(sql, params)`` pair.
     The consumer splices the SQL inline as a subquery and concatenates the
     params with the outer query's binds, so an N-row traversal becomes one
@@ -43,8 +43,8 @@ class SqlRelation(Protocol):
     The subquery's tables must be visible on the consumer's connection. For
     `DuckDBDataStore` (which shares its connection with `Registry`), codelist
     relations compose automatically because both sides see the same
-    ``sdmx.code`` table. For pinaxlib's ``Catalog``, the same applies when the
-    bundle uses Topology B (one DuckDB file holding sdmx.*, pinax.*, and the
+    ``sdmx.code`` table. For statcatlib's ``Catalog``, the same applies when the
+    bundle uses Topology B (one DuckDB file holding sdmx.*, statcat.*, and the
     DuckLake catalog).
     """
 
@@ -79,7 +79,7 @@ class HasSource(Protocol):
     Optional by design, and deliberately not folded into `SqlRelation`. Making
     it required would break every existing producer, and a foreign relation
     that cannot answer is not necessarily wrong — Topology B puts ``sdmx.*``
-    and ``pinax.*`` on one connection precisely so cross-library composition is
+    and ``statcat.*`` on one connection precisely so cross-library composition is
     legitimate. So: a producer that *can* identify its source gets checked, and
     one that cannot is trusted, which is exactly the state before this existed.
     """

@@ -1030,7 +1030,7 @@ The rules it carries:
   a SQL error naming neither the call site nor the fix.
 
 `SqlRelation` itself is untouched, because it was never the raw-SQL seam: a
-`Query` / `Select` satisfies it, and so do external producers (pinaxlib's query
+`Query` / `Select` satisfies it, and so do external producers (statcatlib's query
 builders). Both are compiled relations. Raw text is not.
 
 ---
