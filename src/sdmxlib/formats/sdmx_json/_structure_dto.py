@@ -367,6 +367,14 @@ class Format(WireStruct, rename=_camel_rename):
     end_time: str | None = None
     #: Values with a special meaning (#422) — a text format's alone.
     sentinel_values: list[SentinelValueJson] | None = None
+    #: Read tolerance: SDMX-JSON 1.0's name for `data_type` (GH-30), moved
+    #: there as it is read so nothing downstream sees two spellings.
+    text_type: str | None = None
+
+    def __post_init__(self) -> None:
+        """Read 1.0's `text_type` as `data_type`."""
+        if self.text_type is not None and self.data_type is None:
+            self.data_type, self.text_type = self.text_type, None
 
 
 class SentinelValueJson(WireStruct, rename=_camel_rename):
@@ -404,6 +412,9 @@ class Representation(WireStruct, rename=_camel_rename):
     #: or ``"unbounded"``.
     min_occurs: int | None = None
     max_occurs: int | str | None = None
+    #: Read tolerance: SDMX-JSON 1.0's name for `format` (GH-30), moved there
+    #: as it is read, before the ``oneOf`` below counts it.
+    text_format: Format | None = None
 
     def __post_init__(self) -> None:
         """Every representation type's ``oneOf``: an enumeration or a format (#474).
@@ -411,6 +422,8 @@ class Representation(WireStruct, rename=_camel_rename):
         Raises:
             ValueError: If it has neither, or both.
         """
+        if self.text_format is not None and self.format is None:
+            self.format, self.text_format = self.text_format, None
         # Tested inline before `one_of` builds its arguments: this runs for
         # every component and concept, and the call alone was 2-5% of a read.
         if (self.enumeration is None) == (self.format is None):
@@ -871,6 +884,11 @@ class AttributeRelationship(WireStruct, rename=_camel_rename):
     are_dimensions_optional: list[bool] | None = None
     group: str | None = None
     dataflow: EmptyObject | None = None
+    #: Read tolerance, SDMX-JSON 1.0's two spellings (GH-30): ``none`` is
+    #: `dataflow` (2.1's ``<str:None/>``, a dataset-level attribute), and
+    #: ``primaryMeasure`` is `observation`, naming the measure 2.1 relates it to.
+    none: EmptyObject | None = None
+    primary_measure: str | None = None
 
     def __post_init__(self) -> None:
         """The schema's ``oneOf`` (#474).
@@ -884,6 +902,8 @@ class AttributeRelationship(WireStruct, rename=_camel_rename):
             dimensions=self.dimensions,
             group=self.group,
             observation=self.observation,
+            none=self.none,
+            primaryMeasure=self.primary_measure,
         )
 
 
