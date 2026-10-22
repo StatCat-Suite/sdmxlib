@@ -222,6 +222,33 @@ class SdmxConformanceError(SdmxParseError):
         return cls("Structure", detail, refused=refused, message=message)
 
 
+class SdmxErrorMessage(SdmxParseError):  # noqa: N818 - SDMX's own element name, `ErrorMessage`
+    """Raised by `parse` when the document is an SDMX error message (GH-31).
+
+    A registry answers a query it cannot serve with an error message —
+    ``<mes:Error>`` in SDMX-ML, ``{"errors": [...]}`` in SDMX-JSON — rather
+    than a structure or metadata message. `parse` used to read one as an empty
+    `StructureMessage`, so a saved "100 No Results Found" was indistinguishable
+    from a query that matched nothing. The REST client never gets this far: it
+    raises on the HTTP status first. This is for bytes read from a file.
+
+    A `SdmxParseError`, because the payload is still not the message asked
+    for; catching the base handles it with every other unusable document.
+
+    Attributes:
+        errors: One ``(code, text)`` pair per error the message reports, in
+            document order. The code is text, as SDMX-ML types it; the text
+            is the first one given, or empty when there is none.
+    """
+
+    errors: tuple[tuple[str, str], ...]
+
+    def __init__(self, errors: tuple[tuple[str, str], ...]) -> None:
+        self.errors = errors
+        reported = "; ".join(f"{code} {text}".strip() for code, text in errors) or "no error given"
+        super().__init__(f"the document is an SDMX error message, not a structure or metadata message: {reported}")
+
+
 class LossyReadError(SdmxParseError):
     """Raised by ``parse(..., lossless=True)`` when the message is not exactly the document (#422, #474).
 

@@ -58,6 +58,7 @@ from sdmxlib.model.registry import SupportsAddAll
 from sdmxlib.model.validation import (
     LossyReadError,
     SdmxConformanceError,
+    SdmxErrorMessage,
     SdmxParseError,
     ValidationError,
     check_metadata_serialisable,
@@ -163,6 +164,9 @@ def parse(
             refusals and carries them as ``.refused``, with everything that
             was read as ``.message``. When ``lossless`` and anything was
             lost, `LossyReadError`, carrying ``.lost`` and ``.message``.
+            When the document is an SDMX error message (``<mes:Error>``,
+            ``{"errors": [...]}``), `SdmxErrorMessage`, carrying each
+            error's code and text as ``.errors``.
     """
     try:
         # Read straight into an in-memory registry: its references are bound
@@ -201,6 +205,7 @@ def parse(
 def _dispatch(data: bytes, *, version: str | None) -> StructureMessage | MetadataMessage:
     """Detect format and message kind, then hand off to the matching reader."""
     detected = version or _detect_version(data)
+    _refuse_error_message(data, detected)
     kind = _detect_message_kind(data, detected)
 
     if kind == "metadata":
@@ -333,6 +338,69 @@ _MESSAGE_NS_VERSION = {_MES_21: "2.1", _MES_30: "3.0", _MES_31: "3.1"}
 
 #: Local name of the SDMX-ML root element that carries reported metadata.
 _METADATA_ROOT = "GenericMetadata"
+
+#: Local name of the SDMX-ML root element of an error message, and of each error in it.
+_ERROR_ROOT = "Error"
+_ERROR_ENTRY = "ErrorMessage"
+
+
+class _ErrorProbeEntry(msgspec.Struct):
+    """One SDMX-JSON error. ``message`` is not in the schema; FMR 12.4 writes it."""
+
+    code: int | float | str
+    title: str | None = None
+    detail: str | None = None
+    message: str | None = None
+
+
+class _ErrorProbe(msgspec.Struct):
+    """Just enough of an SDMX-JSON document to tell an error message from the rest."""
+
+    errors: list[_ErrorProbeEntry] | None = None
+    data: msgspec.Raw | None = None
+
+
+def _refuse_error_message(data: bytes, version: str) -> None:
+    """Raise `SdmxErrorMessage` if *data* is an SDMX error message (GH-31).
+
+    SDMX-ML: the root is ``<mes:Error>``. SDMX-JSON: ``errors`` is non-empty
+    and there is no ``data``, since a message may also carry errors beside
+    what it answers. A JSON payload this probe cannot decode is left to the
+    reader, so the reader's own error is the one raised.
+
+    Raises:
+        SdmxErrorMessage: Carrying each error's code and text.
+    """
+    if version == "json":
+        try:
+            probe = msgspec.json.decode(data, type=_ErrorProbe)
+        except msgspec.MsgspecError:
+            return
+        if probe.errors and probe.data is None:
+            raise SdmxErrorMessage(tuple((_code(e.code), e.title or e.detail or e.message or "") for e in probe.errors))
+        return
+    root = _xml_root(data)
+    if root is None or root.localname != _ERROR_ROOT or root.namespace not in _MESSAGE_NS_VERSION:
+        return
+    entries = [
+        el for el in etree.fromstring(data) if isinstance(el.tag, str) and etree.QName(el).localname == _ERROR_ENTRY
+    ]
+    raise SdmxErrorMessage(tuple((el.get("code", ""), _first_text(el)) for el in entries))
+
+
+def _code(code: float | str) -> str:
+    """An SDMX-JSON error code as SDMX-ML writes it: ``404``, not ``404.0``."""
+    if isinstance(code, float) and code.is_integer():
+        return str(int(code))
+    return str(code)
+
+
+def _first_text(entry: etree._Element) -> str:
+    """The first ``<com:Text>`` of an ``<ErrorMessage>``; a message may give several languages."""
+    for child in entry:
+        if isinstance(child.tag, str) and etree.QName(child).localname == "Text":
+            return (child.text or "").strip()
+    return ""
 
 
 def _xml_root(data: bytes) -> etree.QName | None:
