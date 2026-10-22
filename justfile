@@ -587,8 +587,9 @@ release-4-merge:
     echo "Released ${VER} on GitHub; checked out at the tag"
     echo "Next: just release-5-pypi"
 
-# A version's CHANGELOG.md section, as edited — not git-cliff's regeneration
-# from commits, which would drop what was written by hand after step 2
+# Steps 3 and 4 take their text from here, not from git-cliff's regeneration
+# from commits, which would drop what was written by hand after step 2.
+# Print a version's CHANGELOG.md section, as edited
 [group('release')]
 release-notes VERSION:
     #!/usr/bin/env bash
