@@ -540,9 +540,9 @@ def from_attachment(
         # Required by the schema; one a document omits varies with nothing,
         # read as dataset-level as the SDMX-ML readers read it (#421).
         return AttachmentLevel.DATASET, None, frozenset(), None
-    if ar.observation is not None:
+    if ar.observation is not None or ar.primary_measure is not None:
         return AttachmentLevel.OBSERVATION, None, frozenset(), None
-    if ar.dataflow is not None:
+    if ar.dataflow is not None or ar.none is not None:
         return AttachmentLevel.DATASET, None, frozenset(), None
     if ar.dimensions:
         # `areDimensionsOptional` is parallel to `dimensions` (#422).

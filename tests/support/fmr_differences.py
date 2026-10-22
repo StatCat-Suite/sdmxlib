@@ -66,15 +66,6 @@ RULES: tuple[Rule[Kind], ...] = (
         "FMR holds a 2.1 organisation unit scheme at 1.0, whatever version 2.1 gave it: 3.x prohibits the "
         "version, and sdmxlib refuses to write such a scheme as 3.x rather than drop it (#469)",
     ),
-    # Ours.
-    Rule(
-        r"REFUSED DataStructure: an attributeRelationship needs exactly one of dataflow, dimensions, group, "
-        r"observation; it has none - at …",
-        r".+-shape:json10",
-        "ours",
-        "SDMX-JSON 1.0's attributeRelationship has `none`, 2.1's dataflow attachment; the reader knows only "
-        "2.0's choices: #489",
-    ),
     Rule(
         r"REFUSED (?:DataConstraint|Hierarchy): sdmxlib does not model (?:ContentConstraint|HierarchicalCodelist)",
         r".+:json10",
@@ -176,6 +167,13 @@ RULES: tuple[Rule[Kind], ...] = (
         "fmr-drops",
         "FMR's JSON 1.0 output leaves out value lists and hierarchy associations, which the 1.0 schema has no "
         "section for",
+    ),
+    Rule(
+        r"DataStructure\.measures\[\]\.min_occurs",
+        r"3\.0-shape:json10",
+        "fmr-drops",
+        "FMR's JSON 1.0 output gives a measure no minOccurs, which the 1.0 schema has only on a metadata "
+        "attribute: 2.1's primary measure has none, so a 3.x optional measure reads back required",
     ),
     Rule(
         r"MISSING MetadataStructure AG:MSD(?:_SHAPES)?\(1\.0\)",
