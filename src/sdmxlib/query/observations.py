@@ -692,6 +692,12 @@ class ObsQuery(Query[ObsRow]):
         forms the index. One measure fills the cells; several give a column
         per measure per value. Attributes are not carried.
 
+        A `pl.DataFrame`, not a `LazyFrame` (#516), as every other terminal's
+        result is: the query has run by the time a pivot can start, so
+        laziness after it would push nothing back into the fetch, and when
+        the axis's enumeration is unresolved its columns can only be read
+        from the rows. ``.lazy()`` on the result costs nothing.
+
         Args:
             on: The dimension to spread into columns. Needed when the DSD
                 declares no measure dimension.
