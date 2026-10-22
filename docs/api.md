@@ -879,6 +879,10 @@ What a read refused, could not hold, or assumed — reported on the message, and
 
 ---
 
+::: sdmxlib.model.validation.SdmxErrorMessage
+
+---
+
 ::: sdmxlib.model.errors.Refusal
 
 ---

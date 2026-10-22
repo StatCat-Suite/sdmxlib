@@ -172,6 +172,12 @@ for refusal in kept.refused:
 `SdmxConformanceError` is an `sl.SdmxParseError`, so catch that. Each
 `sl.Refusal` carries the `artefact_class`, `urn` and `reason`.
 
+**An error message.** A saved registry response may be an SDMX error message
+(`<mes:Error>`, or `{"errors": [...]}` in SDMX-JSON) rather than an answer.
+`parse` raises `sl.SdmxErrorMessage`, also an `sl.SdmxParseError`, and its
+`errors` holds each `(code, text)` pair, such as `("100", "No Results Found")`,
+so "the registry said no" is not mistaken for an empty result.
+
 **Lost.** Something the model has no field for is left out of the artefact
 and recorded on `msg.lost`, one `sl.ReadGap` per artefact and construct. The
 read still succeeds:
