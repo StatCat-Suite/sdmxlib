@@ -216,6 +216,33 @@ def _check_content_type(response: httpx.Response, fmt: DataFormat, *, url: str) 
     raise ValueError(msg)
 
 
+def _require_csv(response: httpx.Response, *, accept: str, url: str) -> None:
+    """Refuse an observation fetch's response that is not CSV (GH-50).
+
+    The data plane hands the body to DuckDB's CSV reader, which reads an
+    SDMX-ML document as a CSV of one malformed column. BIS answers
+    ``text/csv`` with SDMX-ML and a 200, and ECB and ESTAT answer an
+    ``Accept`` listing two types the same way. Either SDMX-CSV version, or
+    plain ``text/csv``, is fine: the reader takes both envelopes. As in
+    `_check_content_type`, a response with no ``Content-Type`` passes.
+
+    Raises:
+        ValueError: If the response says it is something other than CSV.
+    """
+    header = response.headers.get("content-type")
+    if not header:
+        return
+    media_type = header.partition(";")[0].strip().lower()
+    if media_type == "text/csv" or media_type.endswith("+csv"):
+        return
+    msg = (
+        f"Asked for {accept!r} but the response is {header!r}, not CSV, so it was not read. "
+        "Pass the media type this provider serves CSV under as `csv_media_type=` "
+        f"(see `sl.Provider` for the ones checked). URL: {url}"
+    )
+    raise ValueError(msg)
+
+
 def _raise_for_status(response: httpx.Response, *, url: str) -> None:
     """`raise_for_status`, with the two size refusals named.
 
@@ -277,6 +304,8 @@ class SdmxClient:
             obey the provider exactly.
         freshness_size: How many URLs to remember freshness for. Bounded,
             per `docs/design/caching.md`; eviction only costs a request.
+        csv_media_type: The ``Accept`` an observation fetch sends. Defaults to
+            the SDMX-CSV the API version defines: 1.0 for 2.1, 2.0 for 3.0.
     """
 
     def __init__(
@@ -288,6 +317,7 @@ class SdmxClient:
         headers: dict[str, str] | None = None,
         latest_ttl: int = 0,
         freshness_size: int = 256,
+        csv_media_type: str | None = None,
         **httpx_kwargs: Unpack[HttpxOptions],
     ) -> None:
         self._endpoint = endpoint.rstrip("/")
@@ -300,6 +330,11 @@ class SdmxClient:
         self._freshness_lock = threading.Lock()
         self._api = api
         self._v3 = api.startswith(("3", "2.0"))
+        #: What an observation fetch asks for (GH-50): the provider's, else
+        #: the SDMX-CSV the API version defines.
+        self._csv_media_type = (
+            csv_media_type or (DataFormat.SDMX_CSV_2_0_0 if self._v3 else DataFormat.SDMX_CSV_1_0_0).media_type
+        )
         default_headers: dict[str, str]
         if self._v3:
             default_headers = {"Accept": "application/vnd.sdmx.structure+xml;version=3.0"}
@@ -566,8 +601,9 @@ class SdmxClient:
         """
         url = f"{self._endpoint}/{path}"
         with self._reaching(url):
-            response = self._client.get(url, params=dict(params), headers={"Accept": "text/csv"})
+            response = self._client.get(url, params=dict(params), headers={"Accept": self._csv_media_type})
         _raise_for_status(response, url=url)
+        _require_csv(response, accept=self._csv_media_type, url=url)
         return response.content
 
     def stream_data_at(self, path: str, params: Mapping[str, str], *, to: Path) -> None:
@@ -587,9 +623,10 @@ class SdmxClient:
         url = f"{self._endpoint}/{path}"
         with (
             self._reaching(url),
-            self._client.stream("GET", url, params=dict(params), headers={"Accept": "text/csv"}) as response,
+            self._client.stream("GET", url, params=dict(params), headers={"Accept": self._csv_media_type}) as response,
         ):
             _raise_for_status(response, url=url)
+            _require_csv(response, accept=self._csv_media_type, url=url)
             with to.open("wb") as handle:
                 for chunk in response.iter_bytes():
                     handle.write(chunk)
@@ -609,7 +646,7 @@ class SdmxClient:
         """Fetch a dataflow's data in `fmt`, unparsed.
 
         The byte-faithful counterpart to `get_data_at` / `stream_data_at`, which
-        hardcode ``Accept: text/csv`` because their caller is about to hand the
+        ask for CSV (`csv_media_type`) because their caller is about to hand the
         body to DuckDB's CSV reader. Here the caller wants what the provider
         sent, so the format is the caller's to choose and nothing inspects the
         body afterwards.
