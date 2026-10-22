@@ -1010,8 +1010,11 @@ class RestRegistry:
                 without a DSD there is no key order, and a key built on a guess
                 queries a different slice silently.
         """
-        urn = _flow_urn(flow)
-        dsd = self._resolve_data_structure(urn)
+        # Bound to the dataflow as fetched, not as asked for: the data URL names
+        # its version, and BIS and OECD refuse `latest` there with a 400 that
+        # ECB and Eurostat let pass (GH-51).
+        resolved, dsd = self._resolve_data_structure(_flow_urn(flow))
+        urn = resolved.urn
         store = DuckDBDataStore.from_registry(self._query_store())
         binding = DataflowBinding.from_dsd(
             dsd,
@@ -1045,8 +1048,8 @@ class RestRegistry:
             raise RuntimeError(msg)
         return str(rows[0][0])
 
-    def _resolve_data_structure(self, urn: SdmxUrn[Dataflow]) -> DataStructure:
-        """The dataflow's structure, resolved, or a refusal naming what is missing."""
+    def _resolve_data_structure(self, urn: SdmxUrn[Dataflow]) -> tuple[Dataflow, DataStructure]:
+        """The dataflow as fetched, and its structure resolved, or a refusal naming what is missing."""
         flow = self._fetch_one(
             Dataflow, urn.agency, urn.id, urn.version, detail="referencepartial", references="descendants"
         )
@@ -1057,7 +1060,7 @@ class RestRegistry:
         if not isinstance(dsd, DataStructure):
             msg = f"{flow.structure.urn} did not resolve to a DataStructure."
             raise TypeError(msg)
-        return dsd
+        return flow, dsd
 
     def _fetch_data_for[R: "RowKind"](
         self, plan: Plan[R], _projection: frozenset[tuple[str, str]] | None = None

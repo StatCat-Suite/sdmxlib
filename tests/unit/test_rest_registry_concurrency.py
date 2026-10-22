@@ -60,6 +60,13 @@ def _dsd() -> DataStructure:
     )
 
 
+def _resolved(_urn: object) -> tuple[sl.Dataflow, DataStructure]:
+    """What `_resolve_data_structure` returns: the dataflow at the version the
+    provider resolved it to, which is ``1.0`` whatever was asked for."""
+    dsd = _dsd()
+    return sl.Dataflow(id="EXR", maintainer="ECB", version="1.0", name={"en": "f"}, structure=Ref.to(dsd)), dsd
+
+
 def _race[T](work: Callable[[int], T], *, threads: int = _THREADS) -> list[T]:
     """Run `work` on `threads` threads that provably start together.
 
@@ -190,7 +197,7 @@ def test_one_dataflow_question_asked_by_many_threads_fetches_once(monkeypatch) -
     lock = threading.Lock()
 
     with sl.RestRegistry("https://example.test/service", id="ECB") as reg:
-        monkeypatch.setattr(reg, "_resolve_data_structure", lambda _urn: _dsd())
+        monkeypatch.setattr(reg, "_resolve_data_structure", _resolved)
 
         def _stream(path: str, params, *, to) -> None:
             with lock:
@@ -218,7 +225,7 @@ def test_alternating_questions_on_one_dataflow_do_not_interleave(monkeypatch) ->
     calls: list[str] = []
 
     with sl.RestRegistry("https://example.test/service", id="ECB") as reg:
-        monkeypatch.setattr(reg, "_resolve_data_structure", lambda _urn: _dsd())
+        monkeypatch.setattr(reg, "_resolve_data_structure", _resolved)
 
         def _stream(path: str, params, *, to) -> None:
             with lock:
