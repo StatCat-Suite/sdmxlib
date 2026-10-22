@@ -25,7 +25,7 @@ back across.
 
 The protocol itself is untouched, because it is not the raw-SQL seam: `Query`
 satisfies it, which is how one structural query filters another, and external
-producers satisfy it, which is how pinaxlib composes. Both are compiled
+producers satisfy it, which is how statcatlib composes. Both are compiled
 relations the planner can still reason about. Raw text is not.
 """
 

@@ -18,7 +18,7 @@ def test_parse_dataflow_id_basic():
 
 
 def test_parse_dataflow_id_underscored_agency():
-    assert parse_dataflow_id("PINAX_SUITE:CENSUS_PROFILE(2021)") == ("PINAX_SUITE", "CENSUS_PROFILE", "2021")
+    assert parse_dataflow_id("AG_SUB:CENSUS_PROFILE(2021)") == ("AG_SUB", "CENSUS_PROFILE", "2021")
 
 
 def test_parse_dataflow_id_rejects_missing_version():

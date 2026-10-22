@@ -717,7 +717,7 @@ connection, where the same table names resolve to this database's rows.
 visible on the consumer's connection and had nothing checking it. Optional
 deliberately — making it required would break every existing producer, and a
 foreign relation that cannot answer is not necessarily wrong, since Topology B
-puts `sdmx.*` and `pinax.*` on one connection precisely so cross-library
+puts `sdmx.*` and `statcat.*` on one connection precisely so cross-library
 composition is legitimate. So a producer that *can* identify its source is
 checked; one that cannot is trusted, which is the state before this existed.
 

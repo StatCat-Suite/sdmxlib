@@ -229,7 +229,7 @@ def canonical_key(value: object) -> tuple[object, ...]:
             ),
         )
     if isinstance(value, SqlRelation):
-        # A foreign relation — pinaxlib's, or anything else implementing the
+        # A foreign relation — statcatlib's, or anything else implementing the
         # protocol without being attrs. Its compiled SQL and binds are the only
         # stable description available, and are what a cache would key on.
         sql, params = value.to_sql()

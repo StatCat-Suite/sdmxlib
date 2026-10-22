@@ -495,9 +495,9 @@ prose otherwise.
 `just check-docstrings` enforces it — **`ruff.toml`'s `convention = "google"`
 does not.** That setting checks a docstring's *structure* (summary line, blank
 lines, punctuation) and never reads its markup or rejects a NumPy section, so
-it looks like the gate and is not: in the sibling pinax project the same line
-sat declared and unenforced while 98 Sphinx roles and 13 NumPy-sectioned
-docstrings accumulated under it (#374).
+it looks like the gate and is not: in the sibling statcatlib project (then
+pinax) the same line sat declared and unenforced while 98 Sphinx roles and 13
+NumPy-sectioned docstrings accumulated under it (#374).
 
 Three arms, all at zero here: a grep for roles and literal blocks, a match for
 a NumPy section *name followed by a rule*, and pydoclint's `DOC003` for a

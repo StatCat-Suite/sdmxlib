@@ -5,14 +5,14 @@
 Because that setting is not the gate it looks like. Ruff's pydocstyle rules
 check a docstring's **structure** — summary line, blank lines, punctuation —
 and never read its markup or reject a NumPy section header. In the sibling
-pinax project the same line sat declared and unenforced for the life of the
-file while 98 Sphinx roles and 13 NumPy-sectioned docstrings accumulated
-underneath it.
+statcatlib project (then pinax) the same line sat declared and unenforced for
+the life of the file while 98 Sphinx roles and 13 NumPy-sectioned docstrings
+accumulated underneath it.
 
 sdmxlib is at zero on all three arms today, by discipline with nothing checking
 it. That is the shape CLAUDE.md already describes for the basedpyright rules —
 *zero findings when enabled; on as regression guards* — so this costs nothing
-now and stops the drift that cost pinax a branch.
+now and stops the drift that cost pinax (now statcatlib) a branch.
 
 ## The three arms
 
