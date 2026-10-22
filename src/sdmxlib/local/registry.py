@@ -20,7 +20,7 @@ stashes the URI; the DuckDB connection is opened by ``open()`` /
         dsd = local.get(dsd_urn)
         cm = local.code_map(codelist_urn, lang="en")
 
-    # Share an existing DuckDB connection (e.g. with cataloglib): use the
+    # Share an existing DuckDB connection (e.g. with statcatlib): use the
     # ``from_connection`` classmethod, which doesn't take ownership of the
     # connection's lifecycle.
     import duckdb
@@ -37,6 +37,7 @@ import threading
 import time
 from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 from contextlib import contextmanager
+from importlib import metadata
 from pathlib import Path
 from typing import Final, Literal, Self, cast, overload, override
 
@@ -94,14 +95,24 @@ from sdmxlib.storage.readers import make_lazy_codelist
 from sdmxlib.storage.schema import (
     SCHEMA_VERSION,
     ReadOnlySchemaError,
+    StoreSchemaError,
     check_scan_integrity,
     connection_is_read_only,
     get_schema_version,
+    holds_rows,
     migrate,
     schema_exists,
 )
 
 _SIBLING_INDEX = re.compile(r"\[\d+\]")
+
+
+def _sdmxlib_version() -> str:
+    """This sdmxlib's version, for a message; ``"unknown"`` when not installed as a package."""
+    try:
+        return metadata.version("sdmxlib")
+    except metadata.PackageNotFoundError:
+        return "unknown"
 
 
 def _declared_path(attribute_path: str) -> str:
@@ -573,8 +584,16 @@ class LocalRegistry(SessionFactory):
         source_registry: str | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
         target: str | None = None,
+        rebuild: bool = False,
     ) -> None:
         """Open or wrap a DuckDB-backed registry.
+
+        ``rebuild`` lets opening drop and rebuild a store that holds artefacts
+        on another schema version (GH-57). Without it such a store is refused
+        with `StoreSchemaError`, because the rebuild empties it: right for a
+        cache that `RestRegistry(store=...)` can fetch again, and wrong for a
+        bundle or a store filled with ``add``. An empty store, or a new file,
+        is created or migrated either way.
 
         ``target`` declares which SDMX-ML version this store's contents are
         meant to be written as — ``"2.1"``, ``"3.0"`` or ``"3.1"``. Adding an
@@ -602,6 +621,8 @@ class LocalRegistry(SessionFactory):
         self._uri = store_path(uri, owner="LocalRegistry", wrap="sl.LocalRegistry.from_connection(conn)")
         self._source_registry = source_registry
         self._target = target
+        #: Whether opening may drop a populated store on another schema (GH-57).
+        self._rebuild = rebuild
         self._conn: duckdb.DuckDBPyConnection | None = None
         self._cursor: duckdb.DuckDBPyConnection | None = None
         self._owns_connection = True
@@ -697,6 +718,7 @@ class LocalRegistry(SessionFactory):
         source_registry: str | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
         target: str | None = None,
+        rebuild: bool = False,
     ) -> Self:
         """Wrap an existing DuckDB connection.
 
@@ -705,9 +727,10 @@ class LocalRegistry(SessionFactory):
         is shared with another component (e.g. a co-located DuckLake catalog)
         that owns its lifecycle.
 
-        ``resolve_cache_items`` configures the resolver cache (FIFO), and ``target``
-        declares an SDMX-ML version to hold the contents to; both are
-        described on `__init__`.
+        ``resolve_cache_items`` configures the resolver cache (FIFO), ``target``
+        declares an SDMX-ML version to hold the contents to, and ``rebuild``
+        lets a populated store on another schema be dropped; all are described
+        on `__init__`.
         """
         # `Self`-annotated because `cls.__new__(cls)` is otherwise untyped: the
         # local would be `Self@__new__` with no field information. (It also
@@ -727,6 +750,7 @@ class LocalRegistry(SessionFactory):
         # raise `AttributeError` on any registry built this way. A comment was
         # not enough; `test_constructors_agree_on_fields` is the guard.
         instance._target = target
+        instance._rebuild = rebuild
         instance._conn = conn
         instance._cursor = None
         instance._owns_connection = False
@@ -744,19 +768,33 @@ class LocalRegistry(SessionFactory):
         return instance
 
     def _initialise_schema(self) -> None:
-        """Migrate or open a cursor on the ``sdmx`` schema."""
+        """Migrate or open a cursor on the ``sdmx`` schema.
+
+        Raises:
+            StoreSchemaError: If the store holds artefacts on another schema
+                version and ``rebuild`` was not asked for (GH-57).
+            ReadOnlySchemaError: If the schema must be created or rebuilt and
+                the connection is read-only.
+        """
         if self._conn is None:
             return
         version = get_schema_version(self._conn)
-        if not schema_exists(self._conn) or version != SCHEMA_VERSION:
-            if connection_is_read_only(self._conn):
-                found = version if schema_exists(self._conn) else "no sdmx schema"
+        exists = schema_exists(self._conn)
+        if not exists or version != SCHEMA_VERSION:
+            found = f"schema {version}" if exists else "no sdmx schema"
+            if exists and not self._rebuild and holds_rows(self._conn):
                 msg = (
-                    f"this store is on {found}, and this build of sdmxlib uses "
-                    f"schema {SCHEMA_VERSION}. The store is a cache and migration "
-                    f"is drop-and-rebuild, which a read-only connection cannot do "
-                    f"— reopen it read-write to rebuild in place, or rebuild the "
-                    f"bundle from its source."
+                    f"{self._uri} holds artefacts on store {found}, and this sdmxlib "
+                    f"({_sdmxlib_version()}) reads schema {SCHEMA_VERSION}, so it was not opened: "
+                    f"migrating means dropping them. A bundle: rebuild it from its source with this "
+                    f"sdmxlib, or read it with the one that built it. A cache that can be fetched "
+                    f"again: open it with rebuild=True."
+                )
+                raise StoreSchemaError(msg)
+            if connection_is_read_only(self._conn):
+                msg = (
+                    f"this store has {found}, and this build of sdmxlib uses schema {SCHEMA_VERSION}. "
+                    f"Creating or rebuilding it needs a read-write connection."
                 )
                 raise ReadOnlySchemaError(msg)
             self._cursor = migrate(self._conn)
@@ -1540,6 +1578,10 @@ class LocalRegistry(SessionFactory):
         set — §9's rule. The lake is ATTACHed lazily, when something first asks
         for observations, so opening a bundle to read a codelist costs nothing.
 
+        **A bundle is never rebuilt.** Its ``meta.duckdb`` is the published
+        record, so one built on another schema version is refused with
+        `StoreSchemaError` rather than emptied (GH-57).
+
         Args:
             path: The bundle directory.
             source_registry: Provenance tag for artefacts added later.
@@ -1547,6 +1589,9 @@ class LocalRegistry(SessionFactory):
 
         Returns:
             An open registry over the bundle.
+
+        Raises:
+            StoreSchemaError: If the bundle was built on another schema version.
         """
         root = Path(path) if isinstance(path, str) else path
         registry = cls(

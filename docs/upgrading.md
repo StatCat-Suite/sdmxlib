@@ -1,7 +1,7 @@
 # Upgrading
 
 This page covers every **breaking change** from 0.48.0, which is where the
-current shape of the library starts, through the current release (0.68.0).
+current shape of the library starts, through the current release.
 Each section states what the API is now. Where a later change superseded an
 earlier one, the section gives the result, not the step in between. There are
 no deprecation shims: sdmxlib is pre-stability and breaks cleanly rather than
@@ -16,6 +16,31 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 `CompileContext`, `AnyRef`, `sl.code`, `sl.node`, `Dataset`, `DataQuery`,
 `DimFilter`, `sl.dim`, and the four alias spellings `PathQuery`, `QueryCols`,
 `ArtefactQueryRow`, `QueryRowKind`.
+
+---
+
+## A store on another schema version is refused, not emptied
+
+Opening a `LocalRegistry` (or `LocalRegistry.bundle`) whose store holds
+artefacts on a different store schema version now raises `sl.StoreSchemaError`.
+From 0.68 to 0.70.1 it dropped and rebuilt the schema instead, which emptied a
+bundle built by 0.67 the moment a newer sdmxlib opened it, even only to read
+(GH-57). An empty store, or a new file, is still created or migrated silently.
+
+The store schema moved from 2.19 to 2.48 in **0.68.0**: a store or bundle
+written by 0.67 or earlier has to be rebuilt from its source to be read by
+0.68 or later. A cache that can be fetched again opts back into the rebuild:
+
+```python
+with (
+    sl.LocalRegistry("cache.duckdb", rebuild=True) as cache,
+    sl.RestRegistry(sl.Provider.ECB, store=cache) as ecb,
+):
+    ...
+```
+
+A bundle is never rebuilt: `bundle()` has no `rebuild=`, because its
+`meta.duckdb` is the published record.
 
 ---
 

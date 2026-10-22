@@ -50,6 +50,10 @@ Persistent DuckDB-backed structural store, the in-memory registry, and the data 
 
 ---
 
+::: sdmxlib.storage.schema.StoreSchemaError
+
+---
+
 ::: sdmxlib.model.in_memory_registry.InMemoryRegistry
 
 ---

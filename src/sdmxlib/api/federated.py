@@ -10,7 +10,9 @@ sources cooperating to answer a single URN) is intentionally out of
 scope; see #46 for that conversation.
 
 Example:
-    local = sl.LocalRegistry("cache.duckdb", source_registry="local")
+    # rebuild=True: a cache can be fetched again, so a store schema change may
+    # empty it rather than refuse to open (GH-57).
+    local = sl.LocalRegistry("cache.duckdb", source_registry="local", rebuild=True).open()
     estat = sl.RestRegistry(sl.Provider.ESTAT, store=local)
     sdmx_global = sl.RestRegistry(sl.Provider.SDMX_GLOBAL, store=local)
 
