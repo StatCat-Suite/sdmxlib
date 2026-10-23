@@ -4,9 +4,11 @@
 > (Claude Code). Users who are not comfortable with AI-generated code should
 > take that into account before adopting it.
 
-SDMX structural metadata library for Python. Fetch and navigate Data Structure
-Definitions, Codelists, Dataflows, and related artefacts from any SDMX REST
-endpoint — with plain attribute access, no XML or URN chasing required.
+SDMX for Python: structures, reference metadata and observation data, from
+REST, files or a local DuckDB store. Navigate Data Structure Definitions,
+Codelists, Dataflows and related artefacts with plain attribute access, query
+catalogues and observations with one path language, and read and write SDMX-ML,
+SDMX-JSON and SDMX-CSV.
 
 ## Quick start
 

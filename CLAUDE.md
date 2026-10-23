@@ -1,9 +1,11 @@
-# sdmxlib — SDMX structural metadata library for Python
+# sdmxlib — SDMX for Python
 
 ## What this library does
 
-sdmxlib fetches and models SDMX structural metadata (DataStructures, Codelists,
-Dataflows, etc.) from SDMX REST APIs. Users navigate a typed graph of artefacts
+sdmxlib fetches, models, stores and queries SDMX: structural metadata
+(DataStructures, Codelists, Dataflows, etc.), reference metadata and
+observation data, from SDMX REST APIs, SDMX files or a local DuckDB store.
+Users navigate a typed graph of artefacts
 through plain attribute access. Observations are queried through `obs()` and
 come back as Polars frames.
 
