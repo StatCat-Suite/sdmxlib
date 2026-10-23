@@ -35,7 +35,7 @@ written none of it existed: `Request.path` was hardcoded `f"structure/{…}"`,
 > (`DataRequest.narrows`, `_refuse_unbounded_fetch`). Until #515 it fetched the
 > whole flow and filtered locally. An unfiltered query is not refused.
 
-Three questions decide it, and the third is the one that splits implementers.
+Three questions decide it; the third has two defensible answers.
 
 ## 1. What the wire can hold
 
@@ -146,8 +146,6 @@ scale is the terminal they choose — `stream()` over `frame()`, and an
 **unordered** stream, since a sort materialises the whole result before the
 first batch leaves.
 
-One thing to get right:
-
 **`bounding` is per root, and an observation root's identity is the binding.**
 `root_key(push.plan.root)` keys the requirement, and `Observations` is built
 per binding rather than being a singleton — so whatever `root_key` returns for
@@ -157,7 +155,7 @@ capability lookup misses and `is_bounded` returns `False` for everything.
 
 ## 4. Streaming over REST: two readings
 
-**Does `.stream()` stream, when the backend is REST?**
+**The question is whether `.stream()` streams when the backend is REST.**
 
 Two readings, both defensible, and they produce different libraries.
 
