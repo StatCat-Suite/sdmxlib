@@ -47,7 +47,7 @@ dsd = reg.dsd(flow_urn)
 cf = sl.parse_components(
     "CA+US.M.2021",  # dotted-key path segment
     {"GEO_LEVEL": ["FED"]},  # parsed from c[…]=…
-    dsd.key_slot_ids("3.0"),  # 3.0 gives the time dimension a segment; 2.1 does not (#337)
+    dsd.key_slot_ids("3.0"),  # 3.0 gives the time dimension a segment; 2.1 does not
 )
 
 cf.dimensions  # [['CA', 'US'], ['M'], ['2021']]

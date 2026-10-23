@@ -74,8 +74,8 @@ New with it, none of them breaking:
 Opening a `LocalRegistry` (or `LocalRegistry.bundle`) whose store holds
 artefacts on a different store schema version now raises `sl.StoreSchemaError`.
 From 0.68 to 0.70.1 it dropped and rebuilt the schema instead, which emptied a
-bundle built by 0.67 the moment a newer sdmxlib opened it, even only to read
-(GH-57). An empty store, or a new file, is still created or migrated silently.
+bundle built by 0.67 the moment a newer sdmxlib opened it, even only to read.
+An empty store, or a new file, is still created or migrated silently.
 
 The store schema moved from 2.19 to 2.48 in **0.68.0**: a store or bundle
 written by 0.67 or earlier has to be rebuilt from its source to be read by
@@ -163,7 +163,7 @@ dsd = reg.get(urn, resolve=[sl.Codelist])  # only refs of these types
 !!! note "`LocalRegistry.get` takes no `resolve=`; `FederatedRegistry.get` does"
 
     `LocalRegistry.get(urn)` returns an artefact whose references are bound
-    to the store, so each one finds its target when you use it (#492; see
+    to the store, so each one finds its target when you use it (see
     [A `Ref` is frozen and finds its target on
     access](#a-ref-is-frozen-and-finds-its-target-on-access)). Depth is a
     choice about how many *requests* to make, and a local store makes none,
@@ -279,7 +279,7 @@ and you want a window anyway, `sl.RestRegistry(..., latest_ttl=300)` is a
 An SDMX-ML 2.1 `<Ref>` with no `version` (or, for an item, no
 `maintainableParentVersion`) was read as `latest`: a pointer to whatever was
 newest. Every concrete reference type in the 2.1 schema defaults both to
-`1.0`, so the reference names `1.0`, and it is now read that way (#476). The
+`1.0`, so the reference names `1.0`, and it is now read that way. The
 writers already agreed: `serialize` refuses to write a `latest` reference to
 2.1 because a schema-following reader takes the omission for `1.0`.
 
@@ -508,7 +508,7 @@ names resolve to this database's rows. Give both sides one database with
 
 SDMX 3.0 removed `isFinal` from every maintainable and moved the fact into the
 version: `1.0.0` is final, and `1.0.0-draft` and a legacy `1.0` are not. The
-model follows it (#420), so `is_final` is a property derived from `version`,
+model follows it, so `is_final` is a property derived from `version`,
 not a field you set:
 
 ```text
@@ -542,7 +542,7 @@ Codelist(id="CL", maintainer="AG", version="1.0", ...).is_final          # False
 
 The model holds SDMX 3.x, which has no spelling for `1.03` or `1.2.3.4`. A
 registry's `add` and `add_all` now refuse an artefact at one of those versions,
-or a reference naming one, with a `ValidationError` (#420). Reading and writing
+or a reference naming one, with a `ValidationError`. Reading and writing
 such a document as 2.1, without a registry, is unchanged.
 
 `add_all` takes a rewrite to admit them. It applies to every artefact in the
@@ -571,7 +571,7 @@ reg.add_all(msg.all_artefacts(), rewrite_version={"1.2.3.4": "1.2.4"})
 The other direction. 2.1 has no form for a version extension, so a draft
 (`1.0.0-draft`) cannot be written there. Writing it raised; now the artefact is
 left out of the 2.1 document, and so is everything in the message that would
-otherwise point at it (#420). Stripping the suffix would make a draft look final,
+otherwise point at it. Stripping the suffix would make a draft look final,
 and could collide with a real `1.0.0`.
 
 ```text
@@ -593,15 +593,14 @@ for drop in sl.dropped(msg, "2.1"):
 - A server answering a request for one artefact by name can find it in
   `dropped()` and refuse it, rather than send an empty document.
 - A late-binding reference (`1.0+.0`) is still refused: it is not a draft. The
-  reader keeps it as written; only the formats that cannot name it refuse it
-  (#429).
+  reader keeps it as written; only the formats that cannot name it refuse it.
 
 ---
 
 ## An annotation holds several URLs
 
 SDMX 3.x lets an annotation carry several `AnnotationURL`s, each optionally
-in a language, and SDMX-JSON several `links` with `hreflang` (#422). The model
+in a language, and SDMX-JSON several `links` with `hreflang`. The model
 held one, so the rest were reported lost on read. `Annotation.url` is replaced
 by `urls: tuple[AnnotationURL, ...]`, `sl.AnnotationURL(url, lang=None)`.
 
@@ -630,18 +629,18 @@ and `sl.q.annotation_url` reads them as `.link_urn` and `.type`. SDMX-ML's
 
 ## Text formats carry sentinel values; a time range its validity
 
-Two more SDMX 3.x constructs the readers used to report lost (#422):
+Two more SDMX 3.x constructs the readers used to report lost:
 
 - `Facet.sentinel_values` — `sl.SentinelValue(value, name, description)`, a
   value with a special meaning (`-1` for "not applicable"). Only a text
   format may hold one: a DSD, MSD or hierarchy with one on an
   `enumeration_format` or a level's `coding_format` is refused as it is
-  built (#508), as the schemas refuse it. 2.1 has none.
+  built, as the schemas refuse it. 2.1 has none.
 - `TimeRange.valid_from` / `valid_to` — a cube region time range's own
   validity, apart from its value set's. 2.1 and SDMX-JSON 1.0 have none.
 
 The read-side register was down to two constructs — links on identifiable
-artefacts, and N:M component maps — until an element census (#422) compared
+artefacts, and N:M component maps — until an element census compared
 every element pair the SDMX-ML 3.x schemas allow against what the writer
 emits, and found more that the readers dropped *without* a row: a
 StructureMap's `EpochMap`, `DatePatternMap`, `FrequencyFormatMapping` and
@@ -685,7 +684,7 @@ an artefact named only that way came back without its name. This is the
 schema's own default, applied where the document is parsed. It is not a
 library default language: every API that takes `lang` still requires one.
 
-Attributes were outside both censuses until an attribute census (#422)
+Attributes were outside both censuses until an attribute census
 compared every attribute the SDMX-ML schemas allow with what the writer
 emits. The readers dropped these without a row, and each now has one:
 
@@ -718,7 +717,7 @@ struct declares and nothing writes must be held, registered, or explained.
 ## External references and partial item schemes
 
 Two flags every SDMX version allows, which the readers dropped, are fields
-now (#422):
+now:
 
 | SDMX | the model |
 | --- | --- |
@@ -734,7 +733,7 @@ the URLs and does not fetch from them.
 - SDMX-JSON carries `isExternalReference` and `isPartial`, and has no
   `serviceURL` or `structureURL`; `sl.unrepresentable` reports the URLs.
 - SDMX-ML 2.1 writes a map inside a `StructureSet` and a hierarchy inside a
-  `HierarchicalCodelist`; each reads back with its container's (#421).
+  `HierarchicalCodelist`; each reads back with its container's.
 - Storage 2.33: `artefact.service_url`, `structure_url` and `is_partial`; the
   `is_external_ref` column, declared since the first schema and never
   written, is written now.
@@ -744,7 +743,7 @@ the URLs and does not fetch from them.
 ## A format's sequence and time facets; a concept's enumeration format and ISO reference
 
 Four facets every SDMX format allows on a text format, which the readers
-dropped, are `Facet` fields now (#422):
+dropped, are `Facet` fields now:
 
 | SDMX | `Facet` |
 | --- | --- |
@@ -775,7 +774,7 @@ adds the four facet columns to every facet group (`concept`, `dsd_component`,
 
 ## Smaller fields the attribute census found
 
-More of what the attribute census (#422) found dropped are fields now:
+More of what the attribute census found dropped are fields now:
 
 | SDMX | the model | where SDMX lacks it |
 | --- | --- | --- |
@@ -817,7 +816,7 @@ Storage 2.37 keeps them in `data_key_component` and
 ## A structure map's date and fixed-value maps
 
 An SDMX 3.x `StructureMap` used to be read as its component maps alone. Now
-`StructureMap` holds the other children too (#422):
+`StructureMap` holds the other children too:
 
 - `epoch_maps: tuple[EpochMap, ...]` — maps a source component's epoch count
   (`base_period`, counted in `epoch_period: sl.EpochPeriod`) to a target
@@ -851,7 +850,7 @@ SDMX-ML 2.1 has none of these, and `sl.unrepresentable` reports them. SDMX-ML
 ## Maps are N:M
 
 SDMX 3.x lets a map have several sources and several targets, and the readers
-kept only the first of each (#422). For a representation map they did this
+kept only the first of each. For a representation map they did this
 without reporting it, and a mapping with no target value was dropped
 altogether. The model now holds every one, and the names follow SDMX-ML 3.x's
 elements:
@@ -900,8 +899,8 @@ sl.RepresentationMap(
 - A `str` passed where a tuple is expected is refused rather than iterated.
 
 SDMX-ML 2.1 maps one codelist to one codelist, code to code. `check_writable`
-refuses a map it would have to cut to one pair, just as it refused a regex map
-(#242): several endpoints, or an N:M component map or mapping.
+refuses a map it would have to cut to one pair, just as it refused a regex map:
+several endpoints, or an N:M component map or mapping.
 
 The query language follows. `q.representation_map.sources` and `.targets` are
 fan-outs over the endpoints. Each endpoint has a `codelist` hop, null for a
@@ -933,7 +932,7 @@ annotations to the wrong mapping. All of that is kept now, in order.
 ## SDMX-ML 2.1's representation mappings are held
 
 A 2.1 `<ComponentMap>` says how its values map with a `<RepresentationMapping>`,
-which every 2.1 read dropped and reported (#422). It is one of three forms, and
+which every 2.1 read dropped and reported. It is one of three forms, and
 each is held in the 3.x shape where 3.x has one:
 
 - **`<CodelistMap>`** names a codelist map of the same structure set. It is
@@ -970,8 +969,8 @@ Storage 2.44: `component_map` gains a `to_*` facet group and `to_value_type`.
 A registry's `add` and `add_all` used to store an artefact that every format
 refuses, and the refusal came at its first write — for a server built on a
 `LocalRegistry`, as a failed request for an artefact it was allowed to
-register (#419). Every rule on which SDMX-ML 2.1, 3.0, 3.1 and SDMX-JSON agree
-is now checked as the artefact is built (#492, see [Every rule runs as an
+register. Every rule on which SDMX-ML 2.1, 3.0, 3.1 and SDMX-JSON agree
+is now checked as the artefact is built (see [Every rule runs as an
 artefact is built](#every-rule-runs-as-an-artefact-is-built)), so there is
 nothing of that kind left for `add` to refuse:
 
@@ -1023,7 +1022,7 @@ response holding one raised.
 ## Fields no SDMX format carries are gone
 
 Two fields could be set but no SDMX format could write them, so they were
-dropped on every write (#419):
+dropped on every write:
 
 - **`HierarchicalCode.name` / `.description`.** A hierarchical code is
   *identifiable*, not nameable, in SDMX-ML 2.1, 3.0, 3.1 and SDMX-JSON. The
@@ -1054,7 +1053,7 @@ Storage 2.45 drops `hierarchy_node.name` / `.description` and
 
 A 2.1 `<str:MetadataTarget>` holds one or more target objects, so a report can
 describe, for example, an identifiable object within a data set. The model kept
-the first and reported the rest lost (#422). `MetadataTarget` now holds them
+the first and reported the rest lost. `MetadataTarget` now holds them
 all, in order, as `target_objects`, and each is a `TargetObject`.
 
 **Breaking:** the six fields that flattened the one object onto the target
@@ -1081,7 +1080,7 @@ without this 2.1 layer, as before.
 
 `DataConstraint.data_keys` and `AttachmentConstraint.data_keys` are now
 `data_key_sets`: a tuple of `sl.DataKeySet`, each holding `is_included` and
-its `keys` (#479).
+its `keys`.
 
 ```text
 # before
@@ -1108,8 +1107,8 @@ keys read as one allowing them: the opposite of the document, with nothing
 lost or refused. The shape follows the information model, and pysdmx's
 `KeySet` and sdmx1's `DataKeySet` hold it the same way.
 
-- A key set with no `isIncluded` now refuses its constraint, as #474 refuses
-  any other missing required attribute.
+- A key set with no `isIncluded` now refuses its constraint, as any other
+  missing required attribute does.
 - A key set with no keys is refused by `add` and on read, because every
   format requires at least one.
 - Storage is on schema 2.47: a `data_key_set` table, plus `data_key.set_idx`.
@@ -1123,7 +1122,7 @@ data sources, or to one or more artefacts of a single kind — data structures,
 dataflows or provision agreements — with queryable data sources beside them.
 `ConstraintAttachment` held one artefact per kind, so the readers kept the
 first dataflow and dropped the rest, along with every data source and SDMX-ML
-2.1's data sets (#422). It now holds each alternative:
+2.1's data sets. It now holds each alternative:
 
 ```text
 # before
@@ -1184,7 +1183,7 @@ sources get tables of their own, and `data_constraint` gains
 ## SDMX-ML 2.1's own DSD constructs are held
 
 Four things only a 2.1 DSD can say were dropped on read, each reported as a
-loss (#422). They are held now:
+loss. They are held now:
 
 - **An attribute's attachment groups.** `Attribute.attachment_groups`, a
   tuple of group ids beside `related_dimensions`.
@@ -1216,7 +1215,7 @@ SDMX-JSON is refused, since neither has a form for them. Storage 2.41 adds
 
 SDMX 3.x lets every identifiable carry `<com:Link>` elements — "a link to the
 metadata report can be dynamically inserted in the structure metadata" — and
-every reader dropped them, reported as a loss (#422). They are `links` now,
+every reader dropped them, reported as a loss. They are `links` now,
 beside each `uri`: a tuple of `sl.Link(rel, url, urn=None, type=None)` on
 every maintainable, item and component 3.x lets carry one, and on a DSD's and
 an MSD's component lists (`dimension_descriptor_links`, …,
@@ -1269,7 +1268,7 @@ when it has some, so an artefact without links costs what it did.
 
 ## A component may be enumerated by a ValueList
 
-SDMX 3.x's `ValueList` is modelled (#422) as `sl.ValueList`, a maintainable of
+SDMX 3.x's `ValueList` is modelled as `sl.ValueList`, a maintainable of
 `sl.ValueItem` values — a codelist without hierarchy or item identity, whose
 values may be any string. It lives in `msg.value_lists`, and a component's
 representation may reference one wherever it may a codelist, so the
@@ -1302,7 +1301,7 @@ dim.codelist.codes               # after: TypeError naming value_list if it is o
 
 ## Geographic codelists are read, not refused
 
-SDMX 3.x's `GeographicCodelist` and `GeoGridCodelist` are modelled (#422) —
+SDMX 3.x's `GeographicCodelist` and `GeoGridCodelist` are modelled —
 as `sl.GeographicCodelist` and `sl.GeoGridCodelist`, subclasses of
 `sl.Codelist`. Their URN class is `Codelist`, so they land in `msg.codelists`
 beside the plain ones and any `Ref[Codelist]` can name one; their codes are
@@ -1327,7 +1326,7 @@ what that loses.
 ## What a read cannot hold is reported
 
 SDMX 3.x carries constructs the model has no field for yet, and the SDMX-ML
-readers used to drop them silently (#422). Now:
+readers used to drop them silently. Now:
 
 - **Inside an artefact** (a 2.1 `HybridCodelistMap`, a 2.1 metadata
   target's second target object, …):
@@ -1344,14 +1343,14 @@ readers used to drop them silently (#422). Now:
   includes one a restriction prohibits with `maxOccurs="0"`. In SDMX-ML 3.x,
   a DSD's `<str:MetadataAttributeUsage>` may not carry a `ConceptIdentity` or
   `LocalRepresentation`; one that does was read past and is now refused.
-- **An attribute the schema forbids** on an element is refused the same way
-  (#446). A misspelt optional attribute, such as `validfrom` for `validFrom`,
+- **An attribute the schema forbids** on an element is refused the same way. A
+  misspelt optional attribute, such as `validfrom` for `validFrom`,
   was read past and its value lost. So was one a version prohibits, such as
   `version` and `isFinal` on a 3.0 organisation scheme. `xsi:` attributes are
   always allowed. In the cached registry documents the only such attribute is
   on Eurostat's 3.0 `AgencyScheme`, which its `<str:Name>` already refused. The
   check adds about 5% to the parse of a large codelist document.
-- **The frame around the artefacts is checked too** (#447): the message
+- **The frame around the artefacts is checked too**: the message
   header, and the containers between `mes:Structures` and the artefacts. A
   stray element there is inside no artefact, so it is refused by its place,
   e.g. `mes:Structures/str:Codelists/str:Bogus[1]`. An unknown container, or
@@ -1360,7 +1359,7 @@ readers used to drop them silently (#422). Now:
   among the codelists was blamed as "a reader defect". As with any refusal,
   `parse` raises and `strict=False` reads the rest. None of the 167 cached
   registry documents is affected. The header is read too, into
-  `msg.header` (#480; see [A message's header is read and
+  `msg.header` (see [A message's header is read and
   written](#a-messages-header-is-read-and-written)).
 
 ```text
@@ -1373,8 +1372,8 @@ for gap in msg.lost:
   refused, so a reader that skips one is caught too.
 - **SDMX-JSON works its losses out when you first read `msg.lost`**, not
   during the read, because finding them walks the whole document and most
-  callers never ask (#461). Until then the message holds the document's
-  bytes, at most one copy of what you parsed (#473). Read `msg.lost`, or
+  callers never ask. Until then the message holds the document's
+  bytes, at most one copy of what you parsed. Read `msg.lost`, or
   parse with `lossless=True`, to release them; a process that keeps many
   parsed JSON messages alive and never reads `lost` keeps their documents
   too.
@@ -1396,7 +1395,7 @@ for gap in msg.lost:
 ### A region value is a `RegionValue`
 
 `KeyValue.values` and `ComponentValueSet.values` hold `sl.RegionValue`s, not
-strings (#422): the value, and its `cascade` (`CascadeSelection`, default
+strings: the value, and its `cascade` (`CascadeSelection`, default
 `SELF_ONLY`, the code alone; never `None`), `lang`, `valid_from` and
 `valid_to`. A bare string still builds one, unqualified.
 
@@ -1423,7 +1422,7 @@ KeyValue(dimension_id="REF_AREA", values=["EU", RegionValue("XX", cascade=Cascad
 
 ### A DSD holds SDMX 3.0's component additions
 
-Four of those losses are now fields (#422):
+Four of those losses are now fields:
 
 | SDMX 3.0 | the model |
 | --- | --- |
@@ -1438,7 +1437,7 @@ Four of those losses are now fields (#422):
   that rise with it — counted from 1 or from 0, with or without a number
   skipped — read as before; one that contradicts it (a dimension saying it
   comes before one it follows, or two claiming one place) refuses the DSD,
-  since the schema requires consistency. A gap was refused too until #449,
+  since the schema requires consistency. A gap used to be refused too,
   which cost 802 of Eurostat's SDMX 3.0 DSDs. The
   SDMX-JSON writer now counts from 0, as that schema says; it counted from 1.
 - SDMX-ML 3.0/3.1 and SDMX-JSON read and write all of it. SDMX-ML 2.1 has
@@ -1447,7 +1446,7 @@ Four of those losses are now fields (#422):
   table, and the MSD as an `artefact_ref` with role `metadata`.
 
 The annotations of a DSD's component lists, its groups and an MSD's attribute
-list are fields now too (#422). The lists are not modelled — `dsd.dimensions`
+list are fields now too. The lists are not modelled — `dsd.dimensions`
 stays a plain list — so their annotations sit on the structure, named for
 the SDMX class each list is:
 
@@ -1479,7 +1478,7 @@ reports. No annotation is reported lost any more.
 
 The SDMX-ML readers filled in a schema-required construct that a document
 omitted, and the artefact then held that value as though the document had
-stated it (#474). There are now two outcomes.
+stated it. There are now two outcomes.
 
 - **A value worth assuming** is kept and recorded on `msg.assumed`, one
   `sl.ReadAssumption` per artefact and construct. Examples: an attribute with
@@ -1548,7 +1547,7 @@ assumed to be the same as the identifier of the concept referenced from the
 concept identity". The readers read the omission as `""`, so a conformant DSD
 or MSD was refused for an empty id, or kept with one (2.1's measure dimension).
 Now a dimension, attribute, measure, measure dimension or metadata attribute
-without an `id` takes the item id of its `ConceptIdentity` (#477). This is the
+without an `id` takes the item id of its `ConceptIdentity`. This is the
 standard's answer, not an assumption, so nothing is recorded on
 `msg.assumed`. One with neither an id nor a concept refuses its artefact.
 
@@ -1581,7 +1580,7 @@ structure is now the single source of both.
 SDMX-ML 2.1 pins the primary measure id to `OBS_VALUE`; 3.x lets a measure be
 named for what it measures. A 3.x DSD with one measure named anything else was
 refused by the 2.1 writer, and is now written with that measure renamed
-`OBS_VALUE`, keeping its concept and representation (#421). Read back, the id
+`OBS_VALUE`, keeping its concept and representation. Read back, the id
 is `OBS_VALUE`; `sl.unrepresentable(dsd, "2.1")` names `measures[].id` as the
 loss. A DSD with several measures is still refused: 2.1 has no form for it.
 
@@ -1589,7 +1588,7 @@ loss. A DSD with several measures is still refused: 2.1 has no form for it.
 
 SDMX-ML 2.1 has no codelist extension, and the 2.1 writer used to write an
 extending codelist with only its own codes. It now writes the codes it
-inherits too (#421), and refuses one whose extended codelists it cannot find
+inherits too, and refuses one whose extended codelists it cannot find
 — a reference must be resolved, or the codelist must be in the same message.
 `sl.unrepresentable(codelist, "2.1")` names `extensions` as what is lost.
 
@@ -1608,7 +1607,7 @@ read as one URN, so the store kept one and a 3.0 write was schema-invalid.
 
 The 2.1 reader now names each hierarchy as the Fusion Metadata Registry does,
 `<hierarchy>@<codelist>` — `H` in `HCL_AGE` is `H@HCL_AGE`, which is the form
-ECB and BIS already serve (#421). A hierarchy whose id is its codelist's keeps
+ECB and BIS already serve. A hierarchy whose id is its codelist's keeps
 it. Each hierarchy also takes its codelist's validity and external-reference
 attributes, which 3.0 made its own.
 
@@ -1630,7 +1629,7 @@ attributes, which 3.0 made its own.
 SDMX 3.1 removed `<ReleaseCalendar>` from `DataConstraint`. A 3.1 write used to
 refuse a constraint carrying one; it now writes the constraint without it, and
 `sl.unrepresentable(constraint, "3.1")` names `release_calendar` — as SDMX-JSON
-always did (#421). An `Actual` constraint is written to 3.1 as an
+always did. An `Actual` constraint is written to 3.1 as an
 `AvailabilityConstraint` when it fits that shape, and refused when it does
 not: without its role it would read back as `Allowed`. See [An Actual
 constraint is written to 3.1 as an
@@ -1644,10 +1643,10 @@ SDMX-JSON as the `Allowed` `DataConstraint` it equals, and reads back as one.
 
 SDMX-ML 2.1 requires every metadata structure to carry a `MetadataTarget` and a
 `ReportStructure`, the reporting layer SDMX 3.0 removed. A 3.x MSD has neither,
-and a 2.1 write refused it (#245). It now writes one of each: a target of any
+and a 2.1 write refused it. It now writes one of each: a target of any
 object (`IdentifiableObjectTarget objectType="Any"`) and a report of every
 attribute, both carrying an `sdmxlib:synthetic-report-layer` annotation. The
-2.1 reader drops them again, so 3.x → 2.1 → 3.x returns the MSD (#421).
+2.1 reader drops them again, so 3.x → 2.1 → 3.x returns the MSD.
 
 An MSD with its own layer is written with it, as before. One with half a layer
 — targets and no report, or the reverse — is still refused, as is one with no
@@ -1661,7 +1660,7 @@ structure instead, so a flow read from 2.1 has none, and a 3.x or SDMX-JSON
 write refused it. The writers now derive the targets from the structure's
 `IdentifiableObjectTarget`s, one wildcard URN per class: `Dataflow` gives
 `urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=*:*(*)`, and an item class
-such as `Code` gives `…codelist.Code=*:*(*).*` (#421).
+such as `Code` gives `…codelist.Code=*:*(*).*`.
 
 - `mdf.with_derived_targets(msds)` does the same by hand; the structure comes
   from the resolved reference, or else from `msds`. `mdf.target_misfits(msds)`
@@ -1679,8 +1678,7 @@ such as `Code` gives `…codelist.Code=*:*(*).*` (#421).
 SDMX-ML 2.1 has no `MetadataProviderScheme` and no
 `MetadataProvisionAgreement`, and a 2.1 write refused a message holding either.
 2.1 provisioned reference metadata with a plain `ProvisionAgreement` over a
-metadataflow that names a data provider, so that is how both are now written
-(#421):
+metadataflow that names a data provider, so that is how both are now written:
 
 - An agency's metadata providers go into its `DATA_PROVIDERS` scheme, the only
   id and version 2.1 allows a provider scheme. If the agency has no data
@@ -1707,7 +1705,7 @@ the `MetadataProvider` of the same agency and id. It used to be a
 
 ### `uri` is a query path
 
-Every relation whose table keeps a `uri` now has a `uri` path (#444): every
+Every relation whose table keeps a `uri` now has a `uri` path: every
 maintainable (`q.codelist.uri`, `q.dsd.uri`, …) and the items and components
 `q.code`, `q.concept`, `q.category`, `q.agency`, `q.data_provider`,
 `q.metadata_provider`, `q.component`, `q.group`, `q.hcode` (and its
@@ -1719,7 +1717,7 @@ string column. For example, `reg.query(sl.q.code).filter(sl.q.code.uri ==
 
 `sl.OrganisationSchemeMap` maps one organisation scheme's organisations to
 another's, as `ConceptSchemeMap` does for concepts: `source` and `target`
-references and `maps` of `ItemMap` pairs (#448). Its ends may be schemes of
+references and `maps` of `ItemMap` pairs. Its ends may be schemes of
 different kinds, for example agencies onto data providers.
 
 - **Read and written** in SDMX-ML 2.1 (inside a `StructureSet`, named
@@ -1737,7 +1735,7 @@ different kinds, for example agencies onto data providers.
 In SDMX-ML 3.x a codelist extension may select codes by pattern (`A%`). SDMX-JSON's
 member value is a plain id, and the JSON writer used to write the pattern anyway,
 which the schema rejects. It now writes the codes the pattern matches, each with
-the member's cascade (#451). `cl.expand_wildcards(codelists)` does the same by
+the member's cascade. `cl.expand_wildcards(codelists)` does the same by
 hand.
 
 - The extended codelist must be resolved or in the message, and the pattern must
@@ -1749,7 +1747,7 @@ hand.
 ### An attribute's usage and relationship
 
 Three changes make every attribute convert across SDMX-ML 2.1, 3.0, 3.1 and
-SDMX-JSON (#421):
+SDMX-JSON:
 
 - `Attribute.usage` and `Measure.usage` default to `AttributeUsage.OPTIONAL`
   and are never `None`, as SDMX 3.x's schema defaults `@usage`. Passing
@@ -1760,7 +1758,7 @@ SDMX-JSON (#421):
   Code checking `usage is None` should check for `AttributeUsage.OPTIONAL`.
 - An attribute's `attachment` (and a DSD's metadata attribute usage's) is
   required: there is no default, and `None` is refused as the attribute is
-  built (#508), since every format requires a relationship. Every writer used
+  built, since every format requires a relationship. Every writer used
   to write a missing one as attached to the data set; then it was refused on
   write, after a store had accepted it. Set `AttachmentLevel.DATASET` for that
   meaning. A store row written without one is reported in `refused`.
@@ -1778,7 +1776,7 @@ SDMX 3.1 removed the role from `DataConstraint` and moved Actual content to a
 type of its own, `AvailabilityConstraint`. It is not a maintainable artefact —
 no id, agency, version or name — but one attachment, one included cube region
 and optional series and observation counts: the answer to an availability
-query (#421).
+query.
 
 - `sl.AvailabilityConstraint` models it, in the new
   `StructureMessage.availability_constraints`. It has no URN, so it is in no
@@ -1796,7 +1794,7 @@ query (#421).
 
 ### A 2.1 map is named for its structure set
 
-The same conversion, for 2.1's other container (#421). A map read from a
+The same conversion, for 2.1's other container. A map read from a
 `StructureSet` is named `<map>@<set>` — `CLM_FREQ` in `SS_A` is `CLM_FREQ@SS_A`
 — and takes the set's validity and external-reference attributes. Inside a set
 the 2.1 writer invented (it carries an annotation saying so) a map keeps its
@@ -1842,12 +1840,12 @@ sl.widen_key(key, dsd, "3.0")
 
 ## Validation is stricter
 
-The first four rules below raise `ValidationError` as the artefact is built
-(#492), so no artefact you hold breaks one, and a reader refuses a
+The first four rules below raise `ValidationError` as the artefact is built, so
+no artefact you hold breaks one, and a reader refuses a
 document's artefact that does.
 
 - Every `NameableArtefact` requires a name, and its text must not be blank
-  (empty or whitespace only) in any language it gives (#452). A strict
+  (empty or whitespace only) in any language it gives. A strict
   registry treats `{"en": ""}` as no name: FMR refused a codelist whose
   498,786 codes were named that way. Before, a write produced a file the 2.1
   reader then refused, and SDMX-JSON accepted what SDMX-ML did not. The
@@ -1855,7 +1853,7 @@ document's artefact that does.
   rather than dropping it, so a blank description, which is optional and
   allowed, survives a round trip.
 - A code's or concept's `parent_id` must name another item of the same
-  scheme, and no chain of parents may loop (#453). A dangling parent, a
+  scheme, and no chain of parents may loop. A dangling parent, a
   self-parent or a cycle used to validate cleanly and serialise, and then
   `roots` / `children_of` gave a forest with orphans, or none at all. A
   codelist that extends others may name a parent it inherits, so only its own
@@ -1864,7 +1862,7 @@ document's artefact that does.
 - An attribute or metadata attribute usage attached to a series must name at
   least one dimension, and every name must be a dimension of the DSD (the
   time dimension, and 2.1's measure dimension, count). One attached to a
-  group must name a group the DSD declares (#454). A series attachment with
+  group must name a group the DSD declares. A series attachment with
   no dimensions was written as an empty `<str:AttributeRelationship/>`, which
   every schema rejects, and FMR refused the DSD. Eurostat's 3.0 DSDs name
   dimensions in the wrong case (`FREQ` for `freq`): 2,426 references across
@@ -1872,7 +1870,7 @@ document's artefact that does.
   case is read as that dimension and recorded on `msg.assumed`, so those DSDs
   still read, and `lossless=True` refuses them.
 - A hierarchical code that names its level must name one of the hierarchy's
-  levels, at its own depth or deeper, never shallower (#455). SDMX writes a
+  levels, at its own depth or deeper, never shallower. SDMX writes a
   hierarchy's levels as a chain, broadest first, and a code's level reference
   exists only to skip *down* from its depth. A code naming a level above its
   depth describes a structure the chain cannot hold. The model holds the
@@ -1914,7 +1912,7 @@ by_shape = {tuple(dsd.dimensions.ids()): "..."}
 
 The old `__hash__` was `hash(self._items)`, which only ever succeeded on the
 empty case, because no domain item is hashable. Items are attrs `@frozen`
-now (#492), but deliberately still unhashable: they compare by value, and
+now, but deliberately still unhashable: they compare by value, and
 hashing a large codelist would walk every code. Key by id, or by `urn` for an
 artefact.
 
@@ -2046,7 +2044,7 @@ A category, a hierarchy node and a metadata attribute nest, and SDMX names a
 nested one by its dotted path — `ECON.GDP`, not `GDP` — because its id may
 repeat in another branch. Eurostat files one category id under four parents;
 OECD places `MR` at a root and under `TYPO_METRO`. Keyed by leaf id, the repeat
-was refused or overwrote its namesake (#439).
+was refused or overwrote its namesake.
 
 Every method on `CategoryScheme`, `Hierarchy`, `MetadataStructure` and
 `LazyHierarchy` that names an item now takes a **path**, and a bare id names a
@@ -2083,7 +2081,7 @@ h.depths()                 # {"CA.ON": 1, ...} — every map is keyed by path
 ## An empty measure relationship is refused as it is set
 
 `Attribute.related_measures=()` was stored as given and written as an empty
-measure relationship, which SDMX-ML 3.0, 3.1 and SDMX-JSON all reject (#497).
+measure relationship, which SDMX-ML 3.0, 3.1 and SDMX-JSON all reject.
 The IM relates an attribute "to one or more Measures", and an unset one to
 all of them, so an empty one has no meaning: it now raises `ValidationError`
 as it is set. Use `None` (the default) for every measure, or name them.
@@ -2091,7 +2089,7 @@ as it is set. Use `None` (the default) for every measure, or name them.
 ## An invalid id, version, name, facet bound or time range is refused as it is set
 
 A value SDMX rules out by itself used to be accepted until something
-called `validate()` — `add`, `serialize` — and a store read never did (#492).
+called `validate()` — `add`, `serialize` — and a store read never did.
 Now the model's own fields refuse it: construction and `attrs.evolve` raise
 `ValidationError`, naming the class and field. (Assigning a field is no
 longer possible at all; see [Every model class is
@@ -2145,7 +2143,7 @@ What one artefact must be as a whole — unique item ids, parents that exist and
 do not loop, a concept on every component and a code on every hierarchical
 code, attachments naming the DSD's own dimensions, an organisation scheme's
 fixed id and version, a level's coding type — used to run in `validate()`,
-which bound only where something called it (#492). With the model frozen, an
+which bound only where something called it. With the model frozen, an
 artefact is only ever built whole, so these rules run then: the constructor
 and `attrs.evolve` raise `ValidationError`, and no artefact you hold breaks
 one.
@@ -2175,7 +2173,7 @@ sl.validate(dsd)   # ValidationError         # ValidationError: ...dimensions[FR
 ## Every model class is frozen
 
 Artefacts, items and the model's value classes were `@define`: mutable, with
-nothing recording why (#492). The mutation that needed it is gone — a `Ref`
+nothing recording why. The mutation that needed it is gone — a `Ref`
 finds its target through its registry, and readers build a tree from its
 leaves — so all 103 model classes are now `@frozen`. An artefact a registry
 hands out cannot change under another holder, and a rule its constructor
@@ -2198,7 +2196,7 @@ dsd.dimensions["FREQ"].annotations = a    dsd = attrs.evolve(dsd, dimensions=[..
 ## A `Ref` is frozen and finds its target on access
 
 A `Ref` used to be filled in: a registry wrote the artefact into it, and
-swapped one canonical `Ref` per URN into every artefact it was given (#492).
+swapped one canonical `Ref` per URN into every artefact it was given.
 Nothing writes to a `Ref` now. It holds its URN and, at most, what bound it,
 and looks its target up there each time it is used:
 
@@ -2239,7 +2237,7 @@ and looks its target up there each time it is used:
 
 A `LocalRegistry` read used to trust its rows, so a store written past `add`
 — straight into DuckDB, as a bundle builder does — handed back artefacts no
-SDMX format can write (#492). Every artefact the store builds is now checked
+SDMX format can write. Every artefact the store builds is now checked
 as `add` checks it:
 
 - **`get` raises** `SdmxConformanceError` naming it: `... is stored and
@@ -2261,7 +2259,7 @@ as `add` checks it:
 
 ## Data consumer and organisation unit schemes are read, not refused
 
-SDMX's two remaining organisation schemes are modelled (#469):
+SDMX's two remaining organisation schemes are modelled:
 
 - `sl.DataConsumerScheme`, holding `sl.DataConsumer` items in `consumers`.
   It is the receiving counterpart of `DataProviderScheme`, with its id fixed to
@@ -2298,7 +2296,7 @@ for scheme in msg.organisation_unit_schemes:
 ## A later codelist extension wins a clash
 
 When two extended codelists contribute a code with the same id,
-`Codelist.apply_extensions` now keeps the **later** extension's code (#486). It
+`Codelist.apply_extensions` now keeps the **later** extension's code. It
 kept the earlier one. That also changes what an SDMX-ML 2.1 write of an
 extending codelist holds. The IM says so (§4.3.3.2: "the latest Codelist used
 overrides any previous Codelist"), and FMR 12.4.2 flattens the same way. The
@@ -2312,14 +2310,14 @@ codes, give an extension a `prefix`.
 
 Some rules the information model states are enforced by no SDMX schema. An
 artefact that breaks one is now built with an `sl.ImRuleWarning`, one per
-artefact (#481):
+artefact:
 
-- a facet's sequence attributes go together (IM §3.6.3.3, #482): `interval`,
+- a facet's sequence attributes go together (IM §3.6.3.3): `interval`,
   `start_value` and `end_value` need `is_sequence=True` and each other, and
   likewise `time_interval`, `start_time` and `end_time`. A time dimension's
   `start_time`/`end_time` are bounds, and do not warn;
 - a data constraint holds cube regions or data key sets, not both
-  (§12.3.3.1, #491).
+  (§12.3.3.1).
 
 Nothing that built before is refused. Across every registry we sweep, three
 facets of about 1.05 million warn, and no constraint does. A
@@ -2333,7 +2331,7 @@ is now a warning, never an issue. `str(issue)` no longer starts `error:`.
 
 ## A message's header is read and written
 
-A message's header was ignored on read, and every write invented one (#480).
+A message's header was ignored on read, and every write invented one.
 It is now modelled: `StructureMessage.header` is an `sl.Header` and
 `MetadataMessage.header` an `sl.MetadataHeader`, each `None` when the
 document has none. Both are set with `header=`.
@@ -2367,7 +2365,7 @@ and a header-less message round-trips as one.
 
 ## Writers leave out what a schema defaults, and the model holds what it means
 
-Output has one spelling per meaning, the minimal one (#503). An optional
+Output has one spelling per meaning, the minimal one. An optional
 attribute at the default its format and type declare is left out:
 `usage="optional"`, `include="true"`, `isInclusive="true"`,
 `cascadeValues="false"`, a component's `textType="String"` (a time
@@ -2404,7 +2402,7 @@ reads and writes as SDMX-ML does.
 
 Every SDMX-JSON schema types `prepared`, and a map's validity, as a JSON
 Schema `date-time`, which requires a zone. Nothing checked that, and some of
-what sdmxlib wrote had none (#496).
+what sdmxlib wrote had none.
 
 **Breaking:** `prepared` is a timezone-aware `datetime`, not a string, on
 `write_sdmx_json_data` (SDMX-JSON 1.0 and 2.0) and `ObsQuery.sink_json`. A
@@ -2450,7 +2448,7 @@ local time.
 ## A predicate belongs to the relation it was built from
 
 A query refuses a predicate built from a sibling root — another relation over
-the same table — where it used to plan it from the wrong relation (#510).
+the same table — where it used to plan it from the wrong relation.
 Every maintainable roots at `sdmx.artefact`, so a check on the table let these
 through:
 
@@ -2480,7 +2478,7 @@ maintainable root. The type checker already refused these (`Pred[R]`); the
 runtime now agrees with it.
 ## A time dimension always has a format
 
-`TimeDimension.representation` is never `None` (#507). With no format stated it
+`TimeDimension.representation` is never `None`. With no format stated it
 is `Facet(type=ObservationalTimePeriod)`, the default every SDMX format gives a
 time dimension:
 
@@ -2503,7 +2501,7 @@ test the facet's type instead.
 ## A time or measure dimension needs a concept
 
 Every component needs a concept, and the rule now covers the two that are
-not in a list (#506): a `TimeDimension` or `MeasureDimension` without one is
+not in a list: a `TimeDimension` or `MeasureDimension` without one is
 refused as the DSD is built, as a dimension, attribute or measure already was.
 It used to build, store, and be written as SDMX-ML its XSD rejects.
 
@@ -2523,7 +2521,7 @@ sl.DataStructure(
 ## SDMX-JSON data names its language
 
 `lang` has no default on `write_sdmx_json_data` (1.0 and 2.0) and
-`ObsQuery.sink_json` (#509). It picks the
+`ObsQuery.sink_json`. It picks the
 names a data message carries — each dimension's, value's and the dataflow's —
 and fills `contentLanguages`. It defaulted to `"en"`, the one place the
 library chose a language for the caller; `sink_json` did not take one at all.
@@ -2542,7 +2540,7 @@ obs.sink_json("exr.json", lang="en")
 ## `Frame` is `Select`
 
 What `select(...)`, `group_by(...).agg(...)` and `agg(...)` return — a
-projection plan, run by `.collect()` — is `sl.Select`, not `sl.Frame` (#516).
+projection plan, run by `.collect()` — is `sl.Select`, not `sl.Frame`.
 The old name clashed with `.frame()`, which *runs* a query into a polars
 `DataFrame`; `Select` is SQL's word for the statement, as in SQLAlchemy.
 Nothing changes at a call site that does not name the type.
@@ -2565,7 +2563,7 @@ with sl.LocalRegistry(":memory:") as local:
 ## An observation result is typed from its DSD
 
 `frame()` and `select(...).collect()` on an observation query type each
-component from the DSD (#516): a code as its codelist's `pl.Enum`, a value as
+component from the DSD: a code as its codelist's `pl.Enum`, a value as
 its `Facet` declares — where they returned whatever the table held, usually
 text. A component the DSD gives no representation keeps its stored type. A
 value that does not fit — a code the codelist does not list — raises
@@ -2576,8 +2574,8 @@ every bad value.
 
 ## Observation data is an `ObsQuery`
 
-`reg.data()`, `DataQuery`, `sl.dim`, `DimFilter` and `Dataset` are gone
-(#516). There were two ways to read a dataflow's observations — `reg.data(...)
+`reg.data()`, `DataQuery`, `sl.dim`, `DimFilter` and `Dataset` are gone. There
+were two ways to read a dataflow's observations — `reg.data(...)
 .fetch()` into a `Dataset`, and `reg.obs(flow)` into an `ObsQuery` —
 and they answered different questions about the same rows. `ObsQuery` is the
 one left, and it took over what only `Dataset` had.
@@ -2647,7 +2645,7 @@ print(obs.structure.dimensions.ids())  # ['REF_AREA']
 
 A path-keyed tree — `Hierarchy`, `CategoryScheme`, `MetadataStructure`,
 `LazyHierarchy` — raises `KeyError` when a walk is given a node's own id
-instead of its path, naming the path (#514). `h.broader("ON")` answered `None`
+instead of its path, naming the path. `h.broader("ON")` answered `None`
 and `h.narrower("ON")` an empty list, as if `ON` were a root or a leaf, which
 is how code written before the trees were keyed by path kept running wrong. A
 key that is nobody's id still answers absent; `get` still answers `None`.
@@ -2678,7 +2676,7 @@ h.broader("ON")  # KeyError: 'ON' is a node id, not a path in Hierarchy ... It i
 ## A REST filter nothing narrows is refused
 
 `RestRegistry.obs(flow)` raises `PushdownError` when a filter cannot go into
-the data request — one on a measure, say — and nothing else narrows it (#515).
+the data request — one on a measure, say — and nothing else narrows it.
 It fetched `/data/{flow}/all`, every observation the provider holds, to filter
 them locally. Beside a key or time filter the same predicate still runs, after
 a fetch those narrowed; an unfiltered query still fetches everything, as asked.
@@ -2695,7 +2693,7 @@ obs.filter(obs.col("REF_AREA") == "ON", obs.col("OBS_VALUE") > 1.0).frame()
 
 ## An observation column refuses a literal of the wrong kind
 
-`obs.col(id)` checks what it is compared with as the filter is built (#511). A
+`obs.col(id)` checks what it is compared with as the filter is built. A
 code, a time period or a declared string is text; a numeric `Facet` is a
 number; a component the DSD leaves untyped takes its stored column's type.
 `obs.col("REF_AREA") == 1` matched nothing, and `obs.col("OBS_VALUE") > 1.5`
@@ -2719,7 +2717,7 @@ print(obs.filter(obs.text("REF_AREA") == "ON").frame().height)  # 1
 ## An untyped measure is read as its values say
 
 A measure the DSD gives no type — no `Facet`, no codelist — is no longer
-forced to text when a REST fetch or `reg.scan_csv` stores it (#518). DuckDB
+forced to text when a REST fetch or `reg.scan_csv` stores it. DuckDB
 infers it from the values, so an `OBS_VALUE` of numbers is a number:
 `obs.num("OBS_VALUE") > 1.5` runs, and `frame()` gives it as a float rather
 than a string. A measure the DSD does type is forced as before.
@@ -2731,7 +2729,7 @@ than a string. A measure the DSD does type is forced as before.
 `sl.read`, `sl.parse`, `to_xml`, `to_json`, `Ref`/`ref()`,
 `InternationalString`, the polars bridge, and attribute navigation
 (`dsd.dimensions["FREQ"].codes`) are as they were — though `.codes` on a
-registry-backed DSD only *became* what it always declared in #398, and
+registry-backed DSD only *became* what it always declared in 0.62.0, and
 `code_ids()` is now the cheap way to ask for ids alone. `ItemList` keeps its API
 apart from hashing, covered above. If your code only reads artefacts and never
 touched a registry constructor or a query, it may need nothing beyond the

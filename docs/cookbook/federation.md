@@ -397,7 +397,7 @@ series attributes live in two tables.
 
 `store.connection` is still there, but it is the store's *base* connection —
 a single object shared by every thread, and the one the library stopped
-executing on in #75/#80 because `DuckDBPyConnection` is not thread-safe. Use it
+executing on because `DuckDBPyConnection` is not thread-safe. Use it
 for setup and DDL, or to hand to a component that derives its own handle. For
 running queries, use `session()` or `execute()`.
 

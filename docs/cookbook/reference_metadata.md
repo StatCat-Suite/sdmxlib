@@ -394,7 +394,7 @@ points at the **MetadataSet report** (follow it → its `metadataflow` →
 MSD). Output is unchanged when `metadata_links` is omitted.
 
 An artefact read from a registry that inserts these links holds them in
-`artefact.links` (#422), and the writers put `metadata_links` after them,
+`artefact.links`, and the writers put `metadata_links` after them,
 skipping any report a held link already points at — so writing back what was
 read does not link a report twice.
 

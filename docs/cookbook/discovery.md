@@ -155,7 +155,7 @@ with reg.session() as active, active.value_set(ids) as wanted:
 values one at a time, so the registered path is very nearly flat while binding
 grows linearly. *How* steeply depends on whether pandas is installed: for each
 bound value DuckDB checks whether it is `pandas.NA`, and with pandas absent that
-check retries `import pandas` every time (#411). Median of 7, duckdb 1.5.5:
+check retries `import pandas` every time. Median of 7, duckdb 1.5.5:
 
 ```
     N        bound, no pandas    bound, pandas    registered
@@ -577,7 +577,7 @@ case — so "still current" is a null test rather than a comparison.
 
 The cutoff can be a tz-aware `datetime`, a naive one (read as UTC, as the store
 reads it) or a `date` (midnight UTC); all three mean the same instant whatever
-zone your machine or DuckDB session is in (#415). Anything else — an `int`
+zone your machine or DuckDB session is in. Anything else — an `int`
 year, a string — is refused with a `TypeError` naming the column.
 
 `qualify` is a **separate clause from `filter`, and the type system enforces
@@ -620,8 +620,8 @@ depend on call order.
 
     `version` is stored as text, and ranking text would put `1.9` after
     `1.10` and call `1.9` the latest. So a sortable key is baked beside it at
-    write time, and `order_by`, `rank()` and keyset paging all use it
-    (#311). Comparison is unaffected — `version == "1.10"` matches what the
+    write time, and `order_by`, `rank()` and keyset paging all use it.
+    Comparison is unaffected — `version == "1.10"` matches what the
     registry published, not the key.
 
     Legacy (`1`, `1.0`) and semantic (`1.0.0`) versions interleave correctly,
@@ -680,7 +680,7 @@ Two contracts make this work:
   does not own, so it can be spliced anywhere the `sdmx.*` tables are visible.
   That is why a wide `is_in` still binds its values rather than registering
   them — registering would hand you a statement naming a relation that does not
-  exist outside the call (#301).
+  exist outside the call.
 - **The parameters come with it.** `compiled.params` are positional, so splice
   the SQL and concatenate the binds in the same order.
 

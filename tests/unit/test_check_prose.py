@@ -101,5 +101,26 @@ def test_the_changelog_and_archive_are_not_read(tmp_path: Path) -> None:
     assert check_prose.find(root) == []
 
 
+@pytest.mark.parametrize("ref", ["#411", "GH-57"])
+@pytest.mark.parametrize("rel", ["docs/upgrading.md", "docs/cookbook/data.md"])
+def test_a_bare_issue_reference_in_a_user_doc_is_found(tmp_path: Path, rel: str, ref: str) -> None:
+    root = _tree(tmp_path, {rel: f"It never remembers the failure ({ref}).\n"})
+    assert check_prose.find(root) == [
+        f"{rel}:1: bare issue reference {ref!r}; state the fact or link it",
+    ]
+
+
+def test_a_link_an_anchor_a_fence_and_the_design_docs_are_not_bare_references(tmp_path: Path) -> None:
+    """Each exemption, beside a line that is found, so the exemption is no wider than it says."""
+    user = (
+        "See [GitLab #422](https://gitlab.com/pinax-suite/sdmxlib/-/issues/422).\n"
+        "See [the example](#9-full-example), and a colour `&#38;`, and a/#12 path.\n"
+        "```python\nx = 1  # see #411\n```\n"
+        "Still bare: #7.\n"
+    )
+    root = _tree(tmp_path, {"docs/guide.md": user, "docs/design/query.md": "Measured in #306.\n"})
+    assert check_prose.find(root) == ["docs/guide.md:6: bare issue reference '#7'; state the fact or link it"]
+
+
 def test_the_tree_is_clean() -> None:
     assert check_prose.find(ROOT) == []
