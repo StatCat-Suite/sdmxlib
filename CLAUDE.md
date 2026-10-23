@@ -149,9 +149,9 @@ re-created on GitHub, each carrying a "Moved from GitLab #N" line.
 ## Commits
 
 Conventional commits, `type(scope): subject`, with the issue as `(GH-N)` at
-the end. git-cliff builds `CHANGELOG.md` from the subjects (`cliff.toml`), so
-the type is where an entry lands, and a subject it does not parse is dropped
-from the release notes — not filed under "Other".
+the end. git-cliff builds `CHANGELOG.md` from the subjects (`cliff.toml`): the
+type picks the section an entry lands in, and git-cliff drops a subject it
+cannot parse from the release notes.
 
 - `feat` / `model` → Features, `fix` → Bug Fixes, `docs`, `perf`, `refactor`,
   `test`, and `chore` → Miscellaneous.
@@ -501,6 +501,71 @@ when SDMX-TWG publishes a new schema tag.
   validated source like `_sql_identifier()`) is allowed.
 - For dynamic WHERE clause composition, build a list of clause strings and join
   them; interpolate clause structure with f-strings but parameterize all values.
+
+## Writing style
+
+These rules cover all prose written for this repo: comments, docstrings,
+documentation, CHANGELOG and `docs/upgrading.md` entries, commit messages,
+issues, PRs and milestones. The section is shared across the StatCat-Suite
+repos (GH-58); change it in all three or none.
+
+Write in plain language. State claims directly, in the order the reader
+needs them. Use subject-verb-object sentences, concrete nouns, and the
+actual number, name, or mechanism instead of an allusion to it.
+
+Follow these rules from Strunk & White:
+
+- Put statements in positive form.
+- Use definite, specific, concrete language.
+- Omit needless words.
+
+Avoid these constructions everywhere (sentences, headings, titles, lists):
+
+- Contrast by negation: "not X, but Y", "it's not about X, it's about Y",
+  "X isn't the problem; Y is". State Y. Mention X only if someone
+  actually holds that view.
+- Hook clauses that read like half a question: "what X doesn't tell you",
+  "the part nobody mentions", "the evidence Y lacks", "why this matters".
+  State the fact the clause points at.
+- Colon reveals: "The real issue: ...", "Here's the thing: ...",
+  "The short version: ...". Drop the setup and write the sentence.
+- Punchline structure: ending a sentence or list on a twist, a dramatic
+  final item, or a short fragment for emphasis.
+- Rhetorical questions that the text then answers.
+- Framing work or ideas by what is missing when you can name what is
+  present or proposed.
+
+Titles (milestones, issues, PRs, headings):
+
+- Name the deliverable or scope as a plain noun phrase or imperative.
+  A reader should know from the title alone what gets merged or decided.
+- Use a colon only to separate a component name from the work item
+  (e.g. "Query DSL: add DuckDB backend"), never to introduce a hook.
+
+Examples:
+
+```text
+Bad:  Conformance evidence: what the green checks do not prove
+Good: Conformance: add negative and edge-case test fixtures
+
+Bad:  Query DSL: a second backend, and the evidence the first one lacks
+Good: Query DSL: add second backend; add validation tests for SQL backend
+
+Bad:  The green checks tell you less than you'd think.
+Good: The green checks only cover valid inputs; there are no tests
+      for malformed DSDs or constraint violations.
+
+Bad:  The problem isn't performance — it's correctness.
+Good: The cache returns stale codelists after a version bump.
+
+Bad:  Here's what the benchmark doesn't show: cold-start latency.
+Good: The benchmark measures warm queries only; cold-start latency
+      is untested.
+```
+
+Before finishing, reread the output. Rewrite any sentence that delays its
+point, contrasts with a claim nobody made, or alludes to a fact instead of
+stating it.
 
 ## String style (non-SQL)
 
