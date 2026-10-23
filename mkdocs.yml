@@ -1,5 +1,5 @@
 site_name: sdmxlib
-site_description: SDMX structural metadata library for Python
+site_description: "SDMX for Python: structures, reference metadata and observation data, from REST, files or a local DuckDB store."
 site_url: "https://statcat-suite.github.io/sdmxlib/"
 repo_url: "https://github.com/StatCat-Suite/sdmxlib"
 repo_name: "StatCat-Suite/sdmxlib"

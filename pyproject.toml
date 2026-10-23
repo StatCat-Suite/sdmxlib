@@ -1,7 +1,7 @@
 [project]
 name = "sdmxlib"
 version = "0.72.0"
-description = "SDMX structural metadata library for Python"
+description = "SDMX for Python: structures, reference metadata and observation data, from REST, files or a local DuckDB store."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]

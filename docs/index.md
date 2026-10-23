@@ -1,8 +1,9 @@
 # sdmxlib
 
-**sdmxlib** is a Python library for fetching and navigating SDMX structural
-metadata — Data Structure Definitions, Codelists, Dataflows, and related
-artefacts — from any SDMX REST endpoint.
+**sdmxlib** is SDMX for Python: structures, reference metadata and observation
+data, from SDMX REST endpoints, SDMX files or a local DuckDB store. Data
+Structure Definitions, Codelists, Dataflows and related artefacts come back as
+a typed graph you navigate by plain attribute access.
 
 It is designed for analysts and engineers at national statistical agencies (NSAs)
 who need to automate ETL pipelines, validate datasets, build data catalogs, or

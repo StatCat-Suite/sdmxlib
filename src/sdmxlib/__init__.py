@@ -1,4 +1,8 @@
-"""sdmxlib — SDMX structural metadata library for Python."""
+"""sdmxlib — SDMX for Python.
+
+Structures, reference metadata and observation data, from REST, files or a
+local DuckDB store.
+"""
 
 from sdmxlib.api.federated import FederatedRegistry
 from sdmxlib.api.policy import RegistryUnavailable

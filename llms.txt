@@ -1,10 +1,10 @@
 # sdmxlib
 
-sdmxlib fetches and models SDMX structural metadata — data structures,
-codelists, dataflows, hierarchies, reference metadata — from SDMX REST APIs
-and SDMX files, as a typed graph of frozen artefacts you navigate by plain
-attribute access. It also reads observation data, as Polars frames paired with
-the structure that describes them.
+sdmxlib is SDMX for Python: structures, reference metadata and observation
+data, from SDMX REST APIs, SDMX files or a local DuckDB store. Data structures,
+codelists, dataflows, hierarchies and reference metadata come back as a typed
+graph of frozen artefacts you navigate by plain attribute access; observations
+come back as Polars frames typed from the structure that describes them.
 
 This file is the whole library in one pass. `llms-dsl.txt` is the path query
 language (`sl.q`, `reg.query`, `reg.sql`) in depth. Every Python block in both
