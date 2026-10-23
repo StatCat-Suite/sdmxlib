@@ -90,6 +90,7 @@ from sdmxlib.session import SessionFactory
 from sdmxlib.storage import readers, resolve, writers
 from sdmxlib.storage._kinds import CLASS_TO_NAME
 from sdmxlib.storage._kinds import NAME_TO_CLASS as _TYPE_REGISTRY
+from sdmxlib.storage._manifest import MANIFEST_NAME, Manifest, read_manifest
 from sdmxlib.storage.lazy import LazyCodelist, LazyHierarchy
 from sdmxlib.storage.readers import make_lazy_codelist
 from sdmxlib.storage.schema import (
@@ -640,6 +641,8 @@ class LocalRegistry(SessionFactory):
         self._data_store: DuckDBDataStore | None = None
         #: ATTACH spec a `bundle()` supplied, replayed when the store is built.
         self._attach: dict[str, str | tuple[str, str]] | None = None
+        #: The manifest `bundle()` read, if the bundle had one (GH-66).
+        self._manifest: Manifest | None = None
         # Per-thread read cursor (#80). Each thread that reads from this
         # LocalRegistry lazily gets its own cursor on first call; subsequent
         # calls on the same thread reuse it. Cleared on close().
@@ -649,6 +652,15 @@ class LocalRegistry(SessionFactory):
     def uri(self) -> Path:
         """The URI this registry references. Available before opening."""
         return self._uri
+
+    @property
+    def manifest(self) -> Manifest | None:
+        """The bundle manifest `bundle()` read, or None (not a bundle, or unpublished).
+
+        Its ``token`` changes at every publication and never on a read, so it
+        is what a cache or an ETag keys on (GH-66).
+        """
+        return self._manifest
 
     @property
     def connection(self) -> duckdb.DuckDBPyConnection:
@@ -763,6 +775,7 @@ class LocalRegistry(SessionFactory):
         # whatever it wants visible. `_data_plane` then builds a store over
         # that connection and finds the lake already there.
         instance._attach = None
+        instance._manifest = None
         instance._thread_local = threading.local()
         instance._initialise_schema()
         return instance
@@ -1563,6 +1576,7 @@ class LocalRegistry(SessionFactory):
         *,
         source_registry: str | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
+        require_manifest: bool = False,
     ) -> LocalRegistry:
         """Open a published bundle — artefacts and observations together.
 
@@ -1582,18 +1596,53 @@ class LocalRegistry(SessionFactory):
         record, so one built on another schema version is refused with
         `StoreSchemaError` rather than emptied (GH-57).
 
+        **The manifest** (``bundle.manifest.json``, `sdmxlib.bundle`) is read
+        when there is one, and its store schema version checked *before*
+        ``meta.duckdb`` is opened, so a mismatched bundle is refused without the
+        file being touched. It is `manifest` afterwards, whose ``token`` is what
+        a cache keys on. A directory without one is an unpublished bundle,
+        which opens unless ``require_manifest`` (GH-66).
+
         Args:
             path: The bundle directory.
             source_registry: Provenance tag for artefacts added later.
             resolve_cache_items: As the constructor.
+            require_manifest: Refuse a bundle with no manifest.
 
         Returns:
             An open registry over the bundle.
 
         Raises:
             StoreSchemaError: If the bundle was built on another schema version.
+            ManifestError: If ``require_manifest`` and there is no manifest, or
+                the manifest is malformed or in a format this build cannot read.
         """
         root = Path(path) if isinstance(path, str) else path
+        manifest = read_manifest(root) if require_manifest or (root / MANIFEST_NAME).exists() else None
+        if manifest is not None and manifest.schema_version != SCHEMA_VERSION:
+            msg = (
+                f"{root} is a bundle on store schema {manifest.schema_version} (its manifest says so), "
+                f"and this sdmxlib ({_sdmxlib_version()}) reads schema {SCHEMA_VERSION}, so it was not "
+                f"opened. Rebuild it from its source with this sdmxlib, or read it with the one that built it."
+            )
+            raise StoreSchemaError(msg)
+        registry = cls._over_bundle(root, source_registry=source_registry, resolve_cache_items=resolve_cache_items)
+        registry._manifest = manifest
+        return registry.open()
+
+    @classmethod
+    def _over_bundle(
+        cls,
+        root: Path,
+        *,
+        source_registry: str | None = None,
+        resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
+    ) -> LocalRegistry:
+        """An unopened registry wired to a bundle's layout, its manifest unread.
+
+        `bundle` opens it after checking the manifest; the manifest writer
+        opens it to count what a manifest is about to describe.
+        """
         registry = cls(
             root / "meta.duckdb",
             source_registry=source_registry,
@@ -1616,7 +1665,7 @@ class LocalRegistry(SessionFactory):
                 f"(DATA_PATH '{root / 'parquet'}/', OVERRIDE_DATA_PATH true)",
             )
         }
-        return registry.open()
+        return registry
 
     def _data_plane(self) -> DuckDBDataStore:
         """This registry's data store, over its own connection.
