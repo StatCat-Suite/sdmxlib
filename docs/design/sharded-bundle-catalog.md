@@ -147,6 +147,7 @@ bundles/<bundle_id>/
 |---|---|---|
 | `structural_version` | required | The pinned DSD URN the binding was written against. |
 | `fingerprint` | required | Table fingerprint (§4.4). |
+| `structure_fingerprint` | required | Structural fingerprint of the dataflow (§4.4); the result-store key reads it (§7.4). |
 
 `ArtefactEntry`:
 

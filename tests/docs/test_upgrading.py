@@ -223,7 +223,9 @@ def test_the_manifest_records_engines_artefacts_tiers_and_md5() -> None:
         "artefacts",
     } <= set(bundle.Manifest.__struct_fields__)
     assert {"md5", "tier"} <= set(bundle.BundleFile.__struct_fields__)
-    assert "structural_version" in bundle.BindingCount.__struct_fields__
+    assert {"structural_version", "fingerprint", "structure_fingerprint"} <= set(bundle.BindingCount.__struct_fields__)
+    assert {"canonical_form", "content_fingerprint"} <= set(bundle.Manifest.__struct_fields__)
+    assert "fingerprint" in bundle.ArtefactEntry.__struct_fields__
     assert {"stability", "partial"} <= set(bundle.ArtefactEntry.__struct_fields__)
     for function in (bundle.write_manifest, bundle.copy_bundle):
         assert "tiers" in inspect.signature(function, annotation_format=annotationlib.Format.FORWARDREF).parameters

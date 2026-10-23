@@ -3,7 +3,7 @@
   "$defs": {
     "Manifest": {
       "title": "Manifest",
-      "description": "`bundle.manifest.json`: written last, so a directory without one is unpublished.\n\nAttributes:\n    format_version: The manifest format, ``major.minor``.\n    bundle_id: The producer's stable name for the bundle, kept across\n        rebuilds. Identifies *which* bundle, never which publication.\n    token: A UUIDv7 minted when the publication's build starts, and the\n        name of its directory. Changes on every rebuild, never on a read;\n        what a cache or an ETag keys on.\n    previous_token: The publication this one extends, or None for the\n        first of its bundle.\n    created_at: When the manifest was written (UTC).\n    producer: What built the bundle.\n    sdmxlib_version: The sdmxlib that wrote the manifest.\n    schema_version: The store schema of ``meta.duckdb``, checked before the\n        file is opened.\n    duckdb_version: The DuckDB release that wrote the DuckDB files.\n    duckdb_storage_version: The newest storage version among the DuckDB\n        files, as their headers record it (`storage_version_of`). A reader\n        refuses one newer than its engine before opening any file.\n    ducklake_version: The DuckLake extension that wrote ``lake.ducklake``,\n        or None for a publication without one.\n    ducklake_spec_version: The DuckLake format the catalog records, or\n        None for a publication without one. A reader refuses one newer\n        than its own.\n    data_path: Where the data files live, relative to the publication\n        directory: `DATA_PATH`.\n    files: Every file of the publication but the manifest, and every data\n        file its lake catalog references, sorted by root and path.\n    bindings: Observation counts per bound dataflow, sorted by URN.\n    artefacts: Every maintainable artefact in the store but the\n        bindings, sorted by URN.\n    product: Producer-specific fields, carried and not interpreted.\n    extensions: Sections owned by other packages (statcatlib's search\n        index, say), by name; carried and not interpreted.\n    provenance: Where a fetched bundle came from; None for\n        one built from data the producer holds.",
+      "description": "`bundle.manifest.json`: written last, so a directory without one is unpublished.\n\nAttributes:\n    format_version: The manifest format, ``major.minor``.\n    bundle_id: The producer's stable name for the bundle, kept across\n        rebuilds. Identifies *which* bundle, never which publication.\n    token: A UUIDv7 minted when the publication's build starts, and the\n        name of its directory. Changes on every rebuild, never on a read;\n        what a cache or an ETag keys on.\n    previous_token: The publication this one extends, or None for the\n        first of its bundle.\n    created_at: When the manifest was written (UTC).\n    producer: What built the bundle.\n    sdmxlib_version: The sdmxlib that wrote the manifest.\n    schema_version: The store schema of ``meta.duckdb``, checked before the\n        file is opened.\n    duckdb_version: The DuckDB release that wrote the DuckDB files.\n    duckdb_storage_version: The newest storage version among the DuckDB\n        files, as their headers record it (`storage_version_of`). A reader\n        refuses one newer than its engine before opening any file.\n    ducklake_version: The DuckLake extension that wrote ``lake.ducklake``,\n        or None for a publication without one.\n    ducklake_spec_version: The DuckLake format the catalog records, or\n        None for a publication without one. A reader refuses one newer\n        than its own.\n    data_path: Where the data files live, relative to the publication\n        directory: `DATA_PATH`.\n    files: Every file of the publication but the manifest, and every data\n        file its lake catalog references, sorted by root and path.\n    bindings: Observation counts per bound dataflow, sorted by URN.\n    artefacts: Every maintainable artefact in the store but the\n        bindings, sorted by URN.\n    canonical_form: The version of the canonical text every fingerprint\n        here hashes. Fingerprints at different forms are never compared.\n    content_fingerprint: The bundle fingerprint: every artefact\n        fingerprint and every table fingerprint, so two publications\n        with equal content have equal ones.\n    product: Producer-specific fields, carried and not interpreted.\n    extensions: Sections owned by other packages (statcatlib's search\n        index, say), by name; carried and not interpreted.\n    provenance: Where a fetched bundle came from; None for\n        one built from data the producer holds.",
       "type": "object",
       "properties": {
         "format_version": {
@@ -84,6 +84,20 @@
             "$ref": "#/$defs/ArtefactEntry"
           }
         },
+        "canonical_form": {
+          "type": "string"
+        },
+        "content_fingerprint": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "product": {
           "type": "object",
           "additionalProperties": {
@@ -129,7 +143,8 @@
         "data_path",
         "files",
         "bindings",
-        "artefacts"
+        "artefacts",
+        "canonical_form"
       ]
     },
     "Producer": {
@@ -202,7 +217,7 @@
     },
     "BindingCount": {
       "title": "BindingCount",
-      "description": "How many observations a dataflow's binding holds, as DuckLake counts them.\n\nAttributes:\n    dataflow: The bound dataflow's URN.\n    observations: The row count of the binding's table.\n    structural_version: The URN of the data structure the binding was\n        written against.",
+      "description": "How many observations a dataflow's binding holds, as DuckLake counts them.\n\nAttributes:\n    dataflow: The bound dataflow's URN.\n    observations: The row count of the binding's table.\n    structural_version: The URN of the data structure the binding was\n        written against.\n    fingerprint: The table fingerprint of the binding's table,\n        ``<sum>:<count>``: what the observations are, whatever files\n        hold them.\n    structure_fingerprint: The structure fingerprint of the dataflow:\n        what its structural closure is, the artefacts referring to it\n        included.",
       "type": "object",
       "properties": {
         "dataflow": {
@@ -213,17 +228,25 @@
         },
         "structural_version": {
           "type": "string"
+        },
+        "fingerprint": {
+          "type": "string"
+        },
+        "structure_fingerprint": {
+          "type": "string"
         }
       },
       "required": [
         "dataflow",
         "observations",
-        "structural_version"
+        "structural_version",
+        "fingerprint",
+        "structure_fingerprint"
       ]
     },
     "ArtefactEntry": {
       "title": "ArtefactEntry",
-      "description": "One maintainable artefact in the store.\n\nAttributes:\n    urn: Its URN, at its pinned version.\n    stability: ``semantic`` for a final semantic version (three numeric\n        parts, no extension, major at least 1), which SDMX 3.0 holds\n        immutable; ``legacy`` for any other.\n    partial: Whether it is a partial item scheme, a subset of the full one.",
+      "description": "One maintainable artefact in the store.\n\nAttributes:\n    urn: Its URN, at its pinned version.\n    stability: ``semantic`` for a final semantic version (three numeric\n        parts, no extension, major at least 1), which SDMX 3.0 holds\n        immutable; ``legacy`` for any other.\n    partial: Whether it is a partial item scheme, a subset of the full one.\n    fingerprint: The SHA-256 of its canonical text, lowercase hex.",
       "type": "object",
       "properties": {
         "urn": {
@@ -237,12 +260,16 @@
         },
         "partial": {
           "type": "boolean"
+        },
+        "fingerprint": {
+          "type": "string"
         }
       },
       "required": [
         "urn",
         "stability",
-        "partial"
+        "partial",
+        "fingerprint"
       ]
     },
     "Provenance": {

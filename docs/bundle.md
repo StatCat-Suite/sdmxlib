@@ -81,6 +81,8 @@ two spaces, but a reader MUST NOT depend on the layout.
 | `files` | required | Every file in the publication directory except the manifest, and every data file the lake catalog references, as `BundleFile`s sorted by `root`, then `path`. |
 | `bindings` | required | One `BindingCount` per bound dataflow, sorted by `dataflow`. |
 | `artefacts` | required | One `ArtefactEntry` per maintainable artefact in the store but the `DataflowBinding`s, sorted by `urn`. |
+| `canonical_form` | required | The canonical form every fingerprint in the manifest hashes, `"1"` (§9). Fingerprints at different forms are never compared. |
+| `content_fingerprint` | optional | The bundle fingerprint (§9), or `null`. |
 | `product` | optional | The producer's own fields, as a JSON object. Readers carry it and do not interpret it. |
 | `extensions` | optional | Sections owned by other packages, keyed by package name, each a JSON object. Readers carry them and do not interpret them. |
 | `provenance` | optional | Where a fetched bundle came from: a `Provenance`, or `null`. |
@@ -111,6 +113,8 @@ two spaces, but a reader MUST NOT depend on the layout.
 | `dataflow` | required | The bound dataflow's URN. |
 | `observations` | required | How many observation rows the binding's table holds. |
 | `structural_version` | required | The URN of the data structure the binding was written against. |
+| `fingerprint` | required | The table fingerprint of the binding's table (§9), `<sum>:<count>`. |
+| `structure_fingerprint` | required | The structure fingerprint of the dataflow (§9). |
 
 ### `ArtefactEntry`
 
@@ -119,6 +123,7 @@ two spaces, but a reader MUST NOT depend on the layout.
 | `urn` | required | The artefact's URN, at its pinned version. |
 | `stability` | required | `"semantic"` for a final semantic version (three numeric parts, no extension, major at least 1), which SDMX 3.0 holds immutable; `"legacy"` for any other. |
 | `partial` | required | `true` for a partial item scheme, a subset of the full one. |
+| `fingerprint` | required | The artefact fingerprint (§9): the SHA-256 of its canonical text, lowercase hex. |
 
 ### `Provenance`
 
@@ -437,7 +442,36 @@ it.
 tiers, which is what a server holds when it reads tier 3 remotely. Such a copy
 is incomplete by intent: `check_bundle` reports the files it left out.
 
-## 9. Canonical text of an artefact
+## 9. Fingerprints
+
+A token names a publication; a fingerprint names its content. Two
+publications with equal content have equal fingerprints whatever their
+tokens, file bytes, file layout or DuckDB release, so a result cache keys on
+fingerprints and never on a token. `write_manifest` computes all four.
+
+| fingerprint | over | value |
+| --- | --- | --- |
+| table, `BindingCount.fingerprint` | every row of the binding's table | the sum over rows of each row's MD5 (the lower 64 bits, DuckDB's `md5_number_lower`) modulo 2^62, then `:` and the row count. The row's text is DuckDB's `to_json` of the row, columns in table order |
+| artefact, `ArtefactEntry.fingerprint` | the artefact's canonical text (below) | its SHA-256 |
+| structure, `BindingCount.structure_fingerprint` | the dataflow's structural closure | the SHA-256 of the closure's artefact fingerprints in URN order, joined by `\n` |
+| bundle, `content_fingerprint` | every artefact and every binding | the SHA-256 of `artefacts:`, each artefact fingerprint in URN order, `bindings:`, then `<dataflow URN>\t<table fingerprint>` per binding in dataflow order, joined by `\n` |
+
+The table fingerprint does not move with row order, and moves when a value
+moves between rows, a row is duplicated, or any value changes. In SQL:
+
+```sql
+SELECT coalesce(sum((md5_number_lower(to_json(t)) % 4611686018427387904)::HUGEINT), 0)::VARCHAR
+    || ':' || count(*)::VARCHAR
+FROM lake.<schema>.<table> AS t
+```
+
+A dataflow's **structural closure** is what the dataflow and its data
+structure refer to, transitively; every artefact that refers to either (a
+constraint, a provision agreement, a hierarchy association: these point at
+the dataflow, not the reverse); and what those refer to, transitively. A
+reference to an item counts as one to the artefact holding it.
+
+### Canonical text of an artefact
 
 An artefact fingerprint hashes the artefact's canonical text, which
 `sdmxlib.bundle.canonical_json` produces. Two artefacts with equal content

@@ -43,7 +43,10 @@ It also keeps the numbers honest when the bundle is rebuilt: `H_CP_GEO_FED`
 was "~700k nodes" in #154 and is 499,138 today.
 """
 
+import hashlib
 import os
+import re
+import shutil
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -51,10 +54,12 @@ from pathlib import Path
 
 import duckdb
 
+from sdmxlib.bundle import CANONICAL_FORM, FORMAT_VERSION
 from sdmxlib.local import LocalRegistry
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.query.observations import Observations
 from sdmxlib.storage.schema import SCHEMA_VERSION, get_schema_version
+from tests.support.repo import ROOT
 
 #: Names a bundle directory — one holding `meta.duckdb`. Set it and the tier
 #: runs; set it wrongly and the tier raises rather than skipping.
@@ -421,3 +426,67 @@ def discover_observations(registry: LocalRegistry) -> ObsShapes:
         sidecar=sidecar is not None,
         sidecar_component=component,
     )
+
+
+# ── the published copy, cached across sessions (GH-127) ──────────────────
+
+
+#: The modules whose source decides what a publication holds: a change to any
+#: of them republishes the cached copy.
+_PUBLISHING = (
+    "src/sdmxlib/bundle/_write.py",
+    "src/sdmxlib/bundle/_fingerprint.py",
+    "src/sdmxlib/bundle/_canonical.py",
+    "src/sdmxlib/storage/_manifest.py",
+    "src/sdmxlib/storage/schema.py",
+)
+
+
+#: A cache entry's name: a key, or a key being built.
+_ENTRY = re.compile(r"(\.building-)?[0-9a-f]{64}")
+
+
+def cache_root() -> Path:
+    """Where published copies are kept: ``$SDMXLIB_BENCH_CACHE``, else ``~/.cache/sdmxlib/bench``."""
+    configured = os.environ.get("SDMXLIB_BENCH_CACHE")
+    return Path(configured) if configured else Path.home() / ".cache" / "sdmxlib" / "bench"
+
+
+def publication_key(source: Path) -> str:
+    """What a published copy of `source` depends on, hashed: the source's files and the publishing code."""
+    digest = hashlib.sha256()
+    for name in ("meta.duckdb", "lake.ducklake", "bundle.manifest.json"):
+        path = source / name
+        stat = path.stat() if path.exists() else None
+        digest.update(f"{name}:{stat.st_size if stat else -1}:{stat.st_mtime_ns if stat else -1}\n".encode())
+    for part in (SCHEMA_VERSION, FORMAT_VERSION, CANONICAL_FORM, duckdb.__version__):
+        digest.update(f"{part}\n".encode())
+    for module in _PUBLISHING:
+        digest.update((ROOT / module).read_bytes())
+    return digest.hexdigest()
+
+
+def cached_publication(key: str) -> Path | None:
+    """The published publication cached under `key`, or None."""
+    entry = cache_root() / key
+    manifests = sorted(entry.glob("*/*/bundle.manifest.json"))
+    return manifests[0].parent if len(manifests) == 1 else None
+
+
+def cache_publication(key: str, build: Callable[[Path], Path]) -> Path:
+    """Publish with `build` into the cache under `key`, dropping every other key's copy.
+
+    Built beside the cache under a temporary name and renamed into place, so
+    an interrupted build never reads as a cached one.
+    """
+    root = cache_root()
+    root.mkdir(parents=True, exist_ok=True)
+    for stale in root.iterdir():
+        # Only this cache's own entries: the directory may be one a user named.
+        if _ENTRY.fullmatch(stale.name) and stale.name != key:
+            shutil.rmtree(stale)
+    staging = root / f".building-{key}"
+    shutil.rmtree(staging, ignore_errors=True)
+    publication = build(staging / "census")
+    staging.rename(root / key)
+    return root / key / "census" / publication.name
