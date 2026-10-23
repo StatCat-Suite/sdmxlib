@@ -308,6 +308,8 @@ class DuckDBDataStore(SessionFactory):
             return
         for alias, spec in (self._attach or {}).items():
             url, options = _split_attach_spec(spec)
+            if _already_attached(conn, alias, url):
+                continue
             sql = f"ATTACH {url} AS {_sql_identifier(alias)}"
             if options:
                 sql += f" {options}"
@@ -749,6 +751,30 @@ def _sql_identifier(name: str) -> str:
 def _is_valid_identifier(name: str) -> bool:
     """True if ``name`` is a safe SQL identifier (alphanumeric + underscore)."""
     return bool(name) and all(c.isalnum() or c == "_" for c in name)
+
+
+def _already_attached(conn: duckdb.DuckDBPyConnection, alias: str, url: str) -> bool:
+    """Whether `alias` is attached already, to the catalog `url` names.
+
+    DuckDB shares one database instance between connections to the same file
+    in a process, so a second registry over a bundle sees the first's ``lake``:
+    a bundle checked or profiled while a server holds it open, and the bundle
+    tier's own fixtures. Attaching again fails ("database with name ... already
+    exists"); attached to the same catalog, there is nothing to do.
+
+    Raises:
+        ValueError: If `alias` is attached to a different catalog, which the
+            registry would read in place of its own.
+    """
+    row = conn.execute("SELECT path FROM duckdb_databases() WHERE database_name = ?", [alias]).fetchall()
+    if not row:
+        return False
+    wanted = url.strip("'").removeprefix("ducklake:")
+    held = row[0][0] or ""
+    if Path(held).resolve() == Path(wanted).resolve():
+        return True
+    msg = f"{alias!r} is attached to {held} in this process; this registry wants {wanted}"
+    raise ValueError(msg)
 
 
 def _split_attach_spec(spec: object) -> tuple[str, str]:

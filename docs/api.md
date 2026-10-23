@@ -90,6 +90,30 @@ A bundle published as an artefact: its manifest, a `token` per publication, and 
 
 ---
 
+### Synthetic bundles
+
+Conforming bundles of any shape, deterministic from a seed, for tests and stress runs; and the shape of a real one (GH-69).
+
+::: sdmxlib.testing
+
+---
+
+::: sdmxlib.testing.synthetic_bundle
+
+---
+
+::: sdmxlib.testing.profile_bundle
+
+---
+
+::: sdmxlib.testing.Shape
+
+---
+
+::: sdmxlib.testing.Dim
+
+---
+
 ::: sdmxlib.bundle.Manifest
 
 ---
