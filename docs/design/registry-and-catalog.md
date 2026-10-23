@@ -35,7 +35,7 @@ already derives it:
 | `query(path).filter(agency==…)` | the same, narrowed by identity | `ECB/all/latest` — the equality is lifted into the **path** | SELECT + JOIN | no |
 | `query(path).filter(<anything else>)` | narrowed by a predicate | the same GET as the row above | SELECT + JOIN + WHERE | **yes** |
 
-Measured, not assumed:
+Measured:
 
 ```
 unfiltered                        [('all', 'all', 'full', 'none')]
@@ -71,15 +71,15 @@ materialise-then-query, and louder with a persistent `store=`. See §5.13.
 buildable — `tests/support/oracle.py` is one — but it covers code and hierarchy
 predicates and not joins, EXISTS, windows or aggregates, so promoting it means
 writing the compiler twice. Two evaluators mean two sets of semantics for case
-folding, nulls, LIKE metacharacters and set membership: the one failure mode
-differential testing cannot catch. Revisit only if the DuckDB round-trip shows
+folding, nulls, LIKE metacharacters and set membership to keep in agreement.
+Revisit only if the DuckDB round-trip shows
 up in a profile.
 
 ### 1.2 What splits, and what does not
 
 SDMX REST splits `/structure`, `/data`, `/metadata`. `query()` covers the first
-and third, `obs()` the second. That is not arbitrary, and it is the
-more IM-faithful of the two taxonomies.
+and third, `obs()` the second. That split follows the IM more closely than
+SDMX REST's does.
 
 **Structure and reference metadata cannot be separated, because paths cross
 between them.** The edge graph wires metadata relations onto the same `artefact`
@@ -96,7 +96,7 @@ behaviourally identical (same compiler, same schema, same joins), and would have
 to reject legitimate traversals to stay honest. The three-way split is a
 **transport** fact and belongs in `_rest.py`.
 
-**Data cannot fold in, for a different reason: schema, not transport.** Every
+**Data stays separate because a DSD fixes its schema.** Every
 `sl.q.X` relation has a shape the *IM* fixes — `q.code` is always id, name,
 parent_id. An observation relation's shape is fixed by a **DSD**: CPI's
 observations carry FREQ/REF_AREA/TIME_PERIOD, EXR's carry CURRENCY. Different
@@ -158,7 +158,7 @@ So `store` is a *position* in the chain rather than a parameter, and
 `FederatedRegistry` is *a source that dispatches by agency* rather than a
 parallel mechanism.
 
-Three rules keep it from becoming magic.
+Three rules keep it predictable.
 
 1. **The order is explicit and never inferred.**
 2. **Every result records which source answered, and when.**
@@ -213,7 +213,8 @@ first one consulted always won. The rule, now stated:
 * **A provider directive does not veto an explicit `store`.** The
   `Session` is an implicit cache the user never asked for, and is exactly what
   those directives are written for; `store` is the user taking a copy
-  by name. If `no-store` vetoed it, no ETL pipeline could exist.
+  by name. A `no-store` veto would stop an ETL pipeline from keeping anything it
+fetched.
 
 Note the policies were **inverted relative to consent** before this: the cache
 the user never asked for served `latest` forever, and the one they asked for by
@@ -311,7 +312,8 @@ decorative and SDMX-ML data could not be asked for at all. Format is explicit, n
 contradiction between them should be refused — and the response's
 `Content-Type` is checked against what was asked.
 
-**Corrected while building it: not a `(media type, version)` pair, an enum.**
+**Corrected while building it: an enum, where the design had a
+`(media type, version)` pair.**
 The pair does not survive the vocabulary. SDMX-ML 2.1 carries data under
 **four** media types — generic and structure-specific, each plain or
 time-series — so `("xml", "2.1")` names no single format; and
@@ -444,7 +446,7 @@ duplicate, not a curated entry point.
   policy.
 * **`unique_hierarchy` stays.** It raises `AmbiguousHierarchyError` naming the
   dimension, the dataflow and the competing associations. `one()` would say
-  "expected at most one row", which is true and useless.
+  "expected at most one row", which is true and names none of them.
 
 ### 3.4 Construction
 
@@ -540,8 +542,8 @@ store.write_observations(schema="data", table="obs", source=frame, sort_by=("GEO
 bundle.add(sl.DataflowBinding.from_dsd(dsd, dataflow=flow_ref, schema="data", table="obs"))
 ```
 
-"Fetch remotely, land locally" is not a mode — it is a chain whose cache is the
-artefact being built. Confirms the type split too: `add` is absent on
+"Fetch remotely, land locally" is a chain whose cache is the artefact being
+built. Confirms the type split too: `add` is absent on
 `RestRegistry`, and `write_observations` is on the data store rather than any
 registry. `LocalRegistry.bundle(path)` *opens* a published bundle; it has no
 `create=` — the bundle is written by its builder and opened here.
@@ -620,7 +622,7 @@ were also conflated and are now kept apart:
   materialised `Codelist`. Nothing to do with references; it is about how much
   of *one* artefact is loaded, and it stays.
 
-Defaults differ by backend and that is not an inconsistency: local
+Defaults differ by backend because the cost does: local
 `resolve=True` because resolution is a join away, remote `resolve=False`
 because it is another round trip. Both stated on the method rather than
 implied.
@@ -705,7 +707,7 @@ parameter explosion `InRelation` exists to avoid, and doing it invisibly is what
 §1.3's third rule forbids. Auto-`ATTACH` was rejected: the chain must not open
 connections the caller did not ask for.
 
-**It was a wrong answer, not an error — measured.** Two registries whose
+**Measured, it returned a wrong answer without an error.** Two registries whose
 codelists disagreed about which codes are named "Ontario": `b` alone answered
 `['ON', 'QC']`, and `a.obs(flow).filter(col.is_in(b.query(…)))`
 returned `['ON']` — `a`'s answer to `b`'s question, silently, and entirely
@@ -738,8 +740,8 @@ than by reading:
 
 A label is carried alongside the token because a `DuckDBPyConnection` has no
 useful `repr`: without one the message names *"a different database
-(DuckDBPyConnection)"* twice, which is naming two sources and identifying
-neither.
+(DuckDBPyConnection)"* twice, which names two sources without identifying
+either.
 
 **5.10 / 5.11 filed as issues, and both were narrower than filed.**
 
@@ -748,8 +750,7 @@ neither.
 `FederatedRegistry` declares `routing: dict[str, RegistryReader]` and is routed
 to an `InMemoryRegistry` throughout its tests, and the local-files cookbook
 loads into one and calls `get(urn)`. The *concern* — that the read seam reads
-as a catch-all — stands; the answer is not that this member is not a registry,
-because it is.
+as a catch-all — stands, but this member is a registry all the same.
 
 **5.11** said the REST fetch serves only the structure plane (#334). One of the
 seven relations it named, not all seven. `msd`, `metadataflow` and
@@ -796,8 +797,8 @@ So: **nothing is refused for being wide. A query is refused only for being
 that names nothing to bound it. Both planes state that rule, and §5.2's
 `allow_unbounded=` has no job and goes.
 
-What protects a caller at scale is not a refusal but the terminal they choose,
-and that belongs in the docs rather than in a planner: `collect()` resolves
+The terminal a caller chooses protects them at scale, and that belongs in the
+docs rather than in a planner: `collect()` resolves
 every match into an artefact graph (331x against one statement) where `ids()`,
 `urns()` and `frame()` read columns; `frame()` materialises where `stream()`
 holds 5 MB flat at any `chunk_rows`; and **an ordered stream is not bounded at
@@ -850,7 +851,7 @@ written in `request_for`'s comment: `None` means the caller wants *artefacts*,
 and a stub has no items. So `Select` — which *is* the projected query — supplies
 its columns and every other terminal supplies `None`. `ids()` could in
 principle narrow and deliberately does not: it is not a projection, the saving
-is small, and the failure mode is silence.
+is small, and a mistake would fail silently.
 
 Two things the wiring needed that the section did not mention, both found by a
 test rather than by reading:
@@ -928,7 +929,7 @@ in §1.3. Two of the four options originally on the table — "honour HTTP
 headers" and "resolve `latest` to pinned" — turned out to compose rather than
 compete, which is why the first framing of the decision was wrong.
 
-**What made it small.** The resolve-to-pinned half already worked: a `latest`
+**The fix was small.** The resolve-to-pinned half already worked: a `latest`
 fetch interns under the pinned URN the payload declares, so the fix was to stop
 *reading* the `latest` indices, not to build anything. They then had no readers
 and were deleted, along with `_version_key` — a second, cruder version parser
@@ -964,10 +965,10 @@ this reason.
 
 What *was* wrong is the refusal. A bundle's binding read through a plain
 registry reached DuckDB as ``Binder Error: Catalog "lake" does not exist!`` —
-true, and useless to a caller who does not know that `lake` is what `bundle()`
-attaches. It now names the dataflow, the table it expected, the catalogs that
-*are* attached, and the constructor. Same shape as §5.8 and §5.9: the failure
-was never the refusal, it was a refusal that did not say what to do.
+true, and gives no fix to a caller who does not know that `lake` is what
+`bundle()` attaches. It now names the dataflow, the table it expected, the catalogs that
+*are* attached, and the constructor. Same shape as §5.8 and §5.9: the defect in
+each was a refusal that did not say what to do.
 
 ## 6. Landing it
 
@@ -1065,16 +1066,16 @@ Then, in dependency order:
    `reg.download(flow, fmt=…, to=…)`. Three properties fell out of building
    it that the sketch had not stated: a download makes **exactly one request**
    (no DSD is needed — there is no key to widen and no columns to interpret,
-   which is the sharpest statement of how it differs from `obs`);
+   which is how it differs most from `obs`);
    the `Content-Type` check has to live here precisely *because* a download
    has no downstream to notice a wrong format later; and the extension check
    deliberately ignores extensions it does not recognise, since refusing
-   `.dat` or `.gz` would be inference wearing a refusal's clothes.
+   `.dat` or `.gz` would be guessing at the format.
 9. **The chain**: `store=` as a position, unreachable-raises (§5.8), the
    cross-source refusal (§5.9), and the answers to §5.15 and §5.16 — which are
    *prerequisites* for calling the chain a mechanism rather than a description.
    **Done.** `store=` as a position turned out to be largely already true —
-   measured, not assumed: a new registry over an existing store answers from
+   measured: a new registry over an existing store answers from
    it with the remote dead, in one request, which is what "position in the
    chain" means. What was missing was the *provenance* half of §1.3's second
    rule (`fetched_at` written by nothing) and the contradiction between §1.3's
