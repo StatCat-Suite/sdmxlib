@@ -92,6 +92,14 @@ The format itself, field by field, is [the bundle format](bundle.md).
 
 ---
 
+::: sdmxlib.bundle.verify_remote
+
+---
+
+::: sdmxlib.bundle.RemoteFile
+
+---
+
 ::: sdmxlib.bundle.canonical_json
 
 ---

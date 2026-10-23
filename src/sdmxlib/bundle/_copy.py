@@ -12,7 +12,15 @@ from collections.abc import Collection
 from pathlib import Path
 
 from sdmxlib.bundle._write import digests_of
-from sdmxlib.storage._manifest import MANIFEST_NAME, BundleFile, Manifest, ManifestError, Tier, read_manifest
+from sdmxlib.storage._manifest import (
+    MANIFEST_NAME,
+    SIGNATURE_NAME,
+    BundleFile,
+    Manifest,
+    ManifestError,
+    Tier,
+    read_manifest,
+)
 
 
 def copy_bundle(source: str | Path, destination: str | Path, *, tiers: Collection[Tier] = (1, 2, 3)) -> Manifest:
@@ -23,7 +31,8 @@ def copy_bundle(source: str | Path, destination: str | Path, *, tiers: Collectio
     against `destination`, the ``data/`` beside it. A data file already there
     at the listed size and sha256 is kept, since another publication of the
     bundle shares it. Every copied file is checked against the manifest before
-    the manifest itself is copied, byte for byte.
+    the manifest itself is copied, byte for byte; a detached signature beside
+    it is copied just before it.
 
     `tiers` limits the copy to the files of those placement tiers: a server
     pulls tiers 1 and 2 and reads tier 3 remotely, so ``tiers=(1, 2)`` is what
@@ -60,6 +69,8 @@ def copy_bundle(source: str | Path, destination: str | Path, *, tiers: Collectio
         if not _matches(to, entry):
             msg = f"{to} does not match the manifest after copying from {frm}: the source differs from its manifest"
             raise ManifestError(msg)
+    if (src / SIGNATURE_NAME).is_file():
+        shutil.copyfile(src / SIGNATURE_NAME, dst / SIGNATURE_NAME)
     staged = dst / f"{MANIFEST_NAME}.tmp"
     shutil.copyfile(src / MANIFEST_NAME, staged)
     staged.replace(dst / MANIFEST_NAME)

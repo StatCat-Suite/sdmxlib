@@ -26,6 +26,13 @@ import msgspec
 #: The manifest's file name, at the bundle root.
 MANIFEST_NAME = "bundle.manifest.json"
 
+#: Reserved for a detached signature of the manifest, written after it, so
+#: the manifest never lists it and the files check never reports it.
+SIGNATURE_NAME = f"{MANIFEST_NAME}.sig"
+
+#: What a publication directory holds beside its listed files.
+UNLISTED = frozenset({MANIFEST_NAME, f"{MANIFEST_NAME}.tmp", SIGNATURE_NAME})
+
 #: The format this build writes. A reader takes any ``2.x``: a minor version
 #: only adds fields, which a reader that predates them ignores. 2.0 moved a
 #: publication into a token directory beside a shared ``data/`` (GH-123).

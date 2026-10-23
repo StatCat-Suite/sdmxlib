@@ -25,6 +25,7 @@ from sdmxlib.storage._manifest import (
     DATA_PATH,
     FORMAT_VERSION,
     MANIFEST_NAME,
+    UNLISTED,
     ArtefactEntry,
     BindingCount,
     BundleFile,
@@ -117,8 +118,7 @@ def inventory(root: Path, tiers: Mapping[str, Tier] | None = None) -> tuple[Bund
     Returns:
         Each file's path from the root, size, digests and tier.
     """
-    skip = {MANIFEST_NAME, f"{MANIFEST_NAME}.tmp"}
-    files = sorted(p for p in root.rglob("*") if p.is_file() and p.relative_to(root).as_posix() not in skip)
+    files = sorted(p for p in root.rglob("*") if p.is_file() and p.relative_to(root).as_posix() not in UNLISTED)
     entries: list[BundleFile] = []
     for p in files:
         path = p.relative_to(root).as_posix()
