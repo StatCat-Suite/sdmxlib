@@ -49,8 +49,7 @@ The site is a downstream SDMX REST service's HTTP data route: `where` comes
 from `c[DIM]=op:value` query parameters, `order_by` from `sort=`. The premise
 was false.
 
-**And the second half of that finding matters more than the first.** That
-consumer had to build option C itself, in application code: a fixed operator
+**That consumer had to build option C itself**, in application code: a fixed operator
 table, component ids resolved through `binding.dimension_column_map` with a 400
 on unknown, values bound as `?`, LIKE metacharacters escaped. It then
 *bypasses* the library entirely for anything needing projection or
@@ -101,7 +100,7 @@ the only check that survives — the assembled statement must be one statement,
 judged by DuckDB's own parser — and it closes statement injection and nothing
 else.
 
-That is the argument for C. Not a safer text API: no text.
+That is the argument for C, which accepts no text at all.
 
 ## 3. What the vocabulary has to cover
 
@@ -246,7 +245,7 @@ c = obs.col
 
 ### Checked against the two hardest real queries
 
-Not "does it look nice" — does it reach the shapes §3.1 and §3.2 named.
+The test is whether it reaches the shapes §3.1 and §3.2 named.
 (Written in the candidate spelling; each is followed by what was built.) Both of
 these are consumer B's queries, written today as CTEs against a raw connection.
 
@@ -301,7 +300,7 @@ compose arithmetically (§3.1). This query still runs as hand-written SQL
 
 ## 5. C3's reachability: four couplings
 
-Run, not assumed. All four were fixed — §7 lists where.
+Each was run, and all four were fixed — §7 lists where.
 
 **The join planner does not need the table declared.** A data-plane root has no
 hops — every path is a bare column — and `plan_joins` on an undeclared table
@@ -347,7 +346,7 @@ place the two planners would need to agree.
 > rendered last, and a reference compiled after it raises rather than naming
 > an alias nothing joined.
 >
-> **The other direction does not work, and this is the measurement.** Declaring
+> **Declaring the key instead does not work.** Declaring
 > the key so DuckDB elides the join itself would also help queries that *do*
 > read a sidecar column and then aggregate. It does not: a `UNIQUE INDEX` on
 > the sidecar's key left the hash join in the plan and 2.6 s on the clock, and
@@ -405,7 +404,7 @@ return. The first instinct was to raise, following `Query`'s existing
 precedent: with no resolver, `.objects` raises `TypeError` naming the
 alternative.
 
-**That precedent does not transfer, and the difference is worth stating.**
+**That precedent does not transfer.**
 Whether a resolver exists is *data-dependent* — the registry supplies one per
 table, and the same root may have one in one process and not another. Whether a
 root has an id is a property of the root's **type**, known statically. A
@@ -516,8 +515,8 @@ component id is itself a variable.
    join (#332). A column is `obs.col("GEO")` → `Untyped[ObsRow]`, empty path,
    resolved through the binding's column maps, raising `KeyError` with the
    valid ids. `__key__` is the dimensions (§6.1); the row kind is one `ObsRow`
-   (§6). The typed accessors and the `Query`/`KeyedQuery` split (§6.2, §6.3)
-   did follow in no slice yet — **both unbuilt**.
+   (§6). The typed accessors (§6.3) landed in #511; the
+   `Query`/`KeyedQuery` split (§6.2) is **not built**.
 5. ~~**Wire the existing terminals**~~ — landed: `filter`, `select`,
    `group_by`/`agg`, `qualify`, `order_by`, `limit`, `offset`, `frame`,
    `stream`, `count`, `exists`, plus `filter_components` for an SDMX REST
@@ -550,7 +549,7 @@ it does not migrate to `q.`.
 
 **It does not make the data plane's SQL safe from the caller.** A caller who
 uses the escape hatch is composing SQL, and the statement fence is all that
-guards it. The point of C3 is that nobody has to.
+guards it. C3 exists so that nobody has to.
 
 > **Landed in #329.** The escape hatch is now `reg.sql(text, **params)` on a
 > `LocalRegistry` (it was `catalog.sql` until `FederatedCatalog` was removed) —
