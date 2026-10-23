@@ -2,6 +2,53 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.72.1] - 2026-10-23
+
+### Bug Fixes
+
+- **local**: Keep the thread's read cursor open after to_registry (GH-115)
+
+### Documentation
+
+- **claude**: State the commit convention and name the related repos (GH-61)
+- **claude**: Add the suite writing-style rules (GH-58)
+- Rename 105 headings to the writing-style rules (GH-84)
+- Fail the docs build on a link to a missing anchor
+- **claude**: Rewrite CLAUDE.md to its writing-style rules (GH-84)
+- Rewrite the index and tutorials to the writing-style rules (GH-84)
+- Rewrite the cookbook to the writing-style rules (GH-84)
+- Rewrite upgrading.md to the writing-style rules (GH-84)
+- **design**: Rewrite registry-and-catalog.md to the writing-style rules (GH-84)
+- **design**: Rewrite six small design docs to the writing-style rules (GH-84)
+- Describe sdmxlib as SDMX for Python: structures, reference metadata and observation data
+- **design**: Rewrite three more design docs to the writing-style rules (GH-84)
+- **design**: Rewrite query-tree-paths.md to the writing-style rules (GH-84)
+- **design**: Rewrite performance.md to the writing-style rules (GH-84)
+- **design**: Rewrite query-language-examples.md to the writing-style rules (GH-84)
+- **design**: Rewrite data-plane-query.md to the writing-style rules (GH-84)
+- **design**: Rewrite query-language-evidence.md to the writing-style rules (GH-84)
+- **design**: Rewrite query-pushdown.md to the writing-style rules (GH-84)
+- **design**: Rewrite query-language.md to the writing-style rules (GH-84)
+- **design**: Rewrite mutation-evidence.md to the writing-style rules (GH-84)
+- **bundle**: Write the bundle format specification (GH-98)
+- Remove issue references from the user docs (GH-85)
+- **model**: Remove issue references from rendered docstrings (GH-85)
+- **query**: Remove issue references from rendered docstrings (GH-85)
+- Remove issue references from the remaining rendered docstrings (GH-85)
+- Archive the GitLab tracker in history/gitlab (GH-85)
+
+### Miscellaneous
+
+- **bundle**: Regenerate the shipped manifest schema after a docstring edit (GH-85)
+- Drop stale config, comments and GitLab-era wording (GH-59)
+- Verbatim Apache-2.0 LICENSE, PEP 639 metadata, issue tracker link (GH-60)
+- Gate question headings and banned phrases (GH-84)
+
+### Testing
+
+- **bundle**: Fix the spec guard's lint findings (GH-98)
+- Keep the rendered docstrings free of bare issue references (GH-85)
+
 ## [0.72.0] - 2026-10-23
 
 The bundle as a published, checkable artefact (GH-56). See `docs/upgrading.md`.
