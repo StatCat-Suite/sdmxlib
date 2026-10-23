@@ -90,6 +90,38 @@ A bundle published as an artefact: its manifest, a `token` per publication, and 
 
 ---
 
+#### Annotation overlays
+
+Display annotations changed without a rebuild, the token a cache keys on when they are applied, and folding them into a bundle (GH-70).
+
+::: sdmxlib.bundle.apply_overlays
+
+---
+
+::: sdmxlib.bundle.effective_token
+
+---
+
+::: sdmxlib.bundle.fold_overlays
+
+---
+
+::: sdmxlib.bundle.read_overlay
+
+---
+
+::: sdmxlib.bundle.Overlay
+
+---
+
+::: sdmxlib.bundle.OverlayEntry
+
+---
+
+::: sdmxlib.bundle.OverlayError
+
+---
+
 ### Synthetic bundles
 
 Conforming bundles of any shape, deterministic from a seed, for tests and stress runs; and the shape of a real one (GH-69).
