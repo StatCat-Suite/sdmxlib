@@ -7,7 +7,7 @@ How it was reached — the old split's real seam, what sdmx1 and pysdmx do, why
 the spec's word is *registry*, and the options weighed and dropped — is in the
 commits preceding this file. It is not repeated here.
 
-## 1. Three ideas decide everything
+## 1. Three governing ideas
 
 ### 1.1 Retrieval versus computation
 
@@ -384,7 +384,7 @@ registry — §5.17.
 | `registry` / `to_registry()` | R / L | hands out an `InMemoryRegistry` | see §5.10 |
 | `clear_resolve_cache` / `resolve_cache_info` | L | cache introspection | keep — ops surface |
 
-### 3.2a The three "delete" rows did not survive implementation
+### 3.2a The three "delete" rows, overturned in implementation
 
 The audit above marked three L-methods **delete** on the rule "row selection
 wearing a name." Building step 5 of §6 turned up evidence that overturned all
@@ -546,7 +546,7 @@ artefact being built. Confirms the type split too: `add` is absent on
 registry. `LocalRegistry.bundle(path)` *opens* a published bundle; it has no
 `create=` — the bundle is written by its builder and opened here.
 
-### 4.5 Browse — the one that does not unify
+### 4.5 Browse, which stays separate
 
 ```python
 for entry in reg.browse():
@@ -763,7 +763,7 @@ issued a **wrong** one, and since §5.8 a 404 comes back as "not here", so the
 query returned empty and said nothing. `Request.path` now derives the plane
 from the resource.
 
-### Found by review, never previously asked — now decided
+### Decided after review
 
 **5.12 One rule across both planes: visibility, not magnitude.** *(This began
 as "an unfiltered structural scan is not refused", filed as a defect. It is not

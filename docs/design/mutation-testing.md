@@ -154,7 +154,7 @@ Tests in `tests/unit/test_collections_mutant_gaps.py`.
 | --- | --- |
 | `ItemList.__hash__mutmut_1` | `hash(self._items)` → `hash(None)`. Unkillable in the ordinary way at the time, because **no test could call `hash` on a populated `ItemList`** — `_items` held attrs `@define` items, which were unhashable, so it raised. The class advertised hashability it could not deliver. Filed as **#290** and since fixed: `ItemList.__hash__ = None` (and the same on `ArtefactList`), so the declaration is the refusal and there is no method left to mutate. Since #492 the items are `@frozen(unsafe_hash=False)` — equal by value, still deliberately unhashable, keyed by `urn` — so the collection stays only as hashable as its contents. Pinned by `test_the_collections_are_honestly_unhashable` in `tests/unit/test_collections_mutant_gaps.py`. |
 
-## `model/validation.py` — not triaged, and why
+## `model/validation.py` — untriaged
 
 The full-scope run does not finish in a usable time. Observed while it ran:
 **1000+ mutants, 129 survivors and 75 timeouts after roughly 25 minutes**, with

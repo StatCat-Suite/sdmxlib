@@ -12,7 +12,7 @@ corrupted result sets. The fix landed in v0.28.0 (#78). This page
 documents the resulting model so deployments can pick the right pattern
 without rediscovering the constraints.
 
-## TL;DR
+## Summary
 
 | Operation | Thread-safe? |
 |---|---|
@@ -93,7 +93,7 @@ process lifetime — no per-request cursor churn.
 
 Lifecycle tests live in `tests/unit/test_cursor_lifecycle.py`.
 
-### What concurrent really means here
+### One connection runs one statement at a time
 
 DuckDB has a per-connection mutex that serialises most internals. A
 `LocalRegistry` backed by one DuckDB connection cannot run two SQL
@@ -159,7 +159,7 @@ The cache is a plain `dict` subclass with FIFO eviction:
   `resolve_cache_info()` may slightly under-count. They remain a
   useful diagnostic, but should not be used as a load-bearing assertion.
 
-### Why FIFO and not LRU
+### FIFO eviction keeps reads lock-free
 
 The previous implementation (v0.27.x) was an LRU — every read called
 `move_to_end()` on the underlying `OrderedDict`. That mutation on every
@@ -231,7 +231,7 @@ own `LocalRegistry` and its own DuckDB connection. DuckDB's per-connection
 ceiling no longer bounds your total throughput; the OS schedules
 process-level parallelism for you.
 
-### What about LazyCodelist held across requests?
+### A LazyCodelist held across requests
 
 A `LazyCodelist` returned from `reg.codelist(urn)` or
 `reg.get(codelist_urn, eager=False)` holds the registry's long-lived

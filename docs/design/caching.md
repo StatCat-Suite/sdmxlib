@@ -169,7 +169,7 @@ path. (It is *not* a substitute for single-flight: warmup handles cold
 start, single-flight handles the herd if warmup is skipped or a key is
 missed.)
 
-## The key is not the whole question: cache *completeness*, not just identity
+## A cache key covers completeness as well as identity
 
 Two bugs in this codebase were the same mistake, and neither was about
 eviction, locking, or staleness. Both were a cache answering the right key

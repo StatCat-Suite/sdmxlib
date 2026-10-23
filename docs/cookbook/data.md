@@ -210,14 +210,14 @@ Measured on 4M rows of three columns:
 and the streamed figure does not move at 8M rows, where `frame()` roughly
 doubles.
 
-### `chunk_rows` is not the memory knob
+### `chunk_rows` sets the batch size
 
 Read that table again: 1,000 and 50,000 measure **identically**. Chunk size
 decides the batch your consumer receives — size it for a writer's preferred
 batch or an HTTP chunk — and starts costing anything only once it is large
 enough to be a buffer in its own right.
 
-### What *does* decide it: whether the query sorts
+### A sort decides peak memory
 
 !!! warning "An ordered stream is not bounded"
 

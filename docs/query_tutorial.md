@@ -164,7 +164,7 @@ you have to ask to skip them, on purpose: a silently empty `.annotations` is
 wrong data, not fast data, and a caller who does not know to ask must not get
 it.
 
-## 4. Paths — the idea the rest is built on
+## 4. Paths
 
 So far every filter has been about the root itself. The interesting questions
 are about *related* things: codes of a codelist, dimensions of a structure,

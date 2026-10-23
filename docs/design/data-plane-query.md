@@ -26,7 +26,7 @@ after options A and B were tried and refuted rather than reasoned about.
 > The sections below keep the design argument as it was made; notes mark
 > where building it changed the answer.
 
-## 1. Why this is open
+## 1. The text API this replaced
 
 *(Written when it was. The API described here was removed in #329.)*
 
@@ -57,7 +57,7 @@ on unknown, values bound as `?`, LIKE metacharacters escaped. It then
 aggregation. Milestone %15's rule — every bypass is a specification — lands
 here.
 
-### The count above understates it
+### A second consumer with its own query builder
 
 That measurement counts calls *into* `DataStore`. A second consumer, an LLM
 agent built on sdmxlib, makes none: it carries its own query builder with the
@@ -79,7 +79,7 @@ parameterised predicates.** An agent turning natural language into these calls
 makes every value user input by construction, and with text as the only
 interface on offer, its defence has to be an allow-list it writes itself.
 
-## 2. What option B could not be
+## 2. The fences built and removed for option B
 
 Both stronger fences were built, run against the suite, and removed. They were
 kept as tests in `tests/unit/test_data_plane_fence.py`, asserting the
@@ -299,7 +299,7 @@ projectable as a column.
 compose arithmetically (§3.1). This query still runs as hand-written SQL
 (`reg.sql`) or in polars.
 
-## 5. Is C3 actually reachable? Four couplings
+## 5. C3's reachability: four couplings
 
 Run, not assumed. All four were fixed — §7 lists where.
 
@@ -539,7 +539,7 @@ Staging 1–3 first is deliberate: all three are changes to structural code with
 structural tests already covering them, so they land before any new surface
 exists to get wrong.
 
-## 8. What this does not do
+## 8. Out of scope
 
 **It does not merge the two planes' safety properties by accident.** #273
 rejected sharing a representation because the structural DSLs are safe

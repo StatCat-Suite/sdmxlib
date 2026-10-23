@@ -77,7 +77,7 @@ the instances: every public `Query` method returning `Self` must be assigned a
 law (row-set or preserving), so the next `limit`-shaped method cannot arrive
 untested.
 
-## Two things the principle does not cover
+## Two exceptions to the principle
 
 **Ordering is not a row-set property.** `order_by` permutes; it does not change
 membership. Applying refinement to it by symmetry was a category error, and
@@ -195,7 +195,7 @@ naming what a column reference looks like. (A `Select`'s `order_by` *does*
 take a string: there it names an output column of the projection, which has
 no accessor.)
 
-## Is there an intermediate representation? (#273)
+## The intermediate representation (#273)
 
 **Yes, and it is the `Plan`.** `src/sdmxlib/query/_plan.py` holds what a query
 *says* — root, predicates, qualifiers, order keys, default order, the
@@ -274,7 +274,7 @@ pass, it belongs between construction and emission, with
 `normalize(normalize(q)) == normalize(q)` as the law and
 `tests/support/sql_corpus.py` as the equivalence check.
 
-## Why not the alternatives
+## Alternatives considered
 
 Prior art was checked rather than recalled, and it does not settle the
 question — among declarative peers exactly one law is unanimous:

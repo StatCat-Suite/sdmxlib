@@ -356,7 +356,7 @@ The implementation maintains these:
 - **Partial-failure-safe.** A `_resolve_refs` call that raises before
   `promote()` leaves the shared cache untouched.
 
-## What's *not* cached
+## Uncached results
 
 - **Top-level `reg.get(urn)` results.** The resolver cache holds
   artefacts only as Ref targets (the things `_resolve_urns` loaded to
@@ -444,7 +444,7 @@ cattrs and orjson's native-dataclass path remain measurably *slower* than a
 hand-written emit and were correctly rejected. Data-plane byte streaming was
 migrated separately (#183) and benchmarked flat-to-faster on the large case.
 
-### After the migration: we now beat pysdmx on JSON serialize — losslessly
+### JSON serialisation after the migration, against pysdmx
 
 A profile of the migrated writer settled a question the table above left open.
 Both libraries have a domain-model → wire-Struct conversion (`to_*` for us,

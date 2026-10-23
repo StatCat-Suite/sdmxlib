@@ -215,7 +215,7 @@ why dotting through it works; `.any(*preds)` takes child-rooted predicates
 inside `.any()` is a type error. polars draws the same line with `pl.element()`
 bound by `.list.eval()`.
 
-### The universal, and why its SQL needs care
+### The universal quantifier and its SQL
 
 `.every(*preds)` takes the same child-rooted predicates:
 
@@ -786,7 +786,7 @@ site:
 
 ---
 
-## 12. What working the examples found
+## 12. Findings from the examples
 
 Kept because each changed the design before it shipped.
 

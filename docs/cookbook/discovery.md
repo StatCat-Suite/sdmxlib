@@ -228,7 +228,7 @@ first = reg.query(q.dataflow).order_by(q.dataflow.id).page(50)
 second = reg.query(q.dataflow).order_by(q.dataflow.id).after(first.cursor).page(50)
 ```
 
-### Four ways to materialise, at four prices
+### Four ways to materialise, and their costs
 
 | call | returns | cost |
 | --- | --- | --- |
@@ -263,7 +263,7 @@ From the dataflow, one hop further — through the DSD it is built on:
 reg.query(q.dataflow).filter(q.dataflow.dsd.components.concept.id == "REF_AREA").ids()
 ```
 
-### Either side of that edge
+### Structures and dataflows that use a concept
 
 "Every artefact that uses this concept" spans two roots — a DataStructure
 carrying such a component, and a Dataflow whose DSD does. That is an `|` of two

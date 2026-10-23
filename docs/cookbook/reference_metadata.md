@@ -523,7 +523,7 @@ subtree arm is now visible at the call site rather than a keyword argument.
 
 ---
 
-## What sdmxlib doesn't do (yet)
+## Limitations
 
 - **Submit** metadata to a registry — read-only REST client.
 - Fetch metadata from a live SDMX 3.0 reference-metadata REST endpoint

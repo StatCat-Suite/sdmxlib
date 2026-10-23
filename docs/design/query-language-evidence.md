@@ -13,7 +13,7 @@ usually the more useful record.
 
 ## Peer surveys
 
-### Peer survey: how other libraries name a column
+### Peer survey: column naming
 
 Run rather than recalled; each row was executed and its output inspected.
 
@@ -31,7 +31,7 @@ here are built standalone and handed to `.filter()`, so the accessor has
 nothing to be bound to. Every other library binds the column to the relation it
 came from, which is what lets them check joins and infer scope.
 
-### Peer survey: how a fixed schema resolves join ambiguity
+### Peer survey: join ambiguity in a fixed schema
 
 The sharper question, because our schema *is* fixed and theirs mostly is not.
 
@@ -229,7 +229,7 @@ noting the cost is superlinear — ~293 ns per extra hop, because each hop
 rebuilds child nodes — which is irrelevant at SDMX's one-to-three hops and
 would matter on deep paths.
 
-### Fan-out and N+1, which is what consumers actually hit
+### Fan-out and N+1 in consumer code
 
 The common client shape is not a filter but a *fan-out they iterate*: for each
 codelist, its codes. Written as N+1 today. Measured, 60 codelists x 40 codes:
@@ -309,7 +309,7 @@ extracts.** That is two peers, not one, behind the design's terminal rule (as bu
 peer whose `in` means row membership, and it is also the one whose `in` is
 documented to fall back on a full fetch.
 
-### Nullable edges: the candidate join-kind rule was right, and incomplete
+### Nullable edges: the join-kind rule and its missing case
 
 The sharpest result of the sweep. Django, nullable FK, join kind by context:
 
@@ -404,7 +404,7 @@ peer we match, deliberately.
 the name is ours to choose; `list()` matches the SQL we emit and the DuckDB
 function, which is the tiebreak used elsewhere in this file.
 
-### What the sweep did not cover
+### Sweep scope
 
 - `PIVOT` and window functions — then the `query-composition.md` gaps, and no
   peer comparison changed that they were unimplemented. *(Windows have since
@@ -420,7 +420,7 @@ function, which is the tiebreak used elsewhere in this file.
 
 ## Typing hazards found while prototyping
 
-### The `.str` namespace shadows the builtin — a real hazard
+### The `.str` namespace shadows the builtin
 
 Found building this, and worth keeping whichever branch wins, because any
 namespace named for a builtin has it.
@@ -673,7 +673,7 @@ rather than `object`, which is the case CLAUDE.md keeps
 
 ## Prototype log
 
-### What the prototype does and does not do
+### Prototype scope
 
 Stated so the demos are not read as more than they are:
 

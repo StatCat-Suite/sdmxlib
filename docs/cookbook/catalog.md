@@ -110,7 +110,7 @@ one agency's dataflows rather than every registry's. Leave the agency out and
 the query is **refused** rather than quietly downloading a catalogue to find
 three rows in it. The error names the column to add.
 
-### You no longer choose a resolution depth
+### The query decides the resolution depth
 
 This is the part that changed most. There used to be three terminals —
 `browse()`, `fetch()`, `resolve()` — and picking the wrong one meant either a

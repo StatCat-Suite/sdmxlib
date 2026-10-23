@@ -13,7 +13,7 @@ recovered — or can't be.
 
 Until #399 the answer on this page was `SdmxUrn[Any]`, and the page argued
 *against* `object`. #399 reversed that, for reasons recorded in
-[Why not `Any`](#why-not-any-the-399-reversal) below; the rest of the page
+[`object` over `Any`](#object-over-any-the-399-reversal) below; the rest of the page
 describes the design as it stands.
 
 ## The output is typed. The `object` is on a phantom parameter.
@@ -35,7 +35,7 @@ rest.get(urn)        # -> Codelist | None
 The URN carries a "what do I point at" tag that exists only for the
 type-checker. Nothing in the runtime object depends on it.
 
-## Why plain models don't hit this — and generic ones do
+## Plain models and generic models
 
 A plain `User` model has **no type parameter**, so there is nothing to infer:
 `model_validate(json) -> User` is trivially complete. The wall appears the
@@ -56,7 +56,7 @@ the JSON. That `Box[int]` is exactly a `type[T]` **witness**. So this is not
 an sdmxlib quirk; it is a universal property of *any generic type whose
 parameter the payload does not determine*.
 
-## "But the class name is right there in the string!"
+## The class name in the URN string
 
 It is — **at runtime** (`urn:…codelist.Codelist=SDMX:CL_FREQ(1.0)`). But a
 function's return type is **static**: one signature, one return type. It
@@ -140,7 +140,7 @@ base class, so each one a reader needs inherits `ParsesUrn` alongside
 keeps its explicit `type[U]` argument, with the `ARG003` suppression that
 shape costs.
 
-## Why not `Any`: the #399 reversal
+## `object` over `Any` (the #399 reversal)
 
 This page used to say `parse -> SdmxUrn[Any]` and warn against `object`:
 `Ref.unresolved(SdmxUrn[object])` is a `Ref[object]`, not a `Ref[Codelist]`,

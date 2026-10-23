@@ -48,7 +48,7 @@ frame = (
 
 ---
 
-## 1. What problem it solves
+## 1. The problem
 
 Before #306 there were four query DSLs — `cl.codes` over `sl.code`, `h.nodes`
 over `sl.node`, `reg.artefacts(T)` over `sl.artefact`, and
@@ -490,7 +490,7 @@ and why `limit` cannot be pushed past a residual are
 fetch first it says so on its own line, because the SQL alone reads as a local
 scan.
 
-### Why the earlier no-IR decision does not apply
+### The earlier no-IR decision, superseded
 
 `query-composition.md` decided against an intermediate representation for the
 structural DSLs. Its reasoning was about **expressiveness** — 13 of 18 collected
@@ -598,7 +598,7 @@ over the shared maintainable surface, for helpers that cannot name a root) and
 same `Query`. And the lazy artefacts' named verbs (`cl.narrower(...)`,
 `cl.roots()`, …) return `Query`s too.
 
-### What it costs
+### Cost
 
 *Discoverability*: a lazy object prints a plan, not data — the standing
 complaint against ibis and polars, mitigated the same way, with a `repr` that
@@ -825,7 +825,7 @@ The comparison is nested rather than SQL's row constructor: `(a, b) > (?, ?)`
 cannot express keys whose directions disagree, and "newest version first, then
 id ascending" is the common shape. Nulls follow the emitted `NULLS LAST`.
 
-### 7.5 Have we become a pipeline?
+### 7.5 Composition stays a query, not a pipeline
 
 A fair worry, since `query-composition.md` names polars as the standing hazard:
 *"its vocabulary is borrowed here, but it is a pipeline"*. The answer is no,
@@ -1035,7 +1035,7 @@ builders). Both are compiled relations. Raw text is not.
 
 ---
 
-## 11. The row kind: what it is for, and what it costs
+## 11. The row kind: purpose and cost
 
 `RowKind` is a pure phantom — a never-instantiated marker per relation
 (`CodeRow`, `ComponentRow`, …). Its only job is to make a predicate built for one
