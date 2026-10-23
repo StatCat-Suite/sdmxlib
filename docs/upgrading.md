@@ -3,10 +3,10 @@
 This page covers every **breaking change** from 0.48.0, which is where the
 current shape of the library starts, through the current release.
 Each section states what the API is now. Where a later change superseded an
-earlier one, the section gives the result, not the step in between. There are
-no deprecation shims: sdmxlib is pre-stability and breaks cleanly rather than
-carrying two spellings of the same idea. That means an upgrade is a
-find-and-replace pass, and this page is the list.
+earlier one, the section gives the result. sdmxlib is pre-stability and ships
+no deprecation shims: it breaks cleanly rather than carrying two spellings of
+the same idea, so an upgrade is a find-and-replace pass and this page is the
+list.
 
 If you only read one section, read [Registry naming](#registry-naming) and
 [One `get`](#one-get) — between them they cover most call sites.
@@ -347,9 +347,8 @@ leaking out of the schema the path language exists to hide, so `df["id"]` raised
 `KeyError` on a frame produced by `q.codelist.id`. They now appear only where
 they should: `reg.sql()` and `sl.schema`.
 
-**If you index frames by column name, this is the change that will bite.** It
-fails at runtime rather than at type-check, because column access is
-string-keyed.
+**Code that indexes frames by column name breaks here**, at runtime rather than
+at type-check, because column access is string-keyed.
 
 Two columns projecting to one name are refused rather than renamed. Name either
 side — as a keyword, or with the new `alias` on the expression:
@@ -395,8 +394,8 @@ frame.collect()     # PathError, here
 cl.codes.select(sl.q.code.annotations.title)
 ```
 
-Nothing about it needed the database: the cardinality is a property of the
-declared edge graph. `select()` still executes no SQL, refusing or not.
+The refusal needs no database: the cardinality is a property of the declared
+edge graph. `select()` still executes no SQL, refusing or not.
 
 ### A query is a plan, not a collection
 
@@ -415,7 +414,7 @@ cl.codes.collect()
 cl.codes.filter(sl.q.code.parent.id.is_null()).collect()
 ```
 
-This bites where a codelist came from a `LocalRegistry`, which returns a
+This affects a codelist from a `LocalRegistry`, which returns a
 `LazyCodelist`. A codelist fetched over REST is eager and still supports
 `len()`.
 
@@ -427,8 +426,7 @@ reg.get(cl_urn, eager=True)  # Codelist | None
 reg.get(h_urn)               # LazyHierarchy | None
 ```
 
-The hierarchy line is the one that was a bug rather than a nuisance.
-`LazyHierarchy` has no `codes`, `tree` or `descendants` at all — it has
+The hierarchy line fixes a bug. `LazyHierarchy` has no `codes`, `tree` or `descendants` at all — it has
 `nodes`, `roots()` and `narrower_transitive()` — so `reg.get(h_urn).codes`
 type-checked against the declared `Hierarchy` and raised `AttributeError` at
 runtime. Both halves are fixed: the declaration is now true, and the three
@@ -656,8 +654,7 @@ where both used to say nothing. (A nested `Level` was among them: SDMX-ML 3.x
 chains a hierarchy's levels, and sdmxlib wrote and read them as siblings —
 XSD-invalid output past one level. It now writes and reads the chain.)
 
-The same census over SDMX-ML 2.1 found three readings that were wrong, not
-merely incomplete, and fixes them:
+The same census over SDMX-ML 2.1 found three wrong readings, now fixed:
 
 - **A reference spelled `<URN>`** — 2.1 lets a reference be a `<URN>` child
   instead of a `<Ref>`, and the reader looked only for `<Ref>`. A schema-valid
@@ -1884,7 +1881,7 @@ document's artefact that does.
 - Serialisation checks what the target can carry by default
   (`validate=True`), and refuses a measure-less DSD for 2.1.
 - References whose class does not match are rejected at the read boundary.
-- `Concept.parent` is gone — the column existed, the feature never did.
+- `Concept.parent` is gone; it was a column with no feature behind it.
 - Contacts belong to an organisation, not an agency.
 
 If you build artefacts programmatically, the name requirement is the one most
@@ -1951,7 +1948,7 @@ says. `attachment` carries the whole of what any format encodes.
 
 ## Everything in a signature is importable
 
-Additive, not breaking, but it removes a class of workaround: twelve types
+This change is additive, and removes a class of workaround: twelve types
 that appeared in public signatures could not be imported from `sdmxlib`, so
 callers reached into private modules to name them.
 
@@ -1998,8 +1995,8 @@ was never matching before, so this is a simplification rather than a port.
 
 ## Aggregates take `where=`
 
-New, not breaking, and the answer to a question that had no spelling: which
-children an aggregate collects.
+This change is additive: `where=` says which children an aggregate collects,
+which had no spelling before.
 
 ```text
 # before — `filter` chooses which DSDs come back, never which components collect
@@ -2379,7 +2376,7 @@ default, SDMX-JSON's `minOccurs: 1`, and 2.1's fixed metadata-target types.
 Identity is always written (an artefact's and a reference's id, agency,
 version, parent version, class and package), and so is anything a format
 requires, such as 2.1's `assignmentStatus`. There is no option to spell
-defaults out. The bytes change; the meaning does not.
+defaults out. The bytes written change, and their meaning stays the same.
 
 For that to be safe, the model holds what an unstated value *means* rather
 than `None`, and a reader fills it in:
@@ -2466,7 +2463,7 @@ with sl.LocalRegistry(":memory:") as local:
     local.query(sl.q.dataflow).filter(sl.q.codelist.agency == "AG")
 ```
 
-Through a hop it was a silently wrong answer, not just a loose spelling:
+Through a hop it returned a silently wrong answer:
 `reg.query(sl.q.dataflow).filter(sl.q.dsd.dimensions.id == "UNIT")` planned
 the DSD's path from the dataflow and returned `[]`. Write the predicate from
 the query's own root, and hop from there:
