@@ -103,6 +103,9 @@ exclude_lines = [
 
 [dependency-groups]
 dev = [
+  # The CLI, a workspace member released with sdmxlib (GH-67): installed here so
+  # its tests run in `just ci` with everything else.
+  "sdmxlib-cli",
   # Checker versions carry UPPER bounds. uv.lock is gitignored (published
   # library), so CI resolves the dev group fresh on every pipeline — an
   # unbounded floor means a checker release lands in CI unannounced. With
@@ -225,3 +228,11 @@ process_isolation = "forkserver"
 # never mutated. Its mutants are booked as survivors: 282 for `_v3_writer.py`,
 # where a fresh process kills `__init__`'s outright (#458).
 forkserver_warmup = "none"
+
+[tool.uv.workspace]
+# `cli/` is `sdmxlib-cli`, the command line, a separate distribution so the
+# library never depends on typer (GH-67).
+members = ["cli"]
+
+[tool.uv.sources]
+sdmxlib-cli = { workspace = true }

@@ -51,8 +51,11 @@ python-platform = "linux"
 # (`python bench/concurrency/bench_concurrency.py`), so its sibling
 # `_harness` resolves off the script's own directory at runtime and pyrefly
 # needs telling where that is.
-search-path = ["src", "bench/concurrency", "."]
-project-includes = ["src", "bench", "tests"]
+#
+# `cli/` is the `sdmxlib-cli` workspace member (GH-67), under the same rules as
+# everything else; its package lives in `cli/src`.
+search-path = ["src", "cli/src", "bench/concurrency", "."]
+project-includes = ["src", "cli", "bench", "tests"]
 project-excludes = ["**/__pycache__", "**/.venv", "**/node_modules"]
 
 # Governance model, deliberately the same one ruff runs under: turn EVERYTHING
