@@ -17,7 +17,14 @@ from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.metadataset import MetadataSet
 from sdmxlib.model.validation import reference_issues
-from sdmxlib.storage._manifest import MANIFEST_NAME, Manifest, ManifestError, StoreFormatError, read_manifest
+from sdmxlib.storage._manifest import (
+    MANIFEST_NAME,
+    UNLISTED,
+    Manifest,
+    ManifestError,
+    StoreFormatError,
+    read_manifest,
+)
 from sdmxlib.storage.schema import StoreSchemaError
 
 #: The ATTACH alias `LocalRegistry.bundle` gives the bundle's DuckLake catalog.
@@ -133,7 +140,7 @@ def _files(root: Path, manifest: Manifest) -> Iterable[Finding]:
     on_disk = {
         p.relative_to(root).as_posix(): p
         for p in sorted(root.rglob("*"))
-        if p.is_file() and p.name not in {MANIFEST_NAME, f"{MANIFEST_NAME}.tmp"}
+        if p.is_file() and p.relative_to(root).as_posix() not in UNLISTED
     }
     data = root / manifest.data_path
     for entry in manifest.files:

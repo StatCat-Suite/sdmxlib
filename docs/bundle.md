@@ -46,6 +46,9 @@ bundle; a *reader* opens one.
 - `bundle.manifest.json` marks the publication as published. A directory
   without one is unpublished: `LocalRegistry.bundle` refuses it, and its
   builder reopens it with `LocalRegistry.build(bundle, resume=token)`.
+- `bundle.manifest.json.sig` is reserved for a detached signature of the
+  manifest. The manifest never lists it, the `files` check never reports it,
+  and `copy_bundle` copies it just before the manifest.
 - A producer MAY add files of its own to the publication directory, such as
   a search index. The manifest MUST list them like any other file (§2), so
   they MUST be in place before the manifest is written.
@@ -368,6 +371,20 @@ received, not when one is opened to serve.
 A package that owns part of a bundle MAY pass its own checks as
 `extensions={name: check}`. Each runs after `references`, and its findings
 carry its name.
+
+### Remote files
+
+A server reads tier-3 files from blob storage and never holds them, so it
+cannot hash them. A blob store reports a file's size and, when the uploader
+set it, its `Content-MD5`: the base64 of the MD5 the manifest records in hex
+(`content_md5(entry)` computes it). A publish job MUST set `Content-MD5` on
+every upload.
+
+`verify_remote(manifest, lookup, tiers=(3,))` checks the files of the given
+tiers against what `lookup(entry)` returns for each, a `RemoteFile(size,
+content_md5)` or `None`. sdmxlib holds no blob-store client: the caller's
+lookup asks the store. Each file missing, of another size, without a
+`Content-MD5`, or with a different one is a finding under the check `remote`.
 
 The `Report` lists the checks that ran as `checked`, so a clean report also
 says how much it covered. Another implementation conforms when it refuses
