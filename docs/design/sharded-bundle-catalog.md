@@ -24,8 +24,8 @@ Found by checking this design against sdmxlib 0.72.1 (DuckDB 2.0.0) and statcatl
 - **Effective token (§5.1, §5.2): GH-131.** Merge hooks are per annotation type, and a `null` scope is undefined.
 - **Render key (§7.3): GH-132.** Cache keys must change when a writer's output changes.
 - **Memory (§7.1, §7.4, §8): GH-133.** `memory_limit` and threads are per DuckDB instance, so 16 attached bundles oversubscribe a pod.
-- **Structure routing (§2.1, §6.3): GH-136.** `/structure` queries and `latest` versions span bundles, so the index needs artefact URNs and version lists.
-- **statcatlib traps:** trap 15 is fixed (the statcat schema is checked before any DDL); trap 16 is partly fixed (orphaned language tables are dropped).
+- **Structure routing (§2.1, §6.3): StatCat-Suite/statcatlib#45, StatCat-Suite/sdmxlib-rest#49.** `/structure` queries and `latest` versions span bundles, so the index needs artefact URNs and version lists.
+- **statcatlib traps:** trap 15 is in progress (StatCat-Suite/statcatlib#39); trap 14 is StatCat-Suite/statcatlib#40; trap 16 is partly fixed (orphaned language tables are dropped, StatCat-Suite/statcatlib#42) and the rest is StatCat-Suite/statcatlib#47.
 
 ---
 
