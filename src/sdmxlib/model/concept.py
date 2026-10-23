@@ -22,7 +22,7 @@ from sdmxlib.model.urn import ParsesUrn, SdmxUrn
 
 @frozen
 class ISOConceptReference:
-    """A concept's counterpart in an ISO 11179 registry — SDMX's ``ISOConceptReference`` (#422).
+    """A concept's counterpart in an ISO 11179 registry — SDMX's ``ISOConceptReference``.
 
     Three plain strings, as the schemas spell them: a reference *out* of SDMX,
     so not a `Ref`, which names SDMX artefacts. sdmx1 models it the same way.
@@ -171,8 +171,8 @@ class ConceptScheme(MaintainableArtefact):
 
         One of seven now — `Codelist`, `CategoryScheme`, the three organisation
         schemes, `MetadataStructure` and `DataStructure` all have one, on the
-        shared `_items.item_ref` path rather than a copy of `SdmxUrn.make` each
-        (#407). This was the only one for a long time, which is why authoring a
+        shared `_items.item_ref` path rather than a copy of `SdmxUrn.make`
+        each. This was the only one for a long time, which is why authoring a
         3.0 `Hierarchy` meant building item URNs by hand.
 
         Example:

@@ -283,7 +283,7 @@ class MetadataStructure(MaintainableArtefact, PathNavigation[MetadataAttribute])
         The URN is built from *this* scheme's agency, id and version, so it
         cannot name a parent that does not exist — which is what six hand-written
         keyword arguments to `SdmxUrn.make` invite, and what
-        `validate_references` now correctly reports as broken (#407).
+        `validate_references` now correctly reports as broken.
 
         Raises:
             KeyError: If no metadata attribute has this path in this structure.

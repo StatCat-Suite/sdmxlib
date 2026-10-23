@@ -28,11 +28,11 @@ class AncestorMap:
     province you need each geography mapped to the province containing it.
     Applications were building this by hand — traverse the tree in Python,
     materialise a dict, register it as a DuckDB view, join, unregister — with
-    their own cache around it (#274). It is one query over the ancestor paths
+    their own cache around it. It is one query over the ancestor paths
     the storage writer already bakes.
 
     Keyed by path, ``(path, node_id, rollup_path, rollup_id)``: a node id may
-    repeat in another branch (#439), so a mapping keyed by id would give one
+    repeat in another branch, so a mapping keyed by id would give one
     node two images. The ids ride along because they are what a join against
     observation codes uses. A *join* input rather than an ``IN`` list;
     `ancestors` narrows it to the rollup ids for the membership case.
@@ -98,7 +98,7 @@ class AncestorMap:
         For the membership case — ``code.id.is_in(h.ancestor_at("PR").ancestors())``
         — where the two-column mapping is not what ``IN`` wants. Typed as the
         public `sdmxlib.SqlRelation` it is, not the private class behind it,
-        so a caller can annotate what they hold (#513).
+        so a caller can annotate what they hold.
         """
         return _AncestorTargets(self)
 

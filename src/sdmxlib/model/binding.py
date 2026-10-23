@@ -93,7 +93,7 @@ class DataflowBinding(ParsesUrn):
             only while `preserve_insertion_order` is true, which is the DuckDB
             default and exactly the setting a caller would turn off for a large
             result. So this is a hint for planning and pruning, never a
-            guarantee a consumer may rely on for order (#330).
+            guarantee a consumer may rely on for order.
         dimension_column_map: SDMX dimension id → table column name.
             Identity mapping is the common case.
         measure_column_map: SDMX measure id → table column name.

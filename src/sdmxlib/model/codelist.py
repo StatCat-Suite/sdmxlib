@@ -140,7 +140,7 @@ class EnumerationLike(Protocol):
     """What a resolved enumeration offers: a codelist, eager or lazy, or a `ValueList`.
 
     A component's representation may enumerate its values by either kind in
-    SDMX 3.x (#422). This is the part both answer — the ids, their labels and
+    SDMX 3.x. This is the part both answer — the ids, their labels and
     how many there are — so the label maps and the value checks built on a
     component work whichever it holds. Reach for `CodelistLike` when you need
     `Code` objects, which a value list does not have.
@@ -175,7 +175,7 @@ class EnumerationLike(Protocol):
 
 @runtime_checkable
 class CodelistLike(EnumerationLike, Protocol):
-    """What a resolved codelist offers, whether it is eager or lazy (#398).
+    """What a resolved codelist offers, whether it is eager or lazy.
 
     `Dimension.resolved_codelist` follows the component's `Ref`. When the DSD
     came from a `LocalRegistry` that ref resolves to a `LazyCodelist`, not a
@@ -195,8 +195,8 @@ class CodelistLike(EnumerationLike, Protocol):
 
     Materialising instead was measured and rejected: callers want ids or a
     count, and on `CL_GEOGRAPHY` those cost 92 ms and 22 ms against 2,854 ms
-    to materialise — 31x and 129x, which is the cost #378 removed. That option
-    survives as `materialize()`, for the two callers that genuinely need each
+    to materialise — 31x and 129x. Materialising survives as `materialize()`,
+    for the two callers that genuinely need each
     `Code` and should say so in one visible call.
 
     **Methods rather than the fields they wrap, which is not a style choice.**
@@ -222,7 +222,7 @@ class CodelistLike(EnumerationLike, Protocol):
         codelist, whose cost follows ``len(ids)`` rather than the codelist. The
         SDMX-JSON data writer called `materialize` per component per message
         and paid for every code in a 579,951-code geography to label the
-        handful a response observed (#410).
+        handful a response observed.
         """
         ...
 
@@ -231,7 +231,7 @@ class CodelistLike(EnumerationLike, Protocol):
         """`codes_for` for several codelists of this class at once, answered in request order.
 
         A lazy codelist answers them in one read per store, where asking each
-        in turn cost three statements apiece (#441). `codes_for_all` groups a
+        in turn cost three statements apiece. `codes_for_all` groups a
         caller's requests by class and asks each class once.
         """
         ...
@@ -242,7 +242,7 @@ class CodelistLike(EnumerationLike, Protocol):
         Free on an eager `Codelist`, which returns itself; a full read on a
         lazy one, whose cost is the whole codelist. A caller that needs some
         codes' annotations or ``parent_id`` rather than all of them wants
-        `codes_for` instead — that was the SDMX-JSON data writer (#410).
+        `codes_for` instead — that was the SDMX-JSON data writer.
         """
         ...
 
@@ -311,7 +311,7 @@ class Codelist(MaintainableArtefact):
         The URN is built from *this* scheme's agency, id and version, so it
         cannot name a parent that does not exist — which is what six hand-written
         keyword arguments to `SdmxUrn.make` invite, and what
-        `validate_references` now correctly reports as broken (#407).
+        `validate_references` now correctly reports as broken.
 
         Raises:
             KeyError: If no code with this id is in this codelist.
@@ -440,7 +440,7 @@ class Codelist(MaintainableArtefact):
 
         The eager half of `CodelistLike.code_ids`; on a `LazyCodelist` the same
         call projects one column out of SQL rather than building 579,951
-        `Code` objects to read their ids (#398).
+        `Code` objects to read their ids.
         """
         return self.codes.ids()
 
@@ -467,7 +467,7 @@ class Codelist(MaintainableArtefact):
         return self
 
     def expand_wildcards(self, available: Iterable[Codelist] = ()) -> Codelist:
-        """This codelist with each wildcarded member value of its extensions spelled out (#451).
+        """This codelist with each wildcarded member value of its extensions spelled out.
 
         SDMX-ML 3.x lets a code selection name codes by pattern: ``A%`` is
         every code of the extended codelist whose id starts with ``A``.
@@ -496,7 +496,7 @@ class Codelist(MaintainableArtefact):
         return evolve(self, extensions=tuple(_expanded(ext, by_urn) for ext in self.extensions))
 
     def apply_extensions(self, available: Iterable[Codelist] = ()) -> Codelist:
-        """This codelist with the codes its extensions inherit, and no extensions (#421).
+        """This codelist with the codes its extensions inherit, and no extensions.
 
         SDMX 3.x lets a codelist extend others: each `CodelistExtension`
         contributes the extended codelist's codes, all of them or a selection,
@@ -506,7 +506,7 @@ class Codelist(MaintainableArtefact):
 
         Precedence follows the IM (§4.3.3.2: "the latest Codelist used
         overrides any previous Codelist") and FMR, which flattens the same
-        way (#486): the codelist's own codes win over inherited ones, and a
+        way: the codelist's own codes win over inherited ones, and a
         later extension over an earlier one. An inherited code keeps the place
         it first appeared in. A selected code whose parent was not selected becomes a
         root, as in the extending codelist itself. An extended codelist that
@@ -546,7 +546,7 @@ class Codelist(MaintainableArtefact):
 
         The one member `LazyCodelist` had and this class did not, which is why
         callers wanting labels had to ask which class they were holding — see
-        `sdmxlib.model.protocols.CodelistLike` (#398). The lazy side projects
+        `sdmxlib.model.protocols.CodelistLike`. The lazy side projects
         it straight out of SQL; here it is a dict comprehension over codes that
         are already in memory, so neither needs a cache
         (`docs/design/caching.md`).

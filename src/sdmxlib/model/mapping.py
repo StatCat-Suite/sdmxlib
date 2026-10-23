@@ -189,8 +189,8 @@ class RepresentationMap(MaintainableArtefact):
     """Maps representations to others.
 
     Supersedes the 2.1 ``CodelistMap``. Each endpoint is either a codelist
-    ``Ref`` or a ``MapDataType`` literal (#131), and there may be several on
-    each side (#422): a mapping then holds one source value per source and one
+    ``Ref`` or a ``MapDataType`` literal, and there may be several on
+    each side: a mapping then holds one source value per source and one
     target value per target. The 2.1 serializer round-trips the one-codelist-
     to-one-codelist case as ``<str:CodelistMap>`` with ``<str:CodeMap>``
     entries.
@@ -199,7 +199,7 @@ class RepresentationMap(MaintainableArtefact):
     index or N:M mappings — have no 2.1 form and are refused there rather
     than dropped. They used to
     be written as plain literal pairs, which restated a regex pattern as a
-    code id: a document asserting a mapping the source never made (#242).
+    code id: a document asserting a mapping the source never made.
     """
 
     #: ``structuremapping``, not ``structuremap``: the latter is in no SDMX
@@ -323,7 +323,7 @@ class CategorySchemeMap(MaintainableArtefact):
 
 @frozen(unsafe_hash=False)
 class OrganisationSchemeMap(MaintainableArtefact):
-    """Maps one organisation scheme to another, organisation by organisation (#448).
+    """Maps one organisation scheme to another, organisation by organisation.
 
     Its ends may be any organisation scheme — agencies, data or metadata
     providers, or the data consumer and organisation unit schemes sdmxlib
@@ -387,8 +387,8 @@ BUILT_VALUE_MAP_TYPE = "sdmxlib:value-map"
 class ComponentMap:
     """Single component-level mapping inside a StructureMap.
 
-    SDMX 3.x lets one map several source components to several target ones
-    (#422); 2.1's is one to one.
+    SDMX 3.x lets one map several source components to several target ones;
+    2.1's is one to one.
     """
 
     sources: tuple[str, ...] = field(converter=_to_texts)
@@ -447,7 +447,7 @@ def _to_resolve_period(value: ResolvePeriod | str | None) -> ResolvePeriod | Non
 
 @frozen(unsafe_hash=False)
 class EpochMap(ParsesUrn):
-    """Maps an epoch count to a time period — SDMX 3.x's ``EpochMap`` (#422).
+    """Maps an epoch count to a time period — SDMX 3.x's ``EpochMap``.
 
     The source components hold a number of `epoch_period`s since
     `base_period`; the target, a time period. Frequency comes from a
@@ -476,7 +476,7 @@ class EpochMap(ParsesUrn):
 
 @frozen(unsafe_hash=False)
 class DatePatternMap(ParsesUrn):
-    """Maps a formatted date to a time period — SDMX 3.x's ``DatePatternMap`` (#422).
+    """Maps a formatted date to a time period — SDMX 3.x's ``DatePatternMap``.
 
     The source components hold dates written in `source_pattern` for
     `locale`. Its other fields are an `EpochMap`'s, which shares the schema's
@@ -502,7 +502,7 @@ class DatePatternMap(ParsesUrn):
 
 @frozen(unsafe_hash=False)
 class FrequencyFormatMapping(ParsesUrn):
-    """How a frequency's periods are written — SDMX 3.x's ``FrequencyFormatMapping`` (#422).
+    """How a frequency's periods are written — SDMX 3.x's ``FrequencyFormatMapping``.
 
     A date map's `mapped_frequencies` name these by id.
     """
@@ -521,7 +521,7 @@ class FrequencyFormatMapping(ParsesUrn):
 
 @frozen(unsafe_hash=False)
 class FixedValueMap:
-    """A fixed value for one source or target component — SDMX 3.x's ``FixedValueMap`` (#422).
+    """A fixed value for one source or target component — SDMX 3.x's ``FixedValueMap``.
 
     The schema's choice of ``Source`` or ``Target``, so exactly one of
     `source_id` / `target_id`.
@@ -698,7 +698,7 @@ class StructureSet(MaintainableArtefact):
 
     Written only to SDMX-ML 2.1. The 3.0, 3.1 and SDMX-JSON targets have no
     such concept, so they leave it out and write its maps
-    (`formats.gaps.dropped`, #421); a 2.1 reader names each map for it
+    (`formats.gaps.dropped`); a 2.1 reader names each map for it
     (`model._container.member_id`).
 
     Example:

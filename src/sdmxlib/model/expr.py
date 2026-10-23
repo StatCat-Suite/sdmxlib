@@ -36,8 +36,8 @@ class ItemPredicate:
         (item("id") == "FREQ") & item("is_enumerated")  # both
         (item("id") == "FREQ") | (item("id") == "TIME")  # either
 
-    These are the same three operators the SQL-backed DSLs grew in #262, spelled
-    the same way. The implementation has nothing in common — this side composes
+    These are the same three operators the path language's predicates use,
+    spelled the same way. The implementation has nothing in common — this side composes
     Python callables and there is no NULL, so unlike the SQL predicates these do
     obey excluded middle: ``p | ~p`` holds for every item.
     """

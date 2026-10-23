@@ -79,13 +79,13 @@ class InMemoryRegistry:
         """Add an artefact to the registry.
 
         - Stores a copy whose every ``Ref`` is bound to this registry, so it
-          finds its target here — now, or once the target is added (#492).
+          finds its target here — now, or once the target is added.
           The caller's object is left as built: read the stored one back
           with `get`.
         - Every reference already bound here finds this artefact at once.
 
         A version only SDMX 2.1 accepts, on the artefact or on a reference
-        inside it, is refused: the model holds SDMX 3.x (#420). `add_all`
+        inside it, is refused: the model holds SDMX 3.x. `add_all`
         takes a rewrite for those.
 
         Raises:
@@ -110,7 +110,7 @@ class InMemoryRegistry:
             rewrite_version: Rewrites versions SDMX 3.x cannot hold — a mapping
                 from published to ingested version, or a function such as
                 `sl.versions.strip_leading_zeros`. Applies to every artefact
-                in the batch and every reference inside one (#424).
+                in the batch and every reference inside one.
 
         Returns:
             One `RewrittenVersion` per artefact whose version changed.
@@ -175,7 +175,7 @@ class InMemoryRegistry:
         """Look up an artefact by exact URN, or by a `Ref` naming one.
 
         Returns ``None`` if absent. A `str` raises `TypeError` — it used to
-        work here by accident and nowhere else (#370).
+        work here by accident and nowhere else.
 
         An **item** URN answers the item: `get` of
         ``…codelist.Code=AG:CL(1.0).A`` is that `Code`, found inside the
@@ -183,22 +183,21 @@ class InMemoryRegistry:
         used to answer None for every item URN — which made
         ``reg.get(dim.concept.urn)`` a silent miss while
         ``reg.get(dsd.urn)`` worked, and there is no reading of "look up an
-        artefact by URN" under which a `Code` is not one (#405). The lookup is
+        artefact by URN" under which a `Code` is not one. The lookup is
         lazy: a miss, then one O(1) step inside the scheme the URN names, so
         holding a 579,951-code codelist costs nothing until someone asks for a
         code.
 
         **`expect=` asks for a class and gets that class or None.** A URN
         parsed from a string carries no type — `SdmxUrn.parse` answers
-        `SdmxUrn[object]`, so this answers `object | None` (#399). Passing the
+        `SdmxUrn[object]`, so this answers `object | None`. Passing the
         class states the expectation where the caller actually holds it:
 
             reg.get(SdmxUrn.parse(text), expect=MetadataSet)   # MetadataSet | None
 
         The check is `isinstance`, which makes it the same operation a caller
         writes by hand — a store row may legitimately name something other than
-        what this call site can use, and returning None is how that is said
-        (#406).
+        what this call site can use, and returning None is how that is said.
         """
         urn = target_urn(target)
         found = self._store.get(str(urn))
