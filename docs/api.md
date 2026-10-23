@@ -82,6 +82,14 @@ A bundle published as an artefact: its manifest, a `token` per publication, and 
 
 ---
 
+::: sdmxlib.bundle.fetch_bundle
+
+---
+
+::: sdmxlib.bundle.Provenance
+
+---
+
 ::: sdmxlib.bundle.Manifest
 
 ---

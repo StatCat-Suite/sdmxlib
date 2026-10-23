@@ -5,10 +5,13 @@
 publishes one: a file inventory with a sha256 per file, observation counts per
 binding, and a fresh ``token``, the value a cache or an ETag keys on.
 `read_manifest` reads it back, refusing a format it cannot read, and
-`check_bundle` checks a bundle against it and against itself. The manifest's
+`check_bundle` checks a bundle against it and against itself, and
+`fetch_bundle` lands one dataflow from an SDMX REST source as a published
+bundle, its provenance recorded. The manifest's
 JSON Schema ships beside it, for producers outside Python: `manifest_schema`.
 
-From a shell, ``sdmxlib bundle check PATH`` runs `check_bundle`: it is the
+From a shell, ``sdmxlib bundle check PATH`` and ``sdmxlib bundle fetch`` run
+these: they are the
 ``sdmxlib-cli`` package (``uv tool install sdmxlib-cli``), released with this one,
 so the library itself never depends on typer.
 
@@ -24,6 +27,7 @@ Example:
 from importlib import resources
 
 from sdmxlib.bundle._check import Check, Finding, Report, check_bundle
+from sdmxlib.bundle._fetch import fetch_bundle
 from sdmxlib.bundle._write import inventory, write_manifest
 from sdmxlib.storage._manifest import (
     FORMAT_VERSION,
@@ -33,6 +37,7 @@ from sdmxlib.storage._manifest import (
     Manifest,
     ManifestError,
     Producer,
+    Provenance,
     read_manifest,
 )
 
@@ -46,8 +51,10 @@ __all__ = [
     "Manifest",
     "ManifestError",
     "Producer",
+    "Provenance",
     "Report",
     "check_bundle",
+    "fetch_bundle",
     "inventory",
     "manifest_schema",
     "read_manifest",

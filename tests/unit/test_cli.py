@@ -9,9 +9,11 @@ import tomllib
 from pathlib import Path
 
 import pytest
-from sdmxlib_cli import app
+import typer
+from sdmxlib_cli import _flow, _source, app
 from typer.testing import CliRunner
 
+import sdmxlib as sl
 from sdmxlib.bundle import Producer, write_manifest
 from tests.support.bundles import make_bundle
 from tests.support.repo import ROOT
@@ -56,3 +58,25 @@ def test_the_cli_is_locked_to_sdmxlibs_version() -> None:
     cli = tomllib.loads((_ROOT / "cli" / "pyproject.toml").read_text())["project"]
     assert cli["version"] == library["version"]
     assert f"sdmxlib=={library['version']}" in cli["dependencies"]
+
+
+@pytest.mark.parametrize(
+    ("text", "urn"),
+    [
+        ("ECB:EXR(1.0)", "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EXR(1.0)"),
+        ("ECB:EXR", "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EXR"),
+        (
+            "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EXR(1.0)",
+            "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EXR(1.0)",
+        ),
+    ],
+)
+def test_a_flow_is_read_short_or_as_a_urn(text: str, urn: str) -> None:
+    assert str(_flow(text)) == urn
+
+
+def test_a_source_is_a_provider_by_name_or_a_url() -> None:
+    assert _source("ecb") is sl.Provider.ECB
+    assert _source("https://example.test/rest") == "https://example.test/rest"
+    with pytest.raises(typer.BadParameter, match="neither a known provider nor a URL"):
+        _source("NOPE")

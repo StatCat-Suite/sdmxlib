@@ -10,7 +10,11 @@ from typing import Annotated
 
 import typer
 
-from sdmxlib.bundle import check_bundle
+import sdmxlib as sl
+from sdmxlib.api.providers import ProviderInfo
+from sdmxlib.bundle import check_bundle, fetch_bundle
+from sdmxlib.model.dataflow import Dataflow
+from sdmxlib.model.urn import SdmxUrn
 
 app = typer.Typer(help="sdmxlib from the command line.", no_args_is_help=True)
 bundle = typer.Typer(help="Published SDMX bundles.", no_args_is_help=True)
@@ -42,3 +46,58 @@ def check(
     found = len(report.findings)
     typer.echo(f"{path}: {found} finding{'' if found == 1 else 's'}; checked {', '.join(report.checked)}")
     raise typer.Exit(code=0 if report.ok else 1)
+
+
+def _source(text: str) -> ProviderInfo | str:
+    """A `Provider` by name (``ECB``, case-insensitive), else the text as a REST endpoint URL."""
+    if "://" in text:
+        return text
+    try:
+        return sl.Provider[text.upper()]
+    except (AttributeError, KeyError) as exc:
+        msg = f"{text!r} is neither a known provider nor a URL"
+        raise typer.BadParameter(msg) from exc
+
+
+def _flow(text: str) -> SdmxUrn[Dataflow]:
+    """A dataflow as ``AGENCY:ID(VERSION)``, ``AGENCY:ID`` (latest), or a full URN."""
+    if text.startswith("urn:"):
+        return Dataflow.parse_urn(text)
+    agency, _, rest = text.partition(":")
+    flow_id, _, version = rest.partition("(")
+    if not agency or not flow_id:
+        msg = f"{text!r} is not AGENCY:ID(VERSION), AGENCY:ID or a dataflow URN"
+        raise typer.BadParameter(msg)
+    return Dataflow.urn_for(agency=agency, id=flow_id, version=version.rstrip(")") or "latest")
+
+
+@bundle.command("fetch")
+def fetch(
+    source: Annotated[str, typer.Argument(help="A provider (ECB, ESTAT, BIS, OECD, ...) or a REST endpoint URL.")],
+    flow: Annotated[str, typer.Argument(help="The dataflow: AGENCY:ID(VERSION), AGENCY:ID, or a URN.")],
+    path: Annotated[Path, typer.Argument(help="The bundle directory to create; must not exist or be empty.")],
+    *,
+    key: Annotated[str | None, typer.Option(help="SDMX key, e.g. M.USD+GBP.EUR.SP00.A.")] = None,
+    start: Annotated[str | None, typer.Option(help="Inclusive startPeriod.")] = None,
+    end: Annotated[str | None, typer.Option(help="Inclusive endPeriod.")] = None,
+    structures_only: Annotated[bool, typer.Option(help="Fetch the structures and no observations.")] = False,
+    api: Annotated[str, typer.Option(help="REST API version of a URL source.")] = "2.1",
+    source_id: Annotated[str | None, typer.Option(help="Registry id of a URL source, recorded as provenance.")] = None,
+) -> None:
+    """Fetch one dataflow, narrowed by key and period, into a new published bundle.
+
+    Prints the bundle's token and what it holds.
+    """
+    manifest = fetch_bundle(
+        _source(source),
+        _flow(flow),
+        path,
+        key=key,
+        start=start,
+        end=end,
+        structures_only=structures_only,
+        api=api,
+        source_id=source_id,
+    )
+    counts = ", ".join(f"{b.observations} observations" for b in manifest.bindings) or "structures only"
+    typer.echo(f"{path}: {manifest.bundle_id}, {counts}; token {manifest.token}")
