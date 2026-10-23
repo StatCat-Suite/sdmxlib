@@ -902,6 +902,12 @@ class LocalRegistry(SessionFactory):
         Cleanup: the thread-local storage is dropped by `close`;
         otherwise it lives until the thread dies (Python GC closes the
         cursor object).
+
+        **Never close what this returns**, and never use it as a context
+        manager: a `DuckDBPyConnection` closes itself on leaving a ``with``
+        block, and this one is shared by every later read on the thread.
+        `to_registry` did, and every read after it on that thread raised
+        "Connection already closed" (GH-115).
         """
         # `getattr` on threading.local is untyped; annotate at the boundary so
         # the Any stops here instead of riding out through the return.
@@ -2530,7 +2536,8 @@ class LocalRegistry(SessionFactory):
         load is done — the whole store is in it, so nothing is resolved here.
         """
         reg = InMemoryRegistry()
-        with self._read_cursor() as cur, binding(reg._resolver):
+        cur = self._read_cursor()
+        with binding(reg._resolver):
             rows = cur.execute("SELECT urn FROM artefact").fetchall()
             for (urn_str,) in rows:
                 obj = readers.get_artefact(cur, urn_str, eager=True, refused=self._refused)
