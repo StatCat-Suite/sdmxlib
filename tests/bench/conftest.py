@@ -16,6 +16,7 @@ import shutil
 import pytest
 
 import sdmxlib as sl
+from sdmxlib.bundle import Producer, write_manifest
 from tests.bench import _bundle
 
 
@@ -130,6 +131,12 @@ def data_plane_bundle(bundle, tmp_path_factory):
         pytest.skip(stale)
     destination = tmp_path_factory.mktemp("bundle") / bundle.name
     shutil.copytree(bundle, destination)
+    # Published on the copy (GH-66): sdmxlib owns `bundle.manifest.json`, and
+    # a bundle built before it may carry its builder's own format, which
+    # `bundle()` refuses. Republishing the copy runs `write_manifest` at full
+    # scale — checksums over every file, counts from the real lake — and
+    # leaves the source bundle untouched.
+    write_manifest(destination, bundle_id=bundle.name, producer=Producer(name="sdmxlib-bench", version="0"))
     return destination
 
 

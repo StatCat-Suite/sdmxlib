@@ -49,6 +49,7 @@ from sdmxlib.rest import ComponentFilter, parse_components, widen_key
 from sdmxlib.query._common import Descending
 from sdmxlib.model.convert import from_dict, to_dict
 from sdmxlib.model.errors import ImRuleWarning, ReadAssumption, ReadGap, SdmxWarning
+from sdmxlib.storage._manifest import ManifestError
 from sdmxlib.storage.schema import StoreSchemaError
 from sdmxlib.model.validation import (
     LossyReadError,
@@ -326,6 +327,7 @@ __all__ = [
     "LossyReadError",
     "Maintainable",
     "MaintainableArtefact",
+    "ManifestError",
     "Measure",
     "MeasureDimension",
     "MemberValue",

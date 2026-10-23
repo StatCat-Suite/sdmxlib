@@ -54,6 +54,30 @@ Persistent DuckDB-backed structural store, the in-memory registry, and the data 
 
 ---
 
+### Bundles
+
+A bundle published as an artefact: its manifest, a `token` per publication, and a checksum per file (GH-66).
+
+::: sdmxlib.bundle
+
+---
+
+::: sdmxlib.bundle.write_manifest
+
+---
+
+::: sdmxlib.bundle.read_manifest
+
+---
+
+::: sdmxlib.bundle.Manifest
+
+---
+
+::: sdmxlib.bundle.ManifestError
+
+---
+
 ::: sdmxlib.model.in_memory_registry.InMemoryRegistry
 
 ---
