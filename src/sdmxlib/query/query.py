@@ -510,7 +510,7 @@ class Query[R: RowKind, A = object]:
     `A` is what the object-building terminals return — `collect()`,
     `first()`, `one()`, `one_or_none()` and `Page.collect()`. It comes off the
     root accessor (see `Cols`) and defaults to `object`, which is what all
-    five returned for every root before #396.
+    five returned for every root before `A` existed.
 
     `A` is **invariant**, so it has to be carried rather than dropped: the
     set-op methods take `Query[R, A]`, and `Select` / `Grouped` declare the
@@ -608,7 +608,7 @@ class Query[R: RowKind, A = object]:
 
         Separate from `order_keys` because the two are different claims. A
         caller's `order_by` is a decision the refinement laws govern: it blocks
-        `group_by`, and #294 refuses to let a later call append to it. A
+        `group_by`, and a later call may not append to it. A
         default is neither — it is what the rows mean when nobody has said, so
         `codelist.codes.group_by(...)` must work, and the first `order_by`
         replaces it outright rather than sorting within it.
@@ -898,8 +898,7 @@ class Query[R: RowKind, A = object]:
 
         The other reading — rank across **everything**, then keep the rows
         matching `p` — is a different query rather than a different call
-        order, and it is spelled by nesting, exactly as filter-after-slice is
-        (#310)::
+        order, and it is spelled by nesting, exactly as filter-after-slice is::
 
             ranked = reg.query(q.dataflow).qualify(w).select(urn=q.dataflow.urn)
             reg.query(q.dataflow).filter(q.dataflow.urn.is_in(ranked), p)
@@ -929,7 +928,7 @@ class Query[R: RowKind, A = object]:
             SliceError: If the query has already been sliced.
             TypeError: If handed something that is not a windowed comparison.
                 The checker refuses it statically; an untyped call site reached
-                the compiler, which said only "cannot compile Compare" (#511).
+                the compiler, which said only "cannot compile Compare".
         """
         self._refuse_after_slice("qualify")
         for predicate in predicates:
@@ -948,7 +947,7 @@ class Query[R: RowKind, A = object]:
 
         **Replaces rather than appends**, which is the one place this DSL
         deliberately breaks the refinement principle, and the existing DSLs
-        already do the same (#294). Appending cannot be undone, so a helper
+        already do the same. Appending cannot be undone, so a helper
         that sorted would silently outrank its caller; and "sort by A, then by
         B" is one call with two keys, not two calls. Direction is per key —
         `q.dsd.version.desc()` — because "newest first, then id ascending" is
@@ -966,10 +965,10 @@ class Query[R: RowKind, A = object]:
 
         The middle one drops the caller's keys and leaves the root-key
         tiebreak, so an unsorted result is still *stable* between calls rather
-        than merely unspecified — paging depends on that, and #264 is what
-        happens without it. On a small relation the tiebreak is free. On 4.26 M
+        than merely unspecified — paging depends on that. On a small relation
+        the tiebreak is free. On 4.26 M
         observations it was **5.4x the scan it decorates**, for an order most
-        callers of `frame()` never look at (#389), and nothing could decline it
+        callers of `frame()` never look at, and nothing could decline it
         but `stream()`.
 
         So this is the caller saying they do not need one. It closes the query
@@ -1368,7 +1367,7 @@ class Query[R: RowKind, A = object]:
 
         Every column of the root relation, because `to_sql()` with no argument
         selects them all. So a bare `Query` is a *multi*-column relation and
-        `is_in` refuses it by name (#274) rather than letting the database
+        `is_in` refuses it by name rather than letting the database
         emit a column-count error. `select(one_column)` is the single-column
         form, which is what splices into `WHERE col IN (SELECT ...)`.
 
@@ -1379,7 +1378,7 @@ class Query[R: RowKind, A = object]:
         return tuple(str(row[0]) for row in rows)
 
     def canonical_key(self) -> tuple[object, ...]:
-        """A stable, hashable key identifying this query's *meaning* (#270).
+        """A stable, hashable key identifying this query's *meaning*.
 
         Two queries built by different call sequences that mean the same thing
         return the same key — `filter(a).filter(b)` and `filter(b).filter(a)`
@@ -1396,7 +1395,7 @@ class Query[R: RowKind, A = object]:
         The expression leaves are not `attrs`, and describe themselves through
         `__canonical__`. That is load-bearing rather than tidy: the fallback
         keys an object on its `repr`, and `AnyCol.__repr__` omits the language,
-        so `name["en"]` and `name["fr"]` keyed identically until #306 — a cache
+        so `name["en"]` and `name["fr"]` would key identically — a cache
         serving one language's rows for another.
 
         Returns:
@@ -1501,7 +1500,7 @@ class Query[R: RowKind, A = object]:
         Both cases are wrong without the wrapper, in different ways. Applying a
         *slice* to the aggregate counts every row and then limits the one-row
         result, so `q.limit(3).count()` would return the full count — the
-        defect #264 found in `__len__`. A `QUALIFY` alongside `count(*)` is not
+        defect `__len__` once had. A `QUALIFY` alongside `count(*)` is not
         merely wrong but invalid: the window's partition columns are not in the
         aggregate, and DuckDB refuses to bind it.
         """
@@ -1578,7 +1577,7 @@ class Query[R: RowKind, A = object]:
         `annotations=False` skips the annotation read and leaves every
         `.annotations` empty. On a 579,951-code codelist that join and its
         grouping are **32% of the collect** — more than building the `Code`
-        objects — for annotations most callers never look at (#381).
+        objects — for annotations most callers never look at.
 
         It is off by default and should stay off by default: a silently empty
         `.annotations` is wrong data, not fast data, and a caller who does not
@@ -1708,7 +1707,7 @@ class Query[R: RowKind, A = object]:
         Arrow batches rather than polars frames because that is what a writer
         wants — CSV, parquet, an HTTP body — and `pl.from_arrow(batch)` is a
         cheap zero-copy step for a caller who wants the other thing (the
-        `pl.DataFrame(batch)` constructor is ~2x slower, #427). Converting
+        `pl.DataFrame(batch)` constructor is ~2x slower). Converting
         here would force it on everyone.
 
         Args:
@@ -1860,7 +1859,7 @@ class Query[R: RowKind, A = object]:
         return Grouped(query=self, keys=tuple(keys))
 
     def agg(self, **named: Agg[R]) -> Select[R, A]:
-        """Several aggregates over every row of the query, in one scan (#414).
+        """Several aggregates over every row of the query, in one scan.
 
         One row out, one column per aggregate — `group_by(...).agg(...)` with
         no keys, which is why it is not spelled that way: `group_by()` refuses
@@ -2204,8 +2203,7 @@ class Select[R: RowKind, A = object]:
         leaves *which* row of each group survives unspecified. Excluding it
         keeps `unique` in the commuting set rather than adding a carve-out to
         the third composition law. A caller wanting one row per group has
-        `group_by(...).agg(...)`, which says which one — and, since #306, that
-        is a promise the code keeps rather than a forward reference.
+        `group_by(...).agg(...)`, which says which one.
 
         It lives on the projection rather than on `Query` because the rows of a
         keyed relation are already distinct — `unique()` before `select()`
@@ -2451,7 +2449,7 @@ class Select[R: RowKind, A = object]:
         Arrow batches rather than polars frames because that is what a writer
         wants — CSV, parquet, an HTTP body — and `pl.from_arrow(batch)` is a
         cheap zero-copy step for a caller who wants the other thing (the
-        `pl.DataFrame(batch)` constructor is ~2x slower, #427). Converting
+        `pl.DataFrame(batch)` constructor is ~2x slower). Converting
         here would force it on everyone.
 
         Args:

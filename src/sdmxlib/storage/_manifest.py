@@ -61,7 +61,7 @@ class BindingCount(msgspec.Struct, frozen=True, kw_only=True):
 
 
 class Provenance(msgspec.Struct, frozen=True, kw_only=True):
-    """Where a fetched bundle came from, and what was asked for (GH-68).
+    """Where a fetched bundle came from, and what was asked for.
 
     Attributes:
         source: The registry's stable id (`RestRegistry.id`), e.g. ``ECB``.
@@ -101,7 +101,7 @@ class Manifest(msgspec.Struct, frozen=True, kw_only=True):
         producer: What built the bundle.
         sdmxlib_version: The sdmxlib that wrote the manifest.
         schema_version: The store schema of ``meta.duckdb``, checked before the
-            file is opened (GH-57).
+            file is opened.
         files: Every file but the manifest, sorted by path.
         bindings: Observation counts per bound dataflow, sorted by URN.
         product: Producer-specific fields, carried and not interpreted.

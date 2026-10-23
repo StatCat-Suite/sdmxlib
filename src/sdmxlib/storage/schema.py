@@ -1572,7 +1572,7 @@ def check_scan_integrity(conn: duckdb.DuckDBPyConnection) -> None:
 
 
 class StoreSchemaError(Exception):
-    """A store holds artefacts on a schema version this build does not read (GH-57).
+    """A store holds artefacts on a schema version this build does not read.
 
     Migration is *drop and rebuild*, which is only right for a cache that can
     be fetched again. A bundle's ``meta.duckdb`` is the published record, and a
