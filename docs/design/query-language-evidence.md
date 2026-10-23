@@ -26,14 +26,15 @@ Run rather than recalled; each row was executed and its output inspected.
 | pandas / PySpark | `df.col` | the frame |
 | **sdmxlib** | `sl.artefact.agency_id` | **a module-level singleton** |
 
-We are the only one. The cause is structural rather than stylistic: predicates
-here are built standalone and handed to `.filter()`, so the accessor has
+sdmxlib is the only library that binds a column to a module-level singleton.
+Predicates here are built standalone and handed to `.filter()`, so the accessor has
 nothing to be bound to. Every other library binds the column to the relation it
 came from, which is what lets them check joins and infer scope.
 
 ### Peer survey: join ambiguity in a fixed schema
 
-The sharper question, because our schema *is* fixed and theirs mostly is not.
+This survey bears more directly on sdmxlib, whose schema is fixed; the peers'
+schemas mostly are not.
 
 | library | spelling | ambiguity resolved by |
 | --- | --- | --- |
@@ -42,19 +43,19 @@ The sharper question, because our schema *is* fixed and theirs mostly is not.
 | GraphQL | nested selection along named fields | impossible — every hop is named |
 | Cypher | `MATCH (f)-[:HAS_COMPONENT]->(c)` | the named relationship type |
 
-**Nobody joins tables.** Every one of them names the *edge*. Verified for
+**All four name the edge they join along.** Verified for
 SQLAlchemy by constructing the ambiguous case — `dsd` reachable from both
 `Component` and `Flow` — where `join(Component.dsd)` and `join(Flow.dsd)`
 produce different, unambiguous SQL.
 
 A prototype that joined by *table* and picked the first matching edge was
 written and works, but it silently chooses a path when two exist. That is the
-one design in the survey with no precedent, and it is why it felt wrong.
+one design in the survey with no precedent.
 
 ### What `in` means elsewhere, measured
 
-`__contains__` deserves its own note, because the survey found something
-stronger than "it executes eagerly". Run, not recalled:
+The peers give `__contains__` a different meaning, beyond executing eagerly.
+Run, not recalled:
 
 | library | `x in relation` | what it means | row-existence idiom |
 | --- | --- | --- | --- |
@@ -64,28 +65,26 @@ stronger than "it executes eagerly". Run, not recalled:
 | SQLAlchemy `Select` | **not implemented** | `TypeError: argument of type 'Select' is not iterable` | `select(q.exists())` |
 | **sdmxlib today** | supported | **row id** | — |
 
-**Not one of the three uses `in` for row membership.** Two use it for the
-opposite axis — column names — and the third refuses it. So `"CA" in cl.codes`
-is not just eager; it means something a polars or ibis reader would not expect,
-and closer to the reverse.
+**None of the three uses `in` for row membership.** polars and ibis use it
+for column names, and SQLAlchemy refuses it. A polars or ibis reader would take
+`"CA" in cl.codes` as a column-name test.
 
 That makes it a fifth instance of the hazard `query-composition.md` names —
 borrowing polars' vocabulary without its laws, the seam behind #222, #255, #261
-and #292 — caught before shipping rather than after.
+and #292 — caught before it shipped.
 
 `.exists()` is SQLAlchemy's answer and the only one that suits a lazy query.
-Repurposing `in` to *column* membership for parity is deliberately not
-proposed: columns here are `sl.q.code.*` references rather than strings, so the
-polars meaning would have nothing useful to check.
+The design does not repurpose `in` to *column* membership for parity: columns
+here are `sl.q.code.*` references rather than strings, so the polars meaning
+would check nothing useful.
 
-**3. `Ref.__getattr__` resolves eagerly**, and should keep doing so. It is the
-object graph rather than the row world, and it is CLAUDE.md's headline promise.
-What matters is that it be *named* as the one eager subsystem rather than left
-implicit.
+**`Ref.__getattr__` resolves eagerly**, and keeps doing so. It belongs to the
+object graph, which queries do not cover, and attribute access on that graph is
+CLAUDE.md's headline promise. The design names it as the one eager subsystem.
 
 ## The schema, measured
 
-### The Ref graph is not the join graph
+### The Ref graph and the join graph differ
 
 ```
 domain Ref fields          : 45
@@ -103,11 +102,10 @@ They overlap and neither contains the other:
 - **Names differ where they do correspond**: `Dimension.representation` is
   `dsd_component.codelist_urn`.
 
-So deriving edges from `Ref` fields would be *wrong*, not merely redundant. The
-worry about "declaring the Ref graph twice" dissolves: it is a different graph
-that happens to overlap. What the query layer needs is the storage graph, and
-the storage schema is ours and moves — three tables arrived in #276/#281 —
-which is exactly what a `DESCRIBE` guard covers.
+So edges derived from `Ref` fields would be wrong. Declaring the storage edges
+does not declare the Ref graph twice, because the two graphs only overlap. The
+query layer needs the storage graph. The storage schema is ours and changes
+(three tables arrived in #276/#281), and a `DESCRIBE` guard covers that.
 
 ### Every consumer shape, against the design
 
@@ -150,9 +148,9 @@ they measured one thing.
 
 **The 0-of-32 figure was the wrong measurement for the question it was used to
 answer.** It is at table granularity, while the query model's namespace is
-finer. At the granularity that matters, most pairs *are* unique — and some of
-the remaining ambiguity in the middle rows was self-inflicted by declaring
-convenience edges alongside the real FK ones.
+finer. At that granularity most pairs *are* unique, and some of the remaining
+ambiguity in the middle rows came from declaring convenience edges alongside
+the real FK ones.
 
 The irreducible residue, under the minimal model:
 
@@ -188,8 +186,9 @@ dsd -> codelist, asking "which DSDs reference CL_GEO"
 ```
 
 The answers differ **only** on the structure that overrides. Drop the override
-from the fixture and both return `['TRADE']` — so this is invisible in test
-data where nobody overrides and wrong in production where they do.
+from the fixture and both return `['TRADE']`. Test data without overrides
+never shows the difference; production data with overrides gets a wrong
+answer.
 
 A second case is **contingent** rather than inherent:
 
@@ -203,7 +202,7 @@ dsd -> concept, asking "which DSDs use REF_AREA"
 Three answers only if `dimensions` / `attributes` / `measures` are declared as
 separate edges. With a single `components` edge it resolves uniquely. Three is
 the likely choice — `DataStructure` carries three `ItemList`s and the consumer
-survey's largest bucket is role-specific — but it is a decision, not a fact.
+survey's largest bucket is role-specific — but it remains a design choice.
 
 ## Performance
 
@@ -223,15 +222,15 @@ for scale
   one compiled + executed query              223,000 ns
 ```
 
-The concern was unfounded. A three-hop path is 0.35 % of one query, and the
-*current* DSL's predicate build is slower than the new one-hop path. Worth
-noting the cost is superlinear — ~293 ns per extra hop, because each hop
+The cost is negligible. A three-hop path is 0.35 % of one query, and the
+*current* DSL's predicate build is slower than the new one-hop path. The cost
+is superlinear — ~293 ns per extra hop, because each hop
 rebuilds child nodes — which is irrelevant at SDMX's one-to-three hops and
 would matter on deep paths.
 
 ### Fan-out and N+1 in consumer code
 
-The common client shape is not a filter but a *fan-out they iterate*: for each
+The common client shape is a *fan-out the caller iterates*: for each
 codelist, its codes. Written as N+1 today. Measured, 60 codelists x 40 codes:
 
 ```
@@ -260,14 +259,13 @@ a `list[str]` already in memory:
 for urn, codes, n in frame.iter_rows(): ...
 ```
 
-The property that makes this composable rather than a one-off: `.list()` and
-`.count()` compile to **correlated subqueries, not joins**, so asking for two
-fan-outs at once (codes *and* annotations) cannot produce a cartesian product
-the way two joins would.
+`.list()` and `.count()` compile to **correlated subqueries**, so asking for
+two fan-outs at once (codes *and* annotations) cannot produce a cartesian
+product the way two joins would. That makes fan-outs composable.
 
 ## The peer sweep across the proposed surface
 
-`query-composition.md` says it plainly: *when a DSL decision has a counterpart
+`query-composition.md` says: *when a DSL decision has a counterpart
 in polars or SQLAlchemy, check it.* Four of the five borrowed-names defects on
 record (#222, #255, #261, #292) were found by tests after shipping; the `in`
 finding above was found by running the peers side by side. This section does
@@ -291,8 +289,8 @@ executed.
 | `preview(n)` | — | — | `.head(n)` | `.head(n)` |
 
 `one` / `one_or_none` / `first` are SQLAlchemy's names exactly, and `exists` /
-`count` / `explain` are Django's. **No invention required** — every terminal
-the design proposed exists under that name in at least one peer, most in two.
+`count` / `explain` are Django's. Every terminal the design proposed exists
+under that name in at least one peer, most in two.
 
 ### `[]` and `in`, confirmed across four
 
@@ -304,14 +302,14 @@ the design proposed exists under that name in at least one peer, most in two.
 | SQLAlchemy | `.limit()/.offset()` | — | **not implemented** |
 
 polars and Django agree independently: **a slice refines lazily, an index
-extracts.** That is two peers, not one, behind the design's terminal rule (as built:
+extracts.** Two peers support the design's terminal rule (as built:
 `q[1:3]` refines, `q["FR"]` looks a row up by id, and `in` raises). Django is the lone
 peer whose `in` means row membership, and it is also the one whose `in` is
 documented to fall back on a full fetch.
 
-### Nullable edges: the join-kind rule and its missing case
+### Nullable edges and the join-kind rule
 
-The sharpest result of the sweep. Django, nullable FK, join kind by context:
+Django, nullable FK, join kind by context:
 
 ```
 filter(cl__name='Areas')   -> INNER JOIN       orphan dropped
@@ -319,18 +317,17 @@ values('cid','cl__name')   -> LEFT OUTER JOIN  orphan kept, cl__name = None
 exclude(cl__name='Areas')  -> LEFT OUTER JOIN  orphan RETURNED
 ```
 
-The first two confirm the design's candidate rule. **The third was not anticipated and
-corrects it.** A *negative* filter takes `LEFT`, because excluding rows that
+The first two confirm the design's candidate rule. **The third corrects it.** A *negative* filter takes `LEFT`, because excluding rows that
 match must still return rows that cannot match — under `INNER` the orphan would
-vanish from a query asking for everything that is not "Areas", which is wrong.
+vanish from a query asking for everything that is not "Areas".
 
-So the rule is not "filter → INNER, projection → LEFT". It is:
+So the candidate rule, "filter → INNER, projection → LEFT", becomes:
 
 > **The join kind follows from whether a null-extended row can satisfy the
 > predicate.** Positive filter: it cannot, so `INNER`. Projection or negation:
 > it can, so `LEFT`.
 
-**And SQLAlchemy does not infer this at all** — `join(...)` is `INNER` and
+**SQLAlchemy does not infer the join kind** — `join(...)` is `INNER` and
 `isouter=True` is explicit, verified by the orphan appearing only in the second:
 
 ```
@@ -338,14 +335,14 @@ select(Code).join(Code.cl)                -> ['x', 'y']
 select(Code).join(Code.cl, isouter=True)  -> ['x', 'y', 'orphan']
 ```
 
-So this is a genuine fork rather than a settled idiom: Django infers per
-context, SQLAlchemy makes the caller say. Inference is right for a
-path-expression DSL — there is no join clause to hang `isouter` on — but it
-means the design had to specify the *negation* case, which no draft did.
+The peers split here: Django infers per context, SQLAlchemy makes the caller
+say. Inference fits a path-expression DSL, which has no join clause to hang
+`isouter` on, but it meant the design had to specify the *negation* case, which
+no draft did.
 *(Since resolved differently: a to-many hop compiles to a correlated
 `EXISTS`, never a join, and `~` over it is `NOT EXISTS` — a true complement.)*
 
-### `list()` alignment: the projection hazard, now measured
+### `list()` alignment in projections
 
 Asserted earlier, verified here. Two correlated `list()` subqueries over the
 same child table, DuckDB:
@@ -356,9 +353,9 @@ SELECT (SELECT list(id)  FROM code WHERE cl=cl.id) AS ids,
 -> ids [x, y, z]   labs [X, Y, Z]      aligned
 ```
 
-They align — **incidentally**. `list()` has no defined order without
-`ORDER BY`, and the correspondence is a property of the plan, not of the data.
-Change one subquery's order and it breaks silently:
+They align only because of the plan. `list()` has no defined order without
+`ORDER BY`, so the correspondence depends on the plan. Change one subquery's
+order and they misalign with no error:
 
 ```sql
        (SELECT list(lab ORDER BY pos) FROM code WHERE cl=cl.id)
@@ -372,18 +369,16 @@ list({'id': id, 'lab': lab} ORDER BY pos)
 -> [{'id': y, 'lab': Y}, {'id': x, 'lab': X}, {'id': z, 'lab': Z}]
 ```
 
-**Both peers with an equivalent already return the aligned form.** polars
+**Both peers with an equivalent return the aligned form.** polars
 `group_by().agg(pl.col("id"), pl.col("lab"))` and ibis
 `group_by().agg(ids=t.id.collect(), labs=t.lab.collect())` each keep the two
-lists element-aligned — but each does so from a *single* grouping pass, which
-is exactly the structural guarantee two independent correlated subqueries lack.
-So the peers are not evidence that two `list()` calls are safe; they are
-evidence that everyone else gets alignment from construction. Structs are how
-SQL gets it too.
+lists element-aligned, because each builds both from a *single* grouping pass.
+Two independent correlated subqueries have no such guarantee. A struct gives
+SQL the same single-pass construction.
 
 ### Where the peers already agree with us
 
-Checked because a silent divergence here would be the expensive kind:
+Checked because a divergence here would change results without an error:
 
 | behaviour | polars | SQLAlchemy | Django | ibis | ours |
 | --- | --- | --- | --- | --- | --- |
@@ -397,7 +392,7 @@ spelling and validates the design's `select(flow=…, dims=…)` (since built). 
 restates the measured Django footgun from "To-many edges" — SQLAlchemy is the
 peer we match, deliberately.
 
-### Array aggregation is named four ways
+### Names for array aggregation
 
 `list()` (DuckDB / SQL `array_agg`), `collect()` (ibis), `agg()` / `implode()`
 (polars), `ArrayAgg` (Django, PostgreSQL only). No convergence to borrow, so
@@ -406,8 +401,8 @@ function, which is the tiebreak used elsewhere in this file.
 
 ### Sweep scope
 
-- `PIVOT` and window functions — then the `query-composition.md` gaps, and no
-  peer comparison changed that they were unimplemented. *(Windows have since
+- `PIVOT` and window functions, then unimplemented gaps listed in
+  `query-composition.md`. *(Windows have since
   been built — `qualify(col.rank(...).over(...) == 1)`; `PIVOT` has not.)*
 - Streaming / chunked collection. polars has `collect(engine="streaming")` and
   ibis `.to_pyarrow_batches()`; nothing in this design said what happens when a
@@ -422,8 +417,8 @@ function, which is the tiebreak used elsewhere in this file.
 
 ### The `.str` namespace shadows the builtin
 
-Found building this, and worth keeping whichever branch wins, because any
-namespace named for a builtin has it.
+Found while building the prototype. It applies to any namespace named after a
+builtin.
 
 ```python
 class A:
@@ -440,14 +435,12 @@ basedpyright                ->  0 errors
 pyrefly                     ->  2 errors
 ```
 
-The annotation genuinely resolves to the property. **basedpyright misses it
-entirely; pyrefly catches it** — the third instance this session, and a data
-point for what later made pyrefly the only type checker (#425; CLAUDE.md,
+The annotation resolves to the property. **basedpyright misses it; pyrefly
+catches it.** It was the third such case in this work, and a data point for what later made pyrefly the only type checker (#425; CLAUDE.md,
 *Typing conventions*).
 
-It is not only a typing nicety: anything doing runtime introspection through
-`get_type_hints` sees a property object where a type belongs, and **attrs does
-exactly that**. The fix is `import builtins` and `builtins.str` in any class
+It also breaks at runtime: anything introspecting through `get_type_hints`
+sees a property object where a type belongs, and **attrs does that**. The fix is `import builtins` and `builtins.str` in any class
 carrying a `.str` namespace — which is what the prototype does.
 
 ## Hostile-review measurements
@@ -485,10 +478,11 @@ generated property tests assert, that `filter` chaining is AND and identical to
 passing both at once — which is also polars' behaviour. Buying Django's
 distinction would mean breaking a law with tests behind it.
 
-### Correlated subqueries: linear in fan-out columns
+### Cost of correlated subqueries per fan-out column
 
-The design leans on "correlated subqueries compose, joins do not". True of
-correctness, false of cost. 2,000 codelists × 50 codes = 100k child rows:
+The design relies on correlated subqueries composing where joins do not. That
+holds for correctness. The cost, over 2,000 codelists × 50 codes = 100k child
+rows:
 
 ```
 1 correlated list() subquery      9.7 ms
@@ -504,10 +498,10 @@ five-column projection pays five passes. The **struct form recommended for
 alignment safety is the slowest**. And **`GROUP BY` — rejected because it
 changes row count — is faster than either**.
 
-None of this makes the design wrong; it makes the *compiler* load-bearing in a
-way the prose did not admit. Multiple fan-outs over one edge must be coalesced
-into a single pass rather than emitted independently, and that is the
-shared-prefix deduplication which has never been prototyped.
+The design stands, and the cost falls on the compiler. Multiple fan-outs over
+one edge must be coalesced into a single pass rather than emitted
+independently, and at the time of measurement that shared-prefix
+deduplication had not been prototyped.
 
 ### polars can express the same-child conjunction
 
@@ -523,9 +517,9 @@ pl.col("dims").list.eval(
 # two separate .list.eval(...).list.any() conjoined  -> ['A','B']  independent
 ```
 
-So a binder is not a departure from polars — polars ships one. The difference
-is that `pl.element()` is untyped while a child-rooted accessor carries its row
-kind and is checked.
+polars ships a binder, so a binder here is consistent with polars.
+`pl.element()` is untyped, while a child-rooted accessor carries its row kind
+and is checked.
 
 ### Gap-analysis probes
 
@@ -542,9 +536,8 @@ SELECT id FROM code
 -> ['MX']      matched on the Spanish label alone
 ```
 
-Sharper than it looks, given the project rule that no API has a default
-language: a search box over a multilingual catalogue is the normal case, not an
-exotic one.
+The project rule that no API has a default language makes this common: a
+search box over a multilingual catalogue is the normal case.
 
 **Array-column predicates.** `ancestor_ids` is `TEXT[]`. `descendants_of(x)`
 covers a single ancestor; "under any of these" is a different operator:
@@ -554,9 +547,8 @@ SELECT id FROM code WHERE list_has_any(ancestor_ids, ['EUR','AFR'])
 -> ['FR']
 ```
 
-**"The latest version of each artefact" needs more than `.over()`.** Window
-framing is not sufficient — it needs a window *function* and a filter on its
-result:
+**"The latest version of each artefact" needs a window *function* and a
+filter on its result.** Window framing with `.over()` alone cannot express it:
 
 ```sql
 SELECT agency,id,version FROM (
@@ -581,8 +573,8 @@ reg.query(my.dataset).filter(q.code.id == "CA")
     error: Argument of type "Pred[CodeRow]"
 ```
 
-basedpyright 0/0/0, pyrefly 0 errors. Nothing in sdmxlib changes — this is the
-`RowKind` extension point reaching one level further.
+basedpyright 0/0/0, pyrefly 0 errors. It needs no change in sdmxlib; the
+`RowKind` extension point covers it.
 
 **Labelling observations is one statement.** The DSD is known when a data query
 is bound, so each dimension's codelist URN is a constant:
@@ -622,8 +614,7 @@ df.filter(pl.col("version").rank("ordinal", descending=True).over("agency","id")
 -> ESTAT/CPI 2.0, ESTAT/GDP 1.0
 ```
 
-SQL does not — it needs a subquery wrapper, so this is a compiler obligation
-rather than a syntax question:
+SQL needs a subquery wrapper, so the compiler must emit one:
 
 ```sql
 SELECT * FROM (SELECT *, rank() OVER (PARTITION BY agency,id ORDER BY version DESC) rn
@@ -652,11 +643,11 @@ SELECT * FROM art WHERE version <> '2.0'
  QUALIFY rank() OVER (PARTITION BY agency,id ORDER BY version DESC) = 1
 ```
 
-The second is worse: `unique(subset)` also leaves *which* row survives
+The second has a further problem: `unique(subset)` also leaves *which* row survives
 unspecified. Full-row `unique()` has neither problem, so the subset form is
 excluded rather than given a precondition.
 
-**Both fixes are enforced by types, not discipline.** `.over()` returns
+**Types enforce both fixes.** `.over()` returns
 `Win[R]` whose comparisons give `WinPred[R]`, which is deliberately not a
 `Pred[R]`:
 
@@ -675,11 +666,11 @@ rather than `object`, which is the case CLAUDE.md keeps
 
 ### Prototype scope
 
-Stated so the demos are not read as more than they are:
+The prototype covered less than the design:
 
 - The join compiler handles depth-1 to-one paths against one hard-coded edge.
-  Multi-hop paths, shared-prefix deduplication and alias collision are
-  unimplemented — that remains the real work.
+  Multi-hop paths, shared-prefix deduplication and alias collision were
+  unimplemented in the prototype; `query/_joins.py` built them later.
 - The codelist->code fan-out timing above is of hand-written SQL in the shape
   the design would emit, not of generated output.
 - No `order_by` / `limit` / `offset` / `group_by`, so none of
@@ -697,7 +688,7 @@ Stated so the demos are not read as more than they are:
   closure (`query-tree-paths.md`), so `sl.q.code.descendants.id.list()` is an
   ordinary correlated list over stored columns, and `narrower_transitive` is
   a named filter over the same edge. Recursion is still never path syntax —
-  the closure is read, not computed.
+  the closure is read from stored columns.
 - Binding a URN list with `unnest(?)` is the ~48 us/value path #271 measured. *(That rate was duckdb with pandas absent; with pandas importable it is ~1-2 us — DuckDB retries `import pandas` per bound value when it is missing (#411). The shape holds either way. See `tests/unit/test_value_set.py`.)*
   Fine at 60 URNs; at 5,000 it is what `value_set` exists for.
 
