@@ -177,11 +177,9 @@ def test_a_bundle_opens_artefacts_and_observations_together(tmp_path) -> None:
     A *constructor, not a type*: a bundle answers exactly what any other local
     registry answers, so it differs in wiring rather than in method set. The
     layout is the one a bundle builder writes and a downstream REST service
-    serves — `meta.duckdb` beside `lake.ducklake` and `parquet/`.
+    serves — `meta.duckdb` beside `lake.ducklake`, over the bundle's ``data/``.
     """
     import polars as pl
-
-    from sdmxlib.local.data_store import DuckDBDataStore
 
     dsd = sl.DataStructure(
         id="D",
@@ -193,26 +191,17 @@ def test_a_bundle_opens_artefacts_and_observations_together(tmp_path) -> None:
     )
     flow = sl.Dataflow(id="DF", maintainer="AG", version="1.0", name={"en": "f"}, structure=Ref.to(dsd))
 
-    with LocalRegistry(tmp_path / "meta.duckdb") as writer:
+    with LocalRegistry.build(tmp_path) as writer:
         writer.add_all([dsd, flow])
-        store = DuckDBDataStore.from_registry(
-            writer,
-            attach={
-                "lake": (
-                    f"'ducklake:{tmp_path / 'lake.ducklake'}'",
-                    f"(DATA_PATH '{tmp_path / 'parquet'}/')",
-                )
-            },
-            extensions=["ducklake"],
-        )
-        store.write_observations(
+        writer._data_plane().write_observations(
             schema="data",
             table="obs",
             source=pl.DataFrame({"REF_AREA": ["ON", "QC"], "OBS_VALUE": [1.0, 2.0]}),
         )
         writer.add(DataflowBinding.from_dsd(dsd, dataflow=Ref.to(flow), schema="data", table="obs"))
+        publication = writer.publication
 
-    with LocalRegistry.bundle(publish(tmp_path)) as reg:
+    with LocalRegistry.bundle(publish(publication)) as reg:
         assert [e.binding.table_location for e in reg.browse()] == ["data.obs"]
         obs = reg.obs(flow.urn)
         assert obs.filter(obs.col("REF_AREA") == "QC").frame().to_dicts() == [{"REF_AREA": "QC", "OBS_VALUE": 2.0}]

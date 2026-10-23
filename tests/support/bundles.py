@@ -1,13 +1,12 @@
 """Small real bundles, for the bundle contract's tests (GH-66, GH-67).
 
-Real in every part that matters: a `meta.duckdb` written by `LocalRegistry`, a
-DuckLake catalog, and parquet files when the table is large enough that
-DuckLake does not inline it into the catalog.
+Real in every part that matters: a publication started by
+`LocalRegistry.build`, its `meta.duckdb`, a DuckLake catalog, and data files in
+the bundle's shared ``data/`` when the table is large enough that DuckLake does
+not inline it into the catalog.
 """
 
 from pathlib import Path
-
-import duckdb
 
 import sdmxlib as sl
 from sdmxlib.bundle import Producer, write_manifest
@@ -30,29 +29,27 @@ FLOW = Dataflow(id="F", maintainer=Agency(id="SDMX"), version="1.0", name={"en":
 
 
 def make_bundle(root: Path, rows: int, *, extra: tuple[SupportsUrn, ...] = ()) -> Path:
-    """A bundle at `root` of `rows` observations bound to `FLOW`, with `extra` artefacts in its store.
+    """The first publication of a bundle at `root`, unpublished: `rows` observations bound to `FLOW`, and `extra`.
 
-    `concept_ref` points at a concept scheme the store does not hold, so the
-    bundle's structural closure is not complete; a test checking references
-    adds the scheme through `extra`.
+    Returns the publication directory, ``<root>/<token>/``; its data files are
+    in ``<root>/data/``. `concept_ref` points at a concept scheme the store
+    does not hold, so the bundle's structural closure is not complete; a test
+    checking references adds the scheme through `extra`.
     """
-    root.mkdir()
-    conn = duckdb.connect(":memory:")
-    conn.execute("INSTALL ducklake")
-    conn.execute("LOAD ducklake")
-    conn.execute(f"ATTACH 'ducklake:{root}/lake.ducklake' AS lake (DATA_PATH '{root}/parquet/')")
-    conn.execute("CREATE SCHEMA lake.d")
-    conn.execute(
-        f"CREATE TABLE lake.d.obs AS SELECT 'G' || (range % 7) AS GEO, range::DOUBLE AS OBS_VALUE FROM range({rows})"
-    )
-    conn.close()
-    with sl.LocalRegistry(root / "meta.duckdb") as reg:
+    root.mkdir(parents=True)
+    with sl.LocalRegistry.build(root) as reg:
+        reg._data_plane()  # ATTACHes the lake
+        reg.connection.execute("CREATE SCHEMA lake.d")
+        reg.connection.execute(
+            "CREATE TABLE lake.d.obs AS SELECT 'G' || (range % 7) AS GEO, range::DOUBLE AS OBS_VALUE FROM range(?)",
+            [rows],
+        )
         reg.add_all([*extra, DSD, FLOW])
         reg.add(DataflowBinding.from_dsd(DSD, dataflow=Ref.to(FLOW), schema="d", table="obs", database_role="lake"))
-    return root
+        return reg.publication
 
 
 def publish(root: Path) -> Path:
-    """`root` published with `write_manifest`, so `LocalRegistry.bundle` opens it (GH-122)."""
-    write_manifest(root, bundle_id=root.name, producer=Producer(name="tests", version="0"))
+    """The publication `root` published with `write_manifest`, so `LocalRegistry.bundle` opens it (GH-122)."""
+    write_manifest(root, bundle_id=root.parent.name, producer=Producer(name="tests", version="0"))
     return root

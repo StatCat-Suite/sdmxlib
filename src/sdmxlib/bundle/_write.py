@@ -1,14 +1,17 @@
 """Publishing a bundle: inventory it, count it, and write its manifest last (GH-66)."""
 
 import hashlib
-import uuid
+from collections.abc import Mapping
 from datetime import UTC, datetime
 from importlib import metadata
 from pathlib import Path
 
+import duckdb
+
 from sdmxlib.local.registry import LocalRegistry
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.storage._manifest import (
+    DATA_PATH,
     FORMAT_VERSION,
     MANIFEST_NAME,
     BindingCount,
@@ -18,8 +21,31 @@ from sdmxlib.storage._manifest import (
     Producer,
     Provenance,
     encode_manifest,
+    read_manifest,
 )
-from sdmxlib.storage.schema import get_schema_version
+from sdmxlib.storage.schema import get_schema_version, meta_value
+
+#: Every data file and delete file the lake catalog references from any snapshot
+#: it keeps, with the schema and table paths each one's path is relative to.
+#: The table and schema rows are the ones live when the file was written.
+#: ``__ducklake_metadata_lake`` is the database DuckLake attaches behind the
+#: ``lake`` alias `LocalRegistry.build` gives the catalog.
+_LAKE_FILES = """
+    SELECT s.path, s.path_is_relative, t.path, t.path_is_relative, f.path, f.path_is_relative
+    FROM (
+        SELECT table_id, begin_snapshot, path, path_is_relative FROM __ducklake_metadata_lake.ducklake_data_file
+        UNION ALL
+        SELECT table_id, begin_snapshot, path, path_is_relative FROM __ducklake_metadata_lake.ducklake_delete_file
+    ) AS f
+    JOIN __ducklake_metadata_lake.ducklake_table AS t
+      ON t.table_id = f.table_id
+     AND t.begin_snapshot <= f.begin_snapshot
+     AND (t.end_snapshot IS NULL OR f.begin_snapshot < t.end_snapshot)
+    JOIN __ducklake_metadata_lake.ducklake_schema AS s
+      ON s.schema_id = t.schema_id
+     AND s.begin_snapshot <= f.begin_snapshot
+     AND (s.end_snapshot IS NULL OR f.begin_snapshot < s.end_snapshot)
+"""
 
 #: Read size for checksums: large enough that a multi-gigabyte parquet file is
 #: a sequential read, small enough not to matter in memory.
@@ -36,10 +62,10 @@ def sha256_of(path: Path) -> str:
 
 
 def inventory(root: Path) -> tuple[BundleFile, ...]:
-    """Every file under `root` but the manifest, sorted by its ``/``-separated path.
+    """Every file in the publication directory `root` but the manifest, sorted by ``/``-separated path.
 
     Args:
-        root: The bundle directory.
+        root: The publication directory.
 
     Returns:
         Each file's path from the root, size and sha256.
@@ -47,8 +73,55 @@ def inventory(root: Path) -> tuple[BundleFile, ...]:
     skip = {MANIFEST_NAME, f"{MANIFEST_NAME}.tmp"}
     files = sorted(p for p in root.rglob("*") if p.is_file() and p.relative_to(root).as_posix() not in skip)
     return tuple(
-        BundleFile(path=p.relative_to(root).as_posix(), size=p.stat().st_size, sha256=sha256_of(p)) for p in files
+        BundleFile(path=p.relative_to(root).as_posix(), size=p.stat().st_size, sha256=sha256_of(p), root="publication")
+        for p in files
     )
+
+
+def lake_files(conn: duckdb.DuckDBPyConnection, data: Path) -> list[str]:
+    """Every data file the attached lake catalog references, as ``/``-separated paths under `data`, sorted.
+
+    Read from DuckLake's metadata tables, so it covers every snapshot the
+    catalog keeps, the current one and every one time travel can still reach:
+    what garbage collection must keep while this publication lives.
+
+    Args:
+        conn: A connection with the publication's lake attached as ``lake``.
+        data: The lake's data path.
+
+    Returns:
+        The paths, each once.
+
+    Raises:
+        ManifestError: If the catalog references a file outside `data`.
+    """
+    found: set[str] = set()
+    for row in conn.execute(_LAKE_FILES).fetchall():
+        path = ""
+        for part, relative in zip(row[::2], row[1::2], strict=True):
+            path = f"{path}{part}" if relative else str(part)
+        full = Path(path) if Path(path).is_absolute() else data / path
+        try:
+            found.add(full.resolve().relative_to(data.resolve()).as_posix())
+        except ValueError as exc:
+            msg = f"the lake catalog references {full}, outside its data path {data}"
+            raise ManifestError(msg) from exc
+    return sorted(found)
+
+
+def _data_inventory(
+    data: Path, paths: list[str], carried: Mapping[str, BundleFile], token: str | None
+) -> list[BundleFile]:
+    """The data files at `paths`, their digests carried from `carried` where the size still matches."""
+    files: list[BundleFile] = []
+    for path in paths:
+        size = (data / path).stat().st_size
+        earlier = carried.get(path)
+        if earlier is not None and earlier.size == size:
+            files.append(BundleFile(path=path, size=size, sha256=earlier.sha256, root="data", carried_from=token))
+        else:
+            files.append(BundleFile(path=path, size=size, sha256=sha256_of(data / path), root="data"))
+    return files
 
 
 def write_manifest(
@@ -60,20 +133,25 @@ def write_manifest(
     extensions: dict[str, dict[str, object]] | None = None,
     provenance: Provenance | None = None,
 ) -> Manifest:
-    """Publish the bundle at `path`: write its manifest, with a fresh token.
+    """Publish the publication at `path`, which `LocalRegistry.build` started: write its manifest.
 
-    Write it **last**, once nothing else in the directory will change: the
-    inventory is the files as they are now, and a directory without a manifest
-    is an unpublished bundle. Writing again replaces it with a new token, which
+    Write it **last**, once every builder has closed: the inventory is the
+    files as they are now, and a directory without a manifest is unpublished.
+    A publication is published once. A change is a new publication,
+    ``LocalRegistry.build(bundle, previous=token)``, with a new token, which
     is what tells every cache keyed on the old one to refresh.
 
-    Observation counts come from the bundle's own lake, through each binding's
-    observation query, so DuckLake answers them from its catalog. The
-    manifest goes in through a temporary file and a rename, so a reader never
-    sees half of one.
+    The files are the publication directory's, and every data file its lake
+    catalog references in the shared ``data/``. A data file the previous
+    publication's manifest lists at the same size keeps that manifest's sha256,
+    marked with its token in ``carried_from``, so a republish hashes only the
+    files it wrote. Observation counts come from the lake, through each
+    binding's observation query, so DuckLake answers them from its catalog.
+    The manifest goes in through a temporary file and a rename, so a reader
+    never sees half of one.
 
     Args:
-        path: The bundle directory: ``meta.duckdb``, ``lake.ducklake``, ``parquet/``.
+        path: The publication directory, ``builder.publication``.
         bundle_id: The producer's stable name for the bundle, kept across rebuilds.
         producer: What built it.
         product: Producer-specific fields, carried and not interpreted.
@@ -82,14 +160,34 @@ def write_manifest(
 
     Returns:
         The manifest written.
+
+    Raises:
+        ManifestError: If the publication is already published, was not
+            started by `LocalRegistry.build`, or a builder still holds it open.
     """
     root = Path(path)
-    with LocalRegistry._over_bundle(root).open() as reg:
+    data = root / DATA_PATH
+    if (root / MANIFEST_NAME).exists():
+        msg = (
+            f"{root} is already published, and a publication is never rewritten. "
+            f"Start a new one with LocalRegistry.build({str(root.parent)!r}, previous={root.name!r})."
+        )
+        raise ManifestError(msg)
+    with LocalRegistry._over_bundle(root, data).open() as reg:
+        token = meta_value(reg.connection, "publication_token")
+        if token is None:
+            msg = f"{root} was not started by LocalRegistry.build, so it has no token to publish under"
+            raise ManifestError(msg)
+        previous = meta_value(reg.connection, "previous_token")
         schema_version = get_schema_version(reg.connection) or ""
         bindings = sorted(reg.get_all(DataflowBinding), key=lambda b: str(b.dataflow.urn))
         counts = tuple(
             BindingCount(dataflow=str(b.dataflow.urn), observations=reg.obs(b.dataflow).count()) for b in bindings
         )
+        referenced: list[str] = []
+        if (root / "lake.ducklake").exists():
+            reg._data_plane()  # ATTACHes the lake
+            referenced = lake_files(reg.connection, data)
     # Closing the last connection checkpoints a database, so a log left by a
     # builder that exited is gone by now. One that remains means another
     # connection still holds the database for writing, and its log holds
@@ -104,12 +202,14 @@ def write_manifest(
     manifest = Manifest(
         format_version=FORMAT_VERSION,
         bundle_id=bundle_id,
-        token=str(uuid.uuid7()),
+        token=token,
+        previous_token=previous,
         created_at=datetime.now(UTC),
         producer=producer,
         sdmxlib_version=metadata.version("sdmxlib"),
         schema_version=schema_version,
-        files=inventory(root),
+        data_path=DATA_PATH,
+        files=(*_data_inventory(data, referenced, _carried(root, previous), previous), *inventory(root)),
         bindings=counts,
         product=product or {},
         extensions=extensions or {},
@@ -119,3 +219,14 @@ def write_manifest(
     staged.write_bytes(encode_manifest(manifest))
     staged.replace(root / MANIFEST_NAME)
     return manifest
+
+
+def _carried(root: Path, previous: str | None) -> dict[str, BundleFile]:
+    """The data files the previous publication's manifest lists, by path; empty if it is not beside `root`."""
+    if previous is None:
+        return {}
+    try:
+        earlier = read_manifest(root.parent / previous)
+    except ManifestError:
+        return {}
+    return {f.path: f for f in earlier.files if f.root == "data"}

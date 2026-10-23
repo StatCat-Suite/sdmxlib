@@ -17,17 +17,21 @@ verifies (GH-67).
 
 from datetime import datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 import msgspec
 
 #: The manifest's file name, at the bundle root.
 MANIFEST_NAME = "bundle.manifest.json"
 
-#: The format this build writes. A reader takes any ``1.x``: a minor version
-#: only adds fields, which a reader that predates them ignores. 1.1 added
-#: `provenance` (GH-68).
-FORMAT_VERSION = "1.1"
+#: The format this build writes. A reader takes any ``2.x``: a minor version
+#: only adds fields, which a reader that predates them ignores. 2.0 moved a
+#: publication into a token directory beside a shared ``data/`` (GH-123).
+FORMAT_VERSION = "2.0"
+
+#: Where a publication's data files live, relative to its directory: the
+#: ``data/`` every publication of a bundle shares.
+DATA_PATH = "../data/"
 
 #: A JSON value of any kind: what `product` and `extensions` carry without interpreting.
 #: Annotated so the generated schema can say so; `object` keeps it inert.
@@ -46,11 +50,24 @@ class Producer(msgspec.Struct, frozen=True, kw_only=True):
 
 
 class BundleFile(msgspec.Struct, frozen=True, kw_only=True):
-    """One file of the bundle: its path from the root (``/``-separated), size and sha256."""
+    """One file of the bundle: where it is, its size and sha256.
+
+    Attributes:
+        path: ``/``-separated, relative to the directory `root` names.
+        size: In bytes.
+        sha256: Of the file's contents.
+        root: ``publication`` for a file in the publication directory,
+            ``data`` for a data file under the manifest's `data_path`.
+        carried_from: The token of the manifest `size` and `sha256` were
+            copied from, for a data file an earlier publication listed; None
+            for one hashed by this publication.
+    """
 
     path: str
     size: int
     sha256: str
+    root: Literal["publication", "data"]
+    carried_from: str | None = None
 
 
 class BindingCount(msgspec.Struct, frozen=True, kw_only=True):
@@ -95,29 +112,37 @@ class Manifest(msgspec.Struct, frozen=True, kw_only=True):
         format_version: The manifest format, ``major.minor``.
         bundle_id: The producer's stable name for the bundle, kept across
             rebuilds. Identifies *which* bundle, never which publication.
-        token: A UUIDv7 minted at each publication. Changes on every rebuild,
-            never on a read; what a cache or an ETag keys on.
+        token: A UUIDv7 minted when the publication's build starts, and the
+            name of its directory. Changes on every rebuild, never on a read;
+            what a cache or an ETag keys on.
+        previous_token: The publication this one extends, or None for the
+            first of its bundle.
         created_at: When the manifest was written (UTC).
         producer: What built the bundle.
         sdmxlib_version: The sdmxlib that wrote the manifest.
         schema_version: The store schema of ``meta.duckdb``, checked before the
             file is opened.
-        files: Every file but the manifest, sorted by path.
+        data_path: Where the data files live, relative to the publication
+            directory: `DATA_PATH`.
+        files: Every file of the publication but the manifest, and every data
+            file its lake catalog references, sorted by root and path.
         bindings: Observation counts per bound dataflow, sorted by URN.
         product: Producer-specific fields, carried and not interpreted.
         extensions: Sections owned by other packages (statcatlib's search
             index, say), by name; carried and not interpreted.
-        provenance: Where a fetched bundle came from (format 1.1); None for
+        provenance: Where a fetched bundle came from; None for
             one built from data the producer holds.
     """
 
     format_version: str
     bundle_id: str
     token: str
+    previous_token: str | None
     created_at: datetime
     producer: Producer
     sdmxlib_version: str
     schema_version: str
+    data_path: str
     files: tuple[BundleFile, ...]
     bindings: tuple[BindingCount, ...]
     product: dict[str, JsonValue] = msgspec.field(default_factory=dict)

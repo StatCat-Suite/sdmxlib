@@ -125,6 +125,8 @@ class Shape:
 def synthetic_bundle(path: str | Path, shape: Shape, *, seed: int = 0) -> Manifest:
     """Build and publish a bundle of `shape` at `path`, deterministically from `seed`.
 
+    The bundle's first publication, ``<path>/<token>/``, beside its ``data/``.
+
     One dataflow, ``SYNTHETIC:DF_SYNTHETIC(1.0)``, on a DSD with a dimension
     per `Dim` (``DIM_1``, ``DIM_2``, …, each with its codelist), ``TIME_PERIOD``,
     a numeric ``OBS_VALUE`` and ``ATTR_1``…; its observations in the lake; the
@@ -137,7 +139,7 @@ def synthetic_bundle(path: str | Path, shape: Shape, *, seed: int = 0) -> Manife
             observations take.
 
     Returns:
-        The manifest written.
+        The manifest written; the publication is ``<path>/<manifest.token>/``.
 
     Raises:
         FileExistsError: If `path` exists and is not empty.
@@ -164,8 +166,9 @@ def synthetic_bundle(path: str | Path, shape: Shape, *, seed: int = 0) -> Manife
         rows = completed(bundle.connection).sql(_observations_sql(shape, space, draws))
         bundle._data_plane().write_observations(schema=_SCHEMA, table=_TABLE, source=rows)
         bundle.add(DataflowBinding.from_dsd(dsd, dataflow=Ref.to(flow), schema=_SCHEMA, table=_TABLE))
+        publication = bundle.publication
     return write_manifest(
-        root,
+        publication,
         bundle_id=f"synthetic-{seed}",
         producer=Producer(name="sdmxlib.testing.synthetic_bundle", version="1"),
         product={

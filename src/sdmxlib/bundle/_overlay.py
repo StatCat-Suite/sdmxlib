@@ -205,32 +205,35 @@ def apply_overlays(
 def fold_overlays(
     path: str | Path, overlays: Sequence[Overlay], *, merge: Mapping[str, Merge] | None = None
 ) -> Manifest:
-    """Write `overlays` into a published bundle's store, and republish it.
+    """Publish a new publication of a bundle with `overlays` written into its store.
 
-    Every artefact an entry changes is replaced in ``meta.duckdb``; the
-    manifest is written again, its fields kept and its token new. After
-    this the overlays are part of the bundle and need not be applied at
-    serve time. Loads every artefact, so it is a build-time step.
+    The new publication extends the one at `path`: a sibling directory, its
+    ``meta.duckdb`` copied from `path` with every artefact an entry changes
+    replaced, its lake the same data files, and its manifest's fields kept
+    with a new token. The publication at `path` is left as it was. After this
+    the overlays are part of the bundle and need not be applied at serve time.
+    Loads every artefact, so it is a build-time step.
 
     Args:
-        path: The bundle directory.
+        path: The published publication directory.
         overlays: Applied in order.
         merge: As `apply_overlays`.
 
     Returns:
-        The new manifest.
+        The new manifest; its publication is ``<path>/../<token>/``.
     """
     root = Path(path)
     previous = read_manifest(root)
     plan = _Plan(overlays, merge or {})
-    with LocalRegistry.build(root) as reg:
+    with LocalRegistry.build(root.parent, previous=previous.token) as reg:
         loaded = [a for a in reg.to_registry()._store.values() if isinstance(a, MaintainableArtefact)]
         for artefact in loaded:
             changed = plan.artefact(artefact)
             if changed is not artefact:
                 reg.replace(artefact.urn, changed)
+        publication = reg.publication
     return write_manifest(
-        root,
+        publication,
         bundle_id=previous.bundle_id,
         producer=previous.producer,
         product=dict(previous.product),

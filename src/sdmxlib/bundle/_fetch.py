@@ -50,11 +50,12 @@ def fetch_bundle(
 ) -> Manifest:
     """Fetch one dataflow, narrowed by an SDMX key and periods, into a new published bundle.
 
-    The bundle is `path`, which must not exist or be empty: ``meta.duckdb``
-    holds the dataflow's structural closure and its `DataflowBinding`,
-    ``lake.ducklake`` and ``parquet/`` its observations, and the manifest is
-    written last, with `Provenance` naming the source, the request and every
-    artefact fetched. It then passes `check_bundle`.
+    The bundle is `path`, which must not exist or be empty, and the fetch is
+    its first publication, ``<path>/<token>/``: ``meta.duckdb`` holds the
+    dataflow's structural closure and its `DataflowBinding`, ``lake.ducklake``
+    its observations, whose data files are in ``<path>/data/``, and the
+    manifest is written last, with `Provenance` naming the source, the request
+    and every artefact fetched. It then passes `check_bundle`.
 
     Args:
         source: A `Provider` entry, or a REST endpoint URL (then give ``api``
@@ -73,7 +74,7 @@ def fetch_bundle(
         **options: Passed to the `RestRegistry` (timeouts, a transport).
 
     Returns:
-        The manifest written.
+        The manifest written; the publication is ``<path>/<manifest.token>/``.
 
     Raises:
         FileExistsError: If `path` exists and is not empty.
@@ -125,8 +126,9 @@ def fetch_bundle(
             structures_only=structures_only,
             artefacts=tuple(urn for (urn,) in fetched),
         )
+        publication = bundle.publication
     return write_manifest(
-        root,
+        publication,
         bundle_id=str(resolved.urn),
         producer=Producer(name="sdmxlib.bundle.fetch_bundle", version=metadata.version("sdmxlib")),
         provenance=provenance,

@@ -19,6 +19,63 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## A bundle is a directory of publications over a shared `data/`
+
+A bundle is now a directory holding one directory per publication, named by
+its token, and the `data/` every publication shares:
+
+```text
+<bundle>/data/<schema>/<table>/ducklake-<uuid>.parquet
+<bundle>/<token>/bundle.manifest.json
+<bundle>/<token>/meta.duckdb
+<bundle>/<token>/lake.ducklake
+```
+
+The manifest format is 2.0, and a 1.x manifest is refused with
+`ManifestError`: rebuild the bundle with this sdmxlib. Paths change as
+follows.
+
+- `LocalRegistry.build(path)` takes the **bundle** directory, mints the
+  token, creates `<path>/<token>/` and returns a builder whose
+  `publication` is that directory. `build(path, previous=token)` copies that
+  publication's `meta.duckdb` and `lake.ducklake` and extends them, so the
+  lake writes only new data files. `build(path, resume=token)` reopens an
+  unpublished publication for a second build step.
+- `write_manifest`, `LocalRegistry.bundle`, `check_bundle` and
+  `fold_overlays` take the **publication** directory, `builder.publication`.
+- `write_manifest` publishes a publication once. Writing it again raises
+  `ManifestError`; a change is a new publication with `previous=`.
+- `fold_overlays` writes a new publication beside the one it reads and
+  returns its manifest; the publication it read is left as it was.
+- `fetch_bundle` and `synthetic_bundle` take the bundle directory and return
+  the manifest; the publication is `<path>/<manifest.token>/`.
+- `BundleFile` has `root` (`"publication"` or `"data"`) and `carried_from`;
+  `Manifest` has `previous_token` and `data_path`.
+- `check_bundle` no longer reports a data file it does not list: `data/` is
+  shared, and a file there may belong to another publication. It reports a
+  file the lake references and the manifest omits.
+- `copy_bundle(source, destination)` and `sdmxlib bundle copy` copy a
+  publication with its manifest last.
+
+```python
+from sdmxlib.bundle import Producer, write_manifest
+from sdmxlib.testing import Dim, Shape, synthetic_bundle
+
+# Stands in for your builder's first publication.
+first = synthetic_bundle("out/layout", Shape(dimensions=(Dim(codes=10),), observations=50))
+
+# The next publication extends it, in a directory of its own.
+with sl.LocalRegistry.build("out/layout", previous=first.token) as builder:
+    publication = builder.publication
+second = write_manifest(publication, bundle_id="layout", producer=Producer(name="my-builder", version="1.2"))
+assert second.previous_token == first.token
+
+with sl.LocalRegistry.bundle(publication) as published:
+    assert published.manifest is not None
+```
+
+---
+
 ## A published bundle opens read-only, as a `BundleRegistry`
 
 `LocalRegistry.bundle(path)` opens a **published** bundle, read-only, and
@@ -31,9 +88,9 @@ DuckDB's `read_only`, so any number of processes can hold one bundle open, and
 
 - A directory without `bundle.manifest.json` is refused with `ManifestError`,
   and `require_manifest=` is gone.
-- A builder opens the directory with `LocalRegistry.build(path)`, which is
-  writable and returns a `LocalRegistry`, then publishes with
-  `write_manifest`.
+- A builder opens a new publication with `LocalRegistry.build(path)`, which
+  is writable and returns a `LocalRegistry`, then publishes with
+  `write_manifest` (see the section above for the directories).
 - `write_manifest` refuses while a connection still holds one of the bundle's
   databases for writing (a `.wal` file remains). Close every builder first.
 - A `check_bundle` extension receives a `BundleRegistry`. Annotate its
@@ -46,17 +103,18 @@ DuckDB's `read_only`, so any number of processes can hold one bundle open, and
 from sdmxlib.bundle import Producer, write_manifest
 from sdmxlib.testing import Dim, Shape, synthetic_bundle
 
-# Stands in for your builder's output.
-synthetic_bundle("out/read-only", Shape(dimensions=(Dim(codes=10),), observations=50))
+# Stands in for your builder's first publication.
+first = synthetic_bundle("out/read-only", Shape(dimensions=(Dim(codes=10),), observations=50))
 
 # Building: writable. A builder adds and replaces through `build`.
-with sl.LocalRegistry.build("out/read-only") as builder:
+with sl.LocalRegistry.build("out/read-only", previous=first.token) as builder:
     flow = builder.browse()[0].dataflow_urn
+    publication = builder.publication
 
-write_manifest("out/read-only", bundle_id="read-only", producer=Producer(name="my-builder", version="1.2"))
+write_manifest(publication, bundle_id="read-only", producer=Producer(name="my-builder", version="1.2"))
 
 # Reading: read-only, and any number of processes at once.
-with sl.LocalRegistry.bundle("out/read-only") as published:
+with sl.LocalRegistry.bundle(publication) as published:
     assert published.obs(flow).count() == 50
 ```
 
@@ -65,9 +123,9 @@ with sl.LocalRegistry.bundle("out/read-only") as published:
 ## sdmxlib owns `bundle.manifest.json`
 
 0.72.0 publishes a bundle as an artefact with `sdmxlib.bundle.write_manifest`, and
-`LocalRegistry.bundle` reads the manifest when one is there. A manifest records:
+`LocalRegistry.bundle` reads the manifest. A manifest records:
 
-- a fresh `token` per publication, which caches key on;
+- a `token` per publication, which caches key on;
 - a sha256 for every file;
 - the observation count per dataflow;
 - the store schema version, checked before `meta.duckdb` is opened.
@@ -79,22 +137,22 @@ sdmxlib's writer, keeping any fields of your own in `product`:
 
 ```python
 from sdmxlib.bundle import Producer, write_manifest
-from sdmxlib.testing import Dim, Shape, synthetic_bundle
 
-# Stands in for your builder's output.
-synthetic_bundle("out/my-bundle", Shape(dimensions=(Dim(codes=10),), observations=50))
+# Stands in for your builder.
+with sl.LocalRegistry.build("out/my-bundle") as builder:
+    builder.add(sl.Codelist(id="CL_A", maintainer="AG", version="1.0", name={"en": "A"}))
+    publication = builder.publication
 
 write_manifest(
-    "out/my-bundle",
+    publication,
     bundle_id="my-bundle",
     producer=Producer(name="my-builder", version="1.2"),
     product={"vintage": "2021"},
 )
 ```
 
-Write it last, once nothing else in the directory will change. A directory
-without a manifest is unpublished: `LocalRegistry.bundle` refuses it (see the
-section above).
+Write it last, once every builder has closed. A directory without a manifest
+is unpublished: `LocalRegistry.bundle` refuses it (see the sections above).
 
 A manifest whose store schema differs from this sdmxlib's is refused with
 `sl.StoreSchemaError` before `meta.duckdb` is touched, as a store is (below).

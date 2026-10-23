@@ -133,26 +133,15 @@ def test_a_bundle_binding_works_in_a_bundle(tmp_path) -> None:
     the check is about attachment rather than about the name `lake`."""
     import polars as pl
 
-    from sdmxlib.local.data_store import DuckDBDataStore
-
-    with sl.LocalRegistry(tmp_path / "meta.duckdb") as writer:
+    with sl.LocalRegistry.build(tmp_path) as writer:
         writer.add_all([_DSD, _FLOW])
-        store = DuckDBDataStore.from_registry(
-            writer,
-            attach={
-                "lake": (
-                    f"'ducklake:{tmp_path / 'lake.ducklake'}'",
-                    f"(DATA_PATH '{tmp_path / 'parquet'}/')",
-                )
-            },
-            extensions=["ducklake"],
-        )
-        store.write_observations(
+        writer._data_plane().write_observations(
             schema="data",
             table="obs",
             source=pl.DataFrame({"REF_AREA": ["ON"], "OBS_VALUE": [1.0]}),
         )
         writer.add(DataflowBinding.from_dsd(_DSD, dataflow=Ref.to(_FLOW), schema="data", table="obs"))
+        publication = writer.publication
 
-    with sl.LocalRegistry.bundle(publish(tmp_path)) as bundled:
+    with sl.LocalRegistry.bundle(publish(publication)) as bundled:
         assert bundled.obs(_FLOW).count() == 1

@@ -3,7 +3,7 @@
   "$defs": {
     "Manifest": {
       "title": "Manifest",
-      "description": "`bundle.manifest.json`: written last, so a directory without one is unpublished.\n\nAttributes:\n    format_version: The manifest format, ``major.minor``.\n    bundle_id: The producer's stable name for the bundle, kept across\n        rebuilds. Identifies *which* bundle, never which publication.\n    token: A UUIDv7 minted at each publication. Changes on every rebuild,\n        never on a read; what a cache or an ETag keys on.\n    created_at: When the manifest was written (UTC).\n    producer: What built the bundle.\n    sdmxlib_version: The sdmxlib that wrote the manifest.\n    schema_version: The store schema of ``meta.duckdb``, checked before the\n        file is opened.\n    files: Every file but the manifest, sorted by path.\n    bindings: Observation counts per bound dataflow, sorted by URN.\n    product: Producer-specific fields, carried and not interpreted.\n    extensions: Sections owned by other packages (statcatlib's search\n        index, say), by name; carried and not interpreted.\n    provenance: Where a fetched bundle came from (format 1.1); None for\n        one built from data the producer holds.",
+      "description": "`bundle.manifest.json`: written last, so a directory without one is unpublished.\n\nAttributes:\n    format_version: The manifest format, ``major.minor``.\n    bundle_id: The producer's stable name for the bundle, kept across\n        rebuilds. Identifies *which* bundle, never which publication.\n    token: A UUIDv7 minted when the publication's build starts, and the\n        name of its directory. Changes on every rebuild, never on a read;\n        what a cache or an ETag keys on.\n    previous_token: The publication this one extends, or None for the\n        first of its bundle.\n    created_at: When the manifest was written (UTC).\n    producer: What built the bundle.\n    sdmxlib_version: The sdmxlib that wrote the manifest.\n    schema_version: The store schema of ``meta.duckdb``, checked before the\n        file is opened.\n    data_path: Where the data files live, relative to the publication\n        directory: `DATA_PATH`.\n    files: Every file of the publication but the manifest, and every data\n        file its lake catalog references, sorted by root and path.\n    bindings: Observation counts per bound dataflow, sorted by URN.\n    product: Producer-specific fields, carried and not interpreted.\n    extensions: Sections owned by other packages (statcatlib's search\n        index, say), by name; carried and not interpreted.\n    provenance: Where a fetched bundle came from; None for\n        one built from data the producer holds.",
       "type": "object",
       "properties": {
         "format_version": {
@@ -15,6 +15,16 @@
         "token": {
           "type": "string"
         },
+        "previous_token": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "created_at": {
           "type": "string"
         },
@@ -25,6 +35,9 @@
           "type": "string"
         },
         "schema_version": {
+          "type": "string"
+        },
+        "data_path": {
           "type": "string"
         },
         "files": {
@@ -72,10 +85,12 @@
         "format_version",
         "bundle_id",
         "token",
+        "previous_token",
         "created_at",
         "producer",
         "sdmxlib_version",
         "schema_version",
+        "data_path",
         "files",
         "bindings"
       ]
@@ -99,7 +114,7 @@
     },
     "BundleFile": {
       "title": "BundleFile",
-      "description": "One file of the bundle: its path from the root (``/``-separated), size and sha256.",
+      "description": "One file of the bundle: where it is, its size and sha256.\n\nAttributes:\n    path: ``/``-separated, relative to the directory `root` names.\n    size: In bytes.\n    sha256: Of the file's contents.\n    root: ``publication`` for a file in the publication directory,\n        ``data`` for a data file under the manifest's `data_path`.\n    carried_from: The token of the manifest `size` and `sha256` were\n        copied from, for a data file an earlier publication listed; None\n        for one hashed by this publication.",
       "type": "object",
       "properties": {
         "path": {
@@ -110,12 +125,30 @@
         },
         "sha256": {
           "type": "string"
+        },
+        "root": {
+          "enum": [
+            "data",
+            "publication"
+          ]
+        },
+        "carried_from": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
         "path",
         "size",
-        "sha256"
+        "sha256",
+        "root"
       ]
     },
     "BindingCount": {

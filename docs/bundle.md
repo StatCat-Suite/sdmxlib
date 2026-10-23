@@ -1,10 +1,11 @@
 # The bundle format
 
 A bundle is a directory holding SDMX artefacts and observations, published as
-one unit. statcatlib writes bundles, sdmxlib-rest serves them, and sdmxlib
-reads, checks and fetches them. This page is the contract between them.
+one unit, once per release: each publication is a directory of its own.
+statcatlib writes bundles, sdmxlib-rest serves them, and sdmxlib reads,
+checks, copies and fetches them. This page is the contract between them.
 
-It describes **manifest format 1.1** and **overlay format 1.0**. sdmxlib's
+It describes **manifest format 2.0** and **overlay format 1.0**. sdmxlib's
 code is the reference implementation (`sdmxlib.bundle`,
 `LocalRegistry.bundle`), and the two JSON Schemas ship with it:
 `sdmxlib.bundle.manifest_schema()` and `sdmxlib.bundle.overlay_schema()`.
@@ -18,29 +19,41 @@ bundle; a *reader* opens one.
 
 ```text
 <bundle>/
-  meta.duckdb            the artefact store: the sdmx.* schema, bindings included
-  lake.ducklake          the DuckLake catalog for observations
-  parquet/               DuckLake's data files
-  bundle.manifest.json   the manifest, written last
+  data/                    data files shared by every publication of the bundle
+    <schema>/<table>/ducklake-<uuid>.parquet
+  <token>/                 one publication, named by its token; never rewritten
+    meta.duckdb            the artefact store: the sdmx.* schema, bindings included
+    lake.ducklake          the DuckLake catalog for observations, over ../data/
+    bundle.manifest.json   the manifest, written last
 ```
 
 - `meta.duckdb` MUST be present. It holds every artefact in the store schema
   that `sdmxlib.storage.schema` defines, at the version recorded in the
   manifest's `schema_version`.
-- `lake.ducklake` and `parquet/` hold observations. A bundle with no bound
-  dataflow MAY leave both out. DuckLake stores a small table inside
-  `lake.ducklake` itself, so `parquet/` MAY hold no files even when the lake
-  holds rows.
-- `bundle.manifest.json` marks the bundle as published. A directory without
-  one is an unpublished bundle: `LocalRegistry.bundle` refuses it, and a
-  builder opens it with `LocalRegistry.build`.
-- A producer MAY add files of its own, such as a search index. The manifest
-  MUST list them like any other file (§2), so they MUST be in place before
-  the manifest is written.
+- `lake.ducklake` holds the catalog for observations, and `data/` their data
+  files, in DuckLake's own layout. A publication with no bound dataflow MAY
+  leave the catalog out. DuckLake stores a small table inside
+  `lake.ducklake` itself, so a publication MAY reference no data file even
+  when the lake holds rows.
+- `data/` is shared. A data file is written once, under a fresh UUID, and
+  every publication whose catalog references it lists it. A producer MUST
+  NOT delete, rewrite or clean up a file in `data/`
+  (`ducklake_cleanup_old_files` and `ducklake_delete_orphaned_files`
+  included): an earlier publication may still list it. Deleting is garbage
+  collection's job, which keeps every file some manifest still lists.
+- A publication directory is written once. A change is a new publication,
+  whose catalog is a copy of the previous one's, extended (§7).
+- `bundle.manifest.json` marks the publication as published. A directory
+  without one is unpublished: `LocalRegistry.bundle` refuses it, and its
+  builder reopens it with `LocalRegistry.build(bundle, resume=token)`.
+- A producer MAY add files of its own to the publication directory, such as
+  a search index. The manifest MUST list them like any other file (§2), so
+  they MUST be in place before the manifest is written.
 
-A reader MUST resolve every path relative to the bundle directory as it is
-now. DuckLake records the data path it was written with; sdmxlib attaches the
-lake with `OVERRIDE_DATA_PATH`, because a bundle is moved, copied and unpacked
+A reader MUST resolve every path relative to the publication directory as it
+is now, and the data files through the manifest's `data_path`. DuckLake
+records the data path it was written with; sdmxlib attaches the lake with
+`OVERRIDE_DATA_PATH`, because a bundle is moved, copied and unpacked
 elsewhere.
 
 ## 2. The manifest
@@ -52,18 +65,20 @@ two spaces, but a reader MUST NOT depend on the layout.
 
 | field | presence | meaning |
 | --- | --- | --- |
-| `format_version` | required | The manifest format, `major.minor`: `"1.1"` for this page. |
+| `format_version` | required | The manifest format, `major.minor`: `"2.0"` for this page. |
 | `bundle_id` | required | The producer's stable name for the bundle, kept across rebuilds. It names *which* bundle, never which publication. |
-| `token` | required | A UUIDv7 minted at each publication (§3). |
+| `token` | required | A UUIDv7 minted when the publication's build started, and the name of its directory (§3). |
+| `previous_token` | required | The `token` of the publication this one extends, or `null` for a bundle's first. |
 | `created_at` | required | When the manifest was written: an RFC 3339 timestamp in UTC. |
 | `producer` | required | What built the bundle: a `Producer`. |
 | `sdmxlib_version` | required | The version of sdmxlib that wrote the manifest. |
 | `schema_version` | required | The store schema of `meta.duckdb`, such as `"2.48"` (§4). |
-| `files` | required | Every file in the bundle except the manifest, as `BundleFile`s sorted by `path`. |
+| `data_path` | required | Where the data files live, relative to the publication directory: `"../data/"`. |
+| `files` | required | Every file in the publication directory except the manifest, and every data file the lake catalog references, as `BundleFile`s sorted by `root`, then `path`. |
 | `bindings` | required | One `BindingCount` per bound dataflow, sorted by `dataflow`. |
 | `product` | optional | The producer's own fields, as a JSON object. Readers carry it and do not interpret it. |
 | `extensions` | optional | Sections owned by other packages, keyed by package name, each a JSON object. Readers carry them and do not interpret them. |
-| `provenance` | optional | Where a fetched bundle came from: a `Provenance`, or `null`. Added in format 1.1. |
+| `provenance` | optional | Where a fetched bundle came from: a `Provenance`, or `null`. |
 
 ### `Producer`
 
@@ -76,9 +91,11 @@ two spaces, but a reader MUST NOT depend on the layout.
 
 | field | presence | meaning |
 | --- | --- | --- |
-| `path` | required | The file's path from the bundle root, `/`-separated. |
+| `path` | required | The file's path, `/`-separated, relative to the directory `root` names. |
 | `size` | required | Its size in bytes. |
 | `sha256` | required | The SHA-256 of its contents, as lowercase hex. |
+| `root` | required | `"publication"` for a file in the publication directory, `"data"` for a data file under `data_path`. |
+| `carried_from` | optional | For a data file, the `token` of the manifest whose `size` and `sha256` this entry copies; `null` for one hashed by this publication. |
 
 ### `BindingCount`
 
@@ -107,10 +124,11 @@ it `null`.
 
 ### Versions
 
-A minor format version only adds optional fields. A reader of `1.x`:
+A minor format version only adds optional fields. A reader of `2.x`:
 
-- MUST read a manifest of any `1.x`, and MUST ignore a field it does not know;
-- MUST refuse a manifest whose major version is not `1`;
+- MUST read a manifest of any `2.x`, and MUST ignore a field it does not know;
+- MUST refuse a manifest whose major version is not `2`. Format 1.x bundles
+  kept their data files inside one directory, so they are rebuilt;
 - MUST refuse a `bundle.manifest.json` with no `format_version`. That file is
   a builder's own format from before this one, and the producer must republish
   the bundle with `write_manifest`.
@@ -121,8 +139,10 @@ package's name.
 
 ## 3. Identity
 
-`token` identifies a publication. A producer MUST mint a new UUIDv7 each time
-it writes the manifest, and a reader MUST NOT change it.
+`token` identifies a publication. A producer MUST mint a new UUIDv7 when a
+publication's build starts, name the publication's directory by it, and write
+that token in the manifest; a reader MUST NOT change it. The token exists
+before the build because the directory it names does.
 
 The token is minted rather than computed from the content, because no hash of
 the files identifies the content:
@@ -152,9 +172,10 @@ A published bundle is never written, so a reader MUST also move DuckDB's
 spill directory outside it: a read-only database spills to `<file>.tmp`
 beside itself by default.
 
-`LocalRegistry.bundle(path)` does this and returns a `BundleRegistry`, which
-has the read methods and no writes and no `sql()`. `LocalRegistry.build(path)`
-opens the same layout writable, for a builder.
+`LocalRegistry.bundle(path)` does this for the publication at `path` and
+returns a `BundleRegistry`, which has the read methods and no writes and no
+`sql()`. `LocalRegistry.build(bundle)` starts a publication, writable, for a
+builder (§7).
 
 ### The schema check
 
@@ -286,15 +307,17 @@ token, and so does republishing the bundle.
 
 ### 5.5 Folding overlays into a bundle
 
-`fold_overlays` applies overlays to the store for good. It replaces every
-artefact an entry changes in `meta.duckdb`, then republishes. The new
-manifest keeps `bundle_id`, `producer`, `product`, `extensions` and
-`provenance`, and has a new `token`. After folding, a server no longer
-applies those overlays.
+`fold_overlays` applies overlays to the store for good. It starts a new
+publication extending the one it reads, replaces every artefact an entry
+changes in the new `meta.duckdb`, and publishes it. The new manifest keeps
+`bundle_id`, `producer`, `product`, `extensions` and `provenance`, and has a
+new `token` and the folded publication's as `previous_token`. The folded
+publication is left as it was. After folding, a server no longer applies
+those overlays.
 
 ## 6. Conformance
 
-`check_bundle(path)` checks a published bundle, and the `sdmxlib bundle check
+`check_bundle(path)` checks a published publication, and the `sdmxlib bundle check
 PATH` command runs it from a shell (`uv tool install sdmxlib-cli`). The
 command prints each finding and exits 1 if there is any. It runs these checks
 in order and reports every finding, not only the first:
@@ -302,9 +325,9 @@ in order and reports every finding, not only the first:
 | check | passes when | on failure |
 | --- | --- | --- |
 | `manifest` | the manifest parses, in a format this reader reads (§2) | the run stops |
-| `files` | every listed file is present with its `size` and `sha256`, and no unlisted file is in the directory | continues |
+| `files` | every listed file is present with its `size` and `sha256`, and no unlisted file is in the publication directory; `data/` is shared, so only its listed files are checked | continues |
 | `manifest` | the manifest's `schema_version` is the reader's, so `meta.duckdb` can be opened (§4) | the run stops |
-| `lake` | every file the DuckLake catalog references exists at the size DuckLake recorded, and DuckLake reports no orphaned file; runs only when `lake.ducklake` exists | continues |
+| `lake` | every file the current snapshot references exists at the size DuckLake recorded, and every file the catalog references from any snapshot it keeps is in the manifest; runs only when `lake.ducklake` exists | continues |
 | `bindings` | the store's bindings are the manifest's, and each table holds the count the manifest gives | continues |
 | `references` | every reference in the store resolves to an artefact in the store; `references=False` or `--no-references` skips it | continues |
 
@@ -323,25 +346,49 @@ every check.
 
 ## 7. Producing a bundle
 
-1. Write `meta.duckdb` at this sdmxlib's store schema, for example through
-   `LocalRegistry.build(path)`, and the observations into the bundle's lake,
-   adding a `DataflowBinding` for each dataflow. Close every connection that
-   wrote: DuckDB checkpoints a database when its last connection closes, and
-   a write-ahead log left beside a database holds rows its checksum does not
-   cover. `write_manifest` refuses while one remains, and the `files` check
-   names one found in a published bundle.
-2. Add any files of your own.
-3. Call `write_manifest(path, bundle_id=..., producer=...)` last, with
+1. Start a publication with `LocalRegistry.build(bundle)`, or
+   `LocalRegistry.build(bundle, previous=token)` to extend the last one. It
+   mints the token, creates `<bundle>/<token>/`, which the builder's
+   `publication` names, and with `previous=` copies that publication's
+   `meta.duckdb` and `lake.ducklake` in, so only what changed is written and
+   the lake adds only new data files to `data/`.
+2. Write the artefacts at this sdmxlib's store schema and the observations
+   into the lake, adding a `DataflowBinding` for each dataflow. A builder
+   that writes in more than one step reopens the publication with
+   `build(bundle, resume=token)`. Close every connection that wrote: DuckDB
+   checkpoints a database when its last connection closes, and a write-ahead
+   log left beside a database holds rows its checksum does not cover.
+   `write_manifest` refuses while one remains, and the `files` check names one
+   found in a published bundle.
+3. Add any files of your own to the publication directory.
+4. Call `write_manifest(publication, bundle_id=..., producer=...)` last, with
    `product`, `extensions` and `provenance` as needed. It inventories the
-   files, counts each binding's rows through DuckLake, mints the token, and
-   writes the manifest to a temporary file renamed into place, so a reader
-   never sees half of one.
-4. Run `check_bundle` on the result.
+   publication's files and every data file its catalog references, counts
+   each binding's rows through DuckLake, and writes the manifest to a
+   temporary file renamed into place, so a reader never sees half of one. A
+   data file the previous publication's manifest lists at the same size keeps
+   that manifest's `sha256`, with `carried_from` naming its token, so a
+   republish hashes only the files it wrote.
+5. Run `check_bundle` on the result.
 
-Writing the manifest again republishes the bundle with a new token. A builder
-that wrote its own `bundle.manifest.json` before this format MUST republish
-with `write_manifest`, moving its own fields into `product`
+A publication is published once: `write_manifest` refuses one that already
+has a manifest, and a change is a new publication. A builder that wrote its
+own `bundle.manifest.json` before this format MUST republish with
+`write_manifest`, moving its own fields into `product`
 ([Upgrading](upgrading.md#sdmxlib-owns-bundlemanifestjson)).
+
+## 8. Copying a publication
+
+`copy_bundle(source, destination)` copies a published publication, and
+`sdmxlib bundle copy SRC DST` runs it from a shell. It is how a server
+receives a bundle and how a mirror is made. It copies the files the manifest
+lists, the data files into the `data_path` beside `destination`, checks each
+against its `size` and `sha256`, and copies the manifest last, byte for byte.
+A data file already at the destination with the listed digest is kept, so
+receiving the next publication of a bundle copies only its new data files. An
+interrupted copy leaves a directory without a manifest, which readers refuse
+and `check_bundle` reports as unpublished; running the copy again completes
+it.
 
 sdmxlib also produces bundles itself:
 

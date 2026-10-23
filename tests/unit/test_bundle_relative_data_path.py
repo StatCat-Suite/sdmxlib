@@ -5,17 +5,16 @@ directory that gets built in one place and read in another — copied, unpacked,
 mounted — so that recorded path is provenance, not truth.
 
 A bundle builder writes a **relative** one
-(`data/<bundle>/parquet/`). `LocalRegistry.bundle(path)` passes the
-absolute `<path>/parquet/`, DuckLake compares the two, and refuses the ATTACH:
+(`data/<bundle>/parquet/`). Opening the bundle passes an absolute data path,
+DuckLake compares the two, and refuses the ATTACH:
 
     Error: DATA_PATH parameter "/abs/.../parquet/" does not match existing
     data path in the catalog "data/<bundle>/parquet/".
 
 That made the entire data plane unreachable for the bundle the library's own
-first-party producer emits — found by trying to profile it. `bundle(path)` is
-the caller stating where the bundle is now, and the documented layout fixes
-`parquet/` relative to it, so `OVERRIDE_DATA_PATH true` is the correct reading
-rather than a workaround.
+first-party producer emits — found by trying to profile it. The caller states
+where the publication is now, and the layout fixes ``data/`` beside it, so
+`OVERRIDE_DATA_PATH true` is the correct reading rather than a workaround.
 
 The fixture below writes its catalog from inside the parent directory, which is
 what makes DuckLake record a relative path — building it any other way produces
@@ -43,22 +42,22 @@ pytestmark = pytest.mark.unit
 
 @pytest.fixture
 def relative_bundle(tmp_path: pathlib.Path) -> pathlib.Path:
-    """A bundle whose DuckLake catalog records a relative data path."""
-    root = tmp_path / "abundle"
-    root.mkdir()
+    """A publication whose DuckLake catalog records a relative data path."""
+    with sl.LocalRegistry.build(tmp_path / "abundle") as builder:
+        publication = builder.publication
     previous = pathlib.Path.cwd()
     os.chdir(tmp_path)
     try:
         conn = duckdb.connect(":memory:")
         conn.execute("INSTALL ducklake")
         conn.execute("LOAD ducklake")
-        conn.execute("ATTACH 'ducklake:abundle/lake.ducklake' AS lake (DATA_PATH 'abundle/parquet/')")
+        conn.execute(f"ATTACH 'ducklake:abundle/{publication.name}/lake.ducklake' AS lake (DATA_PATH 'abundle/data/')")
         conn.execute("CREATE SCHEMA lake.d")
         conn.execute("CREATE TABLE lake.d.obs AS SELECT 'CA' AS GEO, 1.0 AS OBS_VALUE")
         conn.close()
     finally:
         os.chdir(previous)
-    return root
+    return publication
 
 
 def test_the_fixture_really_records_a_relative_path(relative_bundle):
@@ -116,7 +115,7 @@ def _bind(registry: sl.LocalRegistry) -> Ref[Dataflow]:
 
 def test_a_bundle_with_a_relative_data_path_opens(relative_bundle):
     """The regression: the lazy ATTACH raised a DuckDB `Error`."""
-    registry = sl.LocalRegistry.build(relative_bundle)
+    registry = sl.LocalRegistry.build(relative_bundle.parent, resume=relative_bundle.name)
     try:
         flow = _bind(registry)
         assert registry.obs(flow).count() == 1
@@ -133,9 +132,9 @@ def test_the_bundle_reads_from_the_directory_it_was_given(relative_bundle, tmp_p
     relative to the *new* directory.
     """
     moved = tmp_path / "moved-elsewhere"
-    shutil.copytree(relative_bundle, moved)
+    shutil.copytree(relative_bundle.parent, moved)
 
-    registry = sl.LocalRegistry.build(moved)
+    registry = sl.LocalRegistry.build(moved, resume=relative_bundle.name)
     try:
         flow = _bind(registry)
         assert registry.obs(flow).count() == 1

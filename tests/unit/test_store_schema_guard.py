@@ -54,13 +54,13 @@ def test_a_populated_store_on_another_schema_is_refused_and_kept(tmp_path: Path,
 
 
 def test_a_bundle_on_another_schema_is_refused_and_kept(tmp_path: Path) -> None:
-    """The reported case: a read-only workload through `bundle()`."""
-    bundle = tmp_path / "bundle"
-    bundle.mkdir()
-    _store(bundle / "meta.duckdb", stamped="2.19")
+    """The reported case, a bundle's store opened on another schema, here by a builder resuming it."""
+    publication = tmp_path / "bundle" / "token"
+    publication.mkdir(parents=True)
+    _store(publication / "meta.duckdb", stamped="2.19")
     with pytest.raises(sl.StoreSchemaError):
-        sl.LocalRegistry.build(bundle)
-    assert _artefacts(bundle / "meta.duckdb") == 1
+        sl.LocalRegistry.build(publication.parent, resume=publication.name)
+    assert _artefacts(publication / "meta.duckdb") == 1
 
 
 def test_rebuild_asks_for_the_drop(tmp_path: Path) -> None:

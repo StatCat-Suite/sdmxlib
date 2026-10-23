@@ -11,7 +11,7 @@ from pathlib import Path
 import duckdb
 from attrs import frozen
 
-from sdmxlib.bundle._write import sha256_of
+from sdmxlib.bundle._write import lake_files, sha256_of
 from sdmxlib.local.registry import BundleRegistry, LocalRegistry
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.binding import DataflowBinding
@@ -76,9 +76,12 @@ def check_bundle(path: str | Path, *, references: bool = True, extensions: Mappi
 
     - **manifest** — it parses, in a format this build reads.
     - **files** — every file the manifest lists is present with its size and
-      sha256, and nothing else is in the directory.
-    - **lake** — every file DuckLake references exists at the size it recorded,
-      and DuckLake reports no orphan in its directories.
+      sha256, and nothing else is in the publication directory. The shared
+      ``data/`` holds other publications' files too, so only its listed
+      files are checked.
+    - **lake** — every file the current snapshot references exists at the
+      size DuckLake recorded, and every file the catalog references from any
+      snapshot is in the manifest, which is what garbage collection keeps.
     - **bindings** — the store's dataflow bindings are the manifest's, and each
       holds the observations the manifest counts.
     - **references** — every reference in the store resolves within it: the
@@ -90,7 +93,7 @@ def check_bundle(path: str | Path, *, references: bool = True, extensions: Mappi
     the run there: nothing after it can be checked against either.
 
     Args:
-        path: The bundle directory.
+        path: The publication directory.
         references: Whether to check the structural closure.
         extensions: More checks, by name, for parts of the bundle other
             packages own (statcatlib's search index, say).
@@ -112,7 +115,7 @@ def check_bundle(path: str | Path, *, references: bool = True, extensions: Mappi
         return Report(root, tuple(checked), (*findings, Finding("manifest", "meta.duckdb", str(exc))))
     with reg:
         if (root / "lake.ducklake").exists():
-            findings += _lake(root, reg)
+            findings += _lake(root, manifest, reg)
             checked.append("lake")
         findings += _bindings(manifest, reg)
         checked.append("bindings")
@@ -131,14 +134,20 @@ def _files(root: Path, manifest: Manifest) -> Iterable[Finding]:
         for p in sorted(root.rglob("*"))
         if p.is_file() and p.name not in {MANIFEST_NAME, f"{MANIFEST_NAME}.tmp"}
     }
+    data = root / manifest.data_path
     for entry in manifest.files:
-        found = on_disk.pop(entry.path, None)
+        if entry.root == "data":
+            subject = f"{manifest.data_path}{entry.path}"
+            found = data / entry.path if (data / entry.path).is_file() else None
+        else:
+            subject = entry.path
+            found = on_disk.pop(entry.path, None)
         if found is None:
-            yield Finding("files", entry.path, "listed in the manifest but missing")
+            yield Finding("files", subject, "listed in the manifest but missing")
         elif (size := found.stat().st_size) != entry.size:
-            yield Finding("files", entry.path, f"{size} bytes, the manifest says {entry.size}")
+            yield Finding("files", subject, f"{size} bytes, the manifest says {entry.size}")
         elif sha256_of(found) != entry.sha256:
-            yield Finding("files", entry.path, "contents differ from the manifest's sha256")
+            yield Finding("files", subject, "contents differ from the manifest's sha256")
     for extra in on_disk:
         if extra.endswith(".wal"):
             # A database was not checkpointed before the manifest: its log holds
@@ -148,10 +157,11 @@ def _files(root: Path, manifest: Manifest) -> Iterable[Finding]:
             yield Finding("files", extra, "in the bundle but not in the manifest")
 
 
-def _lake(root: Path, reg: BundleRegistry) -> list[Finding]:
-    """What DuckLake records against what is on disk, asked through its own functions."""
+def _lake(root: Path, manifest: Manifest, reg: BundleRegistry) -> list[Finding]:
+    """What DuckLake records against what is on disk and in the manifest."""
     reg._data_plane()  # ATTACHes the lake
     conn = reg.connection
+    data = root / manifest.data_path
     findings: list[Finding] = []
     tables = conn.execute(
         "SELECT schema_name, table_name FROM duckdb_tables() WHERE database_name = ? ORDER BY ALL", [_LAKE]
@@ -165,27 +175,33 @@ def _lake(root: Path, reg: BundleRegistry) -> list[Finding]:
         for data_file, data_size, delete_file, delete_size in listed:
             for file, size in ((data_file, data_size), (delete_file, delete_size)):
                 if file is not None:
-                    findings += _lake_file(root, Path(file), size)
-    orphans = conn.execute(
-        "SELECT path FROM ducklake_delete_orphaned_files(?, dry_run => true, cleanup_all => true)", [_LAKE]
-    ).fetchall()
+                    findings += _lake_file(manifest.data_path, data, Path(file), size)
+    listed = {f.path for f in manifest.files if f.root == "data"}
+    try:
+        referenced = lake_files(conn, data)
+    except ManifestError as exc:
+        return [*findings, Finding("lake", "lake.ducklake", str(exc))]
     findings += [
-        Finding("lake", _relative(root, Path(path)), "not referenced by the DuckLake catalog") for (path,) in orphans
+        Finding("lake", f"{manifest.data_path}{path}", "referenced by the DuckLake catalog but not in the manifest")
+        for path in referenced
+        if path not in listed
     ]
     return findings
 
 
-def _lake_file(root: Path, file: Path, size: int) -> list[Finding]:
+def _lake_file(data_path: str, data: Path, file: Path, size: int) -> list[Finding]:
+    subject = _relative(data_path, data, file)
     if not file.is_file():
-        return [Finding("lake", _relative(root, file), "referenced by the DuckLake catalog but missing")]
+        return [Finding("lake", subject, "referenced by the DuckLake catalog but missing")]
     if (actual := file.stat().st_size) != size:
-        return [Finding("lake", _relative(root, file), f"{actual} bytes, DuckLake recorded {size}")]
+        return [Finding("lake", subject, f"{actual} bytes, DuckLake recorded {size}")]
     return []
 
 
-def _relative(root: Path, file: Path) -> str:
+def _relative(data_path: str, data: Path, file: Path) -> str:
+    """`file` as the manifest's ``files`` name it: under `data_path` when it is in `data`."""
     try:
-        return file.resolve().relative_to(root.resolve()).as_posix()
+        return f"{data_path}{file.resolve().relative_to(data.resolve()).as_posix()}"
     except ValueError:
         return str(file)
 

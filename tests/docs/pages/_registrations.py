@@ -21,7 +21,7 @@ import attrs
 import polars as pl
 
 import sdmxlib as sl
-from sdmxlib.bundle import Producer, write_manifest
+from sdmxlib.bundle import Producer, copy_bundle, write_manifest
 from sdmxlib.local.data_store import DuckDBDataStore
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.ref import Ref
@@ -462,7 +462,7 @@ def _facade() -> Generator[dict[str, Any]]:
 
     The one page that needs a whole vertical: structures, a binding, and rows
     to stream. Built as a **real bundle** — `meta.duckdb` beside
-    `lake.ducklake` and `parquet/` — because the page's first line is
+    `lake.ducklake`, over a shared ``data/`` — because the page's first line is
     `LocalRegistry.bundle(...)`, and a fixture that handed it a plain store
     instead would leave the one constructor a facade actually deploys with
     unexecuted.
@@ -508,24 +508,11 @@ def _facade() -> Generator[dict[str, Any]]:
         codes=[sl.Code(id="M", name={"en": "Monthly"})],
     )
     with in_a_directory_containing({}):
-        # Relative, because DuckLake records the DATA_PATH it was *created*
-        # with and refuses a reopen that names the same directory differently.
-        # The page opens `bundle`, so the writer has to as well.
-        bundle = Path("bundle")
-        bundle.mkdir()
-        with sl.LocalRegistry(bundle / "meta.duckdb") as writer:
+        # Built as a bundle's first publication, then copied to `bundle/`, the
+        # path the page opens; its data files land in `data/` beside it.
+        with sl.LocalRegistry.build("built") as writer:
             writer.add_all([areas, freq, dsd, flow])
-            store = DuckDBDataStore.from_registry(
-                writer,
-                attach={
-                    "lake": (
-                        f"'ducklake:{bundle / 'lake.ducklake'}'",
-                        f"(DATA_PATH '{bundle / 'parquet'}/')",
-                    )
-                },
-                extensions=["ducklake"],
-            )
-            store.write_observations(
+            writer._data_plane().write_observations(
                 schema="data",
                 table="obs",
                 source=pl.DataFrame(
@@ -539,8 +526,11 @@ def _facade() -> Generator[dict[str, Any]]:
                 ),
             )
             writer.add(DataflowBinding.from_dsd(dsd, dataflow=Ref.to(flow), schema="data", table="obs"))
+            publication = writer.publication
 
-        write_manifest(bundle, bundle_id="tutorial", producer=Producer(name="docs-tests", version="0"))
+        write_manifest(publication, bundle_id="tutorial", producer=Producer(name="docs-tests", version="0"))
+        bundle = Path("bundle")
+        copy_bundle(publication, bundle)
         registry = sl.LocalRegistry.bundle(bundle)
         try:
             namespace = base()
