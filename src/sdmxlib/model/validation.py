@@ -164,7 +164,7 @@ class SdmxConformanceError(SdmxParseError):
     rather than not parsing at all. Catching the base handles both.
 
     Raised two ways. A reader raises it about one element, and the reader one
-    level up catches it and refuses that artefact (#435). `parse` then raises
+    level up catches it and refuses that artefact. `parse` then raises
     it about the whole document via `refusing` when anything was refused,
     carrying the refusals and the message of everything that *was* read — so
     a caller can recover the rest instead of re-parsing with
@@ -223,7 +223,7 @@ class SdmxConformanceError(SdmxParseError):
 
 
 class SdmxErrorMessage(SdmxParseError):  # noqa: N818 - SDMX's own element name, `ErrorMessage`
-    """Raised by `parse` when the document is an SDMX error message (GH-31).
+    """Raised by `parse` when the document is an SDMX error message.
 
     A registry answers a query it cannot serve with an error message —
     ``<mes:Error>`` in SDMX-ML, ``{"errors": [...]}`` in SDMX-JSON — rather
@@ -250,7 +250,7 @@ class SdmxErrorMessage(SdmxParseError):  # noqa: N818 - SDMX's own element name,
 
 
 class LossyReadError(SdmxParseError):
-    """Raised by ``parse(..., lossless=True)`` when the message is not exactly the document (#422, #474).
+    """Raised by ``parse(..., lossless=True)`` when the message is not exactly the document.
 
     The document is valid, but the model either has nowhere to put some of it
     (`StructureMessage.lost`) or had to supply a value the document omitted
@@ -1376,7 +1376,7 @@ register_advisory(DataConstraint, _check_constraint_choice)
 def validate(msg: StructureMessage | MetadataMessage) -> None:
     """Check what only a message can know: its references resolve, and no artefact is in it twice.
 
-    An artefact is checked as it is built (#492): every rule that depends on
+    An artefact is checked as it is built: every rule that depends on
     it alone runs in its constructor and in `attrs.evolve`, so none can fail
     here, and passing one says so rather than appear to check it. What the
     target format can carry is `serialize`'s question (`check_serialisable`).

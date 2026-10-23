@@ -129,7 +129,7 @@ class MaintainableArtefact(ParsesUrn):
     def is_final(self) -> bool:
         """Whether this artefact is final, read from its version as SDMX 3.0 does.
 
-        Derived rather than stored (#420, #424): 3.0 dropped `isFinal` and made
+        Derived rather than stored: 3.0 dropped `isFinal` and made
         finality a fact about the version, so `1.0.0` is final and `1.0` and
         `1.0.0-draft` are not. A 2.1 document's `isFinal`, where it says
         otherwise, is kept on `legacy_is_final` by the classes 2.1 lets carry
@@ -152,14 +152,13 @@ class MaintainableArtefact(ParsesUrn):
         and `ref.py`'s own docstring offered `Ref.unresolved(cl_freq.urn)` as
         an example, which raised. The builder is `urn_for`.
 
-        **Recomputed, not cached.** This was because artefacts were mutable and
-        a stored URN went stale the moment someone assigned `version`; they are
-        frozen since #492, so a cache would now be sound. It is still not one
-        until a profile names this line — see `docs/design/caching.md`.
+        **Recomputed, not cached.** Artefacts are frozen, so a cache would be
+        sound, but none is added until a profile names this line — see
+        `docs/design/caching.md`.
 
         Typed `SdmxUrn[Self]`, which `artefact_urn()` cannot be: that takes a
         `SupportsUrn` and has no concrete type to return, so it hands back
-        `SdmxUrn[object]` (#399). This keeps the type, so
+        `SdmxUrn[object]`. This keeps the type, so
         `Ref.unresolved(flow.urn)` is a `Ref[Dataflow]`.
         """
         return SdmxUrn.make(

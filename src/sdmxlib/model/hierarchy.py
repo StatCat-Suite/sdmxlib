@@ -168,7 +168,7 @@ class Hierarchy(MaintainableArtefact, PathNavigation[HierarchicalCode]):
     """A standalone hierarchy of codes from one or more codelists.
 
     Nodes are identified by path, as SDMX identifies them: a node id may repeat
-    in another branch, never among siblings (#439).
+    in another branch, never among siblings.
 
     - ``tree``: top-level entry points (roots) with ``children`` navigation
     - ``hierarchy["CANADA.ON.OTTAWA"]``: one node by path; a bare id is a root
@@ -240,8 +240,8 @@ class Hierarchy(MaintainableArtefact, PathNavigation[HierarchicalCode]):
     def codes(self) -> tuple[HierarchicalCode, ...]:
         """Every node in the hierarchy, in pre-order.
 
-        A tuple, not an id-keyed list: a node id may repeat in another branch
-        (#439), so there is no single node for a leaf id. Look a node up by
+        A tuple, not an id-keyed list: a node id may repeat in another branch,
+        so there is no single node for a leaf id. Look a node up by
         path with ``hierarchy["CANADA.ON"]``, or by leaf with
         ``hierarchy.by_id("ON")``.
         """
@@ -301,7 +301,7 @@ class HierarchyAssociation(MaintainableArtefact):
         )
 
     SDMX-ML 2.1 has none, and binds a hierarchy to nothing, so a 2.1 write
-    leaves it out (`formats.gaps.dropped`, #421).
+    leaves it out (`formats.gaps.dropped`).
     """
 
     sdmx_package: ClassVar[str] = "codelist"
@@ -446,10 +446,10 @@ class HierarchicalCodelist(MaintainableArtefact):
     name and silently discarded the container's — so a codelist named
     "Geographic hierarchy" containing a hierarchy named
     "Canada → provinces → cities" came back with only the second, and
-    re-emitting produced a different document (#239).
+    re-emitting produced a different document.
 
     Written only to SDMX-ML 2.1. The other targets leave it out and write its
-    hierarchies (`formats.gaps.dropped`, #421); a 2.1 reader names each one
+    hierarchies (`formats.gaps.dropped`); a 2.1 reader names each one
     for it (`model._container.member_id`).
     """
 

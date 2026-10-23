@@ -86,8 +86,7 @@ class SdmxUrn(Generic[T_co]):  # noqa: UP046 — see above; verified against bot
         string — parses on the class instead: `Concept.parse_urn(text)`, which
         is `SdmxUrn[Concept]` (see `ParsesUrn`).
 
-        It was `SdmxUrn[Any]` until #399, so that those readers' refs could
-        become whatever `Ref[T]` they were assigned to. The same `Any` made
+        It answers `SdmxUrn[object]` rather than `SdmxUrn[Any]`: an `Any` made
         `get(SdmxUrn.parse(text))` answer a confident, wrong `LazyCodelist`
         under basedpyright and an unchecked `Any` under pyrefly.
         """
@@ -174,8 +173,7 @@ class SdmxUrn(Generic[T_co]):  # noqa: UP046 — see above; verified against bot
 
         The cache is keyed on the scheme prefix, so it holds one small tuple
         per codelist or concept scheme in play. Bounding it by *count* is right
-        here for the reason it is wrong in #386: the entries are uniform and
-        tiny.
+        here because the entries are uniform and tiny.
         """
         return _from_fields(_item_fields(urn))
 

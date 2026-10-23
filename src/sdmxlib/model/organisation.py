@@ -122,7 +122,7 @@ class DataProvider(ParsesUrn):
         Hides the package/class internals. Building one by concatenating
         ``.id`` onto the *scheme's* urn produces a urn whose class is
         ``DataProviderScheme``, which then resolves against nothing —
-        an easy mistake, and a silent one (#315).
+        an easy mistake, and a silent one.
 
         `scheme` defaults to ``"DATA_PROVIDERS"`` because the XSD pins the
         scheme's id to that one literal — see
@@ -145,7 +145,7 @@ class DataProvider(ParsesUrn):
 
 @frozen(unsafe_hash=False)
 class MetadataProvider(ParsesUrn):
-    """An organisation that provides reference metadata under an MPA — #315.
+    """An organisation that provides reference metadata under an MPA.
 
     The metadata twin of `DataProvider`, and identical in shape: both are
     `Organisation` in the IM, so both carry `contacts`.
@@ -184,7 +184,7 @@ class MetadataProvider(ParsesUrn):
 
         The metadata twin. Same trap it exists to avoid: concatenating ``.id``
         onto the scheme's urn yields class ``MetadataProviderScheme``,
-        and the join then matches no rows without erroring (#315).
+        and the join then matches no rows without erroring.
 
         `scheme` defaults to ``"METADATA_PROVIDERS"`` because the XSD pins the
         scheme's id to that one literal — see
@@ -207,7 +207,7 @@ class MetadataProvider(ParsesUrn):
 
 @frozen(unsafe_hash=False)
 class DataConsumer(ParsesUrn):
-    """An organisation that consumes data: the receiving counterpart of `DataProvider` (#469).
+    """An organisation that consumes data: the receiving counterpart of `DataProvider`.
 
     Identical in shape to `DataProvider`, as both are `Organisation` in the IM.
     Held in a `DataConsumerScheme`, whose id every format pins to
@@ -242,7 +242,7 @@ class DataConsumer(ParsesUrn):
 
         The same trap as `DataProvider.urn_for`: concatenating ``.id`` onto the
         scheme's urn yields class ``DataConsumerScheme``, which resolves
-        against nothing (#315).
+        against nothing.
 
         Example:
             DataConsumer.urn_for(agency="SDMX", id="C1")
@@ -260,7 +260,7 @@ class DataConsumer(ParsesUrn):
 
 @frozen(unsafe_hash=False)
 class OrganisationUnit(ParsesUrn):
-    """A unit within an organisation, such as a department or division (#469).
+    """A unit within an organisation, such as a department or division.
 
     Hierarchical within its scheme: `parent_id` names another unit of the same
     `OrganisationUnitScheme`, as `Code.parent_id` names a code. That is how
@@ -324,7 +324,7 @@ class AgencyScheme(MaintainableArtefact):
         The URN is built from *this* scheme's agency, id and version, so it
         cannot name a parent that does not exist — which is what six hand-written
         keyword arguments to `SdmxUrn.make` invite, and what
-        `validate_references` now correctly reports as broken (#407).
+        `validate_references` now correctly reports as broken.
 
         Raises:
             KeyError: If no agency with this id is in this scheme.
@@ -399,7 +399,7 @@ class DataProviderScheme(MaintainableArtefact):
         The URN is built from *this* scheme's agency, id and version, so it
         cannot name a parent that does not exist — which is what six hand-written
         keyword arguments to `SdmxUrn.make` invite, and what
-        `validate_references` now correctly reports as broken (#407).
+        `validate_references` now correctly reports as broken.
 
         Raises:
             KeyError: If no provider with this id is in this scheme.
@@ -437,7 +437,7 @@ class DataProviderScheme(MaintainableArtefact):
 
 @frozen(unsafe_hash=False)
 class MetadataProviderScheme(MaintainableArtefact):
-    """Maintainable container for MetadataProvider items — #315.
+    """Maintainable container for MetadataProvider items.
 
     Mirrors `DataProviderScheme`. Until this existed,
     `MetadataProvisionAgreement.metadata_provider` was a `Ref[object]` and the
@@ -480,7 +480,7 @@ class MetadataProviderScheme(MaintainableArtefact):
         The URN is built from *this* scheme's agency, id and version, so it
         cannot name a parent that does not exist — which is what six hand-written
         keyword arguments to `SdmxUrn.make` invite, and what
-        `validate_references` now correctly reports as broken (#407).
+        `validate_references` now correctly reports as broken.
 
         Raises:
             KeyError: If no provider with this id is in this scheme.
@@ -518,7 +518,7 @@ class MetadataProviderScheme(MaintainableArtefact):
 
 @frozen(unsafe_hash=False)
 class DataConsumerScheme(MaintainableArtefact):
-    """Maintainable container for DataConsumer items (#469). Its id is fixed to ``DATA_CONSUMERS``."""
+    """Maintainable container for DataConsumer items. Its id is fixed to ``DATA_CONSUMERS``."""
 
     sdmx_package: ClassVar[str] = "base"
     sdmx_class: ClassVar[str] = "DataConsumerScheme"
@@ -553,7 +553,7 @@ class DataConsumerScheme(MaintainableArtefact):
         """Build a resolved `Ref` to a consumer within this scheme.
 
         The URN is built from *this* scheme's agency, id and version, so it
-        cannot name a parent that does not exist (#407).
+        cannot name a parent that does not exist.
 
         Raises:
             KeyError: If no consumer with this id is in this scheme.
@@ -588,7 +588,7 @@ class DataConsumerScheme(MaintainableArtefact):
 
 @frozen(unsafe_hash=False)
 class OrganisationUnitScheme(MaintainableArtefact):
-    """Maintainable container for OrganisationUnit items, hierarchical through `OrganisationUnit.parent_id` (#469)."""
+    """Maintainable container for OrganisationUnit items, hierarchical through `OrganisationUnit.parent_id`."""
 
     sdmx_package: ClassVar[str] = "base"
     sdmx_class: ClassVar[str] = "OrganisationUnitScheme"
@@ -623,7 +623,7 @@ class OrganisationUnitScheme(MaintainableArtefact):
         """Build a resolved `Ref` to an organisation unit within this scheme.
 
         The URN is built from *this* scheme's agency, id and version, so it
-        cannot name a parent that does not exist (#407).
+        cannot name a parent that does not exist.
 
         Raises:
             KeyError: If no organisation unit with this id is in this scheme.

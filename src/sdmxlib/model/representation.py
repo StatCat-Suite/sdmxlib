@@ -74,7 +74,7 @@ class DataType(StrEnum):
 
 @frozen
 class SentinelValue:
-    """A value with a special meaning in a text format: ``-1`` for "not applicable" (#422).
+    """A value with a special meaning in a text format: ``-1`` for "not applicable".
 
     SDMX 3.x's ``SentinelValueType``: the value as written — any simple type,
     held as its text, since SDMX-JSON may send a number — and its required

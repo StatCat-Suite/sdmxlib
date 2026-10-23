@@ -650,7 +650,7 @@ class ComponentRole(Enum):
 
 @frozen(unsafe_hash=False)
 class MetadataAttributeUsage:
-    """A metadata attribute a DataStructure uses, and what it attaches to (#422).
+    """A metadata attribute a DataStructure uses, and what it attaches to.
 
     SDMX 3.0 lets a DSD report reference metadata alongside data: it names an
     MSD (`DataStructure.metadata`) and, in its AttributeList, uses some of that
@@ -773,7 +773,7 @@ class DataStructure(MaintainableArtefact):
         tidy: `storage.schema` declares ``PRIMARY KEY (dsd_urn, component_id)``
         on ``dsd_component``, so a component id is already unique across the
         whole structure in this library, whichever list it sits in.
-        `validation` enforces the same thing on the model (#407).
+        `validation` enforces the same thing on the model.
 
         `Ref[object]`, not a six-way union: the class varies, every field that
         consumes one of these is declared `Ref[object]`
@@ -823,7 +823,7 @@ class DataStructure(MaintainableArtefact):
         """Dimension components in DSD order — regular dimensions, then time.
 
         **Not, on its own, the shape of a REST key**, which is what an earlier
-        version of this docstring claimed (#337). Whether the time dimension
+        version of this docstring claimed. Whether the time dimension
         occupies a segment depends on the API version, so ask
         `key_slot_ids` and say which. This property is the raw ordering both
         answers are built from.
@@ -838,7 +838,7 @@ class DataStructure(MaintainableArtefact):
 
         The two SDMX-REST generations disagree about the time dimension, and
         the disagreement is silent — a key of the wrong length is either
-        rejected outright or, worse, read with every value one slot out (#337):
+        rejected outright or, worse, read with every value one slot out:
 
         | API | slots | time filtered by |
         | --- | --- | --- |
@@ -931,9 +931,7 @@ class DataStructure(MaintainableArtefact):
         A `LazyCodelist` answers this with one SQL projection, cached and
         single-flight at the source; iterating its codes instead would build a
         `Code` and an `InternationalString` per row to read one string off each
-        (CL_GEOGRAPHY: 78k codes, ~16s). `sdmxlib.polars` has taken that fast
-        path for a while — this took the slow one until #306 removed the
-        implicit iteration that was hiding it.
+        (CL_GEOGRAPHY: 78k codes, ~16s). `sdmxlib.polars` takes the same path.
         """
         return {
             comp.id: enumeration.code_map(lang=lang)

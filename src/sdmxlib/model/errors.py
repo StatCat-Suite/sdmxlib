@@ -53,7 +53,7 @@ class SdmxParseError(ValueError):
 
 @frozen
 class Refusal:
-    """One artefact a reader declined to build, and why (#435).
+    """One artefact a reader declined to build, and why.
 
     A document is a batch of independent maintainable artefacts, and one of
     them contradicting the schema used to lose all of them: registry.sdmx.org's
@@ -71,7 +71,7 @@ class Refusal:
             agency, id and version. The element was not read, so nothing in it
             was checked; this names it, it does not vouch for it.
         reason: Why it was refused — the `SdmxConformanceError` message, or
-            each rule it broke that `Registry.add` enforces (#419).
+            each rule it broke that `Registry.add` enforces.
     """
 
     artefact_class: str
@@ -85,7 +85,7 @@ class Refusal:
 
 @frozen
 class ReadGap:
-    """Content a reader met and the model has nowhere to put (#422).
+    """Content a reader met and the model has nowhere to put.
 
     The artefact is built without it and the loss is recorded here, rather
     than the artefact refused: a DataStructure carrying one `com:Link` is still
@@ -112,7 +112,7 @@ class ReadGap:
 
 @frozen
 class ReadAssumption:
-    """A value a reader filled in because the document omitted something the schema requires (#474).
+    """A value a reader filled in because the document omitted something the schema requires.
 
     A `ReadGap` records what a reader dropped; this records what it supplied.
     The artefact holds the assumed value exactly as if the document had stated
@@ -196,7 +196,7 @@ class SdmxWarning(UserWarning):
 
 
 class ImRuleWarning(SdmxWarning):
-    """An artefact breaks a rule the information model states and no wire schema enforces (#481).
+    """An artefact breaks a rule the information model states and no wire schema enforces.
 
     The artefact is still built: every SDMX format can carry it, and refusing
     would break documents and builders that work today. One warning per

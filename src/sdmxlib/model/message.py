@@ -184,7 +184,7 @@ class StructureMessage:
 
     @property
     def refused(self) -> tuple[Refusal, ...]:
-        """Artefacts the reader refused, each with the reason (#435).
+        """Artefacts the reader refused, each with the reason.
 
         A document is read artefact by artefact: one that contradicts the
         schema is recorded here and the rest are read. Empty for a message
@@ -196,7 +196,7 @@ class StructureMessage:
 
     @property
     def lost(self) -> tuple[ReadGap, ...]:
-        """What the reader dropped from artefacts it built, per artefact and construct (#422).
+        """What the reader dropped from artefacts it built, per artefact and construct.
 
         SDMX 3.x carries constructs the model has no field for yet — a
         `com:Link`, a DSD's `MetadataAttributeUsage`. The artefact is built
@@ -205,11 +205,11 @@ class StructureMessage:
         ``parse(..., lossless=True)`` raises on a non-empty one.
 
         An SDMX-JSON read works its losses out here, on first access, rather
-        than during the read (#461). Finding them walks the whole document, and
+        than during the read. Finding them walks the whole document, and
         most callers never ask, so a read that walked eagerly cost them 40-90%
         more. The price is memory: until `lost` is first read, the message
         holds its source document's bytes, at most one copy, the size of what
-        was parsed (#473). Reading `lost`, or parsing with
+        was parsed. Reading `lost`, or parsing with
         ``parse(..., lossless=True)``, which reads it, releases them.
         """
         lost = self._lost
@@ -222,20 +222,20 @@ class StructureMessage:
 
     @property
     def assumed(self) -> tuple[ReadAssumption, ...]:
-        """Values the reader supplied where the document omitted something the schema requires (#474).
+        """Values the reader supplied where the document omitted something the schema requires.
 
         Beside `refused` (artefacts not built) and `lost` (content dropped), the
         third account of a read: content *filled in*. IMF omits the required
         ``AttributeRelationship`` on thousands of attribute usages, and the
-        reader takes each to be dataset-level, a tolerance chosen in #421; this
-        is where that choice shows. Empty for a message built in code.
+        reader takes each to be dataset-level, a deliberate tolerance; this is
+        where it shows. Empty for a message built in code.
         ``parse(..., lossless=True)`` raises on a non-empty one.
         """
         return self._assumed
 
     @property
     def header(self) -> Header | None:
-        """Who sent the message, to whom, when and what about; None when it has none (#480)."""
+        """Who sent the message, to whom, when and what about; None when it has none."""
         return self._header
 
     def all_artefacts(self) -> list[MaintainableArtefact]:
@@ -243,7 +243,7 @@ class StructureMessage:
 
         **Every** slot, which it did not used to be: `structure_sets` and
         `hierarchical_codelists` were absent, and the two callers of this
-        method want opposite things from it (#394).
+        method want opposite things from it.
 
         *Validation* wants everything, and silently got 21 of 23 — so
         `validate_references` never checked a `StructureSet` or a
@@ -251,15 +251,15 @@ class StructureMessage:
         container-of-`Ref` fields in the model.
 
         *Storage* wants only what it can persist, and this is not that list:
-        four of the 21 it already yielded have no `ArtefactKind` (#395), so
+        four of the 21 it already yielded have no `ArtefactKind`, so
         `add_all(msg.all_artefacts())` refuses them. Completing the list makes
         that six.
 
         Completing it is still right, because the alternative was worse than a
         refusal. Ingesting a message through `parse(xml, registry=…)` dropped
         the two absent artefacts **silently** — a `HierarchicalCodelist` named
-        "Geographic hierarchy" simply ceased to exist, which is the name #239
-        added the container to stop losing. `formats/gaps.py` states the rule
+        "Geographic hierarchy" simply ceased to exist, the very hierarchy the
+        container exists to keep. `formats/gaps.py` states the rule
         this follows: *dropping is the one that burns an author; a refusal is
         visible, a drop is not.*
 
@@ -267,7 +267,7 @@ class StructureMessage:
         own fields, so a new slot cannot be added without a decision. One is
         left out on purpose: `availability_constraints`, SDMX 3.1's
         availability statements, which have no identity and so are not
-        artefacts — nothing can store, reference or validate one by URN (#421).
+        artefacts — nothing can store, reference or validate one by URN.
         """
         return [
             *self.codelists,
@@ -398,7 +398,7 @@ class MetadataMessage:
 
     @property
     def header(self) -> MetadataHeader | None:
-        """Who sent the message, to whom, when and what about; None when it has none (#480)."""
+        """Who sent the message, to whom, when and what about; None when it has none."""
         return self._header
 
     def all_artefacts(self) -> list[MaintainableArtefact]:

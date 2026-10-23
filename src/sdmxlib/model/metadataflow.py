@@ -83,7 +83,7 @@ class Metadataflow(MaintainableArtefact):
     is_partial_language: bool = False
 
     def target_misfits(self, available: Iterable[MetadataStructure] = ()) -> tuple[str, ...]:
-        """Why `with_derived_targets` cannot give this flow targets, or nothing when it can (#421).
+        """Why `with_derived_targets` cannot give this flow targets, or nothing when it can.
 
         Args:
             available: Metadata structures to find this flow's in when its
@@ -95,7 +95,7 @@ class Metadataflow(MaintainableArtefact):
         return self._derived(available)[1]
 
     def with_derived_targets(self, available: Iterable[MetadataStructure] = ()) -> Metadataflow:
-        """This flow with the targets its 2.1 metadata structure implies (#421).
+        """This flow with the targets its 2.1 metadata structure implies.
 
         SDMX 3.x requires a metadataflow to name at least one target — what
         the metadata reported against it may describe. SDMX-ML 2.1 put that

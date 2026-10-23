@@ -140,7 +140,7 @@ def artefact_urn(artefact: SupportsUrn) -> SdmxUrn[object]:
         >>> str(artefact_urn(codelist))
         'urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(1.0)'
 
-    Returns `SdmxUrn[object]` (#399): a `SupportsUrn` can be any artefact, so
+    Returns `SdmxUrn[object]`: a `SupportsUrn` can be any artefact, so
     the URN can name any. It was `SdmxUrn[Any]`, which let a caller recover
     whatever `Ref[T]` it assigned the result to; a caller that knows the type
     has `artefact.urn`, which is `SdmxUrn[Self]`.
@@ -173,7 +173,7 @@ T_co = TypeVar("T_co", covariant=True)
 class Ref(Generic[T_co]):  # noqa: UP046 — see above; verified against both checkers
     """A reference to an SDMX artefact.
 
-    Always carries the URN. Finds its target on access (#492): first in the
+    Always carries the URN. Finds its target on access: first in the
     `Resolver` of the registry that bound it — so a target added after the
     reference was made is found — then in the object it was built with, if
     `Ref.of` / `Ref.to` built it. Nothing is ever written to it: two `Ref`s
@@ -326,7 +326,7 @@ class Ref(Generic[T_co]):  # noqa: UP046 — see above; verified against both ch
         Built as ``Ref(...)`` rather than ``cls(...)``: on a class whose
         parameter is covariant, ``cls`` is bound to `T_co` and a factory
         generic in its own ``U`` cannot return through it. `Ref` is not
-        subclassed, so nothing is lost (#289).
+        subclassed, so nothing is lost.
         """
         return Ref(urn=urn, _resolver=current())
 

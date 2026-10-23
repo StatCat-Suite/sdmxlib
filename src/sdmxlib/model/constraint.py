@@ -73,7 +73,7 @@ class TimeBound:
     `period` is the wire text, not a `datetime`: SDMX types it
     `ObservationalTimePeriodType`, which takes reporting periods (`2020-Q1`,
     `2020-A1`) that have no faithful `datetime`, and parsing would also
-    decide a time zone the source never gave (#440).
+    decide a time zone the source never gave.
     """
 
     period: str
@@ -121,7 +121,7 @@ def _cascade(value: CascadeSelection | None) -> CascadeSelection:
 
 @frozen
 class RegionValue:
-    """One value a cube region's value set lists, with what qualifies it (#422).
+    """One value a cube region's value set lists, with what qualifies it.
 
     SDMX-ML 3.x's `SimpleComponentValueType` (2.1's `SimpleValueType`), and
     SDMX-JSON's object form of a region value. A bare string is still accepted
@@ -131,7 +131,7 @@ class RegionValue:
     Attributes:
         value: The value — usually a code id.
         cascade: Whether the code's descendants are selected too: by default
-            the code alone, the `false` every format defaults to (#503).
+            the code alone, the `false` every format defaults to.
             2.1 has `true` / `false` only.
         lang: The language of a multilingual text value. SDMX 3.x prohibits
             it on a dimension's value, so only a component's may carry one.
@@ -157,9 +157,7 @@ class KeyValue:
     """A dimension constraint: the allowed values for one dimension, or a time range.
 
     SDMX's `CubeRegionKeyType` is a choice of `Value+` or one `TimeRange`, so
-    a key holds exactly one of the two. Until #433 the time range had nowhere
-    to go and a key read from OECD came back with neither, which every
-    SDMX-ML version rejects.
+    a key holds exactly one of the two.
     """
 
     dimension_id: str
@@ -232,7 +230,7 @@ class DataKey:
 
 @frozen(unsafe_hash=False)
 class DataKeySet:
-    """Whole observation keys a constraint includes, or excludes (#479).
+    """Whole observation keys a constraint includes, or excludes.
 
     SDMX's ``DataKeySet``: ``isIncluded`` is required, and says whether its
     keys are the ones allowed or the ones ruled out. The flag belongs to the
@@ -267,7 +265,7 @@ class CubeRegion:
 
         A value set with ``include=False`` turns its own test around: the key
         is inside the region on that dimension when its value is *not* one
-        of them (#422).
+        of them.
 
         A value's `RegionValue.cascade` is not expanded — selecting a code's
         descendants needs the codelist, which a key does not carry — and its
@@ -342,7 +340,7 @@ def _to_urls(values: Iterable[str]) -> tuple[str, ...]:
 
 @frozen
 class QueryableDataSource:
-    """A data source that answers queries — SDMX ``QueryableDataSourceType`` (#422).
+    """A data source that answers queries — SDMX ``QueryableDataSourceType``.
 
     Attributes:
         data_url: Where the data is queried (``DataURL``).
@@ -362,7 +360,7 @@ class QueryableDataSource:
 
 @frozen
 class DataSetReference:
-    """A data set, named by its provider and id — SDMX-ML 2.1's ``SetReferenceType`` (#422).
+    """A data set, named by its provider and id — SDMX-ML 2.1's ``SetReferenceType``.
 
     2.1 only: 3.x attaches a constraint to no data set.
     """
@@ -379,8 +377,7 @@ class ConstraintAttachment:
     sets, or simple data sources, or one or more artefacts of a *single* kind
     — data structures, dataflows or provision agreements — which may carry
     queryable data sources beside them. The fields hold each alternative;
-    `validate` refuses more than one set at once (#422). Until #422 each kind
-    held one artefact, and a reader kept the first.
+    `validate` refuses more than one set at once.
 
     Attributes:
         data_provider: The provider whose data is constrained.
@@ -411,7 +408,7 @@ class ConstraintAttachment:
         wire because ``<ConstraintAttachment>`` is ``minOccurs="0"`` in every
         SDMX-ML version *and* requires one of its target elements when
         present — so an empty attachment must be omitted rather than emitted
-        as a bare wrapper, which is a document the schema rejects (#229).
+        as a bare wrapper, which is a document the schema rejects.
         """
         return not self.alternatives
 
@@ -516,7 +513,7 @@ class DataConstraint(MaintainableArtefact):
         return misfits
 
     def to_availability_constraint(self) -> AvailabilityConstraint:
-        """This Actual constraint as SDMX 3.1 states availability (#421).
+        """This Actual constraint as SDMX 3.1 states availability.
 
         3.1 removed the role from `DataConstraint` and gave Actual content an
         artefact of its own, which has no identity: no id, agency, version,
@@ -589,7 +586,7 @@ class AttachmentConstraint(MaintainableArtefact):
         conversion loses nothing. The 3.x and SDMX-JSON writers apply it
         instead of refusing, which is what the old refusal advised ("use a
         DataConstraint") and could not be done until `DataConstraint` gained
-        key sets (#241).
+        key sets.
 
         **The return trip is not exact.** A 3.0 DataConstraint carrying only a
         key set could have been either 2.1 artefact, and the document does not
@@ -597,10 +594,9 @@ class AttachmentConstraint(MaintainableArtefact):
         The *content* survives; the artefact kind does not.
 
         That asymmetry is asserted by `_CONVERTED_ON_WRITE` in the round-trip
-        properties, and belongs to the cross-version harness (#246) rather
+        properties, and belongs to the cross-version harness rather
         than to `KNOWN_GAPS` — the latter records a *field* lost on one target,
-        where this is an artefact *kind* that changes across a version hop
-        (#244).
+        where this is an artefact *kind* that changes across a version hop.
 
         Returns:
             An equivalent `DataConstraint`.

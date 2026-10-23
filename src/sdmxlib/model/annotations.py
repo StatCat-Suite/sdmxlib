@@ -24,8 +24,8 @@ class AnnotationURL:
         url: The resource's URL.
         lang: The language of the resource, None when it is not localised.
         urn: The SDMX registry URN of what the link points at — SDMX-JSON's
-            alone (#422).
-        type: The kind of resource, such as ``"PDF"`` — SDMX-JSON's alone (#422).
+            alone.
+        type: The kind of resource, such as ``"PDF"`` — SDMX-JSON's alone.
     """
 
     url: str

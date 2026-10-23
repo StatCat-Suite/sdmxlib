@@ -324,7 +324,7 @@ def from_dict[T](cls: type[T], data: dict[str, Any]) -> T:
     payload's shape depends on *cls* — every value flows into a differently
     typed constructor parameter, so there is no single narrowing that would
     serve. This is the generic deserialiser; the typed entry points are the
-    per-format readers built over it (#285).
+    per-format readers built over it.
     """
     # Probe through a separate handle: `attrs.has` is a TypeGuard onto
     # `type[AttrsInstance]`, and narrowing `cls` itself would erase `T` from

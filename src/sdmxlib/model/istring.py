@@ -52,7 +52,7 @@ class InternationalString:
         """Build from an existing dict.
 
         Returns the shared `EMPTY` for an empty mapping — the common case on a
-        real bundle, and the one that used to allocate (#377). Only for this
+        real bundle, and the one that used to allocate. Only for this
         exact class: a subclass gets its own fresh instance, since `EMPTY` is
         an `InternationalString` and returning it would be a type error the
         annotation cannot see.
