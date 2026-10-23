@@ -25,8 +25,9 @@ import msgspec
 MANIFEST_NAME = "bundle.manifest.json"
 
 #: The format this build writes. A reader takes any ``1.x``: a minor version
-#: only adds fields, which a reader that predates them ignores.
-FORMAT_VERSION = "1.0"
+#: only adds fields, which a reader that predates them ignores. 1.1 added
+#: `provenance` (GH-68).
+FORMAT_VERSION = "1.1"
 
 #: A JSON value of any kind: what `product` and `extensions` carry without interpreting.
 #: Annotated so the generated schema can say so; `object` keeps it inert.
@@ -59,6 +60,34 @@ class BindingCount(msgspec.Struct, frozen=True, kw_only=True):
     observations: int
 
 
+class Provenance(msgspec.Struct, frozen=True, kw_only=True):
+    """Where a fetched bundle came from, and what was asked for (GH-68).
+
+    Attributes:
+        source: The registry's stable id (`RestRegistry.id`), e.g. ``ECB``.
+        endpoint: The REST endpoint it was fetched from.
+        api: The SDMX REST API version spoken to it.
+        retrieved_at: When the fetch started (UTC).
+        dataflow: The dataflow's URN, at the version it resolved to.
+        key: The SDMX key asked for, or None for every series.
+        start: The inclusive ``startPeriod`` asked for, if any.
+        end: The inclusive ``endPeriod`` asked for, if any.
+        structures_only: Whether observations were left out on purpose.
+        artefacts: Every structural artefact fetched, by URN, sorted.
+    """
+
+    source: str
+    endpoint: str
+    api: str
+    retrieved_at: datetime
+    dataflow: str
+    key: str | None = None
+    start: str | None = None
+    end: str | None = None
+    structures_only: bool = False
+    artefacts: tuple[str, ...] = ()
+
+
 class Manifest(msgspec.Struct, frozen=True, kw_only=True):
     """`bundle.manifest.json`: written last, so a directory without one is unpublished.
 
@@ -78,6 +107,8 @@ class Manifest(msgspec.Struct, frozen=True, kw_only=True):
         product: Producer-specific fields, carried and not interpreted.
         extensions: Sections owned by other packages (statcatlib's search
             index, say), by name; carried and not interpreted.
+        provenance: Where a fetched bundle came from (format 1.1); None for
+            one built from data the producer holds.
     """
 
     format_version: str
@@ -91,6 +122,7 @@ class Manifest(msgspec.Struct, frozen=True, kw_only=True):
     bindings: tuple[BindingCount, ...]
     product: dict[str, JsonValue] = msgspec.field(default_factory=dict)
     extensions: dict[str, dict[str, JsonValue]] = msgspec.field(default_factory=dict)
+    provenance: Provenance | None = None
 
 
 class _FormatProbe(msgspec.Struct):

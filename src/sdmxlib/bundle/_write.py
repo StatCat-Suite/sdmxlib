@@ -15,6 +15,7 @@ from sdmxlib.storage._manifest import (
     BundleFile,
     Manifest,
     Producer,
+    Provenance,
     encode_manifest,
 )
 from sdmxlib.storage.schema import get_schema_version
@@ -56,6 +57,7 @@ def write_manifest(
     producer: Producer,
     product: dict[str, object] | None = None,
     extensions: dict[str, dict[str, object]] | None = None,
+    provenance: Provenance | None = None,
 ) -> Manifest:
     """Publish the bundle at `path`: write its manifest, with a fresh token.
 
@@ -75,6 +77,7 @@ def write_manifest(
         producer: What built it.
         product: Producer-specific fields, carried and not interpreted.
         extensions: Sections owned by other packages, by name.
+        provenance: Where a fetched bundle came from; `fetch_bundle` supplies it.
 
     Returns:
         The manifest written.
@@ -98,6 +101,7 @@ def write_manifest(
         bindings=counts,
         product=product or {},
         extensions=extensions or {},
+        provenance=provenance,
     )
     staged = root / f"{MANIFEST_NAME}.tmp"
     staged.write_bytes(encode_manifest(manifest))
