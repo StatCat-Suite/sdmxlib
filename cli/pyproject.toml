@@ -6,7 +6,10 @@ name = "sdmxlib-cli"
 version = "0.72.0"
 description = "sdmxlib from the command line: check SDMX bundles"
 readme = "README.md"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+# Its own copy, as PEP 639 keeps `license-files` inside the package directory;
+# a test asserts it is sdmxlib's, byte for byte.
+license-files = ["LICENSE"]
 authors = [{ name = "gabrielgellner", email = "gabrielgellner@gmail.com" }]
 requires-python = ">=3.14"
 keywords = ["sdmx", "statistics", "metadata", "cli"]
@@ -32,6 +35,7 @@ Homepage      = "https://github.com/StatCat-Suite/sdmxlib"
 Repository    = "https://github.com/StatCat-Suite/sdmxlib"
 Documentation = "https://statcat-suite.github.io/sdmxlib"
 Changelog     = "https://github.com/StatCat-Suite/sdmxlib/blob/main/CHANGELOG.md"
+"Issue Tracker" = "https://github.com/StatCat-Suite/sdmxlib/issues"
 
 [build-system]
 requires = ["uv_build>=0.13.0,<0.14.0"]

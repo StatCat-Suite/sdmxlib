@@ -3,7 +3,8 @@ name = "sdmxlib"
 version = "0.72.0"
 description = "SDMX structural metadata library for Python"
 readme = "README.md"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [{ name = "gabrielgellner", email = "gabrielgellner@gmail.com" }]
 requires-python = ">=3.14"
 keywords = ["sdmx", "statistics", "metadata", "datastructure"]
@@ -47,6 +48,7 @@ Homepage      = "https://github.com/StatCat-Suite/sdmxlib"
 Repository    = "https://github.com/StatCat-Suite/sdmxlib"
 Documentation = "https://statcat-suite.github.io/sdmxlib"
 Changelog     = "https://github.com/StatCat-Suite/sdmxlib/blob/main/CHANGELOG.md"
+"Issue Tracker" = "https://github.com/StatCat-Suite/sdmxlib/issues"
 
 [build-system]
 requires = ["uv_build>=0.13.0,<0.14.0"]
