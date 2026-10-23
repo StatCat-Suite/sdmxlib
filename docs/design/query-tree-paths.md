@@ -39,7 +39,7 @@ is that they are similar in exactly the way `q.dsd.components` and
 `q.component.dsd` are similar. Two of the four names are inverses, not new
 concepts.
 
-### Why keep the closure if the direct edge implies it
+### The closure is a stored fact beside the direct edge
 
 Because the language has no recursion, deliberately. `descendants` is not
 `children` applied repeatedly; it is a separate stored fact — the writer bakes
@@ -94,7 +94,7 @@ as a pair and only where the writer bakes the closure.
 
 ---
 
-## 3. There is no `parent_id` — the hop is free
+## 3. `parent` emits no join
 
 `q.code.parent.id` is the only spelling, and it emits no join:
 
@@ -133,7 +133,7 @@ A reference column with **no** edge stays exposed, because then the column is
 the only way to ask — `q.artefact.agency` (the stored `agency_id`) names an
 agency this schema usually has no row for. See §7.
 
-### This was not always true, and the gap was invisible
+### Before trimming: a `LEFT JOIN` that changed no answer
 
 Before trimming, the second spelling emitted a `LEFT JOIN` back to `sdmx.code`.
 On referentially-intact data both answered identically — which is why the
@@ -172,7 +172,7 @@ declared on `code`, `dsd_component` *and* `concept`, all reaching
 and so trimmed trees and nothing else: it passed every tree test while doing
 nothing for the common case.
 
-### What does not trim, and why
+### Hops that keep their join
 
 | | | |
 | --- | --- | --- |
@@ -180,7 +180,7 @@ nothing for the common case.
 | `children.id` | a reverse hop | the key lives on the far row; stays a correlated `EXISTS` |
 | `ancestors.id` | a membership hop | the source column is a *list* of keys; trimming would compare a list to a scalar |
 
-### So which do you write?
+### Choosing a spelling
 
 `parent.id` — there is nothing else to write. Trimming made the two spellings
 compile to one statement, and once they did, keeping both would only have
@@ -277,7 +277,7 @@ we could apply to an arbitrary graph.
 
 ---
 
-## 5. Why none of this recurses
+## 5. Traversal without recursion
 
 The query language's design (`query-language.md`, on recursion) states the
 corollary that the compiler never emits a recursive CTE: traversal is a
@@ -355,7 +355,7 @@ composite would have drifted apart.
 
 ---
 
-## 7. The sweep, and what it found
+## 7. The sweep's findings
 
 Once the mechanism existed, the question was whether `ancestor_ids` had been
 the only one-off. An inventory of every `*_urn` / `*_id` column on a relation
@@ -405,7 +405,7 @@ raised `AttributeError`. The guard that should have caught it hand-listed the
 three accessors it knew were trees; it now derives them — and the annotations
 it flagged as wrong then are correct now, for the first time.
 
-### Still not here
+### Edges not added
 
 - **A `leaves` edge.** None is needed: an aggregate over a to-many edge is a
   predicate, so "no children" is `q.code.children.count() == 0` in a filter.

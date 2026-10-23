@@ -155,7 +155,7 @@ it must be stable across two `Observations` over the same dataflow, or a
 capability lookup misses and `is_bounded` returns `False` for everything.
 *(As built, every observation root keys as one constant, `DATA_ROOT`.)*
 
-## 4. The question that splits implementers
+## 4. Streaming over REST: two readings
 
 **Does `.stream()` stream, when the backend is REST?**
 

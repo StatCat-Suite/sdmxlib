@@ -115,7 +115,7 @@ with sl.RestRegistry(sl.Provider.SDMX_GLOBAL) as reg:
 
 ---
 
-## Availability: what data is *actually* there
+## Synthesising availability from the data
 
 Everything above reads a constraint someone **published**. The other question
 is what the data itself says, and for a local lake you can synthesise the

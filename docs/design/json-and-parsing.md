@@ -110,7 +110,7 @@ this document is about.
   not know**; a tree preserves everything. If faithful re-emit matters and the
   model is incomplete, the tree is *safer*.
 
-## The two failure modes (both are real, both have bitten us)
+## The two failure modes
 
 - **Over-parsing** — forcing open/vendor payloads into rigid classes: lossy,
   brittle, endless "add-a-field" churn. Issues #159 / #160 (serializer and

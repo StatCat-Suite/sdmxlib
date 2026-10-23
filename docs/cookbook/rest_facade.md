@@ -69,7 +69,7 @@ dimensions in the message — fail-fast for malformed URLs.
 
 ---
 
-## Why `c[…]=…` matters: filtering on attributes
+## Filtering on attributes with `c[…]=…`
 
 Real workloads filter on attributes that aren't in the key. The
 canonical example is StatCan Census Profile's `GEO_LEVEL` — derivable

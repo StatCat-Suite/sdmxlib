@@ -1,4 +1,4 @@
-# The query language: explorations that did not survive
+# The query language: rejected explorations
 
 Companion to `query-language.md` (the design), `query-language-evidence.md`
 (what was run), `query-language-examples.md` (the surface, construct by
@@ -11,7 +11,7 @@ proposed. If a section reads as a good idea, read its verdict.
 
 ## Bare and contextual paths
 
-### First principles: why not `filter(sl.q.concept.codelist.id == "CL_GEO")`?
+### Bare, un-rooted paths in `filter()`
 
 The question deserves answering from scratch rather than by appeal to the
 choice already made: why can a bare, un-rooted path not be the spelling, fully
@@ -90,7 +90,7 @@ for this document.
 
 ## A parent-level `.any()`
 
-### Why not put `.any()` on the parent and skip the edge name?
+### `.any()` on the parent, without the edge name
 
 `sl.q.dsd.any(sl.q.concept.id == "REF_AREA")` is a real middle point: it keeps
 **cardinality** explicit (strictly better than Django, whose implicit `INNER
@@ -148,7 +148,7 @@ sl.q.dsd.components.any(                                            # the workar
 )
 ```
 
-### Worked out: exactly what mechanism 5 cannot check
+### The two cases mechanism 5 fails
 
 Two failures, and they fail for different reasons. Recorded because "it cannot
 be typed" is the wrong summary — the predicate is perfectly well typed.
@@ -224,7 +224,7 @@ of it that does not.
 
 ## The `Fan[R]` marker
 
-### 3 is dead: the fan marker does not nest
+### The fan marker does not nest
 
 The idea was to re-expose the child accessor at a marker row kind `Fan[R]`
 meaning "a child row behind a to-many from R", so the marker forces exactly one
@@ -244,7 +244,7 @@ that needs `Fan[Fan[R]] == Fan[R]`, a type-level function Python does not have.
 
 ## Strict path with a bare inner predicate
 
-### Strictness and quantification are separable, and only one of them is `.any()`
+### Strictness and quantification are separable; `.any()` is quantification
 
 An objection worth recording because it corrects the framing above: if
 mechanism 5 fails on vague paths, does forcing a strict path let `.any()` stay?
@@ -302,7 +302,7 @@ narrows open question 13 considerably.
 
 ## Superseded: the grain claim
 
-### The hole this leaves
+### To-many in a projection
 
 `.any()` covers to-many in a *filter*. It does not cover to-many in a
 *projection*, and the question that opened #280 is exactly that: "every

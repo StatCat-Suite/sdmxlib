@@ -9,7 +9,7 @@ Every accessor, hop and row kind in `sl.q` is named by one rule:
 This is written down because the alternative is re-deciding it per name, which
 is how three of them drifted before anyone counted.
 
-## Why not a general word
+## General words do not identify
 
 A general word does not identify the thing. `node` was the case that forced the
 rule: `sdmx.hierarchy_node` rows were exposed as `q.node`, but "node" appears in
@@ -31,7 +31,7 @@ q.hcode.code.id         # the Code this HierarchicalCode places
 relationship. That is the concrete cost of a general word, over and above the
 discoverability one.
 
-## Why not an invented descriptive word
+## Invented descriptive words
 
 `placement` was the runner-up, and it describes the row exactly — a
 `HierarchicalCode` *is* the placement of a code in a hierarchy, which is why one

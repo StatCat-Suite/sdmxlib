@@ -1,10 +1,10 @@
-# What the mutation runs actually measured
+# Mutation run results
 
 `just mutate` produces a number. This file is what the numbers *mean*, because
 twice now a mutation score has been quoted here that measured something other
 than what it appeared to.
 
-## The #218 question, answered
+## Property-based versus example-based kills (#218)
 
 > Do property-based tests kill more mutants than example-based ones? Same
 > module, same mutants, different suite.
@@ -28,7 +28,7 @@ Over all 1,290, including what each suite never reaches: properties killed
 mutant they caught, the examples caught too, and the examples caught 106 more.
 The 106 cluster in `_constraint_clause`, `_facet_clause` and `_conjoin`.
 
-### What that does and does not license
+### Limits of that result
 
 It does **not** say the property files are redundant, and they are not being
 deleted. Three reasons, and the first is the one that matters:
@@ -54,7 +54,7 @@ and pushes more mutants past their CPU budget (see below).
 oracles are the executable statement of what a predicate means. That value is
 in the reading as much as the running.
 
-### The honest caveats on these numbers
+### Caveats on these numbers
 
 * **Run-to-run variance.** Two runs of the properties arm gave 454 kills / 0
   timeouts and 440 kills / 13 timeouts. Hypothesis tests are slow enough that
@@ -138,7 +138,7 @@ which is all that was tested.
 
 ## Installment 2: the two discriminator clauses, and a broken runner
 
-### The runner had been dead, and nothing said so
+### The runner was broken
 
 Before a single survivor could be read, the run had to work. It did not:
 
@@ -176,7 +176,7 @@ so the numbers are not comparable to the table above, only to each other.
 mutants aimed at, which is the check #324 asks for and the one a "killed 20,
 resurrected 1" fix fails.
 
-### What the two clusters found: a declared branch nothing could reach
+### The two clusters held a declared branch no input reached
 
 `_facet_clause` (12 survivors) and `_constraint_clause` (12) are the same
 function twice — absent / one value / several — and reading them explains why
@@ -216,14 +216,14 @@ that an empty clause is *dropped* by `_conjoin` rather than merely falsy.
 and aggregate-subquery construction is where a wrong join or a dropped
 correlation returns plausible numbers rather than an error.
 
-## Installment 3 (#458): `formats/gaps.py`, and mutants nobody had tried
+## Installment 3 (#458): `formats/gaps.py`
 
 #458 asked for the readers, the writers and `formats/gaps.py`. The register
 went first. It is 289 rows built from small predicate factories, and its
 `carried` predicates are what `sl.unrepresentable` and every `dropped` answer
 rest on.
 
-### Half the survivors had been tried against one test
+### Half the survivors ran against one test
 
 The first run against the unit suite reported 268 of 625 mutants surviving.
 Every mutant of `_any_node_has`, `_any_selection`, `_any_map_has`, `_url_has`
@@ -323,7 +323,7 @@ Three of these hold only because of a fact about the table, not the code:
 The first is the one worth a guard. A typo'd `carried` attribute never fires,
 and nothing says so. That is the subject of the row-firing gap below.
 
-### What the register still cannot prove
+### Limits of the register
 
 On the maximal message 262 of 289 rows fire; 27 never do. Each row is checked
 in one direction only:
@@ -333,7 +333,7 @@ in one direction only:
 
 The 27 are candidates for a missing witness, or for a row that is wrong.
 
-## Installment 4 (#458): the SDMX-ML 2.1 reader, and a census that never compared text
+## Installment 4 (#458): the SDMX-ML 2.1 reader
 
 | `sdmx_ml21/reader.py`, unit suite minus 6 DuckLake files | mutants | killed | survived | no test |
 | --- | --- | --- | --- | --- |
@@ -432,14 +432,14 @@ Each now has a test, in `test_ml21_reader_mutant_gaps.py` unless named:
 | `read_int`'s default under `maxOccurs` | 2 | reached only when the attribute is present |
 | a text `<Level>` that is empty | 1 | `""` and `"XXXX"` both name no level |
 
-### What the census still does not reach
+### Artefacts the census omits
 
 `maximal` holds no attachment constraint, availability constraint or category
 scheme map. `shapes` covers the first and third. Availability constraints have
 their own round-trip tests but no census. The fixture-population check is per
 class *present*, so a class absent from the fixture is not demanded at all.
 
-## Installment 5 (#458): the SDMX-ML 2.1 writer, and what only the document holds
+## Installment 5 (#458): the SDMX-ML 2.1 writer
 
 | `sdmx_ml21/writer.py`, 16 direct test files, 4 children | mutants | killed | survived | no test |
 | --- | --- | --- | --- | --- |
@@ -524,7 +524,7 @@ the document is pretty-printed. It now compares line counts. Like installment
 | `kind=` the default | 1 | `TargetObject.kind` defaults to `IdentifiableObjectTarget` |
 | `_s(None)` | 1 | the f-string makes the same tag, `{ns}None` |
 
-## Installment 6 (#458): the SDMX-ML 3.x reader, and 2.1's shapes it still read
+## Installment 6 (#458): the SDMX-ML 3.x reader
 
 | `sdmx_ml/_v3_reader.py`, 97 files that parse 3.x, 4 children | mutants | killed | survived | timeout | no test |
 | --- | --- | --- | --- | --- | --- |
@@ -734,7 +734,7 @@ module, start from everything that parses.
 | `resolve_ref`'s `isinstance` | 2 | `Ref.of(urn, None)` is unresolved; and the URN's class is checked before the lookup, so the index holds the right type |
 | equal by construction | 6 | `InternationalString()` is `_EMPTY_ISTRING`; neither `"1.0"` nor a mangled default is a final version; `partial_language`'s `None` is falsy; `pop` of a key the dict always holds; an untagged value sorting as `"XXXX"` still sorts before a lowercase language tag; a time range with no bounds, which `validate()` refuses |
 
-## Installment 9 (#458): `sdmx_json/_structure_ingest.py`, and the second spelling of every text
+## Installment 9 (#458): `sdmx_json/_structure_ingest.py`
 
 | `sdmx_json/_structure_ingest.py`, 103 files that mention JSON, 4 children, mutmut 3.8 | mutants | killed | survived |
 | --- | --- | --- | --- |
@@ -858,9 +858,9 @@ membership test.
 
 Installments 1–6 were measured under 3.7 and were not re-run under 3.8.
 
-## Installment 11 (#324): `_Scope._agg_body_from`, and a `version` aggregate that refused
+## Installment 11 (#324): `_Scope._agg_body_from`
 
-### A new baseline, and two ways the runner misled
+### A new baseline and two runner faults
 
 `_compile.py` has grown since installment 2: **1,718** mutants. #324's resume
 command mutates against the whole unit suite, and that no longer runs. The
@@ -961,7 +961,7 @@ as the baseline's. The one timeout is installment 11's paging hang. With those
 counted, the true survivors went 189 → 178, and **no function but `_window`
 moved**.
 
-## What is not measured yet
+## Unmeasured scope
 
 Stated rather than left as an absence, per #218's ruling that the triage is the
 artifact and the percentage is not:

@@ -59,7 +59,7 @@ print(obs.frame().height)    # 9
 `obs` is reusable. Every refinement below returns a new query and leaves `obs`
 alone, so you can keep it around as "all the rows" and branch from it.
 
-## 2. Components, not columns
+## 2. Filters name components
 
 Filters name **SDMX component ids**, not physical columns:
 

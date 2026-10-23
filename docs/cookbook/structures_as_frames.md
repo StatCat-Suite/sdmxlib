@@ -65,7 +65,7 @@ Rename with a keyword argument:
 cl.codes.select(geo=sl.q.code.id, label=sl.q.code.name["en"])
 ```
 
-### It is still the same query
+### Filters come before `select()`
 
 Everything you would put before `collect()` goes before `select()`:
 
@@ -450,7 +450,7 @@ cl.codes.filter(
 And `collect()` returns whole `Code` objects with their annotations populated —
 there is nothing to opt into.
 
-## Why not just write the SQL?
+## Writing the SQL yourself
 
 You can — `sdmx.code` and `sdmx.hierarchy_node` are ordinary DuckDB tables on
 the same connection, and `reg.sql(...)` is the supported hatch. Three things

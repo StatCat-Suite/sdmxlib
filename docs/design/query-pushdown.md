@@ -101,7 +101,7 @@ has spent its length removing (three facet column groups, four DSLs, one
 2. There is no way for a backend to declare what it can push.
 3. There is no planner to split a plan against a declaration.
 
-### The one real objection, and why it does not land
+### The objection and its answer
 
 An IR earns its keep when there are transformations to apply (predicate
 pushdown through joins, join reordering) or several frontends to normalise.
@@ -226,7 +226,7 @@ belongs to the resolver rather than the planner; §11 shows that is half right.
 It is not a filter, but it is the *only* way a crossed path yields values, so
 it is a planner decision — just a projection one rather than a selection one.
 
-## 5. The refusal rule, which is the whole safety property
+## 5. The refusal rule
 
 > `filter(name.contains("price"))` cannot push to REST, so the residual means
 > fetching every dataflow and filtering locally — the 800-resolutions problem,
@@ -255,7 +255,7 @@ So: **a residual requires that `agency` was pushed.** That is a crisp rule tied
 to the wire format rather than to a row-count guess, and it needs no threshold
 to tune — thresholds are where this kind of rule rots.
 
-### The table over-states it, and the code is right
+### The implemented rule is narrower than the table
 
 Read strictly, the third row refuses `reg.query(q.codelist)` with no filter at
 all — a scan of every agency's codelists. The implemented rule does not: it
@@ -441,7 +441,7 @@ in §7; the corpus is `tests/support/sql_corpus.py`.
   and is wrong in production (§9.3); this is the same discrimination
   requirement rule 4 of the oracle notes already imposes on strategies.
 
-## 9. What REST changes, and what step 1 must not bake in
+## 9. What REST changes for the seam built in step 1
 
 Steps 1–3 are DuckDB-only, so there is a live risk of designing the seam
 against one backend and finding the second does not fit. Four places where
@@ -522,7 +522,7 @@ to rows is an ordinary local projection, and the columns a crossed path needs
 arrive in the *same request* via `references=`. Projection is available, it is
 computed locally, and what it decides is the shape of the fetch. See §11.
 
-### What this does *not* change
+### Unchanged by REST
 
 The §2 argument stands: none of the above wants a second data structure beside
 `Query`. `9.1` wants capability lookup keyed by path prefix, `9.2` wants the
@@ -530,7 +530,7 @@ planner's return type to be a sequence, `9.3` wants declarations to carry
 semantics, `9.4` wants `Select`'s plan kept separable. All four are shapes of
 the *planner and its declaration*, and none of them is a node type.
 
-## 10. The survey: does a REST backend earn its keep?
+## 10. Survey: the value of a REST backend
 
 Before building an executor, the cheap experiment: express the question shapes
 #276 inventoried across its 76 hand-written sites, declare SDMX REST's
@@ -584,7 +584,7 @@ it is the outer one. The check now fires on `residual or memberships` rather
 than on `residual` alone, because lifting every residual leaves the list
 empty and the old condition silently passed.
 
-### Two gaps in the capability model — closed, and the count did not move
+### Two capability-model gaps, closed
 
 Seven of the twelve refusals are rooted at **item** relations — `q.code`,
 `q.component`, `q.concept`. Two things were missing, both now added:
@@ -625,7 +625,7 @@ Both spellings fetch the same bytes. Only one of them is expressible today,
 and whether the other should be is the explode question above rather than a
 missing declaration.
 
-### The result that decides it
+### The headline query: dataflows by concept
 
 `dataflows whose DSD uses concept REF_AREA` is #276's headline — the single
 most common question asked of an SDMX catalog, and the one with no expression
@@ -636,7 +636,7 @@ The rewrite makes it **two**, independent of N. That alone is the difference
 between a usable client and an unusable one, and it is not something
 "fetch and filter locally" can be tuned into.
 
-### The catch, which is real and is the user's to resolve
+### The headline query needs the DSD's agency
 
 That query is `REFUSED` as written and `REWRITE` only when the DSD's agency is
 stated:
@@ -697,7 +697,7 @@ no, they are available), and whether `store` is simply the better answer for
 any session issuing more than one query — the REST backend's honest niche is the first query, against a live
 registry, before you know whether you want the whole thing.
 
-## 11. Projection, and the join REST turns out to have
+## 11. Projection, and REST's `references=` join
 
 §9.4 asserted that `select()` and `group_by()` are probably unavailable over a
 REST root, on the reasoning that the endpoint returns artefacts rather than
@@ -719,7 +719,7 @@ cannot join and built the two-scan rewrite around that. REST cannot *filter on
 the joined side* — which is what the rewrite is really for — but it can bring
 the joined side back.
 
-### So projection is available, and it decides the fetch
+### Projection decides the fetch
 
 `select(q.dataflow.id, q.dataflow.dsd.id)` needs a value from across an edge.
 It cannot push — nothing is computed server-side — but it is not the
@@ -738,7 +738,7 @@ computes nothing, every filter is evaluated locally. So the fetch must close
 over every path the query reaches, not only the ones it projects. Stated as
 "projection drives prefetch", this section was true and too narrow.
 
-### Which leaves the planner a genuine choice
+### The planner's choice
 
 For `filter(q.dataflow.dsd.id == "X")` there are now two admissible programs:
 
@@ -841,7 +841,7 @@ to hide everything else. With it 3× smaller the per-item term is visible:
 codes between them, not because those artefacts are individually expensive.
 Both terms matter now; neither is bytes.
 
-### The two costs are not symmetric, and that decides it
+### A bounded query and a materialisation fetch the same bytes
 
 A bounded query and a materialisation **fetch the same bytes**. §5 forces the
 scan to be bounded by agency, and an agency's structures are exactly the
@@ -876,7 +876,7 @@ This is a stronger claim than the first pass reached, and it was the first
 pass's own conclusion that "at ~1 ms per artefact the rule would collapse to
 *materialise, always*". Two thirds of the way there is enough.
 
-### What is left, and it is not inherent either
+### The two remaining costs
 
 Two costs survive #317 and both have a known shape rather than a mystery:
 
@@ -914,7 +914,7 @@ which requests to issue; the answer is always computed locally. `Residual` and
 `Membership` stop being work the executor performs and become the *reason* a
 particular fetch is enough.
 
-### Which means the fetch must close over every path the query touches
+### The fetch closes over every path the query touches
 
 And this is the part that is easy to get wrong, because the failure is silent.
 `references=datastructure` returns the DSDs, so
@@ -945,7 +945,7 @@ A query is therefore refused not only when its scan is unbounded, but when the
 `references=` depth needed to close it is one the backend will not issue.
 `references=all` is never that answer — §11 measured 29.8 MB for one codelist.
 
-### And it makes the §9.1 rewrite *more* valuable, not less
+### The §9.1 rewrite keeps the closure small
 
 The obvious reading is that if everything is fetched and evaluated locally, the
 rewrite is pointless. The opposite: the rewrite is how the closure stays small.
@@ -961,7 +961,7 @@ Same answer, and the rewrite is choosing the cheaper closure rather than
 avoiding an N+1. That the two motivations coincide is a good sign; that they
 are different arguments is worth remembering when one of them stops applying.
 
-### What step 4b actually had to build
+### What step 4b built
 
 Much less than §7 implied, and one thing it did not mention. Built as listed:
 

@@ -18,7 +18,7 @@ is a required dependency of sdmxlib.
 
 ---
 
-## 1. Why a Local Registry?
+## 1. What a Local Registry is for
 
 When you work with large SDMX registries -- hundreds of codelists, some
 with tens of thousands of codes -- loading everything into memory every

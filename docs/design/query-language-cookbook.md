@@ -270,7 +270,7 @@ reg.query(q.codelist).qualify(
 it. `Version` orders by version, so `1.10` outranks `1.9`. "The three newest" is
 `.row_number(descending=True).over(...).le(3)`.
 
-## 10. What nothing uses
+## 10. Unreferenced artefacts
 
 ```python
 # codelists no component references
@@ -427,7 +427,7 @@ back ([`data-plane-pushdown.md`](data-plane-pushdown.md)).
 
 ---
 
-## What is still out of reach
+## Unsupported queries
 
 | shape | status | do instead |
 | --- | --- | --- |
