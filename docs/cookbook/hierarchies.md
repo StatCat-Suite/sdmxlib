@@ -160,9 +160,9 @@ province you need every geography mapped to the province containing it.
 stays in the database and composes into a join, so it costs a handful of bind
 parameters whatever the size of the hierarchy.
 
-The name is deliberate: SQL already has `GROUP BY ROLLUP(...)`, which means
-grouping sets with subtotals -- a different thing that DuckDB supports and
-this library may expose later. Calling this one `rollup` would collide.
+It is not called `rollup` because SQL's `GROUP BY ROLLUP(...)` means grouping
+sets with subtotals -- a different thing that DuckDB supports and this library
+may expose later.
 
 It is a `LazyHierarchy` method for that reason -- a relation needs the
 database it runs on -- so this section works from a store rather than from the
@@ -183,7 +183,7 @@ Keyed by path, like every map on this page: a node id may sit in two
 branches, and an id-keyed mapping would give that node two images. The ids
 ride along because they are what you join observations on.
 
-Three rules, and the third is the one worth knowing:
+Three rules:
 
 - a node **at** the level maps to itself (`"ON" -> "ON"`),
 - a node below maps to its **nearest** ancestor at that level,
@@ -383,13 +383,13 @@ it is paid whether the answer is 265,939 rows or zero.
 
     A relation used for *membership* has no use for an order, and a bare
     `select()` carries the root-key tiebreak into the subquery. `is_in`
-    receives compiled SQL and cannot strip it, so decline it at the source:
-    worth ~12% here, and free.
+    receives compiled SQL and cannot strip it, so decline it at the source.
+    It saves ~12% here at no cost.
 
 The same shape answers "descendants at a level in both trees" — add the level
-filter to either side. No `intersect` verb is needed: `Query.intersect` is a
-semi-join on the row key, which is a different question, since two hierarchies
-place the *same code* under *different node URNs*.
+filter to either side. `Query.intersect` answers a different question: it is
+a semi-join on the row key, and two hierarchies place the *same code* under
+*different node URNs*.
 
 Annotations are a to-many edge, so a reach through them asks *whether*:
 `~(hcode.annotations.type == "t")` is "has no `t` annotation", and it is a true
@@ -407,7 +407,7 @@ are `hcode.parent`, `hcode.children`, `hcode.ancestors`, `hcode.descendants`,
 any other, so the transitive walks are `ancestors` / `descendants` rather than
 their own methods.
 
-Combine any of them with `&`, `|` and `~`. Two things are worth knowing:
+Combine any of them with `&`, `|` and `~`:
 
 - **Parenthesise each comparison.** Python binds `&` and `|` more tightly than
   `==`, so `sl.q.hcode.id == "A" | sl.q.hcode.id == "B"` is a `TypeError`, not

@@ -12,9 +12,8 @@ reg = sl.LocalRegistry.bundle("bundle")  # /srv/bundle in a deployment
 flow_urn = sl.Dataflow.parse_rest_ref("ESTAT,STS_INPR_M,1.0")  # AGENCY,ID,VERSION
 ```
 
-This is the audience that *publishes* SDMX data, not the audience that
-consumes it. If you're fetching from a public registry, you want
-[Observation Data](data.md) instead.
+This page is for publishers of SDMX data. If you're fetching from a public
+registry, see [Observation Data](data.md).
 
 The kit is four small pieces, designed to compose:
 
@@ -76,9 +75,8 @@ canonical example is StatCan Census Profile's `GEO_LEVEL` — derivable
 from `REF_AREA`, so it can't be a key dimension, but every bulk
 download filters on it ("give me all federal electoral districts").
 
-Without `c[…]=…` the only options are bad: hand-roll attribute WHERE
-clauses (back in raw-SQL land), or expand the attribute filter into a
-50KB OR-list on `REF_AREA`.
+Without `c[…]=…` you would hand-roll attribute WHERE clauses in raw SQL,
+or expand the attribute filter into a 50KB OR-list on `REF_AREA`.
 
 `ComponentFilter.attributes` is translated against
 `binding.attribute_column_map` exactly the same way `dimensions` is
@@ -94,7 +92,7 @@ A common pattern: "give me all dissemination areas in Ontario." That's
 a hierarchy traversal — `Codelist.narrower_transitive("ON_CODE")` —
 which can resolve to ~50k REF_AREA codes. Materialising those into a
 Python list and binding them as 50k WHERE-IN parameters works on
-DuckDB but is gross, and other backends have bind-parameter caps.
+DuckDB, but binding is slow and other backends cap bind parameters.
 
 `ComponentFilter` filter values accept either an eager `list[str]`
 *or* a `SqlRelation` — a lazy single-column subquery. `LazyCodelist`'s
@@ -154,10 +152,10 @@ for batch in batches:
 It is the same query object either way, so every filter, projection and
 aggregate above applies.
 
-**`chunk_rows` is not the memory knob** — 1,000 and 50,000 measure identically.
-Size it for the response chunk you want to write, not for memory.
+**`chunk_rows` sets the batch size** — 1,000 and 50,000 measure identically.
+Size it for the response chunk you want to write.
 
-**What does decide it is whether the query sorts.** A sort materialises the
+**A sort decides peak memory.** A sort materialises the
 whole result before the first batch can leave, so an *ordered* stream is not
 bounded at all — 210 MB on 4M rows, 368 MB on 8M, whatever `chunk_rows` says.
 A facade streaming a big slice must not add an `ORDER BY`; `stream()` drops the
@@ -203,8 +201,7 @@ writer-bound.
 ## Mapping URL refs to typed URNs
 
 SDMX REST URLs identify maintainable artefacts as `AGENCY,ID,VERSION`.
-Every facade reimplemented this; `parse_rest_ref` is the canonical
-form, symmetric with `urn_for(...)`:
+`parse_rest_ref` parses that form, symmetric with `urn_for(...)`:
 
 ```python
 flow_urn = sl.Dataflow.parse_rest_ref("ESTAT,STS_INPR_M,1.0")

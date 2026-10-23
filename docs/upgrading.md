@@ -324,6 +324,9 @@ cl.codes.filter(sl.q.code.id.str.starts_with("CA"))
 ```
 
 `sl.code` and `sl.node` (the old predicate namespaces) are gone with them.
+`sl.artefact.has_metadata()` is a filter over `described_by`, with the subtree
+arm written at the call site — see
+[Reference Metadata](cookbook/reference_metadata.md#finding-what-has-metadata-at-all).
 
 ### Projected columns are named the way you wrote them
 

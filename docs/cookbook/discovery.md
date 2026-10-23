@@ -86,8 +86,8 @@ q.codelist.id.str.caseless == "cl_freq"  # finds CL_FREQ
 Only `caseless` gets equality because only case has a real question behind it —
 a caller typing an id in the wrong case. `is_in` is always exact.
 
-Accent and punctuation folding is offered on labels only. An id is not prose,
-and folding `REF_AREA` into `REF AREA` helps nobody.
+Accent and punctuation folding is offered on labels only: an id's punctuation
+is significant, so `REF_AREA` and `REF AREA` are different ids.
 
 ### Annotations
 
@@ -112,7 +112,7 @@ reg.query(q.artefact).filter(
 ).ids()
 ```
 
-That distinction is the whole reason `.any()` exists; see
+`.any()` exists for that distinction; see
 [Structures as Frames](structures_as_frames.md).
 
 ### Combining predicates
@@ -170,10 +170,6 @@ it.** sdmxlib does not depend on pandas, so unless your environment brings it
 in, the first column is yours. Below the crossover a plain list is as fast and
 simpler; above it the advantage keeps widening, because the shape — linear
 against flat — is the same in both.
-
-An earlier version of this page said DuckDB had become 25x faster at binding and
-moved the crossover to a thousand. It had not: that measurement ran with pandas
-importable and the one before it did not.
 
 `is_in` also takes another **query**, which is the lazy form: the sub-query is
 spliced as `IN (SELECT ...)` rather than fetched and re-bound.
@@ -237,16 +233,17 @@ second = reg.query(q.dataflow).order_by(q.dataflow.id).after(first.cursor).page(
 | `frame()` | `polars.DataFrame` | one statement, every column — **builds nothing** |
 | `collect()` | `list[Dataflow]` | one statement **plus** an artefact built per match |
 
-`collect()` is the expensive one — it builds each match as a domain object. Reach for `urns()` or a projection when the answer is a list of
-identifiers rather than a graph to navigate. That difference is the whole
-reason this API exists alongside `get_all()`.
+`collect()` is the expensive one — it builds each match as a domain object.
+Reach for `urns()` or a projection when the answer is a list of identifiers
+rather than a graph to navigate; this API exists alongside `get_all()` for that
+difference.
 
 **`collect()` is for object graphs, `frame()` is for volume**, and the gap is
-wider than it looks: on a real bundle's 579,951-code codelist, `frame()` is
-**158 ms** and `collect()` is **2372 ms**. Both run the same statement over the
-same columns; the difference is 579,951 Python objects. If you are about to
-loop over `collect()` pulling two fields out of each artefact, `select()` those
-two columns instead — that loop is the one this API exists to delete.
+large: on a real bundle's 579,951-code codelist, `frame()` is **158 ms** and
+`collect()` is **2372 ms**. Both run the same statement over the same columns;
+the difference is 579,951 Python objects. If you are about to loop over
+`collect()` pulling two fields out of each artefact, `select()` those two
+columns instead.
 
 ## Concept-driven discovery
 
@@ -324,8 +321,7 @@ Everything above reaches components to filter *artefacts*. The other direction
 ```
 
 One statement for the whole catalogue. Reaching it through resolved artefacts
-instead — `dsd.dimensions` per DSD — is one resolution per DSD, which is the
-shape this page exists to replace.
+instead — `dsd.dimensions` per DSD — costs one resolution per DSD.
 
 `role` says which list a component came from: `Dimension`, `TimeDimension`,
 `MeasureDimension`, `Attribute` or `Measure`.
@@ -622,10 +618,9 @@ depend on call order.
 
 !!! note "Version ranking is numeric"
 
-    `version` is stored as text, so ranking it *as text* would put `1.9` after
-    `1.10` and call `1.9` the latest — wrong for any catalogue whose minor
-    version reaches double digits. It does not: a sortable key is baked beside
-    it at write time, and `order_by`, `rank()` and keyset paging all use it
+    `version` is stored as text, and ranking text would put `1.9` after
+    `1.10` and call `1.9` the latest. So a sortable key is baked beside it at
+    write time, and `order_by`, `rank()` and keyset paging all use it
     (#311). Comparison is unaffected — `version == "1.10"` matches what the
     registry published, not the key.
 
@@ -659,13 +654,10 @@ a.difference(b).ids()
 
 ### Joining a query into SQL of your own
 
-The DSL roots at an sdmxlib relation and navigates sdmxlib's edges. It cannot
-root at *your* table, and `is_in` takes a relation only as a one-column
-membership filter — so "select columns from my table **and** `sdmx.*`" is not a
-query you can write in it.
-
-You do not need to. `to_sql()` returns a standalone statement, so compile the
-sdmx half and join it:
+The DSL roots at an sdmxlib relation and navigates sdmxlib's edges, and
+`is_in` takes a relation only as a one-column membership filter. To select
+columns from your table **and** `sdmx.*`, compile the sdmx half with
+`to_sql()`, which returns a standalone statement, and join it:
 
 ```python
 conn = reg.connection
@@ -682,7 +674,7 @@ print(conn.execute(sql, compiled.params).fetchall())
 []
 ```
 
-Two things make this work, and both are contracts rather than accidents:
+Two contracts make this work:
 
 - **`to_sql()` output is standalone.** It references no temporary the caller
   does not own, so it can be spliced anywhere the `sdmx.*` tables are visible.
@@ -692,8 +684,7 @@ Two things make this work, and both are contracts rather than accidents:
 - **The parameters come with it.** `compiled.params` are positional, so splice
   the SQL and concatenate the binds in the same order.
 
-The projection can carry an aggregate, which is where this earns its keep — one
-statement instead of a walk:
+The projection can carry an aggregate, so one statement replaces a walk:
 
 ```python
 under = q.hcode.ancestors.any(q.hcode.id == "CA")
@@ -708,10 +699,10 @@ print("codes" in pairs.sql)
 True
 ```
 
-!!! note "This is the seam, not a workaround"
+!!! note "The supported seam between schemas"
 
-    A cross-schema join is the one shape the path language deliberately does
-    not have — it would mean knowing about tables it does not own. `reg.sql()`,
+    The path language deliberately leaves out cross-schema joins, which would
+    mean knowing about tables it does not own. `reg.sql()`,
     `sl.schema` and this splice are the supported way across, and
     `sdmxlib.sql.SqlRelation` is the protocol they agree on.
 
@@ -749,10 +740,10 @@ reg.sql("SELECT urn FROM sdmx.artefact WHERE resource_id LIKE $p", p="CL_%").col
 
 Values are bound — `$name` is rewritten to a placeholder and checked against
 DuckDB's own parser, so a query that would not parse fails at `reg.sql()`
-rather than at execution. What is *not* protected is the layout: a column that gets renamed
-turns a working statement into a runtime error.
+rather than at execution. The layout is unprotected: a renamed column turns a
+working statement into a runtime error.
 
-`sl.schema` closes that half. It is reflected from the DDL, so a stale name is
+`sl.schema` covers the layout. It is reflected from the DDL, so a stale name is
 an `AttributeError` at import rather than a broken query in production:
 
 <!-- test: raises -->

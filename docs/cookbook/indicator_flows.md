@@ -90,8 +90,9 @@ long = kei.frame()
 
 `obs(flow)` is lazy: nothing is fetched until a terminal such as
 `frame()` runs — so a query needs its registry open, and the sections below
-keep using this `reg`. Close it (`reg.close()`), or use `with`, when done. The filters on dimensions are pushed into the SDMX REST key,
-so only matching rows come over the wire — the `MEASURE` filter included,
+keep using this `reg`. Close it (`reg.close()`), or use `with`, when done.
+The filters on dimensions are pushed into the SDMX REST key, so only matching
+rows come over the wire — the `MEASURE` filter included,
 without you needing to know its position in the key. `kei.explain()` shows
 what is pushed and what runs locally.
 

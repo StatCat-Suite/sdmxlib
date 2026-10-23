@@ -160,13 +160,6 @@ with sl.RestRegistry(sl.Provider.ESTAT) as estat:
             ...  # absent
 ```
 
-A `FailurePolicy` enum used to sit here, and `RETURN_NONE` was documented as
-*"source down or artefact missing — same outcome to the caller"*. It was
-deleted rather than re-scoped: its stated job was *whether a federation
-continues past a dead source*, and `FederatedRegistry` routes each URN to
-exactly one source by agency — so there was no next source to continue to and
-the knob only ever converted an error into a silence.
-
 Programmer errors (`ValueError`, `TypeError`) propagate unchanged: only
 transport failures mean "could not reach". A `404` is the server answering,
 so it comes back as `None`; a `500` is the server's own error and is raised.
@@ -277,12 +270,10 @@ with sl.LocalRegistry("lake.duckdb", source_registry="local") as local:
     df = obs.filter(obs.col("REF_AREA") == "CA").frame(labels="en")
 ```
 
-!!! note "Why there is no catalog to build"
+!!! note "One registry answers both planes"
 
-    This example used to end by composing a `FederatedCatalog` from three
-    roles — `structural`, `bindings`, `data`. Two of the three were almost
-    always the same object, and every method it had was *look up the binding
-    for this dataflow, then delegate*. A registry does that itself.
+    A registry looks up the binding for a dataflow and delegates to the store
+    its rows live in, so no separate catalog object composes the two.
 
 Notes on the moving parts:
 

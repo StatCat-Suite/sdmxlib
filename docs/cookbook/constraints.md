@@ -222,7 +222,7 @@ enumerated is relaxed.
 ### On batching the scans
 
 `build_component_availability` runs **one `SELECT DISTINCT` per component**,
-and that is deliberate rather than unconsidered. Batching them into a single
+by design. Batching them into a single
 `array_agg(DISTINCT c) FILTER (…)` per column — the shape a consumer
 hand-wrote on the assumption it would be cheaper — measured **1.2× to 2.5×
 slower** across every width, row count and cardinality tried, on parquet and
