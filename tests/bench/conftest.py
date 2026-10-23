@@ -13,6 +13,7 @@ this tier.
 
 import shutil
 
+import duckdb
 import pytest
 
 import sdmxlib as sl
@@ -105,13 +106,20 @@ def shapes(bundle_conn):
 
 @pytest.fixture(scope="session")
 def data_plane_bundle(bundle, tmp_path_factory):
-    """A **copy** of the bundle, republished, which `LocalRegistry.bundle()` then opens read-only.
+    """A **copy** of the bundle, republished as a publication, which `LocalRegistry.bundle()` opens read-only.
 
     The copy is what `write_manifest` writes into: sdmxlib owns
     `bundle.manifest.json`, and the real bundle may carry its builder's older
     one, which `bundle()` refuses. Republishing a copy leaves the source
     untouched. Opening it through `bundle()` means this tier exercises the
     public constructor #387 fixed rather than a hand-rolled stand-in.
+
+    The real bundle keeps the single-directory layout (``meta.duckdb``,
+    ``lake.ducklake``, ``parquet/``); the copy is laid out as a publication
+    (GH-123): `LocalRegistry.build` mints the token and the directory, the
+    real store and catalog replace the empty ones, the token is stamped into
+    the copied store as `build` stamps it, and ``parquet/`` becomes the
+    bundle's ``data/``. Returns the publication directory.
 
     Cheap where it matters: 2.6 GB clones in ~3 s on APFS, once per session.
 
@@ -128,15 +136,23 @@ def data_plane_bundle(bundle, tmp_path_factory):
     stale = _bundle.schema_skip_reason_for(bundle)
     if stale:
         pytest.skip(stale)
-    destination = tmp_path_factory.mktemp("bundle") / bundle.name
-    shutil.copytree(bundle, destination)
+    root = tmp_path_factory.mktemp("bundle") / bundle.name
+    with sl.LocalRegistry.build(root) as started:
+        publication = started.publication
+    for name in ("meta.duckdb", "lake.ducklake"):
+        shutil.copyfile(bundle / name, publication / name)
+    shutil.copytree(bundle / "parquet", root / "data", dirs_exist_ok=True)
+    with duckdb.connect(str(publication / "meta.duckdb")) as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO sdmx._meta (key, value) VALUES ('publication_token', ?)", [publication.name]
+        )
     # Published on the copy (GH-66): sdmxlib owns `bundle.manifest.json`, and
     # a bundle built before it may carry its builder's own format, which
     # `bundle()` refuses. Republishing the copy runs `write_manifest` at full
     # scale — checksums over every file, counts from the real lake — and
     # leaves the source bundle untouched.
-    write_manifest(destination, bundle_id=bundle.name, producer=Producer(name="sdmxlib-bench", version="0"))
-    return destination
+    write_manifest(publication, bundle_id=bundle.name, producer=Producer(name="sdmxlib-bench", version="0"))
+    return publication
 
 
 @pytest.fixture(scope="session")

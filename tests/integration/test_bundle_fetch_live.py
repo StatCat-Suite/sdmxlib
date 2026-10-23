@@ -41,10 +41,11 @@ def test_a_slice_of_ecb_exr_lands_as_a_bundle_that_checks_clean(tmp_path: Path) 
     assert provenance.dataflow == binding.dataflow, "fetched at the version `latest` resolved to"
     assert binding.dataflow in provenance.artefacts
 
-    report = check_bundle(root)
+    publication = root / manifest.token
+    report = check_bundle(publication)
     assert report.ok, "\n".join(map(str, report.findings))
 
-    with sl.LocalRegistry.bundle(root) as reg:
+    with sl.LocalRegistry.bundle(publication) as reg:
         frame = reg.obs(sl.Dataflow.parse_urn(binding.dataflow)).frame()
     assert sorted(frame.get_column("TIME_PERIOD").to_list()) == ["2024-01", "2024-02", "2024-03"]
     assert set(frame.get_column("CURRENCY").cast(str).to_list()) == {"USD"}
@@ -57,7 +58,7 @@ def test_structures_only_fetches_no_observations(tmp_path: Path) -> None:
     assert manifest.bindings == ()
     assert manifest.provenance is not None
     assert manifest.provenance.structures_only
-    assert check_bundle(root).ok
+    assert check_bundle(root / manifest.token).ok
 
 
 @pytest.mark.vcr

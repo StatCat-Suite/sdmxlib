@@ -257,7 +257,7 @@ Both pin sdmxlib by range in their `pyproject.toml`. Before a breaking release,
 | `storage/readers.py`              | Reconstruct objects from DuckDB                                                                                                                                        |
 | `storage/_checked.py`             | A store read checks what it builds as `add` does (#492): `get` raises, a bulk read records it in `LocalRegistry.refused` and reads on |
 | `storage/lazy.py`                 | `LazyCodelist` / `LazyHierarchy` — store-backed facades whose walks return a `Query` |
-| `local/registry.py`               | `BundleRegistry` — the DuckDB store's reads (`get` with lazy codelists and hierarchies, `query`, `obs`, `refused`), what a published bundle opens as, read-only, via `LocalRegistry.bundle` (GH-122); `LocalRegistry` extends it with `add`/`add_all`, `sql` and `build` |
+| `local/registry.py`               | `BundleRegistry` — the DuckDB store's reads (`get` with lazy codelists and hierarchies, `query`, `obs`, `refused`), what a published bundle opens as, read-only, via `LocalRegistry.bundle` (GH-122); `LocalRegistry` extends it with `add`/`add_all`, `sql` and `build`, which starts a publication in `<bundle>/<token>/` over the shared `<bundle>/data/` (GH-123) |
 | `query/observations.py`           | `ObsQuery` — the path language over a dataflow's observations; `obs.col(id)` names a component |
 | `query/_expr.py`                  | Columns, predicates, aggregates and windows — what `sl.q` paths build; `where=` on an aggregate |
 | `storage/resolve.py`              | Batch resolvers — key rows to domain objects for the path language (`cl.codes` → `Code`s) |

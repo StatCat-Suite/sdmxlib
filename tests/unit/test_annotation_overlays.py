@@ -162,7 +162,8 @@ def test_the_result_is_the_same_in_sdmx_ml_and_sdmx_json() -> None:
 
 
 def test_the_effective_token_moves_with_the_overlays_and_not_the_bundle(tmp_path: Path) -> None:
-    manifest = write_manifest(make_bundle(tmp_path / "b", 10), bundle_id="b", producer=Producer(name="t", version="1"))
+    publication = make_bundle(tmp_path / "b", 10)
+    manifest = write_manifest(publication, bundle_id="b", producer=Producer(name="t", version="1"))
     one, two = _overlay(_entry("*", title="1"), overlay_id="one"), _overlay(_entry("*", title="2"), overlay_id="two")
     assert effective_token(manifest, []) == manifest.token
     tokens = {
@@ -176,7 +177,7 @@ def test_the_effective_token_moves_with_the_overlays_and_not_the_bundle(tmp_path
     assert effective_token(manifest, [one]) == effective_token(
         manifest, [_overlay(_entry("*", title="1"), overlay_id="one")]
     )
-    assert read_manifest(tmp_path / "b").token == manifest.token, "applying overlays never touches the bundle"
+    assert read_manifest(publication).token == manifest.token, "applying overlays never touches the bundle"
 
 
 @pytest.mark.parametrize(
@@ -206,16 +207,23 @@ def test_a_document_that_is_not_an_overlay_is_refused(tmp_path: Path, document: 
         read_overlay(path)
 
 
-def test_fold_writes_overlays_into_the_bundle_and_republishes(tmp_path: Path) -> None:
+def test_fold_writes_overlays_into_a_new_publication(tmp_path: Path) -> None:
     root = make_bundle(tmp_path / "b", 10, extra=(_FREQ,))
     before = write_manifest(root, bundle_id="b", producer=Producer(name="t", version="1"), product={"edition": 1})
     after = fold_overlays(root, [_overlay(_entry("AG:CL_FREQ", "set", "ORDER", "folded"))])
     assert after.token != before.token
+    assert after.previous_token == before.token
     assert (after.bundle_id, after.producer, after.product) == (before.bundle_id, before.producer, before.product)
-    with sl.LocalRegistry.bundle(root) as reg:
+    folded = root.parent / after.token
+    with sl.LocalRegistry.bundle(folded) as reg:
         assert _titles(reg.get(_FREQ.urn, eager=True), "ORDER") == ["folded"]
-    report = check_bundle(root, references=False)
-    assert report.ok, "\n".join(map(str, report.findings))
+    with sl.LocalRegistry.bundle(root) as reg:
+        assert _titles(reg.get(_FREQ.urn, eager=True), "ORDER") == _titles(_FREQ, "ORDER") == ["kept"], (
+            "the earlier publication is untouched"
+        )
+    for publication in (root, folded):
+        report = check_bundle(publication, references=False)
+        assert report.ok, "\n".join(map(str, report.findings))
 
 
 def test_the_shipped_schema_is_the_models() -> None:

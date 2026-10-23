@@ -20,6 +20,7 @@ import inspect
 import pytest
 
 import sdmxlib as sl
+from sdmxlib import bundle
 from tests.support.narrow import present
 from tests.support.repo import ROOT
 
@@ -199,3 +200,15 @@ def test_bundle_reads_and_build_writes() -> None:
         name for name in ("add", "add_all", "drop", "replace", "ingest", "sql") if hasattr(sl.BundleRegistry, name)
     ] == []
     assert callable(sl.LocalRegistry.build)
+
+
+def test_build_starts_publications_over_a_shared_data_directory() -> None:
+    """The guide's bundle-layout section (GH-123): `build()` takes `previous=`
+    and `resume=`, the manifest is format 2 with the layout fields, and
+    `copy_bundle` exists."""
+    parameters = inspect.signature(sl.LocalRegistry.build, annotation_format=annotationlib.Format.FORWARDREF).parameters
+    assert {"previous", "resume"} <= parameters.keys()
+    assert bundle.FORMAT_VERSION.partition(".")[0] == "2"
+    assert {"root", "carried_from"} <= set(bundle.BundleFile.__struct_fields__)
+    assert {"previous_token", "data_path"} <= set(bundle.Manifest.__struct_fields__)
+    assert callable(bundle.copy_bundle)

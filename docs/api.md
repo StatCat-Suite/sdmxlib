@@ -88,6 +88,10 @@ The format itself, field by field, is [the bundle format](bundle.md).
 
 ---
 
+::: sdmxlib.bundle.copy_bundle
+
+---
+
 ::: sdmxlib.bundle.fetch_bundle
 
 ---
@@ -153,6 +157,10 @@ Conforming bundles of any shape, deterministic from a seed, for tests and stress
 ---
 
 ::: sdmxlib.bundle.Manifest
+
+---
+
+::: sdmxlib.bundle.BundleFile
 
 ---
 

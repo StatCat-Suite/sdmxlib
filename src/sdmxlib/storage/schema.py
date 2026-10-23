@@ -1502,10 +1502,17 @@ def get_schema_version(conn: duckdb.DuckDBPyConnection) -> str | None:
     Returns ``None`` if the schema doesn't exist or the version key
     is missing.
     """
+    return meta_value(conn, "schema_version")
+
+
+def meta_value(conn: duckdb.DuckDBPyConnection, key: str) -> str | None:
+    """The value of `key` in ``sdmx._meta``, or None if the key or the schema is missing.
+
+    Keys: ``schema_version``; ``publication_token`` and ``previous_token``,
+    which `LocalRegistry.build` writes into a publication's store.
+    """
     try:
-        row = conn.execute("""
-            SELECT value FROM sdmx._meta WHERE key = 'schema_version'
-        """).fetchone()
+        row = conn.execute("SELECT value FROM sdmx._meta WHERE key = ?", [key]).fetchone()
     except duckdb.CatalogException:
         return None
     return row[0] if row else None

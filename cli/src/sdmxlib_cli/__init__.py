@@ -12,7 +12,7 @@ import typer
 
 import sdmxlib as sl
 from sdmxlib.api.providers import ProviderInfo
-from sdmxlib.bundle import check_bundle, fetch_bundle
+from sdmxlib.bundle import check_bundle, copy_bundle, fetch_bundle
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.urn import SdmxUrn
 
@@ -75,7 +75,7 @@ def _flow(text: str) -> SdmxUrn[Dataflow]:
 def fetch(
     source: Annotated[str, typer.Argument(help="A provider (ECB, ESTAT, BIS, OECD, ...) or a REST endpoint URL.")],
     flow: Annotated[str, typer.Argument(help="The dataflow: AGENCY:ID(VERSION), AGENCY:ID, or a URN.")],
-    path: Annotated[Path, typer.Argument(help="The bundle directory to create; must not exist or be empty.")],
+    path: Annotated[Path, typer.Argument(help="The bundle directory; the publication is created inside it.")],
     *,
     key: Annotated[str | None, typer.Option(help="SDMX key, e.g. M.USD+GBP.EUR.SP00.A.")] = None,
     start: Annotated[str | None, typer.Option(help="Inclusive startPeriod.")] = None,
@@ -86,7 +86,7 @@ def fetch(
 ) -> None:
     """Fetch one dataflow, narrowed by key and period, into a new published bundle.
 
-    Prints the bundle's token and what it holds.
+    Prints the publication directory, its token and what it holds.
     """
     manifest = fetch_bundle(
         _source(source),
@@ -100,4 +100,18 @@ def fetch(
         source_id=source_id,
     )
     counts = ", ".join(f"{b.observations} observations" for b in manifest.bindings) or "structures only"
-    typer.echo(f"{path}: {manifest.bundle_id}, {counts}; token {manifest.token}")
+    typer.echo(f"{path / manifest.token}: {manifest.bundle_id}, {counts}; token {manifest.token}")
+
+
+@bundle.command("copy")
+def copy(
+    source: Annotated[Path, typer.Argument(help="The published publication directory.")],
+    destination: Annotated[Path, typer.Argument(help="The publication directory to create.")],
+) -> None:
+    """Copy a publication's listed files, verify them, and write its manifest last.
+
+    Data files go to the shared data directory beside the destination, and one
+    already there at the listed digest is kept. Prints the token copied.
+    """
+    manifest = copy_bundle(source, destination)
+    typer.echo(f"{destination}: {manifest.bundle_id}, token {manifest.token}; {len(manifest.files)} files")

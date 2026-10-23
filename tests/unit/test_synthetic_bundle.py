@@ -43,11 +43,14 @@ def _codes(root: Path, n: int) -> list[tuple[str, str | None, int]]:
     return [(code_id, parent, depth) for code_id, parent, depth in rows]
 
 
+def _synthetic(root: Path, shape: Shape, *, seed: int) -> Path:
+    """The publication `synthetic_bundle` writes under `root`."""
+    return root / synthetic_bundle(root, shape, seed=seed).token
+
+
 @pytest.fixture(scope="module")
 def built(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    root = tmp_path_factory.mktemp("synthetic") / "b"
-    synthetic_bundle(root, _SHAPE, seed=3)
-    return root
+    return _synthetic(tmp_path_factory.mktemp("synthetic") / "b", _SHAPE, seed=3)
 
 
 def test_it_publishes_a_bundle_that_checks_clean(built: Path) -> None:
@@ -78,12 +81,12 @@ def test_a_hierarchy_keeps_to_its_depth_and_fanout(built: Path) -> None:
 
 
 def test_the_same_seed_gives_the_same_bundle_and_another_seed_does_not(tmp_path: Path, built: Path) -> None:
-    synthetic_bundle(tmp_path / "same", _SHAPE, seed=3)
-    synthetic_bundle(tmp_path / "other", _SHAPE, seed=4)
-    assert _rows(tmp_path / "same").equals(_rows(built))
-    assert _codes(tmp_path / "same", 1) == _codes(built, 1)
-    assert not _rows(tmp_path / "other").equals(_rows(built)), "the seed chooses the keys"
-    assert _codes(tmp_path / "other", 1) != _codes(built, 1), "the seed chooses the hierarchy"
+    same = _synthetic(tmp_path / "same", _SHAPE, seed=3)
+    other = _synthetic(tmp_path / "other", _SHAPE, seed=4)
+    assert _rows(same).equals(_rows(built))
+    assert _codes(same, 1) == _codes(built, 1)
+    assert not _rows(other).equals(_rows(built)), "the seed chooses the keys"
+    assert _codes(other, 1) != _codes(built, 1), "the seed chooses the hierarchy"
 
 
 def test_a_profile_reads_the_shape_back(built: Path) -> None:
@@ -97,8 +100,7 @@ def test_a_profile_reads_the_shape_back(built: Path) -> None:
 
 def test_a_profile_builds_a_stand_in_of_the_same_shape(tmp_path: Path, built: Path) -> None:
     profile = profile_bundle(built, _FLOW)
-    synthetic_bundle(tmp_path / "twin", profile, seed=11)
-    twin = profile_bundle(tmp_path / "twin", _FLOW)
+    twin = profile_bundle(_synthetic(tmp_path / "twin", profile, seed=11), _FLOW)
     assert [(d.codes, d.depth) for d in twin.dimensions] == [(d.codes, d.depth) for d in profile.dimensions]
     assert (twin.observations, twin.periods, twin.languages, twin.attributes) == (
         profile.observations,

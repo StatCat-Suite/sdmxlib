@@ -1,4 +1,4 @@
-"""`check_bundle`: a published bundle against its manifest and itself (GH-67).
+"""`check_bundle`: a published bundle against its manifest and itself (GH-67, GH-123).
 
 Each test damages one thing in a bundle that checked clean and asserts the
 check that owns it says so. A finding is compared by check and subject, so a
@@ -12,7 +12,7 @@ import duckdb
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.bundle import MANIFEST_NAME, Finding, Producer, Report, check_bundle, write_manifest
+from sdmxlib.bundle import DATA_PATH, MANIFEST_NAME, Finding, Producer, Report, check_bundle, write_manifest
 from tests.support.bundles import FLOW, make_bundle
 
 pytestmark = pytest.mark.unit
@@ -29,10 +29,10 @@ _ALL = ("manifest", "files", "lake", "bindings", "references")
 
 
 def _published(root: Path, *, rows: int = 200_000, closed: bool = True) -> Path:
-    """A bundle published with `write_manifest`; `closed` adds the concept scheme its DSD names."""
-    make_bundle(root, rows, extra=(_CONCEPTS,) if closed else ())
-    write_manifest(root, bundle_id="b", producer=_PRODUCER)
-    return root
+    """A publication published with `write_manifest`; `closed` adds the concept scheme its DSD names."""
+    publication = make_bundle(root, rows, extra=(_CONCEPTS,) if closed else ())
+    write_manifest(publication, bundle_id="b", producer=_PRODUCER)
+    return publication
 
 
 def _found(report: Report) -> set[tuple[str, str]]:
@@ -40,8 +40,14 @@ def _found(report: Report) -> set[tuple[str, str]]:
 
 
 def _parquet(root: Path) -> Path:
-    (file,) = (root / "parquet").rglob("*.parquet")
+    """The publication's one data file, in the bundle's shared ``data/``."""
+    (file,) = (root.parent / "data").rglob("*.parquet")
     return file
+
+
+def _listed(root: Path, file: Path) -> str:
+    """`file` as a finding names a data file: under the manifest's ``data_path``."""
+    return f"{DATA_PATH}{file.relative_to(root.parent / 'data').as_posix()}"
 
 
 def test_a_published_bundle_checks_clean_on_every_check(tmp_path: Path) -> None:
@@ -61,8 +67,8 @@ def test_a_missing_parquet_file_is_missing_to_the_manifest_and_to_the_lake(tmp_p
     root = _published(tmp_path / "b")
     file = _parquet(root)
     file.unlink()
-    relative = file.relative_to(root).as_posix()
-    assert {("files", relative), ("lake", relative)} <= _found(check_bundle(root, references=False))
+    listed = _listed(root, file)
+    assert {("files", listed), ("lake", listed)} <= _found(check_bundle(root, references=False))
 
 
 def test_a_changed_file_of_the_same_size_fails_its_checksum(tmp_path: Path) -> None:
@@ -72,9 +78,7 @@ def test_a_changed_file_of_the_same_size_fails_its_checksum(tmp_path: Path) -> N
     data[len(data) // 2] ^= 0xFF
     file.write_bytes(bytes(data))
     findings = [f for f in check_bundle(root, references=False).findings if f.check == "files"]
-    assert findings == [
-        Finding("files", file.relative_to(root).as_posix(), "contents differ from the manifest's sha256")
-    ]
+    assert findings == [Finding("files", _listed(root, file), "contents differ from the manifest's sha256")]
 
 
 def test_a_file_added_after_publishing_is_not_in_the_manifest(tmp_path: Path) -> None:
@@ -83,14 +87,27 @@ def test_a_file_added_after_publishing_is_not_in_the_manifest(tmp_path: Path) ->
     assert _found(check_bundle(root, references=False)) == {("files", "notes.txt")}
 
 
-def test_an_orphan_the_manifest_took_in_is_still_found_by_the_lake(tmp_path: Path) -> None:
-    """A stray parquet file present when the manifest was written is in its
-    inventory, so only DuckLake's own record shows it is unreferenced."""
-    root = make_bundle(tmp_path / "b", 200_000, extra=(_CONCEPTS,))
-    stray = _parquet(root).with_name("stray.parquet")
-    stray.write_bytes(_parquet(root).read_bytes())
-    write_manifest(root, bundle_id="b", producer=_PRODUCER)
-    assert _found(check_bundle(root, references=False)) == {("lake", stray.relative_to(root).as_posix())}
+def test_another_publications_data_file_is_not_a_finding(tmp_path: Path) -> None:
+    """``data/`` is shared by every publication of a bundle, so a data file this
+    manifest does not list belongs to another one, and only garbage collection,
+    reading every manifest, may call it unreferenced."""
+    root = _published(tmp_path / "b")
+    _parquet(root).with_name("ducklake-another.parquet").write_bytes(b"another publication's")
+    assert check_bundle(root, references=False).ok
+
+
+def test_a_data_file_the_lake_references_and_the_manifest_omits_is_named(tmp_path: Path) -> None:
+    """What garbage collection keeps is what the manifests list, so a file the
+    catalog needs and the manifest leaves out would be deleted under it."""
+    root = _published(tmp_path / "b")
+    path = root / MANIFEST_NAME
+    document = json.loads(path.read_text())
+    document["files"] = [f for f in document["files"] if f["root"] == "publication"]
+    path.write_text(json.dumps(document))
+    findings = check_bundle(root, references=False).findings
+    assert findings == (
+        Finding("lake", _listed(root, _parquet(root)), "referenced by the DuckLake catalog but not in the manifest"),
+    )
 
 
 def test_an_observation_count_that_disagrees_is_named(tmp_path: Path) -> None:

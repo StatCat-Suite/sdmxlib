@@ -34,9 +34,11 @@ import functools
 import logging
 import os
 import re
+import shutil
 import tempfile
 import threading
 import time
+import uuid
 from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 from contextlib import contextmanager
 from importlib import metadata
@@ -92,7 +94,7 @@ from sdmxlib.session import SessionFactory
 from sdmxlib.storage import readers, resolve, writers
 from sdmxlib.storage._kinds import CLASS_TO_NAME
 from sdmxlib.storage._kinds import NAME_TO_CLASS as _TYPE_REGISTRY
-from sdmxlib.storage._manifest import Manifest, read_manifest
+from sdmxlib.storage._manifest import DATA_PATH, MANIFEST_NAME, Manifest, ManifestError, read_manifest
 from sdmxlib.storage.lazy import LazyCodelist, LazyHierarchy
 from sdmxlib.storage.readers import make_lazy_codelist
 from sdmxlib.storage.schema import (
@@ -103,6 +105,7 @@ from sdmxlib.storage.schema import (
     connection_is_read_only,
     get_schema_version,
     holds_rows,
+    meta_value,
     migrate,
     schema_exists,
 )
@@ -1365,13 +1368,16 @@ class BundleRegistry(SessionFactory):
     ) -> BundleRegistry:
         """Open a published bundle, read-only: artefacts and observations together.
 
-        The standard layout, which a bundle builder writes and a downstream
-        SDMX REST service serves::
+        `path` is one publication of a bundle, the directory named by its
+        token. Every publication of a bundle shares the ``data/`` beside it::
 
-            <path>/bundle.manifest.json   the manifest, written last
-            <path>/meta.duckdb            sdmx.* artefacts, including the bindings
-            <path>/lake.ducklake          DuckLake catalog
-            <path>/parquet/               DuckLake-managed observation data
+            <bundle>/data/                       data files, shared by every publication
+            <bundle>/<token>/bundle.manifest.json   the manifest, written last
+            <bundle>/<token>/meta.duckdb            sdmx.* artefacts, including the bindings
+            <bundle>/<token>/lake.ducklake          DuckLake catalog over ``data/``
+
+        The lake reads its data files from the manifest's ``data_path``,
+        resolved against `path`.
 
         **Published means a manifest** (``bundle.manifest.json``,
         `sdmxlib.bundle`). It is required, read first, and its store schema
@@ -1391,11 +1397,11 @@ class BundleRegistry(SessionFactory):
         observations, so opening a bundle to read a codelist costs nothing.
 
         Args:
-            path: The bundle directory.
+            path: The publication directory.
             resolve_cache_items: As the `LocalRegistry` constructor.
 
         Returns:
-            An open, read-only registry over the bundle.
+            An open, read-only registry over the publication.
 
         Raises:
             StoreSchemaError: If the bundle was built on another schema version.
@@ -1411,7 +1417,7 @@ class BundleRegistry(SessionFactory):
                 f"opened. Rebuild it from its source with this sdmxlib, or read it with the one that built it."
             )
             raise StoreSchemaError(msg)
-        registry = BundleRegistry._over_bundle(root, resolve_cache_items=resolve_cache_items)
+        registry = BundleRegistry._over_bundle(root, root / manifest.data_path, resolve_cache_items=resolve_cache_items)
         registry._manifest = manifest
         return registry.open()
 
@@ -1419,11 +1425,12 @@ class BundleRegistry(SessionFactory):
     def _over_bundle(
         cls,
         root: Path,
+        data: Path,
         *,
         source_registry: str | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
     ) -> Self:
-        """An unopened registry of this class wired to a bundle's layout, its manifest unread.
+        """An unopened registry of this class over publication `root`, its lake's data files in `data`.
 
         `bundle` opens a read-only one after checking the manifest;
         `LocalRegistry.build` and the manifest writer open a writable one.
@@ -1435,20 +1442,19 @@ class BundleRegistry(SessionFactory):
         )
         # `OVERRIDE_DATA_PATH` because a DuckLake catalog records the data path
         # it was *written* with, and a bundle is a directory that gets moved,
-        # copied and unpacked somewhere else. A bundle builder writes a
-        # relative one (`data/<bundle>/parquet/`), so without the override
-        # DuckLake refuses the ATTACH outright and the whole data plane is
+        # copied and unpacked somewhere else. Without the override DuckLake
+        # refuses the ATTACH of a moved catalog, and the whole data plane is
         # unreachable — which is how this was found.
         #
-        # Overriding is right rather than merely convenient: `bundle(path)` is
-        # the caller stating where the bundle is *now*, and the layout above
-        # fixes `parquet/` relative to it. The catalog's remembered path is
+        # Overriding is right rather than merely convenient: the manifest's
+        # `data_path`, resolved against where the publication is *now*, says
+        # where its data files are. The catalog's remembered path is
         # provenance, not truth.
         read_only = ", READ_ONLY" if cls._READ_ONLY else ""
         registry._attach = {
             "lake": (
                 f"'ducklake:{root / 'lake.ducklake'}'",
-                f"(DATA_PATH '{root / 'parquet'}/', OVERRIDE_DATA_PATH true{read_only})",
+                f"(DATA_PATH '{data.resolve()}/', OVERRIDE_DATA_PATH true{read_only})",
             )
         }
         return registry
@@ -2267,28 +2273,115 @@ class LocalRegistry(BundleRegistry):
         cls,
         path: str | Path,
         *,
+        previous: str | None = None,
+        resume: str | None = None,
         source_registry: str | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
     ) -> Self:
-        """Open a bundle directory for building: writable, wired to the bundle layout.
+        """Start a new publication of the bundle at `path`, and open it for building.
 
-        ``meta.duckdb`` and the lake (``lake.ducklake`` over ``parquet/``) as
-        `bundle` wires them, but read-write and with no manifest required: a
-        builder writes artefacts and observations here, then publishes with
-        `sdmxlib.bundle.write_manifest`. `fetch_bundle`, `synthetic_bundle`
-        and `fold_overlays` build through it. Readers open the result with
-        ``LocalRegistry.bundle(path)``.
+        Mints the publication's token, a UUIDv7, and creates its directory,
+        ``<path>/<token>/``, which `publication` names. ``meta.duckdb`` and the
+        lake open read-write; the lake writes its data files into
+        ``<path>/data/``, which every publication of the bundle shares. A
+        builder writes artefacts and observations, closes, then publishes with
+        ``sdmxlib.bundle.write_manifest(builder.publication, ...)``; readers open
+        the result with ``LocalRegistry.bundle(builder.publication)``.
+
+        With `previous`, the new publication extends that one: its
+        ``meta.duckdb`` and ``lake.ducklake`` are copied in, so the builder
+        changes only what differs and the lake writes only new data files.
+        Without it, both start empty. Neither touches an earlier publication's
+        directory, and nothing is ever deleted from ``data/``: files an earlier
+        publication lists stay until garbage collection finds no manifest
+        listing them.
+
+        With `resume`, it reopens a publication `build` started and nobody has
+        published yet, for a builder that writes in more than one step.
 
         Args:
-            path: The bundle directory; it must exist.
+            path: The bundle directory, holding ``data/`` and one directory per
+                publication. Created if missing.
+            previous: The token of the published publication to extend, or
+                None for a bundle's first.
+            resume: The token of an unpublished publication to reopen, instead
+                of starting one.
             source_registry: Provenance tag for the artefacts added.
             resolve_cache_items: As the constructor.
 
         Returns:
-            An open, writable registry over the bundle directory.
+            An open, writable registry over the publication.
+
+        Raises:
+            ManifestError: If `previous` is not a published publication of this
+                bundle, or `resume` is not an unpublished one.
+            ValueError: If both `previous` and `resume` are given.
         """
-        root = Path(path)
-        return cls._over_bundle(root, source_registry=source_registry, resolve_cache_items=resolve_cache_items).open()
+        bundle = Path(path)
+        if resume is not None:
+            if previous is not None:
+                msg = "pass previous= to start a publication or resume= to reopen one, not both"
+                raise ValueError(msg)
+            return cls._resume(bundle, resume, source_registry=source_registry, resolve_cache_items=resolve_cache_items)
+        token = str(uuid.uuid7())
+        publication = bundle / token
+        if previous is not None:
+            source = bundle / previous
+            if read_manifest(source).data_path != DATA_PATH:
+                msg = f"{source} keeps its data files outside {bundle / 'data'}, so a publication cannot extend it"
+                raise ManifestError(msg)
+            publication.mkdir(parents=True)
+            for name in ("meta.duckdb", "lake.ducklake"):
+                if (source / name).exists():
+                    shutil.copyfile(source / name, publication / name)
+        else:
+            publication.mkdir(parents=True)
+        (bundle / "data").mkdir(exist_ok=True)
+        registry = cls._over_bundle(
+            publication,
+            bundle / "data",
+            source_registry=source_registry,
+            resolve_cache_items=resolve_cache_items,
+        ).open()
+        registry.connection.execute("DELETE FROM sdmx._meta WHERE key IN ('publication_token', 'previous_token')")
+        registry.connection.execute("INSERT INTO sdmx._meta (key, value) VALUES ('publication_token', ?)", [token])
+        if previous is not None:
+            registry.connection.execute("INSERT INTO sdmx._meta (key, value) VALUES ('previous_token', ?)", [previous])
+        return registry
+
+    @classmethod
+    def _resume(cls, bundle: Path, token: str, *, source_registry: str | None, resolve_cache_items: int) -> Self:
+        """`build(bundle, resume=token)`: reopen an unpublished publication writable."""
+        publication = bundle / token
+        if (publication / MANIFEST_NAME).exists():
+            msg = (
+                f"{publication} is published, and a publication is never rewritten. "
+                f"Start a new one with LocalRegistry.build({str(bundle)!r}, previous={token!r})."
+            )
+            raise ManifestError(msg)
+        if not (publication / "meta.duckdb").is_file():
+            msg = f"{publication} is not a publication LocalRegistry.build started"
+            raise ManifestError(msg)
+        registry = cls._over_bundle(
+            publication, bundle / "data", source_registry=source_registry, resolve_cache_items=resolve_cache_items
+        ).open()
+        if meta_value(registry.connection, "publication_token") != token:
+            registry.close()
+            msg = f"{publication} is not a publication LocalRegistry.build started"
+            raise ManifestError(msg)
+        return registry
+
+    @property
+    def publication(self) -> Path:
+        """The publication directory `build` created, named by its token.
+
+        Raises:
+            ValueError: If this registry was not opened with `build`.
+        """
+        if meta_value(self.connection, "publication_token") is None:
+            msg = f"{self.uri} is not a publication; LocalRegistry.build(path) starts one"
+            raise ValueError(msg)
+        return self.uri.parent
 
     @contextmanager
     def transaction(self) -> Generator[None]:
