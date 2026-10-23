@@ -5,6 +5,13 @@ repo_url: "https://github.com/StatCat-Suite/sdmxlib"
 repo_name: "StatCat-Suite/sdmxlib"
 edit_uri: ""
 
+# A link to a heading that no longer exists is an INFO line by default, which
+# `mkdocs build --strict` (just docs-build) does not fail on. Renaming headings
+# breaks anchors silently, so a missing one is a warning and fails the build.
+validation:
+  links:
+    anchors: warn
+
 extra_css:
   - stylesheets/catppuccin.css
 
