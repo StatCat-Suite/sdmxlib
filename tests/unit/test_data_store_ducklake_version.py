@@ -11,6 +11,8 @@ duckdb >= 1.5.4, which reads format 1.0), so the ATTACH-time tests
 simulate the DuckDB exception.
 """
 
+from typing import Self
+
 import duckdb
 import pytest
 
@@ -57,10 +59,15 @@ class _FakeConn:
         self._exc = exc
         self.executed: list[str] = []
 
-    def execute(self, sql: str, *args: object, **kwargs: object) -> None:
+    def execute(self, sql: str, *args: object, **kwargs: object) -> Self:
         self.executed.append(sql)
         if sql.strip().upper().startswith("ATTACH"):
             raise self._exc
+        return self
+
+    def fetchall(self) -> list[tuple[object, ...]]:
+        """Nothing attached yet: the pre-check `_already_attached` asks first."""
+        return []
 
 
 def _data_store_with_conn(conn: _FakeConn, monkeypatch: pytest.MonkeyPatch) -> DuckDBDataStore:
