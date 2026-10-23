@@ -72,7 +72,7 @@ that shared no session state; `lazy.py` now imports `cursor_for`. No
 
 ### Cursor lifecycle
 
-A few invariants worth knowing:
+Invariants:
 
 - **One `_read_cursor` per (thread, registry)**, plus one `cursor_for`
   handle per (thread, connection), both created lazily. N worker threads
@@ -274,18 +274,17 @@ be needed to push past it.
 
 ## RestRegistry — the same contract, stated later (#336)
 
-`RestRegistry` was silent about threads until #336. Silence is not the same
-as absence: the intended shape of that API is a server (§4.1 of
-[registry-and-catalog](registry-and-catalog.md) is a FastAPI facade), so an
-unstated contract was one nobody could rely on and nobody could violate. It
-now commits to the same sentence the rest of this page does — **concurrent
+`RestRegistry` was silent about threads until #336, and nobody could rely on
+or violate an unstated contract. The intended shape of that API is a server
+(§4.1 of [registry-and-catalog](registry-and-catalog.md) is a FastAPI facade).
+It now commits to the same sentence the rest of this page does — **concurrent
 reads are safe and do not duplicate work** — which took four fixes:
 
 1. **One query store.** The lazy `:memory:` store is built under a
    double-checked lock. Two threads previously built two, and the loser's was
    *leaked still open* holding that thread's fetched artefacts. A query then
-   read an empty store and correctly reported nothing, which is the worst
-   shape a concurrency bug can take.
+   read an empty store and correctly reported nothing, with no error to show
+   anything was wrong.
 2. **One fetch per question.** `_fetched` was a plain unbounded `set`, so
    eight threads asking one question made eight HTTP round-trips. It is now a
    `SingleFlight` (`sdmxlib/_singleflight.py`): the first arrival fetches, the

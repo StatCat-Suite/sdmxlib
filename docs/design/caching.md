@@ -73,13 +73,13 @@ When a read is slow, walk these **in order** and stop at the first that
 applies. Each step earlier in the list has strictly better correctness
 and multiuser properties than the ones below it.
 
-1. **Is it actually slow? Profile it.** (#155 stops here — it isn't.)
-2. **Is it slow because of physical layout I control at build time?**
-   Fix the layout (**B**): cluster/partition by the filter key, narrow
+1. **Profile it, and stop if it is fast.** (#155 stops here.)
+2. **If physical layout you control at build time makes it slow,** fix the
+   layout (**B**): cluster/partition by the filter key, narrow
    the projection, confirm the plan. Helps every consumer in every
    language, with zero invalidation surface. A cache on top of a fixable
    query is debt.
-3. **Is the input immutable within a bundle / artefact version?** Then
+3. **If the input is immutable within a bundle / artefact version,**
    **bake it (A)** — don't runtime-cache it. Per the SDMX information
    model, a versioned `MaintainableArtefact` in a bundle is effectively
    frozen, and its codelists and languages are fixed at build time. Bake
@@ -135,8 +135,8 @@ Two requirements follow:
    cache satisfied it — by entry count, while its entries ranged from
    0.1 MB to over 900 MB. Five artefacts filled 2% of the counter and held
    ~4.4 GB (#386). An entry count is a bound only where entries are
-   *comparable*; that is the axis the ecosystem splits on, and it is worth
-   knowing which side a new cache is on before picking a number:
+   *comparable*; that is the axis the ecosystem splits on. Know which side a
+   new cache is on before picking a number:
 
    | | bound | why it works there |
    | --- | --- | --- |
@@ -151,7 +151,7 @@ Two requirements follow:
    pre-built `ItemList` length and never traverses or queries — and the
    items-to-bytes correspondence must be **measured and written next to the
    default**, so a number in the cache's own unit can be read as memory.
-   The absence of that measurement is how #386 happened: the constant it
+   #386 happened because that measurement was missing: the constant it
    corrects carried no comment and arrived in a bulk cleanup commit.
 
 Place the cache at the **source** of the cost (e.g. `code_map` /
@@ -202,8 +202,8 @@ Two things to check for any cache of *fetched* data:
 written specifically for it, because every case in
 `tests/unit/test_rest_partial.py` used a `latest` URN — which re-asks for an
 unrelated reason (#338) and so passed while the pinned path was broken. That
-file is now parametrised over both. A guard that only exercises the case that
-passes for a different reason is worse than no guard: it reads as coverage.
+file is now parametrised over both. A guard that only exercises a case passing
+for another reason reads as coverage while checking nothing.
 
 ## Checklist for a performance pass
 

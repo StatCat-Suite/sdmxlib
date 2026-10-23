@@ -1,10 +1,10 @@
 # Phantom Type Parameters and the Witness Pattern
 
-`SdmxUrn.parse("urn:…") -> SdmxUrn[object]`. Every so often someone asks the
-right question: *why isn't that typed? Isn't it just "untyped string in,
-typed object out" — exactly what a pydantic/attrs constructor does?*
+`SdmxUrn.parse("urn:…") -> SdmxUrn[object]` can look untyped beside a
+pydantic or attrs constructor, which also turns an untyped string into a typed
+object.
 
-It is — and the output **is** fully typed. This page explains why the
+The output **is** fully typed. This page explains why the
 parameter is nonetheless `object` *there*, where the real type comes back, and
 the general rule so you recognise the shape next time. It's the
 type-**parameter** companion to `json-and-parsing.md` (which is about how
@@ -58,7 +58,8 @@ parameter the payload does not determine*.
 
 ## The class name in the URN string
 
-It is — **at runtime** (`urn:…codelist.Codelist=SDMX:CL_FREQ(1.0)`). But a
+The class name is in the string **at runtime**
+(`urn:…codelist.Codelist=SDMX:CL_FREQ(1.0)`). But a
 function's return type is **static**: one signature, one return type. It
 cannot be "`SdmxUrn[Codelist]` when the string says Codelist,
 `SdmxUrn[Concept]` when it says Concept." The only mechanisms that let an
@@ -145,7 +146,7 @@ shape costs.
 This page used to say `parse -> SdmxUrn[Any]` and warn against `object`:
 `Ref.unresolved(SdmxUrn[object])` is a `Ref[object]`, not a `Ref[Codelist]`,
 so "the friction reappears at every caller" — while `Any` flows into `Ref[T]`
-silently. Both halves were true. The conclusion was not:
+silently. Both halves were true, and the conclusion drawn from them was wrong:
 
 - **"Silently" was the defect.** The same `Any` that flowed quietly into a
   reader's `Ref[Concept]` also flowed into `LocalRegistry.get`'s overloads,
@@ -153,7 +154,7 @@ silently. Both halves were true. The conclusion was not:
   answered a confident, wrong `LazyCodelist | None`, and pyrefly an unchecked
   `Any | None`. A phantom `Any` is only harmless until something dispatches on
   the phantom. `tests/typing/probe_urn_any.py` pins what is declared now.
-- **The friction had a home.** It only reappeared "at every caller" if every
+- **Only the callers that know the type need to recover it.** It only reappeared "at every caller" if every
   caller had to narrow. The callers that *know* the type are the readers, and
   `<Class>.parse_urn` gives them `SdmxUrn[T]` with no narrowing at all. The
   callers that don't know it should be told so — which is what `object` does.
