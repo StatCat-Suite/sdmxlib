@@ -265,11 +265,11 @@ def handle_count(base: duckdb.DuckDBPyConnection) -> int:
 
 @attrs.frozen
 class ValueSet:
-    """A caller-supplied set of values, registered as a relation (#271).
+    """A caller-supplied set of values, registered as a relation.
 
     Satisfies `sdmxlib.sql.SqlRelation`, so it goes straight into
-    `is_in` with no change to the DSL — the seam has accepted a relation since
-    #261. What was missing was a way to turn a plain Python list into one.
+    `is_in` with no change to the DSL — the seam accepts a relation. What was
+    missing was a way to turn a plain Python list into one.
 
     Obtained from `Session.value_set`, and valid only inside that block.
     """
@@ -280,7 +280,7 @@ class ValueSet:
 
     @property
     def columns(self) -> tuple[str, ...]:
-        """One column. `is_in` checks arity against this (#274)."""
+        """One column. `is_in` checks arity against this."""
         return ("value",)
 
     def to_sql(self) -> tuple[str, list[object]]:
@@ -331,7 +331,7 @@ class Session:
 
     @contextmanager
     def value_set(self, values: Iterable[object]) -> Generator[ValueSet]:
-        """Register *values* as a relation for the duration of the block (#271).
+        """Register *values* as a relation for the duration of the block.
 
         An eager ``is_in`` binds the list as one parameter (``= ANY(?)``), and
         DuckDB's Python client converts its elements one at a time. Registering hands it a pointer to
@@ -345,7 +345,7 @@ class Session:
         bound value, DuckDB checks whether it is ``pandas.NaT`` or
         ``pandas.NA``, and with pandas absent that check retries
         ``import pandas`` — twice per value, every time, because DuckDB does
-        not remember the failure (#411). Median of 7 on a 200k-row table,
+        not remember the failure. Median of 7 on a 200k-row table,
         duckdb 1.5.5:
 
         N        bound, no pandas    bound, pandas    registered
@@ -365,7 +365,7 @@ class Session:
 
         Re-measure before quoting these: they are properties of a dependency
         and its environment, not of this library. The history shows why —
-        #271 measured ~48 us a value, a later re-measure ~1.9 us and called
+        one measurement found ~48 us a value, a later re-measure ~1.9 us and called
         DuckDB "25x faster", and the difference was pandas being importable in
         one run and not the other, not a DuckDB change.
 
@@ -384,7 +384,7 @@ class Session:
 
         Args:
             values: The set. Order and duplicates are irrelevant; `is_in`
-                treats it as a set and `canonical_key` (#270) canonicalises it.
+                treats it as a set and `canonical_key` canonicalises it.
 
         Yields:
             A `ValueSet` to pass to `is_in`.

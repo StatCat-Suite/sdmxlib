@@ -204,7 +204,7 @@ def len[R: RowKind]() -> Agg[R]:  # noqa: A001 - polars' `pl.len()`; nothing in 
     """The number of rows, as an aggregate — `count(*)`, named for polars' `pl.len()`.
 
     For `Query.agg`, which folds a whole query into one row, so the row count
-    can come out of the same scan as the other aggregates (#414):
+    can come out of the same scan as the other aggregates:
 
         obs.agg(SEX=obs.col("SEX").unique(), n=sl.len())
 

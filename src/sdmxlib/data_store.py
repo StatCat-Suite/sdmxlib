@@ -30,8 +30,7 @@ type WriteSource = pl.DataFrame | pl.LazyFrame | pa.Table | pa.RecordBatchReader
 
 Public and defined once, because it appears in the signature of a `Protocol`
 method: anyone implementing `DataStore` outside this package has to name this
-type, and until #299 it existed only under `TYPE_CHECKING` in two modules —
-spelled identically in both, importable from neither.
+type.
 
 Runtime rather than type-checking-only: `duckdb`, `polars` and `pyarrow` are
 all baseline runtime dependencies, so there is nothing to defer. A comment in

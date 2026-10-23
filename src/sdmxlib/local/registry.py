@@ -590,7 +590,7 @@ class LocalRegistry(SessionFactory):
         """Open or wrap a DuckDB-backed registry.
 
         ``rebuild`` lets opening drop and rebuild a store that holds artefacts
-        on another schema version (GH-57). Without it such a store is refused
+        on another schema version. Without it such a store is refused
         with `StoreSchemaError`, because the rebuild empties it: right for a
         cache that `RestRegistry(store=...)` can fetch again, and wrong for a
         bundle or a store filled with ``add``. An empty store, or a new file,
@@ -658,7 +658,7 @@ class LocalRegistry(SessionFactory):
         """The bundle manifest `bundle()` read, or None (not a bundle, or unpublished).
 
         Its ``token`` changes at every publication and never on a read, so it
-        is what a cache or an ETag keys on (GH-66).
+        is what a cache or an ETag keys on.
         """
         return self._manifest
 
@@ -672,9 +672,9 @@ class LocalRegistry(SessionFactory):
 
         **Not the handle to execute on from more than one thread.**
         `DuckDBPyConnection` is not thread-safe, which is why every query here
-        runs on a per-thread handle instead (#75/#80). For custom SQL use
+        runs on a per-thread handle instead. For custom SQL use
         `execute` or `session`, which resolve that handle for you and cannot be
-        captured by accident (#300).
+        captured by accident.
 
         Raises:
             RuntimeError: If the registry hasn't been opened.
@@ -1042,7 +1042,7 @@ class LocalRegistry(SessionFactory):
                 from published to ingested version, or a function such as
                 `sl.versions.strip_leading_zeros`. Applies to every artefact
                 in the batch and every reference inside one, and each rewrite
-                is recorded in the store's `version_rewrite` table (#424).
+                is recorded in the store's `version_rewrite` table.
 
         Returns:
             One `RewrittenVersion` per artefact whose version changed.
@@ -1151,17 +1151,14 @@ class LocalRegistry(SessionFactory):
         materialized). Pass ``eager=True`` to get a real ``Codelist``.
 
         **An untyped URN answers `object | None`.** `SdmxUrn.parse(text)` and
-        `artefact_urn(x)` are `SdmxUrn[object]` (#399): a URN string can name
+        `artefact_urn(x)` are `SdmxUrn[object]`: a URN string can name
         anything, so this cannot say which class comes back, and the caller
         narrows. A typed URN — `Codelist.urn_for(...)`, `Codelist.parse_urn(text)`,
         `artefact.urn` — picks the matching overload and its class.
 
-        Until #399 those were `SdmxUrn[Any]`, which made the call ambiguous
-        across these overloads; basedpyright then answered a confident, wrong
-        `LazyCodelist | None` and pyrefly an unchecked `Any | None`.
-        `tests/typing/probe_urn_any.py` pins what is declared now.
+        `tests/typing/probe_urn_any.py` pins what is declared.
 
-        **`expect=` names the class when the URN does not carry it (#406).**
+        **`expect=` names the class when the URN does not carry it.**
         It names the class, so `T` comes from the argument rather than from the
         URN's phantom, and the ambiguity above never arises:
 
@@ -1178,7 +1175,7 @@ class LocalRegistry(SessionFactory):
         ``expect=CodelistLike`` for either, or ``eager=True`` alongside
         ``expect=Codelist``.
 
-        **The two lazy roots are declared, not implied (#397).** A
+        **The two lazy roots are declared, not implied.** A
         `SdmxUrn[Hierarchy]` used to give `Hierarchy | None` here while a
         `LazyHierarchy` came back — and that one has no ``codes``, ``tree`` or
         ``descendants`` at all, so `local.get(h_urn).codes` type-checked and
@@ -1187,7 +1184,7 @@ class LocalRegistry(SessionFactory):
         returned type, and one declaration could not describe both.
 
         Every ``Ref`` on the returned artefact is bound to this store and
-        finds its target on access (#492), so standard traversal works::
+        finds its target on access, so standard traversal works::
 
             dsd = local.get(dsd_urn)
             dsd.dimensions["FREQ"].codelist  # -> LazyCodelist
@@ -1195,7 +1192,7 @@ class LocalRegistry(SessionFactory):
 
         A `Ref` is accepted for the same reason `RestRegistry.get` accepts one
         — traversal hands them out. It used to return ``None`` here instead,
-        silently; a `str` used to work here and nowhere else (#370).
+        silently; a `str` used to work here and nowhere else.
         """
         urn = target_urn(target)
         cur = self._read_cursor()
@@ -1219,7 +1216,7 @@ class LocalRegistry(SessionFactory):
         return result
 
     def reported_attributes(self) -> Query[ReportedAttributeRow, MetadataSection]:
-        """A lazy query over reported reference-metadata values (#281).
+        """A lazy query over reported reference-metadata values.
 
         The SQL counterpart to `metadata_report`, which projects one set at a
         time. This filters across the whole catalogue in one statement — "every
@@ -1231,7 +1228,7 @@ class LocalRegistry(SessionFactory):
 
         Exactly `reg.query(sl.q.reported_attribute)`, kept as a named entry point
         because "the reported values" is a question worth a name and because
-        `metadata_report` is its per-set counterpart. Since #306 it is the same
+        `metadata_report` is its per-set counterpart. It is the same
         `Query` every other root returns — the bespoke `MetadataValueQuery` is
         gone.
 
@@ -1284,7 +1281,7 @@ class LocalRegistry(SessionFactory):
 
             reg.artefacts(sl.Dataflow).filter(q.artefact.agency == "ESTAT").urns()
 
-        Since #306 it returns the same `Query` every other root does, so it
+        It returns the same `Query` every other root does, so it
         composes with `filter` / `order_by` / `select` / `group_by` and the
         whole terminal surface. `artefact_type` applies the same discriminator
         the named roots carry — `q.artefact.type` is that column, exposed.
@@ -1311,7 +1308,7 @@ class LocalRegistry(SessionFactory):
         return self.query(root).filter(root.type == type_name)
 
     def query[R: "RowKind", A](self, root: Cols[R, A]) -> Query[R, A]:
-        """A lazy query over the relation `root` names (#306).
+        """A lazy query over the relation `root` names.
 
         The generic entry point for the path query language: pass any accessor
         from `sl.q` and compose with `filter` / `limit` / `offset`, then take a
@@ -1412,7 +1409,7 @@ class LocalRegistry(SessionFactory):
         return resolve.resolve_hcode_keys(self._require_open(), keys, annotations=annotations)
 
     def sql(self, text: str, **params: object) -> RawSql:
-        """Run raw SQL against this registry's layout — the escape hatch (#306).
+        """Run raw SQL against this registry's layout — the escape hatch.
 
         Two things at once. A terminal:
 
@@ -1594,14 +1591,14 @@ class LocalRegistry(SessionFactory):
 
         **A bundle is never rebuilt.** Its ``meta.duckdb`` is the published
         record, so one built on another schema version is refused with
-        `StoreSchemaError` rather than emptied (GH-57).
+        `StoreSchemaError` rather than emptied.
 
         **The manifest** (``bundle.manifest.json``, `sdmxlib.bundle`) is read
         when there is one, and its store schema version checked *before*
         ``meta.duckdb`` is opened, so a mismatched bundle is refused without the
         file being touched. It is `manifest` afterwards, whose ``token`` is what
         a cache keys on. A directory without one is an unpublished bundle,
-        which opens unless ``require_manifest`` (GH-66).
+        which opens unless ``require_manifest``.
 
         Args:
             path: The bundle directory.
@@ -2444,7 +2441,7 @@ class LocalRegistry(SessionFactory):
 
     @property
     def refused(self) -> tuple[Refusal, ...]:
-        """Every stored artefact a read refused since the store last changed (#492).
+        """Every stored artefact a read refused since the store last changed.
 
         A store read checks each artefact it builds as `add` would. `get` raises
         for one it refuses; every other read — `get_all`, a query's
@@ -2480,8 +2477,8 @@ class LocalRegistry(SessionFactory):
         mutation and rise as ``get`` / ``get_all`` populate it; ``weight`` is
         the one capped, at ``max_items``.
 
-        **``weight`` is the number to watch, not ``entries``** — that is the
-        whole of #386. An entry is an artefact, and artefacts differ in size by
+        **``weight`` is the number to watch, not ``entries``.** An entry is an
+        artefact, and artefacts differ in size by
         four orders of magnitude, so five of them can be 4.4 GB. ``entries``
         remains reported because a hit rate is per lookup, not per item.
 
@@ -2528,7 +2525,7 @@ class LocalRegistry(SessionFactory):
     def to_registry(self) -> InMemoryRegistry:
         """Load everything into an `InMemoryRegistry`, every reference bound to it.
 
-        Each artefact is built bound to the new registry (#492), so `add`
+        Each artefact is built bound to the new registry, so `add`
         copies nothing, and every reference finds its target there once the
         load is done — the whole store is in it, so nothing is resolved here.
         """

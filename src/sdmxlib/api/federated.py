@@ -174,13 +174,13 @@ class FederatedRegistry:
         Args:
             target: Identity of the artefact to read — a URN, or a `Ref`
                 naming one. Routing reads the *agency* off it, so a `Ref`
-                had to be unwrapped before this could route at all (#370).
+                had to be unwrapped before this could route at all.
             resolve: How deep to follow references. `True` for every
                 reference, a sequence of artefact types for only those.
             partial: `False` asks for untrimmed codelists.
             expect: The class the caller requires. The artefact is returned
                 when it is an instance, `None` otherwise — see
-                `RestRegistry.get` for why this exists (#406).
+                `RestRegistry.get` for why this exists.
 
         Raises:
             KeyError: If no source is routed for the URN's agency.

@@ -61,7 +61,7 @@ class ComponentFilter:
     ``IN (<subquery>)`` with the relation's params spliced into the
     outer bind list.
 
-    **``None`` and ``[]`` are different, deliberately** (#256). ``None`` is
+    **``None`` and ``[]`` are different, deliberately**. ``None`` is
     "this component is unconstrained"; ``[]`` is "the set of permitted values
     is empty", which no observation can satisfy, so the query returns nothing.
     Reading ``[]`` as "no constraint" would make a dynamically-computed code
@@ -194,7 +194,7 @@ def widen_key(key: str, dsd: DataStructure, api: ApiVersion) -> str:
 
     Real clients disagree about the time dimension. Fusion Registry, pandasdmx
     and SDMX-RI all send 1.5-shaped keys — time omitted — and a 2.2.2 endpoint
-    expects one segment more (#337). A facade that refuses them is refusing
+    expects one segment more. A facade that refuses them is refusing
     conformant requests from most of the ecosystem, so this widens a short key
     by appending the empty (wildcard) time segment.
 
@@ -263,7 +263,7 @@ def parse_components(
             programmatically). Component ids that match a key-dimension
             id are placed onto ``dimensions``; the rest land on
             ``attributes``. An empty list is kept, and means "no permitted
-            value" — see `ComponentFilter` (#256). It used to be dropped,
+            value" — see `ComponentFilter`. It used to be dropped,
             which silently widened the caller's query to everything and
             disagreed with what direct construction did with the same input.
         key_dimension_ids: Dimension ids in DSD key order. Used both to

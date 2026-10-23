@@ -180,7 +180,8 @@ def apply_overlays(
             artefact or item no entry selects is returned as it was.
         overlays: Applied in order.
         merge: Per annotation type, how a ``set`` combines with what is there
-            (GH-19's typed vocabularies are what will supply these); replace
+            ([GH-19](https://github.com/StatCat-Suite/sdmxlib/issues/19)'s
+            typed annotation vocabularies will supply these); replace
             by default.
 
     Returns:

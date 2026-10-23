@@ -1,4 +1,4 @@
-"""Rewriting versions SDMX 3.x cannot hold, at ingest (#420, #424).
+"""Rewriting versions SDMX 3.x cannot hold, at ingest.
 
 `1.03` and `1.2.3.4` are valid SDMX 2.1 and have no SDMX 3.x form, so a
 registry refuses them. `add_all` takes a rewrite to ingest them anyway:

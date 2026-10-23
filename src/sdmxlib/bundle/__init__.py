@@ -1,4 +1,4 @@
-"""A bundle as a published artefact: its manifest, and what identifies it (GH-56).
+"""A bundle as a published artefact: its manifest, and what identifies it.
 
 `LocalRegistry.bundle` opens the layout — ``meta.duckdb``, ``lake.ducklake``,
 ``parquet/`` — and this names what a given bundle is. `write_manifest`
