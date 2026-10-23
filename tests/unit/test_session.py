@@ -388,4 +388,5 @@ def test_every_relation_call_on_a_handle_goes_through_completed() -> None:
                 continue
             unguarded[path.relative_to(root).as_posix(), ast.unparse(receiver), node.func.attr] += 1
     assert unguarded == _NOT_A_HANDLE
-    assert guarded == 17, "the guarded sites moved — recount, and check each still names a handle"
+    # 18: the synthetic generator's observation SELECT joined in GH-69.
+    assert guarded == 18, "the guarded sites moved — recount, and check each still names a handle"
