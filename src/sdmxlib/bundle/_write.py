@@ -24,7 +24,8 @@ from sdmxlib.storage.schema import get_schema_version
 _CHUNK = 1 << 20
 
 
-def _sha256(path: Path) -> str:
+def sha256_of(path: Path) -> str:
+    """The sha256 of a file, read in chunks so a large one stays out of memory."""
     digest = hashlib.sha256()
     with path.open("rb") as handle:
         while chunk := handle.read(_CHUNK):
@@ -44,7 +45,7 @@ def inventory(root: Path) -> tuple[BundleFile, ...]:
     skip = {MANIFEST_NAME, f"{MANIFEST_NAME}.tmp"}
     files = sorted(p for p in root.rglob("*") if p.is_file() and p.relative_to(root).as_posix() not in skip)
     return tuple(
-        BundleFile(path=p.relative_to(root).as_posix(), size=p.stat().st_size, sha256=_sha256(p)) for p in files
+        BundleFile(path=p.relative_to(root).as_posix(), size=p.stat().st_size, sha256=sha256_of(p)) for p in files
     )
 
 

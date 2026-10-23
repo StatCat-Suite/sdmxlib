@@ -1414,7 +1414,7 @@ def validate(msg: StructureMessage | MetadataMessage) -> None:
 # ── Cross-artefact reference validation ──────────────────────────────────────
 
 
-def _collect_known_urns(msg: StructureMessage) -> set[str]:
+def _collect_known_urns(artefacts: Iterable[MaintainableArtefact]) -> set[str]:
     """Every artefact URN the message carries, scheme-level and item-level.
 
     **Item URNs are the whole point.** This used to expand items for
@@ -1451,7 +1451,7 @@ def _collect_known_urns(msg: StructureMessage) -> set[str]:
     reference actually carries.
     """
     known: set[str] = set()
-    for artefact in msg.all_artefacts():
+    for artefact in artefacts:
         if not isinstance(artefact, MaintainableArtefact):
             continue
         try:
@@ -1561,7 +1561,7 @@ def _item_id(item: object) -> str | None:
     return item_id if isinstance(item_id, str) and item_id else None
 
 
-def _versions_present(msg: StructureMessage) -> dict[tuple[str, str, str], tuple[str, ...]]:
+def _versions_present(artefacts: Iterable[MaintainableArtefact]) -> dict[tuple[str, str, str], tuple[str, ...]]:
     """`(package, agency, id)` → the versions of it the message carries.
 
     What a version-less reference needs. SDMX writes "no version" for *latest*,
@@ -1577,7 +1577,7 @@ def _versions_present(msg: StructureMessage) -> dict[tuple[str, str, str], tuple
     `Codelist` are both ``codelist``, `Agency` and `AgencyScheme` both ``base``.
     """
     found: dict[tuple[str, str, str], list[str]] = {}
-    for artefact in msg.all_artefacts():
+    for artefact in artefacts:
         if not isinstance(artefact, MaintainableArtefact):
             continue
         found.setdefault((artefact.sdmx_package, artefact.agency_id, artefact.id), []).append(artefact.version)
@@ -1747,20 +1747,41 @@ def validate_references(msg: StructureMessage) -> None:
         ReferenceValidationError: If any Ref fails to resolve.
             ``error.issues`` carries the full accumulated list.
     """
-    known = _collect_known_urns(msg)
-    versions = _versions_present(msg)
+    issues = reference_issues(msg.all_artefacts())
+    if issues:
+        raise ReferenceValidationError(issues)
+
+
+def reference_issues(
+    artefacts: Sequence[MaintainableArtefact], also: Iterable[MaintainableArtefact] = ()
+) -> list[ReferenceIssue]:
+    """Every reference in `artefacts`, and in `also`, that resolves to nothing in `artefacts`.
+
+    `validate_references` over a collection rather than a message, and without
+    the raise. ``also`` holds artefacts whose references are checked without
+    being targets themselves: a bundle's metadata sets, which a
+    `StructureMessage` has no slot for, but whose metadataflows and targets
+    must be in the store (GH-67).
+
+    Args:
+        artefacts: What references may resolve to, each checked too.
+        also: More artefacts to check, which nothing resolves to.
+
+    Returns:
+        One issue per reference that resolves to nothing, in artefact order.
+    """
+    known = _collect_known_urns(artefacts)
+    versions = _versions_present(artefacts)
     issues: list[ReferenceIssue] = []
 
-    for artefact in msg.all_artefacts():
+    for artefact in [*artefacts, *also]:
         cls_name = type(artefact).__name__
         artefact_id = getattr(artefact, "id", "?")
         prefix = f"{cls_name}:{artefact_id}"
         for path, ref in _collect_refs(artefact, prefix):
             if not _resolves(ref.urn, known, versions):
                 issues.append(ReferenceIssue(source=path, target_urn=str(ref.urn)))
-
-    if issues:
-        raise ReferenceValidationError(issues)
+    return issues
 
 
 #: Values `DataType` permits that SDMX-ML 2.1 does not accept on a *component*

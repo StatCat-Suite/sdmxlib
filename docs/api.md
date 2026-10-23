@@ -70,6 +70,18 @@ A bundle published as an artefact: its manifest, a `token` per publication, and 
 
 ---
 
+::: sdmxlib.bundle.check_bundle
+
+---
+
+::: sdmxlib.bundle.Report
+
+---
+
+::: sdmxlib.bundle.Finding
+
+---
+
 ::: sdmxlib.bundle.Manifest
 
 ---
