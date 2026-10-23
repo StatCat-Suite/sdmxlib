@@ -41,10 +41,10 @@ bound lands on `FederalElectoralDistrict` — 4,915,280 rows, close to the
 
 ## Why a copy of the bundle
 
-`LocalRegistry.bundle()` opens `meta.duckdb` read-write and DuckDB's lock is
-exclusive, so pointing it at the real directory would lock what it measures.
-The `data_plane_bundle` fixture copies first — ~3 s for 2.6 GB on APFS — which
-also means this tier exercises the public constructor #387 fixed.
+The `data_plane_bundle` fixture copies the bundle (~3 s for 2.6 GB on APFS) and
+republishes the copy with `write_manifest`, since the real bundle may carry its
+builder's older manifest, which `bundle()` refuses. `bundle()` then opens the
+copy read-only, so this tier exercises the public constructor #387 fixed.
 """
 
 import time

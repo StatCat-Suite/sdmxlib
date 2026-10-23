@@ -116,7 +116,7 @@ def _bind(registry: sl.LocalRegistry) -> Ref[Dataflow]:
 
 def test_a_bundle_with_a_relative_data_path_opens(relative_bundle):
     """The regression: the lazy ATTACH raised a DuckDB `Error`."""
-    registry = sl.LocalRegistry.bundle(relative_bundle)
+    registry = sl.LocalRegistry.build(relative_bundle)
     try:
         flow = _bind(registry)
         assert registry.obs(flow).count() == 1
@@ -135,7 +135,7 @@ def test_the_bundle_reads_from_the_directory_it_was_given(relative_bundle, tmp_p
     moved = tmp_path / "moved-elsewhere"
     shutil.copytree(relative_bundle, moved)
 
-    registry = sl.LocalRegistry.bundle(moved)
+    registry = sl.LocalRegistry.build(moved)
     try:
         flow = _bind(registry)
         assert registry.obs(flow).count() == 1

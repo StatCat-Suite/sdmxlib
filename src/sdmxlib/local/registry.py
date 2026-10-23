@@ -32,14 +32,16 @@ stashes the URI; the DuckDB connection is opened by ``open()`` /
 
 import functools
 import logging
+import os
 import re
+import tempfile
 import threading
 import time
 from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 from contextlib import contextmanager
 from importlib import metadata
 from pathlib import Path
-from typing import Final, Literal, Self, cast, overload, override
+from typing import ClassVar, Final, Literal, Self, cast, overload, override
 
 import duckdb
 
@@ -90,7 +92,7 @@ from sdmxlib.session import SessionFactory
 from sdmxlib.storage import readers, resolve, writers
 from sdmxlib.storage._kinds import CLASS_TO_NAME
 from sdmxlib.storage._kinds import NAME_TO_CLASS as _TYPE_REGISTRY
-from sdmxlib.storage._manifest import MANIFEST_NAME, Manifest, read_manifest
+from sdmxlib.storage._manifest import Manifest, read_manifest
 from sdmxlib.storage.lazy import LazyCodelist, LazyHierarchy
 from sdmxlib.storage.readers import make_lazy_codelist
 from sdmxlib.storage.schema import (
@@ -498,7 +500,7 @@ class _MemoResolver:
 
     __slots__ = ("_memo", "_registry")
 
-    def __init__(self, registry: LocalRegistry, memo: _CallScopedMemo) -> None:
+    def __init__(self, registry: BundleRegistry, memo: _CallScopedMemo) -> None:
         self._registry = registry
         self._memo = memo
 
@@ -527,10 +529,10 @@ def _as_value_key(key: Sequence[object]) -> tuple[str, str, int]:
     return str(set_urn), str(path), sibling
 
 
-type _Resolver = "Callable[[LocalRegistry], Resolver | None]"
+type _Resolver = "Callable[[BundleRegistry], Resolver | None]"
 
 
-def _no_resolver(_registry: LocalRegistry) -> None:
+def _no_resolver(_registry: BundleRegistry) -> None:
     """No way to build a domain object from this root's rows."""
     return
 
@@ -545,38 +547,35 @@ def _no_resolver(_registry: LocalRegistry) -> None:
 _RESOLVERS: dict[str, _Resolver] = {}
 
 
-class LocalRegistry(SessionFactory):
-    """DuckDB-backed persistent SDMX artefact store.
+def _spill_directory() -> Path:
+    """Where a read-only database spills: under the system temp, one directory per process."""
+    return Path(tempfile.gettempdir()) / f"sdmxlib-spill-{os.getpid()}"
 
-    Path-style construction. ``LocalRegistry(uri)`` is cheap — it just stores
-    the URI. The DuckDB connection is opened by ``open()`` (or implicitly
-    by ``__enter__`` when used as a context manager) and closed on exit.
 
-    Provides the same read interface as the read-only `RegistryReader`
-    Protocol, plus mutations (``add``, ``drop``, ``replace``) and direct SQL
-    helpers (``code_map``, ``dsd_code_map``) that avoid creating Python
-    objects.
+class BundleRegistry(SessionFactory):
+    """A DuckDB-backed SDMX store, read-only: what a published bundle opens as.
 
-    Typical usage::
+    It carries the read surface (``get``, ``get_all``, ``query``, ``obs``,
+    ``dsd``, ``binding_for``, ``browse``, the label maps) and opens its
+    database with DuckDB's ``read_only``, so any number of processes may hold
+    one bundle open at once. `LocalRegistry` extends it with the writes.
 
-        with LocalRegistry("store.duckdb") as reg:
-            reg.add(codelist)
-            cl = reg.get(codelist_urn)  # LazyCodelist
+    It has no ``sql()``. Several bundles can share one DuckDB engine, where a
+    fully qualified name reaches any attached catalog, so a request-reachable
+    raw SQL surface would read other bundles. ``connection``, ``execute`` and
+    ``session`` remain for checkers and set-valued filters; they are not for
+    a request path.
 
-    Sharing an existing DuckDB connection (e.g. when co-located with a
-    DuckLake catalog the caller already opened) is done via
-    `from_connection`, which doesn't take ownership of the
-    connection's lifecycle.
+    Open a published bundle with ``LocalRegistry.bundle(path)``.
 
     **Concurrency.** Reads (``get`` / ``get_all`` / ``codelist`` /
     ``code_map`` / ``dsd_code_map`` / ``to_registry`` / ``__contains__``
-    / ``__len__``) are safe to call from multiple threads against the
-    same ``LocalRegistry``. Writes (``add`` / ``drop`` / ``replace`` /
-    ``add_all`` / ``ingest``) are single-threaded — serialise externally
-    if you need to mutate from multiple threads. See
-    ``docs/design/concurrency.md`` for the model and deployment
-    recipes.
+    / ``__len__``) are safe to call from multiple threads against one
+    registry. See ``docs/design/concurrency.md``.
     """
+
+    #: Whether `open` connects read-only. `LocalRegistry` connects read-write.
+    _READ_ONLY: ClassVar[bool] = True
 
     def __init__(
         self,
@@ -716,8 +715,14 @@ class LocalRegistry(SessionFactory):
         """
         if self._conn is not None:
             return self
-        self._conn = duckdb.connect(str(self._uri))
+        self._conn = duckdb.connect(str(self._uri), read_only=self._READ_ONLY)
         self._owns_connection = True
+        if self._READ_ONLY:
+            # A read-only database spills to `<file>.tmp` beside itself by
+            # default: inside a published bundle, and shared by every process
+            # holding it. Each process spills under the system temp instead.
+            spill = str(_spill_directory()).replace("'", "''")
+            self._conn.execute(f"SET temp_directory = '{spill}'")
         self._initialise_schema()
         self._install_default_session_hooks()
         return self
@@ -926,189 +931,6 @@ class LocalRegistry(SessionFactory):
         return cur
 
     # ── Add ───────────────────────────────────────────────────────────────
-
-    @contextmanager
-    def transaction(self) -> Generator[None]:
-        """Group writes into a single DuckDB transaction.
-
-        Wraps any sequence of ``add`` / ``drop`` / ``replace`` calls in
-        one BEGIN/COMMIT so DuckDB amortises WAL flush and index
-        maintenance across the batch instead of paying autocommit per
-        statement::
-
-            with reg.transaction():
-                for artefact in many_artefacts:
-                    reg.add(artefact)
-
-        On exception the transaction rolls back and is re-raised.
-        Either way, the resolver cache is cleared once at exit (a
-        partial in-flight state may have left it stale).
-
-        Nestable as a no-op: re-entering ``transaction`` inside an
-        already-open block does not emit a second BEGIN — DuckDB
-        rejects nested transactions, and silently joining the outer
-        block is what callers usually want.
-
-        When the ``sdmxlib.local.registry`` logger is set to DEBUG,
-        a one-line ``transaction_summary`` is emitted at exit with the
-        artefact-count and total-wall-time breakdown by class.
-        """
-        if self._in_transaction:
-            yield
-            return
-        conn = self._c
-        conn.begin()
-        self._in_transaction = True
-        self._txn_stats.clear()
-        t_start = time.perf_counter() if _logger.isEnabledFor(logging.DEBUG) else 0.0
-        try:
-            yield
-            conn.commit()
-        except BaseException:
-            conn.rollback()
-            raise
-        finally:
-            self._in_transaction = False
-            self._resolve_cache.clear()
-            self._refused.clear()
-            if _logger.isEnabledFor(logging.DEBUG) and self._txn_stats:
-                total = time.perf_counter() - t_start
-                count = sum(n for n, _ in self._txn_stats.values())
-                by_class = " ".join(f"{cls}:{n}({wall:.2f}s)" for cls, (n, wall) in sorted(self._txn_stats.items()))
-                _logger.debug("transaction_summary count=%d wall=%.2f by_class=[%s]", count, total, by_class)
-                self._txn_stats.clear()
-
-    def add(self, artefact: SupportsUrn, *, source_registry: str | None = None) -> None:
-        """Add or replace an artefact in the store.
-
-        ``source_registry`` overrides the registry-level default for this
-        call. ``None`` (default) means "use the registry-level default."
-
-        Clears the resolver cache: any cached resolved target may now be
-        stale (e.g. a freshly-added Codelist replaces the one a previous
-        ``get`` had cached).
-
-        **Single-threaded.** Mutations are not safe under concurrent
-        callers — do not invoke ``add`` / ``drop`` / ``replace`` from
-        multiple threads against the same ``LocalRegistry``. Concurrent reads
-        through ``get`` / ``get_all`` / ``code_map`` etc. are safe. See
-        ``docs/design/concurrency.md``.
-        """
-        # `validate`, and a version only SDMX 2.1 accepts, which has no place
-        # in a 3.x model; the rewrite that admits one is `add_all`'s (#420).
-        check_ingestable([artefact])
-        self._put(artefact, source_registry=source_registry)
-
-    def _put(self, artefact: SupportsUrn, *, source_registry: str | None) -> None:
-        """`add` without `check_ingestable`, for a batch `add_all` has checked whole."""
-        self._refuse_unrepresentable(artefact)
-        tag = source_registry if source_registry is not None else self._source_registry
-        timed = _logger.isEnabledFor(logging.DEBUG)
-        t0 = time.perf_counter() if timed else 0.0
-        writers.put_artefact(self._c, artefact, source_registry=tag)
-        if timed:
-            wall = time.perf_counter() - t0
-            cls = type(artefact).__name__
-            _logger.debug("artefact_persist class=%s wall=%.4f urn=%s", cls, wall, artefact_urn(artefact))
-            if self._in_transaction:
-                n, total = self._txn_stats.get(cls, (0, 0.0))
-                self._txn_stats[cls] = (n + 1, total + wall)
-        # Inside an open ``transaction()`` block the cache is cleared
-        # once at exit; per-call clearing would just churn it.
-        if not self._in_transaction:
-            self._resolve_cache.clear()
-            self._refused.clear()
-
-    def add_all(
-        self,
-        artefacts: Iterable[SupportsUrn],
-        *,
-        source_registry: str | None = None,
-        rewrite_version: VersionRewrite | None = None,
-    ) -> tuple[RewrittenVersion, ...]:
-        """Add multiple artefacts in a single transaction.
-
-        Equivalent to::
-
-            with reg.transaction():
-                for a in artefacts:
-                    reg.add(a, source_registry=source_registry)
-
-        except that every version in the batch is checked before anything is
-        written, so a refusal names every problem at once.
-
-        Convenience wrapper for the common case where the caller has a
-        ready iterable. For interleaved or conditional writes, use
-        ``transaction()`` directly.
-
-        Args:
-            artefacts: The batch.
-            source_registry: Overrides the registry-level default, as for `add`.
-            rewrite_version: Rewrites versions SDMX 3.x cannot hold — a mapping
-                from published to ingested version, or a function such as
-                `sl.versions.strip_leading_zeros`. Applies to every artefact
-                in the batch and every reference inside one, and each rewrite
-                is recorded in the store's `version_rewrite` table.
-
-        Returns:
-            One `RewrittenVersion` per artefact whose version changed.
-
-        Raises:
-            ValidationError: If a version only SDMX 2.1 accepts is left after
-                the rewrite, if the rewrite makes two artefacts one or
-                replaces one the store holds, or if an artefact outside the
-                batch references a version the batch rewrites.
-        """
-        batch, rewrites = rewrite_versions(artefacts, rewrite_version)
-        check_ingestable(batch)
-        with self.transaction():
-            self._refuse_rewrites(batch, rewrites)
-            for artefact in batch:
-                self._put(artefact, source_registry=source_registry)
-            for rewrite in rewrites:
-                writers.put_version_rewrite(self._c, rewrite.urn, rewrite.original)
-        return rewrites
-
-    def _refuse_rewrites(self, batch: list[SupportsUrn], rewrites: tuple[RewrittenVersion, ...]) -> None:
-        """What only the store can know: a collision, or a reference left dangling.
-
-        A URN the store holds *as a rewrite of the same version* is no
-        collision: that is the same batch ingested again.
-        """
-        if not rewrites:
-            return
-        issues: list[ValidationIssue] = []
-        in_batch = {str(artefact_urn(artefact)) for artefact in batch}
-        for rewrite in rewrites:
-            held = self._c.execute(
-                """
-                SELECT r.original_version
-                FROM artefact a LEFT JOIN version_rewrite r ON r.urn = a.urn
-                WHERE a.urn = ?
-                """,
-                [rewrite.urn],
-            ).fetchone()
-            if held is not None and held[0] != rewrite.original:
-                issues.append(collision(rewrite))
-            # Only a reference to a version nothing here answers dangles: under
-            # a mapping such as `{"1.0": "1.0.0"}` a held `1.0` stays, and so
-            # do the references to it.
-            if self._c.execute("SELECT 1 FROM artefact WHERE urn = ?", [original_urn(rewrite)]).fetchone():
-                continue
-            old = SdmxUrn.parse(original_urn(rewrite))
-            # A prefilter: `LIKE` treats `_` in an id as a wildcard, and the
-            # exact test is `names`, on the parsed URN.
-            candidates = self._c.execute(
-                "SELECT source_urn, target_urn FROM artefact_ref WHERE target_urn LIKE ?",
-                [f"%={old.agency}:{old.id}({old.version})%"],
-            ).fetchall()
-            issues.extend(
-                dangling(source, rewrite)
-                for source, target in candidates
-                if source not in in_batch and names(SdmxUrn.parse(target), str(old))
-            )
-        if issues:
-            raise ValidationError(issues)
 
     # ── Get ───────────────────────────────────────────────────────────────
 
@@ -1414,44 +1236,6 @@ class LocalRegistry(SessionFactory):
         """
         return resolve.resolve_hcode_keys(self._require_open(), keys, annotations=annotations)
 
-    def sql(self, text: str, **params: object) -> RawSql:
-        """Run raw SQL against this registry's layout — the escape hatch.
-
-        Two things at once. A terminal:
-
-            reg.sql("SELECT agency_id, count(*) FROM sdmx.artefact GROUP BY 1").collect()
-
-        and a single-column relation the structural DSL can splice:
-
-            urns = reg.sql("SELECT urn FROM sdmx.artefact WHERE resource_id LIKE $p", p="CL_%")
-            reg.query(sl.q.dataflow).filter(sl.q.dataflow.urn.is_in(urns))
-
-        Deliberately a *different method on a different object* from `filter`.
-        The structural DSL still never accepts text; this is visibly not it at
-        the call site, which is the property that ban was protecting.
-
-        **Values are parameters, never interpolation.** Placeholders are
-        `$name` and every one needs a matching keyword argument. Name columns
-        through `sl.schema` rather than as literal strings, so a raw query is
-        coupled to the layout and a schema change is a loud failure.
-
-        Anything reached often through here is a candidate for the DSL — that
-        is what the hatch is for.
-
-        Args:
-            text: One SQL statement, with `$name` placeholders for values.
-            params: A value per placeholder.
-
-        Returns:
-            A lazy `RawSql`. Nothing has run yet.
-
-        Raises:
-            RawSqlError: If the SQL will not parse, is more than one statement,
-                or its placeholders and arguments do not correspond.
-            RuntimeError: If the registry is closed.
-        """
-        return prepare(self._require_open(), text, params)
-
     def _resolve_urns_batch[T](self, urns: list[str]) -> list[T]:
         """Load and resolve many artefacts, sharing one call-scoped memo.
 
@@ -1577,59 +1361,57 @@ class LocalRegistry(SessionFactory):
         cls,
         path: str | Path,
         *,
-        source_registry: str | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
-        require_manifest: bool = False,
-    ) -> LocalRegistry:
-        """Open a published bundle — artefacts and observations together.
+    ) -> BundleRegistry:
+        """Open a published bundle, read-only: artefacts and observations together.
 
         The standard layout, which a bundle builder writes and a downstream
         SDMX REST service serves::
 
-            <path>/meta.duckdb      sdmx.* artefacts, including the bindings
-            <path>/lake.ducklake    DuckLake catalog
-            <path>/parquet/         DuckLake-managed observation data
+            <path>/bundle.manifest.json   the manifest, written last
+            <path>/meta.duckdb            sdmx.* artefacts, including the bindings
+            <path>/lake.ducklake          DuckLake catalog
+            <path>/parquet/               DuckLake-managed observation data
 
-        A *constructor, not a type*: a bundle answers exactly what any other
-        local registry answers, so it differs in wiring rather than in method
-        set — §9's rule. The lake is ATTACHed lazily, when something first asks
-        for observations, so opening a bundle to read a codelist costs nothing.
+        **Published means a manifest** (``bundle.manifest.json``,
+        `sdmxlib.bundle`). It is required, read first, and its store schema
+        version checked *before* ``meta.duckdb`` is opened, so a mismatched
+        bundle is refused without the file being touched. It is `manifest`
+        afterwards, whose ``token`` is what a cache keys on.
 
-        **A bundle is never rebuilt.** Its ``meta.duckdb`` is the published
-        record, so one built on another schema version is refused with
-        `StoreSchemaError` rather than emptied.
+        **Read-only.** ``meta.duckdb`` opens with DuckDB's
+        ``read_only`` and the lake attaches ``READ_ONLY``, so any number of
+        processes may hold one bundle open at once, and a checker can run
+        beside a server. The result is a `BundleRegistry`, which has no write
+        methods and no ``sql()``. DuckDB's spill directory is moved outside
+        the bundle, which is never written after publication. Open a bundle
+        directory for building with ``LocalRegistry.build(path)``.
 
-        **The manifest** (``bundle.manifest.json``, `sdmxlib.bundle`) is read
-        when there is one, and its store schema version checked *before*
-        ``meta.duckdb`` is opened, so a mismatched bundle is refused without the
-        file being touched. It is `manifest` afterwards, whose ``token`` is what
-        a cache keys on. A directory without one is an unpublished bundle,
-        which opens unless ``require_manifest``.
+        The lake is ATTACHed lazily, when something first asks for
+        observations, so opening a bundle to read a codelist costs nothing.
 
         Args:
             path: The bundle directory.
-            source_registry: Provenance tag for artefacts added later.
-            resolve_cache_items: As the constructor.
-            require_manifest: Refuse a bundle with no manifest.
+            resolve_cache_items: As the `LocalRegistry` constructor.
 
         Returns:
-            An open registry over the bundle.
+            An open, read-only registry over the bundle.
 
         Raises:
             StoreSchemaError: If the bundle was built on another schema version.
-            ManifestError: If ``require_manifest`` and there is no manifest, or
-                the manifest is malformed or in a format this build cannot read.
+            ManifestError: If there is no manifest, or it is malformed or in a
+                format this build cannot read.
         """
-        root = Path(path) if isinstance(path, str) else path
-        manifest = read_manifest(root) if require_manifest or (root / MANIFEST_NAME).exists() else None
-        if manifest is not None and manifest.schema_version != SCHEMA_VERSION:
+        root = Path(path)
+        manifest = read_manifest(root)
+        if manifest.schema_version != SCHEMA_VERSION:
             msg = (
                 f"{root} is a bundle on store schema {manifest.schema_version} (its manifest says so), "
                 f"and this sdmxlib ({_sdmxlib_version()}) reads schema {SCHEMA_VERSION}, so it was not "
                 f"opened. Rebuild it from its source with this sdmxlib, or read it with the one that built it."
             )
             raise StoreSchemaError(msg)
-        registry = cls._over_bundle(root, source_registry=source_registry, resolve_cache_items=resolve_cache_items)
+        registry = BundleRegistry._over_bundle(root, resolve_cache_items=resolve_cache_items)
         registry._manifest = manifest
         return registry.open()
 
@@ -1640,11 +1422,11 @@ class LocalRegistry(SessionFactory):
         *,
         source_registry: str | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
-    ) -> LocalRegistry:
-        """An unopened registry wired to a bundle's layout, its manifest unread.
+    ) -> Self:
+        """An unopened registry of this class wired to a bundle's layout, its manifest unread.
 
-        `bundle` opens it after checking the manifest; the manifest writer
-        opens it to count what a manifest is about to describe.
+        `bundle` opens a read-only one after checking the manifest;
+        `LocalRegistry.build` and the manifest writer open a writable one.
         """
         registry = cls(
             root / "meta.duckdb",
@@ -1662,10 +1444,11 @@ class LocalRegistry(SessionFactory):
         # the caller stating where the bundle is *now*, and the layout above
         # fixes `parquet/` relative to it. The catalog's remembered path is
         # provenance, not truth.
+        read_only = ", READ_ONLY" if cls._READ_ONLY else ""
         registry._attach = {
             "lake": (
                 f"'ducklake:{root / 'lake.ducklake'}'",
-                f"(DATA_PATH '{root / 'parquet'}/', OVERRIDE_DATA_PATH true)",
+                f"(DATA_PATH '{root / 'parquet'}/', OVERRIDE_DATA_PATH true{read_only})",
             )
         }
         return registry
@@ -1772,66 +1555,6 @@ class LocalRegistry(SessionFactory):
             )
             raise KeyError(msg)
         return self._data_plane().obs(binding, dsd=self.dsd(flow))
-
-    def scan_csv(self, source: str | Path | bytes) -> ObsQuery:
-        """An SDMX-CSV file's observations, as a query — the structure this registry holds.
-
-        The file names its own structure (``STRUCTURE`` / ``STRUCTURE_ID``,
-        or 1.0's ``DATAFLOW``), and it is looked up here, so what is needed
-        is the dataflow and its structure — not a binding, and not rows::
-
-            with sl.LocalRegistry(":memory:") as reg:
-                reg.add_all([codelists, concepts, dsd, flow])
-                obs = reg.scan_csv("exr.csv")
-                obs.pivot()
-
-        The same `ObsQuery` `obs(flow)` returns, over the file's
-        rows: filters, `pivot`, `validate`, the sinks. A path is read in place
-        on every query; bytes are loaded once. See `sdmxlib.local._scan`.
-
-        Args:
-            source: An SDMX-CSV file, or its bytes.
-
-        Returns:
-            An `ObsQuery` over the file, lazy until a terminal.
-
-        Raises:
-            ValueError: If the file names no structure, or one this registry
-                cannot resolve; or if it names a data structure rather than a
-                dataflow or provision agreement — an observation query is over
-                a dataflow, and a structure alone does not say which.
-        """
-        structure, flow = _resolve_structure(source, self)
-        if flow is None:
-            msg = (
-                f"this file names the data structure {structure.id}, not a dataflow — an observation query is "
-                "over a dataflow, and a structure alone does not say which. Name the dataflow in the file "
-                "(STRUCTURE=dataflow), or a provision agreement for it."
-            )
-            raise ValueError(msg)
-        return scan_csv_into(self._data_plane(), source, dsd=structure, dataflow=flow)
-
-    def scan_json(self, source: str | Path | bytes) -> ObsQuery:
-        """An SDMX-JSON data message's observations, as a query — the structure this registry holds.
-
-        Either version, 1.0 or 2.0, told apart by its envelope. The message
-        names its dataflow by a ``rel="dataflow"`` link, which is looked up
-        here, as `scan_csv` looks up a file's ``STRUCTURE_ID``. JSON does not
-        stream, so the message is decoded and its rows loaded once.
-
-        Args:
-            source: An SDMX-JSON data message, or its bytes.
-
-        Returns:
-            An `ObsQuery` over the message's observations.
-
-        Raises:
-            ValueError: If the message is not an SDMX-JSON data message, names
-                no dataflow, or names one this registry does not hold.
-        """
-        frame, urn = read_observations(source)
-        dsd, flow = resolve_flow(urn, self.get)
-        return scan_frame_into(self._data_plane(), frame, dsd=dsd, dataflow=flow)
 
     def browse(self) -> list[DataflowEntry]:
         """Every dataflow this registry holds rows for.
@@ -2419,30 +2142,6 @@ class LocalRegistry(SessionFactory):
 
     # ── Mutations ─────────────────────────────────────────────────────────
 
-    def drop(self, urn: SdmxUrn[object]) -> bool:
-        """Remove an artefact by URN. Returns True if it existed.
-
-        Clears the resolver cache (cached resolved targets may reference
-        the dropped artefact).
-
-        **Single-threaded** — see `add`.
-        """
-        result = writers.drop_artefact(self._c, str(urn))
-        self._resolve_cache.clear()
-        self._refused.clear()
-        return result
-
-    def replace(self, old_urn: SdmxUrn[object], new: SupportsUrn) -> None:
-        """Remove the old artefact and add the new one.
-
-        Each leg clears the resolver cache via `add` / `drop`;
-        the net effect is a single fully-cleared cache at the end.
-
-        **Single-threaded** — see `add`.
-        """
-        writers.drop_artefact(self._c, str(old_urn))
-        self.add(new)
-
     # ── Refusals ──────────────────────────────────────────────────────────
 
     @property
@@ -2513,19 +2212,6 @@ class LocalRegistry(SessionFactory):
 
     # ── Bulk ──────────────────────────────────────────────────────────────
 
-    def ingest(
-        self,
-        registry: InMemoryRegistry,
-        *,
-        source_registry: str | None = None,
-    ) -> None:
-        """Copy all artefacts from an `InMemoryRegistry` into this store.
-
-        ``source_registry`` overrides the registry-level default for this
-        bulk import.
-        """
-        self.add_all(registry._store.values(), source_registry=source_registry)
-
     # ── Escape hatch ──────────────────────────────────────────────────────
 
     def to_registry(self) -> InMemoryRegistry:
@@ -2544,6 +2230,383 @@ class LocalRegistry(SessionFactory):
                 if obj is not None:
                     reg.add(obj)
         return reg
+
+
+class LocalRegistry(BundleRegistry):
+    """DuckDB-backed persistent SDMX artefact store: `BundleRegistry`'s reads plus the writes.
+
+    Path-style construction. ``LocalRegistry(uri)`` is cheap — it just stores
+    the URI. The DuckDB connection is opened by ``open()`` (or implicitly
+    by ``__enter__`` when used as a context manager) and closed on exit.
+
+    Typical usage::
+
+        with LocalRegistry("store.duckdb") as reg:
+            reg.add(codelist)
+            cl = reg.get(codelist_urn)  # LazyCodelist
+
+    Sharing an existing DuckDB connection (e.g. when co-located with a
+    DuckLake catalog the caller already opened) is done via
+    `from_connection`, which doesn't take ownership of the
+    connection's lifecycle. ``LocalRegistry.build(path)`` opens a bundle
+    directory for building; ``LocalRegistry.bundle(path)`` opens a published
+    one, read-only, as a `BundleRegistry`.
+
+    **Concurrency.** Reads are safe from multiple threads, as on
+    `BundleRegistry`. Writes (``add`` / ``drop`` / ``replace`` /
+    ``add_all`` / ``ingest``) are single-threaded — serialise externally
+    if you need to mutate from multiple threads. See
+    ``docs/design/concurrency.md`` for the model and deployment
+    recipes.
+    """
+
+    _READ_ONLY: ClassVar[bool] = False
+
+    @classmethod
+    def build(
+        cls,
+        path: str | Path,
+        *,
+        source_registry: str | None = None,
+        resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
+    ) -> Self:
+        """Open a bundle directory for building: writable, wired to the bundle layout.
+
+        ``meta.duckdb`` and the lake (``lake.ducklake`` over ``parquet/``) as
+        `bundle` wires them, but read-write and with no manifest required: a
+        builder writes artefacts and observations here, then publishes with
+        `sdmxlib.bundle.write_manifest`. `fetch_bundle`, `synthetic_bundle`
+        and `fold_overlays` build through it. Readers open the result with
+        ``LocalRegistry.bundle(path)``.
+
+        Args:
+            path: The bundle directory; it must exist.
+            source_registry: Provenance tag for the artefacts added.
+            resolve_cache_items: As the constructor.
+
+        Returns:
+            An open, writable registry over the bundle directory.
+        """
+        root = Path(path)
+        return cls._over_bundle(root, source_registry=source_registry, resolve_cache_items=resolve_cache_items).open()
+
+    @contextmanager
+    def transaction(self) -> Generator[None]:
+        """Group writes into a single DuckDB transaction.
+
+        Wraps any sequence of ``add`` / ``drop`` / ``replace`` calls in
+        one BEGIN/COMMIT so DuckDB amortises WAL flush and index
+        maintenance across the batch instead of paying autocommit per
+        statement::
+
+            with reg.transaction():
+                for artefact in many_artefacts:
+                    reg.add(artefact)
+
+        On exception the transaction rolls back and is re-raised.
+        Either way, the resolver cache is cleared once at exit (a
+        partial in-flight state may have left it stale).
+
+        Nestable as a no-op: re-entering ``transaction`` inside an
+        already-open block does not emit a second BEGIN — DuckDB
+        rejects nested transactions, and silently joining the outer
+        block is what callers usually want.
+
+        When the ``sdmxlib.local.registry`` logger is set to DEBUG,
+        a one-line ``transaction_summary`` is emitted at exit with the
+        artefact-count and total-wall-time breakdown by class.
+        """
+        if self._in_transaction:
+            yield
+            return
+        conn = self._c
+        conn.begin()
+        self._in_transaction = True
+        self._txn_stats.clear()
+        t_start = time.perf_counter() if _logger.isEnabledFor(logging.DEBUG) else 0.0
+        try:
+            yield
+            conn.commit()
+        except BaseException:
+            conn.rollback()
+            raise
+        finally:
+            self._in_transaction = False
+            self._resolve_cache.clear()
+            self._refused.clear()
+            if _logger.isEnabledFor(logging.DEBUG) and self._txn_stats:
+                total = time.perf_counter() - t_start
+                count = sum(n for n, _ in self._txn_stats.values())
+                by_class = " ".join(f"{cls}:{n}({wall:.2f}s)" for cls, (n, wall) in sorted(self._txn_stats.items()))
+                _logger.debug("transaction_summary count=%d wall=%.2f by_class=[%s]", count, total, by_class)
+                self._txn_stats.clear()
+
+    def add(self, artefact: SupportsUrn, *, source_registry: str | None = None) -> None:
+        """Add or replace an artefact in the store.
+
+        ``source_registry`` overrides the registry-level default for this
+        call. ``None`` (default) means "use the registry-level default."
+
+        Clears the resolver cache: any cached resolved target may now be
+        stale (e.g. a freshly-added Codelist replaces the one a previous
+        ``get`` had cached).
+
+        **Single-threaded.** Mutations are not safe under concurrent
+        callers — do not invoke ``add`` / ``drop`` / ``replace`` from
+        multiple threads against the same ``LocalRegistry``. Concurrent reads
+        through ``get`` / ``get_all`` / ``code_map`` etc. are safe. See
+        ``docs/design/concurrency.md``.
+        """
+        # `validate`, and a version only SDMX 2.1 accepts, which has no place
+        # in a 3.x model; the rewrite that admits one is `add_all`'s (#420).
+        check_ingestable([artefact])
+        self._put(artefact, source_registry=source_registry)
+
+    def _put(self, artefact: SupportsUrn, *, source_registry: str | None) -> None:
+        """`add` without `check_ingestable`, for a batch `add_all` has checked whole."""
+        self._refuse_unrepresentable(artefact)
+        tag = source_registry if source_registry is not None else self._source_registry
+        timed = _logger.isEnabledFor(logging.DEBUG)
+        t0 = time.perf_counter() if timed else 0.0
+        writers.put_artefact(self._c, artefact, source_registry=tag)
+        if timed:
+            wall = time.perf_counter() - t0
+            cls = type(artefact).__name__
+            _logger.debug("artefact_persist class=%s wall=%.4f urn=%s", cls, wall, artefact_urn(artefact))
+            if self._in_transaction:
+                n, total = self._txn_stats.get(cls, (0, 0.0))
+                self._txn_stats[cls] = (n + 1, total + wall)
+        # Inside an open ``transaction()`` block the cache is cleared
+        # once at exit; per-call clearing would just churn it.
+        if not self._in_transaction:
+            self._resolve_cache.clear()
+            self._refused.clear()
+
+    def add_all(
+        self,
+        artefacts: Iterable[SupportsUrn],
+        *,
+        source_registry: str | None = None,
+        rewrite_version: VersionRewrite | None = None,
+    ) -> tuple[RewrittenVersion, ...]:
+        """Add multiple artefacts in a single transaction.
+
+        Equivalent to::
+
+            with reg.transaction():
+                for a in artefacts:
+                    reg.add(a, source_registry=source_registry)
+
+        except that every version in the batch is checked before anything is
+        written, so a refusal names every problem at once.
+
+        Convenience wrapper for the common case where the caller has a
+        ready iterable. For interleaved or conditional writes, use
+        ``transaction()`` directly.
+
+        Args:
+            artefacts: The batch.
+            source_registry: Overrides the registry-level default, as for `add`.
+            rewrite_version: Rewrites versions SDMX 3.x cannot hold — a mapping
+                from published to ingested version, or a function such as
+                `sl.versions.strip_leading_zeros`. Applies to every artefact
+                in the batch and every reference inside one, and each rewrite
+                is recorded in the store's `version_rewrite` table.
+
+        Returns:
+            One `RewrittenVersion` per artefact whose version changed.
+
+        Raises:
+            ValidationError: If a version only SDMX 2.1 accepts is left after
+                the rewrite, if the rewrite makes two artefacts one or
+                replaces one the store holds, or if an artefact outside the
+                batch references a version the batch rewrites.
+        """
+        batch, rewrites = rewrite_versions(artefacts, rewrite_version)
+        check_ingestable(batch)
+        with self.transaction():
+            self._refuse_rewrites(batch, rewrites)
+            for artefact in batch:
+                self._put(artefact, source_registry=source_registry)
+            for rewrite in rewrites:
+                writers.put_version_rewrite(self._c, rewrite.urn, rewrite.original)
+        return rewrites
+
+    def _refuse_rewrites(self, batch: list[SupportsUrn], rewrites: tuple[RewrittenVersion, ...]) -> None:
+        """What only the store can know: a collision, or a reference left dangling.
+
+        A URN the store holds *as a rewrite of the same version* is no
+        collision: that is the same batch ingested again.
+        """
+        if not rewrites:
+            return
+        issues: list[ValidationIssue] = []
+        in_batch = {str(artefact_urn(artefact)) for artefact in batch}
+        for rewrite in rewrites:
+            held = self._c.execute(
+                """
+                SELECT r.original_version
+                FROM artefact a LEFT JOIN version_rewrite r ON r.urn = a.urn
+                WHERE a.urn = ?
+                """,
+                [rewrite.urn],
+            ).fetchone()
+            if held is not None and held[0] != rewrite.original:
+                issues.append(collision(rewrite))
+            # Only a reference to a version nothing here answers dangles: under
+            # a mapping such as `{"1.0": "1.0.0"}` a held `1.0` stays, and so
+            # do the references to it.
+            if self._c.execute("SELECT 1 FROM artefact WHERE urn = ?", [original_urn(rewrite)]).fetchone():
+                continue
+            old = SdmxUrn.parse(original_urn(rewrite))
+            # A prefilter: `LIKE` treats `_` in an id as a wildcard, and the
+            # exact test is `names`, on the parsed URN.
+            candidates = self._c.execute(
+                "SELECT source_urn, target_urn FROM artefact_ref WHERE target_urn LIKE ?",
+                [f"%={old.agency}:{old.id}({old.version})%"],
+            ).fetchall()
+            issues.extend(
+                dangling(source, rewrite)
+                for source, target in candidates
+                if source not in in_batch and names(SdmxUrn.parse(target), str(old))
+            )
+        if issues:
+            raise ValidationError(issues)
+
+    def sql(self, text: str, **params: object) -> RawSql:
+        """Run raw SQL against this registry's layout — the escape hatch.
+
+        Two things at once. A terminal:
+
+            reg.sql("SELECT agency_id, count(*) FROM sdmx.artefact GROUP BY 1").collect()
+
+        and a single-column relation the structural DSL can splice:
+
+            urns = reg.sql("SELECT urn FROM sdmx.artefact WHERE resource_id LIKE $p", p="CL_%")
+            reg.query(sl.q.dataflow).filter(sl.q.dataflow.urn.is_in(urns))
+
+        Deliberately a *different method on a different object* from `filter`.
+        The structural DSL still never accepts text; this is visibly not it at
+        the call site, which is the property that ban was protecting.
+
+        **Values are parameters, never interpolation.** Placeholders are
+        `$name` and every one needs a matching keyword argument. Name columns
+        through `sl.schema` rather than as literal strings, so a raw query is
+        coupled to the layout and a schema change is a loud failure.
+
+        Anything reached often through here is a candidate for the DSL — that
+        is what the hatch is for.
+
+        Args:
+            text: One SQL statement, with `$name` placeholders for values.
+            params: A value per placeholder.
+
+        Returns:
+            A lazy `RawSql`. Nothing has run yet.
+
+        Raises:
+            RawSqlError: If the SQL will not parse, is more than one statement,
+                or its placeholders and arguments do not correspond.
+            RuntimeError: If the registry is closed.
+        """
+        return prepare(self._require_open(), text, params)
+
+    def scan_csv(self, source: str | Path | bytes) -> ObsQuery:
+        """An SDMX-CSV file's observations, as a query — the structure this registry holds.
+
+        The file names its own structure (``STRUCTURE`` / ``STRUCTURE_ID``,
+        or 1.0's ``DATAFLOW``), and it is looked up here, so what is needed
+        is the dataflow and its structure — not a binding, and not rows::
+
+            with sl.LocalRegistry(":memory:") as reg:
+                reg.add_all([codelists, concepts, dsd, flow])
+                obs = reg.scan_csv("exr.csv")
+                obs.pivot()
+
+        The same `ObsQuery` `obs(flow)` returns, over the file's
+        rows: filters, `pivot`, `validate`, the sinks. A path is read in place
+        on every query; bytes are loaded once. See `sdmxlib.local._scan`.
+
+        Args:
+            source: An SDMX-CSV file, or its bytes.
+
+        Returns:
+            An `ObsQuery` over the file, lazy until a terminal.
+
+        Raises:
+            ValueError: If the file names no structure, or one this registry
+                cannot resolve; or if it names a data structure rather than a
+                dataflow or provision agreement — an observation query is over
+                a dataflow, and a structure alone does not say which.
+        """
+        structure, flow = _resolve_structure(source, self)
+        if flow is None:
+            msg = (
+                f"this file names the data structure {structure.id}, not a dataflow — an observation query is "
+                "over a dataflow, and a structure alone does not say which. Name the dataflow in the file "
+                "(STRUCTURE=dataflow), or a provision agreement for it."
+            )
+            raise ValueError(msg)
+        return scan_csv_into(self._data_plane(), source, dsd=structure, dataflow=flow)
+
+    def scan_json(self, source: str | Path | bytes) -> ObsQuery:
+        """An SDMX-JSON data message's observations, as a query — the structure this registry holds.
+
+        Either version, 1.0 or 2.0, told apart by its envelope. The message
+        names its dataflow by a ``rel="dataflow"`` link, which is looked up
+        here, as `scan_csv` looks up a file's ``STRUCTURE_ID``. JSON does not
+        stream, so the message is decoded and its rows loaded once.
+
+        Args:
+            source: An SDMX-JSON data message, or its bytes.
+
+        Returns:
+            An `ObsQuery` over the message's observations.
+
+        Raises:
+            ValueError: If the message is not an SDMX-JSON data message, names
+                no dataflow, or names one this registry does not hold.
+        """
+        frame, urn = read_observations(source)
+        dsd, flow = resolve_flow(urn, self.get)
+        return scan_frame_into(self._data_plane(), frame, dsd=dsd, dataflow=flow)
+
+    def drop(self, urn: SdmxUrn[object]) -> bool:
+        """Remove an artefact by URN. Returns True if it existed.
+
+        Clears the resolver cache (cached resolved targets may reference
+        the dropped artefact).
+
+        **Single-threaded** — see `add`.
+        """
+        result = writers.drop_artefact(self._c, str(urn))
+        self._resolve_cache.clear()
+        self._refused.clear()
+        return result
+
+    def replace(self, old_urn: SdmxUrn[object], new: SupportsUrn) -> None:
+        """Remove the old artefact and add the new one.
+
+        Each leg clears the resolver cache via `add` / `drop`;
+        the net effect is a single fully-cleared cache at the end.
+
+        **Single-threaded** — see `add`.
+        """
+        writers.drop_artefact(self._c, str(old_urn))
+        self.add(new)
+
+    def ingest(
+        self,
+        registry: InMemoryRegistry,
+        *,
+        source_registry: str | None = None,
+    ) -> None:
+        """Copy all artefacts from an `InMemoryRegistry` into this store.
+
+        ``source_registry`` overrides the registry-level default for this
+        bulk import.
+        """
+        self.add_all(registry._store.values(), source_registry=source_registry)
 
 
 def _drain_ref_containers(

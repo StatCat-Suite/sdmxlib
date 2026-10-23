@@ -10,6 +10,7 @@ from pathlib import Path
 import duckdb
 
 import sdmxlib as sl
+from sdmxlib.bundle import Producer, write_manifest
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure, Dimension, Measure
@@ -48,4 +49,10 @@ def make_bundle(root: Path, rows: int, *, extra: tuple[SupportsUrn, ...] = ()) -
     with sl.LocalRegistry(root / "meta.duckdb") as reg:
         reg.add_all([*extra, DSD, FLOW])
         reg.add(DataflowBinding.from_dsd(DSD, dataflow=Ref.to(FLOW), schema="d", table="obs", database_role="lake"))
+    return root
+
+
+def publish(root: Path) -> Path:
+    """`root` published with `write_manifest`, so `LocalRegistry.bundle` opens it (GH-122)."""
+    write_manifest(root, bundle_id=root.name, producer=Producer(name="tests", version="0"))
     return root

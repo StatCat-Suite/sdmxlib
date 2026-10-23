@@ -223,7 +223,7 @@ def fold_overlays(
     root = Path(path)
     previous = read_manifest(root)
     plan = _Plan(overlays, merge or {})
-    with LocalRegistry.bundle(root, require_manifest=True) as reg:
+    with LocalRegistry.build(root) as reg:
         loaded = [a for a in reg.to_registry()._store.values() if isinstance(a, MaintainableArtefact)]
         for artefact in loaded:
             changed = plan.artefact(artefact)

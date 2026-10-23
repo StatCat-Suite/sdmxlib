@@ -65,7 +65,7 @@ Example:
 import duckdb
 from attrs import evolve, frozen
 
-from sdmxlib.local.registry import LocalRegistry
+from sdmxlib.local.registry import BundleRegistry
 from sdmxlib.model.annotations import Annotation, Annotations
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.ref import artefact_urn
@@ -221,7 +221,7 @@ def _accumulate(
 
 
 def _resolve_conn(
-    registry: LocalRegistry,
+    registry: BundleRegistry,
     conn: duckdb.DuckDBPyConnection | None,
 ) -> duckdb.DuckDBPyConnection:
     """The explicit ``conn`` or the registry's own DuckDB connection."""
@@ -241,7 +241,7 @@ def _resolve_conn(
 
 
 def build_dsd_metadata_map(
-    registry: LocalRegistry,
+    registry: BundleRegistry,
     *,
     conn: duckdb.DuckDBPyConnection | None = None,
 ) -> dict[str, list[DsdMetadataLink]]:
@@ -316,7 +316,7 @@ ORDER BY mt.target_urn, mt.set_urn
 
 
 def build_metadata_target_links(
-    registry: LocalRegistry,
+    registry: BundleRegistry,
     *,
     conn: duckdb.DuckDBPyConnection | None = None,
 ) -> dict[str, list[str]]:

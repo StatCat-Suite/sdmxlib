@@ -28,6 +28,7 @@ from sdmxlib.local.registry import LocalRegistry
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.concept import Concept
 from sdmxlib.model.ref import Ref
+from tests.support.bundles import publish
 
 pytestmark = pytest.mark.unit
 
@@ -211,7 +212,7 @@ def test_a_bundle_opens_artefacts_and_observations_together(tmp_path) -> None:
         )
         writer.add(DataflowBinding.from_dsd(dsd, dataflow=Ref.to(flow), schema="data", table="obs"))
 
-    with LocalRegistry.bundle(tmp_path) as reg:
+    with LocalRegistry.bundle(publish(tmp_path)) as reg:
         assert [e.binding.table_location for e in reg.browse()] == ["data.obs"]
         obs = reg.obs(flow.urn)
         assert obs.filter(obs.col("REF_AREA") == "QC").frame().to_dicts() == [{"REF_AREA": "QC", "OBS_VALUE": 2.0}]
@@ -223,7 +224,7 @@ def test_a_plain_registry_attaches_no_lake(tmp_path) -> None:
     one to read a codelist must not pay for a DuckLake extension."""
     with LocalRegistry(tmp_path / "plain.duckdb") as reg:
         assert reg._attach is None
-    with LocalRegistry.bundle(tmp_path) as bundled:
+    with LocalRegistry.build(tmp_path) as bundled:
         assert "lake" in (bundled._attach or {})
 
 

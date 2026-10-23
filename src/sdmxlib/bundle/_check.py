@@ -12,7 +12,7 @@ import duckdb
 from attrs import frozen
 
 from sdmxlib.bundle._write import sha256_of
-from sdmxlib.local.registry import LocalRegistry
+from sdmxlib.local.registry import BundleRegistry, LocalRegistry
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.metadataset import MetadataSet
@@ -68,7 +68,7 @@ class Report:
 
 #: An extension's check: given the bundle root, its manifest and an open
 #: registry over it, what is wrong with the extension's part of it.
-type Check = Callable[[Path, Manifest, LocalRegistry], Iterable[Finding]]
+type Check = Callable[[Path, Manifest, BundleRegistry], Iterable[Finding]]
 
 
 def check_bundle(path: str | Path, *, references: bool = True, extensions: Mapping[str, Check] | None = None) -> Report:
@@ -140,10 +140,15 @@ def _files(root: Path, manifest: Manifest) -> Iterable[Finding]:
         elif sha256_of(found) != entry.sha256:
             yield Finding("files", entry.path, "contents differ from the manifest's sha256")
     for extra in on_disk:
-        yield Finding("files", extra, "in the bundle but not in the manifest")
+        if extra.endswith(".wal"):
+            # A database was not checkpointed before the manifest: its log holds
+            # committed rows the database file's sha256 does not cover (GH-122).
+            yield Finding("files", extra, "a write-ahead log: its database was not checkpointed before publishing")
+        else:
+            yield Finding("files", extra, "in the bundle but not in the manifest")
 
 
-def _lake(root: Path, reg: LocalRegistry) -> list[Finding]:
+def _lake(root: Path, reg: BundleRegistry) -> list[Finding]:
     """What DuckLake records against what is on disk, asked through its own functions."""
     reg._data_plane()  # ATTACHes the lake
     conn = reg.connection
@@ -185,7 +190,7 @@ def _relative(root: Path, file: Path) -> str:
         return str(file)
 
 
-def _bindings(manifest: Manifest, reg: LocalRegistry) -> list[Finding]:
+def _bindings(manifest: Manifest, reg: BundleRegistry) -> list[Finding]:
     stored = {str(b.dataflow.urn): b for b in reg.get_all(DataflowBinding)}
     declared = {b.dataflow: b.observations for b in manifest.bindings}
     findings = [
@@ -207,7 +212,7 @@ def _bindings(manifest: Manifest, reg: LocalRegistry) -> list[Finding]:
     return findings
 
 
-def _references(reg: LocalRegistry) -> list[Finding]:
+def _references(reg: BundleRegistry) -> list[Finding]:
     loaded = [a for a in reg.to_registry()._store.values() if isinstance(a, MaintainableArtefact)]
     structural = [a for a in loaded if not isinstance(a, MetadataSet)]
     metadata = [a for a in loaded if isinstance(a, MetadataSet)]

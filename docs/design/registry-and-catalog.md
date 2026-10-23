@@ -232,10 +232,14 @@ were a structural reader, artefacts the registry already holds, and a store the
 registry already owns.
 
 **Types, not a factory.** A new type when a method appears or disappears; a
-constructor when only arguments differ. So `LocalRegistry.bundle(path)` rather
-than a `BundleRegistry`, and `FmrRegistry` stays a subclass of `RestRegistry`.
-The reason is that `sql()`, `add()` and `download()` must be *absent*, not
-raising, and only a type can do that. (`write_observations()` was on this list;
+constructor when only arguments differ. So `FmrRegistry` stays a subclass of
+`RestRegistry`. The reason is that `sql()`, `add()` and `download()` must be
+*absent*, not raising, and only a type can do that. The same rule made
+`BundleRegistry` a type (GH-122): a published bundle opens read-only, so its
+`add()` and `sql()` disappear, and `LocalRegistry.bundle(path)` returns a
+`BundleRegistry`, which `LocalRegistry` extends with the writes. Until then a
+bundle differed from a store only in wiring, and `bundle(path)` returned a
+`LocalRegistry`. (`write_observations()` was on this list;
 it turned out to belong to neither registry but to `DuckDBDataStore` — §5.17.)
 
 **`RestRegistry` contains a `LocalRegistry`, and does not inherit one.** It
@@ -545,8 +549,8 @@ bundle.add(sl.DataflowBinding.from_dsd(dsd, dataflow=flow_ref, schema="data", ta
 "Fetch remotely, land locally" is a chain whose cache is the artefact being
 built. Confirms the type split too: `add` is absent on
 `RestRegistry`, and `write_observations` is on the data store rather than any
-registry. `LocalRegistry.bundle(path)` *opens* a published bundle; it has no
-`create=` — the bundle is written by its builder and opened here.
+registry. `LocalRegistry.bundle(path)` *opens* a published bundle, read-only;
+its builder writes it through `LocalRegistry.build(path)`.
 
 ### 4.5 Browse, which stays separate
 

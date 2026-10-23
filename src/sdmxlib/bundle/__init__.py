@@ -22,7 +22,7 @@ Example:
 
     manifest = write_manifest("out/cenprof", bundle_id="cenprof-2021",
                               producer=Producer(name="my-builder", version="1.2"))
-    with sl.LocalRegistry.bundle("out/cenprof", require_manifest=True) as reg:
+    with sl.LocalRegistry.bundle("out/cenprof") as reg:
         reg.manifest.token
 """
 

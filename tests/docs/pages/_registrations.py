@@ -21,6 +21,7 @@ import attrs
 import polars as pl
 
 import sdmxlib as sl
+from sdmxlib.bundle import Producer, write_manifest
 from sdmxlib.local.data_store import DuckDBDataStore
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.ref import Ref
@@ -539,8 +540,8 @@ def _facade() -> Generator[dict[str, Any]]:
             )
             writer.add(DataflowBinding.from_dsd(dsd, dataflow=Ref.to(flow), schema="data", table="obs"))
 
+        write_manifest(bundle, bundle_id="tutorial", producer=Producer(name="docs-tests", version="0"))
         registry = sl.LocalRegistry.bundle(bundle)
-        registry.open()
         try:
             namespace = base()
             namespace["reg"] = registry

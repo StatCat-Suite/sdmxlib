@@ -32,8 +32,8 @@ bundle; a *reader* opens one.
   `lake.ducklake` itself, so `parquet/` MAY hold no files even when the lake
   holds rows.
 - `bundle.manifest.json` marks the bundle as published. A directory without
-  one is an unpublished bundle: `LocalRegistry.bundle` opens it, unless the
-  caller passes `require_manifest=True`.
+  one is an unpublished bundle: `LocalRegistry.bundle` refuses it, and a
+  builder opens it with `LocalRegistry.build`.
 - A producer MAY add files of its own, such as a search index. The manifest
   MUST list them like any other file (§2), so they MUST be in place before
   the manifest is written.
@@ -142,6 +142,19 @@ A cache or an HTTP `ETag` MAY key on `token`. When overlays are applied at
 serve time, it MUST key on the effective token instead (§5.4).
 
 ## 4. Store and observations
+
+### Opening read-only
+
+A reader MUST open a published bundle read-only: `meta.duckdb` with DuckDB's
+`read_only`, and the lake attached `READ_ONLY`. Any number of processes MAY
+then hold one bundle open at once, and a checker MAY run beside a server.
+A published bundle is never written, so a reader MUST also move DuckDB's
+spill directory outside it: a read-only database spills to `<file>.tmp`
+beside itself by default.
+
+`LocalRegistry.bundle(path)` does this and returns a `BundleRegistry`, which
+has the read methods and no writes and no `sql()`. `LocalRegistry.build(path)`
+opens the same layout writable, for a builder.
 
 ### The schema check
 
@@ -311,8 +324,12 @@ every check.
 ## 7. Producing a bundle
 
 1. Write `meta.duckdb` at this sdmxlib's store schema, for example through
-   `LocalRegistry.bundle(path)`, and the observations into the bundle's lake,
-   adding a `DataflowBinding` for each dataflow.
+   `LocalRegistry.build(path)`, and the observations into the bundle's lake,
+   adding a `DataflowBinding` for each dataflow. Close every connection that
+   wrote: DuckDB checkpoints a database when its last connection closes, and
+   a write-ahead log left beside a database holds rows its checksum does not
+   cover. `write_manifest` refuses while one remains, and the `files` check
+   names one found in a published bundle.
 2. Add any files of your own.
 3. Call `write_manifest(path, bundle_id=..., producer=...)` last, with
    `product`, `extensions` and `provenance` as needed. It inventories the

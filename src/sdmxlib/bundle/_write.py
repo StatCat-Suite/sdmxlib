@@ -14,6 +14,7 @@ from sdmxlib.storage._manifest import (
     BindingCount,
     BundleFile,
     Manifest,
+    ManifestError,
     Producer,
     Provenance,
     encode_manifest,
@@ -89,6 +90,17 @@ def write_manifest(
         counts = tuple(
             BindingCount(dataflow=str(b.dataflow.urn), observations=reg.obs(b.dataflow).count()) for b in bindings
         )
+    # Closing the last connection checkpoints a database, so a log left by a
+    # builder that exited is gone by now. One that remains means another
+    # connection still holds the database for writing, and its log holds
+    # committed rows the database file's sha256 would not cover (GH-122).
+    logs = sorted(p.relative_to(root).as_posix() for p in root.rglob("*.wal"))
+    if logs:
+        msg = (
+            f"{root} still has a write-ahead log ({', '.join(logs)}): a connection holds one of its "
+            f"databases open for writing. Close every builder before publishing."
+        )
+        raise ManifestError(msg)
     manifest = Manifest(
         format_version=FORMAT_VERSION,
         bundle_id=bundle_id,

@@ -40,7 +40,7 @@ from sdmxlib.session import SessionFactory, completed
 
 if TYPE_CHECKING:
     # `local.registry` imports this module at runtime: a cycle.
-    from sdmxlib.local.registry import LocalRegistry
+    from sdmxlib.local.registry import BundleRegistry
 
 
 class DuckLakeVersionError(Exception):  # mirrors RegistryUnavailable etc.
@@ -160,7 +160,7 @@ class DuckDBDataStore(SessionFactory):
         self._attach = attach
         self._extensions = extensions
         self._azure_credentials = azure_credentials
-        self._registry: LocalRegistry | None = None
+        self._registry: BundleRegistry | None = None
         self._conn: duckdb.DuckDBPyConnection | None = None
         self._owns_connection = True
         # Per-thread read cursor (#80); see LocalRegistry._read_cursor.
@@ -200,7 +200,7 @@ class DuckDBDataStore(SessionFactory):
         return self._conn
 
     @property
-    def registry(self) -> LocalRegistry | None:
+    def registry(self) -> BundleRegistry | None:
         """The `LocalRegistry` whose connection is shared, or ``None``.
 
         Set when the data store was constructed via `from_registry`;
@@ -223,7 +223,7 @@ class DuckDBDataStore(SessionFactory):
     @classmethod
     def from_registry(
         cls,
-        registry: LocalRegistry,
+        registry: BundleRegistry,
         *,
         attach: dict[str, str | tuple[str, str]] | None = None,
         extensions: list[str] | None = None,

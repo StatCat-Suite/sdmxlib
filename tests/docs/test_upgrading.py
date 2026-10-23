@@ -63,7 +63,16 @@ def test_a_name_the_guide_calls_removed_is_removed(name: str) -> None:
 
 @pytest.mark.parametrize(
     "name",
-    ["LocalRegistry", "RestRegistry", "FederatedRegistry", "DataFormat", "RegistryUnavailable", "widen_key", "q"],
+    [
+        "LocalRegistry",
+        "BundleRegistry",
+        "RestRegistry",
+        "FederatedRegistry",
+        "DataFormat",
+        "RegistryUnavailable",
+        "widen_key",
+        "q",
+    ],
 )
 def test_a_replacement_the_guide_names_exists(name: str) -> None:
     assert hasattr(sl, name), f"upgrading.md points readers at sl.{name}"
@@ -175,3 +184,18 @@ def test_a_ref_finds_what_its_urn_finds() -> None:
 def test_key_slot_ids_replaced_key_dimension_ids() -> None:
     assert hasattr(sl.DataStructure, "key_slot_ids")
     assert not hasattr(sl.DataStructure, "key_dimension_ids")
+
+
+def test_bundle_reads_and_build_writes() -> None:
+    """The guide's read-only bundle section (GH-122): `bundle()` lost
+    `require_manifest=` and returns a type with no writes; `build()` opens for
+    writing."""
+    parameters = inspect.signature(
+        sl.LocalRegistry.bundle, annotation_format=annotationlib.Format.FORWARDREF
+    ).parameters
+    assert "require_manifest" not in parameters
+    assert issubclass(sl.LocalRegistry, sl.BundleRegistry)
+    assert [
+        name for name in ("add", "add_all", "drop", "replace", "ingest", "sql") if hasattr(sl.BundleRegistry, name)
+    ] == []
+    assert callable(sl.LocalRegistry.build)

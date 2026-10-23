@@ -19,6 +19,49 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## A published bundle opens read-only, as a `BundleRegistry`
+
+`LocalRegistry.bundle(path)` opens a **published** bundle, read-only, and
+returns a `BundleRegistry`. That type has the read methods (`get`,
+`get_all`, `query`, `obs`, `dsd`, `binding_for`, `browse`, the label maps)
+and none of the writes: no `add`, `add_all`, `drop`, `replace`, `ingest`,
+`scan_csv`, `scan_json`, `transaction` or `sql`. The database opens with
+DuckDB's `read_only`, so any number of processes can hold one bundle open, and
+`check_bundle` can run beside a server.
+
+- A directory without `bundle.manifest.json` is refused with `ManifestError`,
+  and `require_manifest=` is gone.
+- A builder opens the directory with `LocalRegistry.build(path)`, which is
+  writable and returns a `LocalRegistry`, then publishes with
+  `write_manifest`.
+- `write_manifest` refuses while a connection still holds one of the bundle's
+  databases for writing (a `.wal` file remains). Close every builder first.
+- A `check_bundle` extension receives a `BundleRegistry`. Annotate its
+  parameter `sl.BundleRegistry`; one annotated `LocalRegistry` no longer
+  type-checks.
+- Code that only reads should accept `sl.BundleRegistry`. `LocalRegistry` is
+  a subclass, so a writable store passes too.
+
+```python
+from sdmxlib.bundle import Producer, write_manifest
+from sdmxlib.testing import Dim, Shape, synthetic_bundle
+
+# Stands in for your builder's output.
+synthetic_bundle("out/read-only", Shape(dimensions=(Dim(codes=10),), observations=50))
+
+# Building: writable. A builder adds and replaces through `build`.
+with sl.LocalRegistry.build("out/read-only") as builder:
+    flow = builder.browse()[0].dataflow_urn
+
+write_manifest("out/read-only", bundle_id="read-only", producer=Producer(name="my-builder", version="1.2"))
+
+# Reading: read-only, and any number of processes at once.
+with sl.LocalRegistry.bundle("out/read-only") as published:
+    assert published.obs(flow).count() == 50
+```
+
+---
+
 ## sdmxlib owns `bundle.manifest.json`
 
 0.72.0 publishes a bundle as an artefact with `sdmxlib.bundle.write_manifest`, and
@@ -49,8 +92,9 @@ write_manifest(
 )
 ```
 
-Write it last, once nothing else in the directory will change. A bundle without
-a manifest still opens; pass `require_manifest=True` to refuse one.
+Write it last, once nothing else in the directory will change. A directory
+without a manifest is unpublished: `LocalRegistry.bundle` refuses it (see the
+section above).
 
 A manifest whose store schema differs from this sdmxlib's is refused with
 `sl.StoreSchemaError` before `meta.duckdb` is touched, as a store is (below).
