@@ -58,6 +58,8 @@ Persistent DuckDB-backed structural store, the in-memory registry, and the data 
 
 A bundle published as an artefact: its manifest, a `token` per publication, and a checksum per file (GH-66).
 
+The format itself, field by field, is [the bundle format](bundle.md).
+
 ::: sdmxlib.bundle
 
 ---
