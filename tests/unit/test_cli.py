@@ -60,6 +60,17 @@ def test_the_cli_is_locked_to_sdmxlibs_version() -> None:
     assert f"sdmxlib=={library['version']}" in cli["dependencies"]
 
 
+def test_the_cli_ships_sdmxlibs_licence_and_links() -> None:
+    """One licence, one set of project links: the CLI's copy of `LICENSE` is
+    sdmxlib's, since PEP 639 will not let it point outside `cli/`."""
+    library = tomllib.loads((_ROOT / "pyproject.toml").read_text())["project"]
+    cli = tomllib.loads((_ROOT / "cli" / "pyproject.toml").read_text())["project"]
+    assert (library["license"], library["license-files"]) == ("Apache-2.0", ["LICENSE"])
+    assert (cli["license"], cli["license-files"]) == (library["license"], library["license-files"])
+    assert (_ROOT / "cli" / "LICENSE").read_bytes() == (_ROOT / "LICENSE").read_bytes()
+    assert cli["urls"] == library["urls"]
+
+
 @pytest.mark.parametrize(
     ("text", "urn"),
     [
