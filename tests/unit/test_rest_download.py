@@ -61,8 +61,7 @@ def _serving(
 
 
 def test_the_format_is_sent_as_accept() -> None:
-    """The whole point. `Accept` used to be hardcoded, so this is the
-    assertion that the argument does anything at all."""
+    """`Accept` used to be hardcoded; this asserts the argument sets it."""
     with _registry(_serving()) as (reg, seen):
         reg.download(_FLOW, fmt=sl.DataFormat.SDMX_CSV_2_0_0)
     assert seen[-1].headers["accept"] == "application/vnd.sdmx.data+csv;version=2.0.0"

@@ -188,7 +188,7 @@ SDMX requires one, and which languages it is in is yours to say.
     counts coincide would be read with **every value one slot out**, which
     returns a different slice with no error at all (#337).
 
-**The two modes differ in one thing**, and the difference is the whole point:
+The two modes differ only in the filter applied while enumerating a component:
 
 | mode | filter while enumerating component `C` |
 | --- | --- |

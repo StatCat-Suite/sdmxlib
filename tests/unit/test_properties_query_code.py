@@ -6,11 +6,11 @@ it reads `Code` objects and re-derives ancestry from `parent_id` — so it is an
 independent specification of what these predicates mean, and it can hold the
 new compiler to the same account.
 
-That is the whole point of writing this before the migration rather than after.
-`query/_compile.py` is the module that will replace four DSLs; it has example
-tests and no generative ones, while the module it replaces has ~1,500 lines of
-differential property. Deleting the covered thing first and porting the tests
-afterwards would run the migration through the gap.
+That is why this is written before the migration. `query/_compile.py` is the
+module that will replace four DSLs; it has example tests and no generative
+ones, while the module it replaces has ~1,500 lines of differential property.
+Deleting the covered thing first and porting the tests afterwards would run
+the migration through the gap.
 
 **What does not port, and why that is not a hole.** The oracle models five
 recursive predicates — `has_ancestor`, `is_ancestor_of`, `has_no_narrower`,

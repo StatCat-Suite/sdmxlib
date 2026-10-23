@@ -298,7 +298,7 @@ def item_urn_of[T: SdmxItem](scheme: SupportsUrn, item_cls: type[T], item_id: st
 
     The inverse of `scheme_urn_of`, and the constructive half of what #404 and
     #405 made the library able to *read*. Agency, id and version come off the
-    scheme rather than from the caller, which is the whole point: a URN built by
+    scheme rather than from the caller, because a URN built by
     hand can name a parent that does not exist — six keyword arguments, three of
     them restating the scheme — and `validate_references` will now correctly
     report that as broken (#407).

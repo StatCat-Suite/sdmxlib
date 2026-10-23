@@ -616,7 +616,7 @@ an explicit ask, and both are also enforced by `.claude/settings.json` — but t
 rule stands on its own, agent or human.
 
 **1. Checker configuration is protected.** `pyrefly.toml` and `ruff.toml` are
-not edited without asking first. The whole point of a checker gate is that it
+not edited without asking first. A checker gate exists so that it
 doesn't move when the code makes it inconvenient. Loosening a rule to make a run
 go green is the failure mode these files exist to prevent. Ask, explain what the
 rule is catching and why it should change, and let the maintainer decide.

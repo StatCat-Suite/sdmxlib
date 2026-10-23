@@ -41,8 +41,8 @@ covers, which is the normal case when a module is split across many files.
         tests/unit/test_query_select.py,tests/unit/test_query_group_by.py
 
 Each argument after the module is one comma-separated group. Budget a few
-minutes per group. Keep groups to two or three files: that is what keeps the
-parent light, and it is the whole point.
+minutes per group. Keep groups to two or three files: that keeps the
+parent light.
 """
 
 import argparse

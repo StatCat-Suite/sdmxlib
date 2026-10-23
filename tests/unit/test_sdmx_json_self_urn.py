@@ -61,7 +61,7 @@ def _self_link(artefact: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def test_every_written_maintainable_carries_its_own_urn() -> None:
-    """The whole point, asserted across every collection in the message.
+    """Every written maintainable carries its own URN, in every collection.
 
     A count, not a spot check: a writer that emitted the link for codelists and
     not for maps would pass any single-artefact test, and the maps are exactly

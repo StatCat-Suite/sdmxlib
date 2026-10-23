@@ -16,7 +16,7 @@ Attributes are counted as `path/@name`. `xml:lang` is `@lang`, so a `Name` in
 three languages written back in one shows as two lost `Name/@lang`. A boolean
 attribute is counted with its value — `@isFinal=true` — because dropping a
 `false` the schema defaults to `false` loses nothing, and dropping a `true`
-loses the whole point of the attribute. The few non-boolean attributes with a
+loses the attribute's meaning. The few non-boolean attributes with a
 schema default (`_KEYED_BY_VALUE`) are counted with their value for the same
 reason: an omitted `maxOccurs="1"` is still `1`.
 

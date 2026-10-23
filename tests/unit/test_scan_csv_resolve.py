@@ -222,8 +222,8 @@ def test_the_kinds_are_the_specs_three() -> None:
 def test_written_then_read_back_through_the_registry(
     structures: _Structures, registry: sl.LocalRegistry, tmp_path: Path
 ) -> None:
-    """The whole point, end to end: write with the artefact, read with the
-    registry, and nobody formats or parses the short URN by hand."""
+    """End to end: write with the artefact, read with the registry, and
+    nobody formats or parses the short URN by hand."""
     import pyarrow as pa
 
     from sdmxlib.formats.sdmx_csv.writer import write_sdmx_csv

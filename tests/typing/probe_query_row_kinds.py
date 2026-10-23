@@ -81,7 +81,7 @@ assert_type(q.dsd.components.id == "FREQ", Pred[DsdRow])
 assert_type(q.codelist.codes.id, Str[CodelistRow])
 
 # `.any()` takes CHILD-rooted predicates and yields a PARENT-rooted one. That
-# asymmetry is the whole point: it is what makes the grouping expressible.
+# asymmetry makes the grouping expressible.
 assert_type(q.dsd.components.any(q.component.id == "FREQ"), Pred[DsdRow])
 assert_type(
     q.dsd.components.any(
@@ -164,7 +164,7 @@ assert_type(_query.qualify(_rank == 1), Query[DsdRow, DataStructure])
 assert_type(_query.select(n=_rank), Select[DsdRow, DataStructure])
 assert_type(q.dsd.id.count().over(q.dsd.agency), Win[DsdRow])
 
-# and these must not type-check — this is the whole point of the split:
+# and these must not type-check, which is what the split is for:
 #
 #   _query.filter(_rank == 1)              # WinPred into filter -> use qualify
 #   _query.qualify(q.dsd.id == "CPI")      # Pred into qualify   -> use filter

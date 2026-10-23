@@ -8,7 +8,7 @@ fail a test**: every existing round-trip asserts that what it put in came back,
 over a fixture that did not happen to set the missing field.
 
 So the field list is derived from `attrs.fields()` rather than written out. A
-field added tomorrow is covered the day it lands, which is the whole point; a
+field added tomorrow is covered the day it lands; a
 hand-listed version is what already exists and is what missed all three.
 
 **Values are distinguishable, not merely valid.** `is_multilingual=False`

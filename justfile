@@ -62,6 +62,13 @@ check-docstrings:
     set -euo pipefail
     uv run python tools/check_docstrings.py --check
 
+# Fail on the two Writing style rules a pattern can check exactly (GH-84): a
+# Markdown heading that is a question, and a fixed list of colon reveals and
+# hook clauses. The rest of the rules need a reader; see CLAUDE.md.
+[group('dev')]
+check-prose:
+    uv run python tools/check_prose.py --check
+
 # Fail if `Any` in src/ grows past the recorded baseline (#284).
 #
 # `ANN401` bans an `Any`-annotated parameter, which is what CLAUDE.md claims
@@ -102,7 +109,7 @@ generate-allowed-children:
 
 # Lint + typecheck (inner dev loop)
 [group('dev')]
-check: lint checkfmt check-docstrings check-any check-indexes typecheck
+check: lint checkfmt check-docstrings check-prose check-any check-indexes typecheck
 
 # Format code
 [group('dev')]

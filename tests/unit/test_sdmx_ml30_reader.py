@@ -734,7 +734,7 @@ def test_two_hierarchies_over_one_codelist_parsed():
     assert set(msg.hierarchies.ids()) == {"H_GEO_ADMIN", "H_GEO_STAT"}
     admin = msg.hierarchies["H_GEO_ADMIN"]
     stat = msg.hierarchies["H_GEO_STAT"]
-    # Same codes, different parent graphs — that's the whole point of #135.
+    # Same codes, different parent graphs (#135).
     assert admin.descendants("CA") == ["ON", "TOR", "QC"]
     assert stat.descendants("CA") == ["ON", "QC", "TOR"]
     # ON has a descendant under admin (TOR) but not under statistical.

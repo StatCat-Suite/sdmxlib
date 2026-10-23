@@ -831,7 +831,7 @@ def _federation() -> Generator[dict[str, Any]]:
 
     **The one page that has to silence a warning, and it is the stub's.** The
     page opens an ECB registry and then an ESTAT one over a shared
-    `cache.duckdb`, which is the whole point of cache-mode federation. Really
+    `cache.duckdb`, the case cache-mode federation exists for. Really
     those two publish disjoint agencies, so the store never sees one URN from
     both. `serving` answers every provider with the *same* fixture, so it does
     — and `storage.writers` correctly warns that a spine row is being

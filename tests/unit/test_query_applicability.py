@@ -226,7 +226,7 @@ def test_the_tiebreak_is_unique_on_data_built_to_break_it(reg: sl.LocalRegistry)
 
 
 def test_the_relation_agrees_with_the_python_resolver(reg: sl.LocalRegistry) -> None:
-    """The differential check, and the whole point of stage 2.
+    """The differential check stage 2 exists for.
 
     `applicable_hierarchies` walks objects; the view walks rows. They are
     different implementations of one rule, and #372 exists because two such

@@ -2,7 +2,7 @@
 
 **Derived from the SDMX specification, not from `sdmxlib.model.validation`.**
 
-That distinction is the whole point. If `sdmx_ids()` were built from the same
+The strategies depend on that distinction. If `sdmx_ids()` were built from the same
 regex `validation.py` enforces, then "every generated id validates" would be a
 tautology — the strategy and the code under test would share a single source of
 truth, and a wrong regex would produce a passing property. The alphabets below

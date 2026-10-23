@@ -175,7 +175,7 @@ class Recorder:
 
     def print(self, *args: object, sep: str = " ", end: str = "\n", **_: object) -> None:
         """Signature-compatible with `print` for the arguments pages use."""
-        line = sys._getframe(1).f_lineno  # the caller's line is the whole point
+        line = sys._getframe(1).f_lineno  # keyed by the caller's line
         self.by_line.setdefault(line, []).append(sep.join(str(a) for a in args))
 
     def mismatches(self, claims: list[Claim]) -> list[str]:

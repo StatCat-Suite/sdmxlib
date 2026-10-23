@@ -145,7 +145,7 @@ def test_counting_and_filtering(plane) -> None:
 
 
 def test_the_statement_reads_the_bound_table_and_columns(plane) -> None:
-    """The whole point, in one assertion: SDMX ids in, physical SQL out."""
+    """SDMX ids in, physical SQL out, in one assertion."""
     store, binding, obs = plane
     compiled = store.obs(binding).filter(obs["REF_AREA"] == "CA").to_sql()
     assert "memory.data.obs" in compiled.sql
@@ -574,7 +574,7 @@ def test_an_explicit_alias_still_wins(plane) -> None:
 
 
 def test_a_projected_frame_can_be_labelled(plane) -> None:
-    """The whole point of the two changes, end to end.
+    """Both changes, end to end.
 
     Before: the frame came back with `GEO`, `label()` matched no component and
     silently returned it unchanged, and `catalog.query(with_labels=True)` was a

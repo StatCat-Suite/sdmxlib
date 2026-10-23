@@ -417,7 +417,7 @@ class ComponentTable:
         """Fill each observed value's name, ``parent`` and annotations.
 
         Every enumerated component's codes in one `codes_for_all`, over the ids
-        this message observed: the whole point of deferring it here (#410). For
+        this message observed, which is why it is deferred to here (#410). For
         a DSD from a store that is one read, not three statements per component
         (#441). Annotations are registered in position order, so the pool's
         indices are deterministic for a given input.

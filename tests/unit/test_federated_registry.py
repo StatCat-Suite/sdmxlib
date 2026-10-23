@@ -439,8 +439,8 @@ def test_partial_false_against_a_local_source_is_refused():
 
 
 def test_a_mixed_federation_refuses_only_the_route_that_cannot_answer():
-    """The refusal is per-URN, not per-federation — which is the whole point
-    of routing by agency. The same call is fine for ESTAT and refused for a
+    """The refusal is per-URN, not per-federation, because the federation
+    routes by agency. The same call is fine for ESTAT and refused for a
     locally-authored agency, and a federation that refused either always or
     never would be wrong half the time."""
     handler, _ = _rest_serving_by_detail()
