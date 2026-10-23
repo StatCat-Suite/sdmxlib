@@ -186,7 +186,7 @@ SDMX requires one, and which languages it is in is yours to say.
     There is no default, deliberately. A key of the other shape is usually
     caught by its length — but a structure whose measure dimension makes the
     counts coincide would be read with **every value one slot out**, which
-    returns a different slice with no error at all (#337).
+    returns a different slice with no error at all.
 
 The two modes differ only in the filter applied while enumerating a component:
 

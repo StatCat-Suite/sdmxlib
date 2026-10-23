@@ -148,6 +148,15 @@ from 1, so a bare number would collide with the GitLab one the tree already
 means. GitHub links `GH-N` by itself. The 31 issues still open at the move were
 re-created on GitHub, each carrying a "Moved from GitLab #N" line.
 
+**Living text states current behaviour** (GH-85). Comments, docstrings and
+the docs say what the code does now; history belongs in git, the CHANGELOG
+and the issue. Keep a reference only where the reader needs the issue: an
+open limitation or follow-up, a measurement or decision recorded there, or a
+test pinning a regression. In user docs (`docs/` outside `docs/design/`) and
+in public docstrings, which render in the API reference, either link the
+issue in full (`[GitLab #422](https://gitlab.com/pinax-suite/sdmxlib/-/issues/422)`)
+or leave it out. The CHANGELOG and released history are left as written.
+
 ## Commits
 
 Conventional commits, `type(scope): subject`, with the issue as `(GH-N)` at

@@ -2,18 +2,25 @@
 
 Most of those rules need a reader: a scan of the tree found that about a third
 of the "X, not Y" sentences break them and two-thirds correct a real misreading,
-so no pattern can gate them. Two checks are exact, and this runs those:
+so no pattern can gate them. Three checks are exact, and this runs those:
 
 1. **A Markdown heading ending in `?`.** A heading names its section's content.
    GH-84's first step renamed the 17 question headings under `docs/`.
 2. **A fixed phrase list** (`PHRASES`): colon reveals and hook clauses with no
    legitimate use in this tree's prose, such as "the whole point" and "here's
    the". Six were rewritten when this landed.
+3. **A bare issue reference in the user docs** (GH-85): `#N` or `GH-N` in
+   `docs/` outside `docs/design/`. CLAUDE.md's "Issue references" asks user
+   docs to state behaviour, and to link an issue in full when a reader needs
+   it. A Markdown link is removed before the line is read, so a full link and
+   a page anchor such as `(#9-full-example)` pass. GH-85 took out the 106 there.
 
 ## What is read
 
 Headings: the Markdown in `MARKDOWN`, outside code fences. Phrases: that
-Markdown, and every Python, toml and justfile line under `CODE`. CHANGELOG.md
+Markdown, and every Python, toml and justfile line under `CODE`. Issue
+references: the Markdown under `USER_DOCS`, outside code fences, but not under
+`DESIGN_DOCS`. CHANGELOG.md
 and the root `design/archive/` are left out as the historical record.
 
 CLAUDE.md's own "Writing style" section quotes the phrases it bans, so lines
@@ -34,6 +41,9 @@ from pathlib import Path
 MARKDOWN = ("docs", "README.md", "CLAUDE.md", "cli/README.md")
 #: Trees and files whose lines are read for the phrase check.
 CODE = ("src", "cli/src", "tests", "tools", "bench", "justfile", "pyproject.toml", "ruff.toml", "pyrefly.toml")
+#: The user docs, read for bare issue references; the design docs are left out.
+USER_DOCS = "docs"
+DESIGN_DOCS = "docs/design"
 #: The section of CLAUDE.md that states the rules, and so quotes what they ban.
 RULES_FILE = "CLAUDE.md"
 RULES_HEADING = "## Writing style"
@@ -54,6 +64,11 @@ PHRASES = (
     r"\b(less|more) than you'?d (think|expect)\b",
 )
 PHRASE_RE = re.compile("|".join(PHRASES), re.IGNORECASE)
+
+#: An issue reference: GitLab's ``#N`` or GitHub's ``GH-N``, not inside a word or a path.
+ISSUE_RE = re.compile(r"(?<![\w/#&])(?:#\d+|GH-\d+)\b")
+#: A Markdown link or image, whose text and target may name an issue in full.
+LINK_RE = re.compile(r"!?\[[^\]]*\]\([^)]*\)")
 
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 HEADING_RE = re.compile(r"^#{1,6}\s+(.*?)\s*(\{[^}]*\})?\s*$")
@@ -98,6 +113,11 @@ def _exempt_rules(rel: str, lines: list[tuple[int, str]]) -> list[tuple[int, str
     return kept
 
 
+def _is_user_doc(rel: str) -> bool:
+    """Whether `rel` is a user doc: under `USER_DOCS`, and not under `DESIGN_DOCS`."""
+    return rel.startswith(f"{USER_DOCS}/") and not rel.startswith(f"{DESIGN_DOCS}/")
+
+
 def find(root: Path) -> list[str]:
     """Every finding under `root`, as `path:line: message`.
 
@@ -117,6 +137,8 @@ def find(root: Path) -> list[str]:
                 findings.append(f"{rel}:{number}: heading is a question: {heading.group(1)!r}")
             if match := PHRASE_RE.search(line):
                 findings.append(f"{rel}:{number}: banned phrase {match.group(0)!r}")
+            if _is_user_doc(rel) and (match := ISSUE_RE.search(LINK_RE.sub("", line))):
+                findings.append(f"{rel}:{number}: bare issue reference {match.group(0)!r}; state the fact or link it")
     for path in _files(root, CODE, (".py", ".toml")):
         rel = path.relative_to(root).as_posix()
         for number, line in enumerate(path.read_text(errors="replace").splitlines(), 1):

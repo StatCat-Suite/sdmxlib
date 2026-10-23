@@ -56,7 +56,7 @@ Persistent DuckDB-backed structural store, the in-memory registry, and the data 
 
 ### Bundles
 
-A bundle published as an artefact: its manifest, a `token` per publication, and a checksum per file (GH-66).
+A bundle published as an artefact: its manifest, a `token` per publication, and a checksum per file.
 
 The format itself, field by field, is [the bundle format](bundle.md).
 
@@ -94,7 +94,7 @@ The format itself, field by field, is [the bundle format](bundle.md).
 
 #### Annotation overlays
 
-Display annotations changed without a rebuild, the token a cache keys on when they are applied, and folding them into a bundle (GH-70).
+Display annotations changed without a rebuild, the token a cache keys on when they are applied, and folding them into a bundle.
 
 ::: sdmxlib.bundle.apply_overlays
 
@@ -126,7 +126,7 @@ Display annotations changed without a rebuild, the token a cache keys on when th
 
 ### Synthetic bundles
 
-Conforming bundles of any shape, deterministic from a seed, for tests and stress runs; and the shape of a real one (GH-69).
+Conforming bundles of any shape, deterministic from a seed, for tests and stress runs; and the shape of a real one.
 
 ::: sdmxlib.testing
 

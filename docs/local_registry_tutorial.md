@@ -306,14 +306,14 @@ with sl.LocalRegistry("bis_cbpol.duckdb") as local:
     And when you need full `Code` objects — annotations, `parent_id` — for
     *some* codes, `codelist.codes_for(ids)` builds exactly those in one batched
     read, eager or lazy alike; it is what the SDMX-JSON data writer uses to
-    label the codes a message observed (#410).
+    label the codes a message observed.
 
 ### Running without pandas
 
 sdmxlib does not depend on pandas, and neither does DuckDB. But when pandas is
 **not installed**, DuckDB's Python client retries `import pandas` twice for
 every value it binds as a query parameter — it checks whether the value is
-`pandas.NA` — and never remembers that the import failed (#411). Every
+`pandas.NA` — and never remembers that the import failed. Every
 parameterised read pays it: ~200 failed imports to read one dataflow, and
 binding gets 40-60x slower per value, so a long `is_in` list feels it most.
 Each failed import walks `sys.path`, so a long path makes it worse.
@@ -457,7 +457,7 @@ info = local.resolve_cache_info()
 **The bound counts items.** An entry is a whole artefact, and artefacts
 differ in size by four orders of magnitude — a codelist of 579,951 codes
 retains ~400 MB, an empty dataflow ~0.08 MB. A bound of "256 entries" could
-therefore hold 4.4 GB while reporting 2% full (#386).
+therefore hold 4.4 GB while reporting 2% full.
 
 Measured per item: **~0.7 KB per code and ~2.1 KB per hierarchy node**, so the
 1,000,000-item default is roughly 0.7–2.0 GB. Artefacts holding no items weigh a floor of 64, which is what
