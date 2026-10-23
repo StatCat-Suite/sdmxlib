@@ -189,16 +189,15 @@ class _FIFOCache(dict[str, object]):
         # lock-free plain-dict read, count hits/misses
 ```
 
-**The bound was an entry count until #386, and an entry count was not a
-bound.** Its entries differ in size by four orders of magnitude, so the
+**Until #386 the bound counted entries, which bounded nothing useful.** Its
+entries differ in size by four orders of magnitude, so the
 number said nothing about the only thing it existed to control. On
 the 2021 Census Profile bundle the five largest artefacts total **~4.4 GB and occupy 5 of
 256 slots**: a service could report `size: 5, max_size: 256`, look
 healthy, and be holding 4.4 GB. `caching.md` requires a runtime cache to
-be bounded, and this met the letter of that and nothing else.
+be bounded, and an entry count met that requirement in name only.
 
-The bound is now **items**, and the correspondence to memory is measured
-rather than assumed — `tracemalloc`, in one process so a one-time 4.4 MB
+The bound is now **items**, and the correspondence to memory is measured — `tracemalloc`, in one process so a one-time 4.4 MB
 warm-up is not charged to every artefact:
 
 | artefact | items | retained | bytes/item |
@@ -216,8 +215,8 @@ where an entry count was not.
 
 **Default `resolve_cache_items=1_000_000`** — 0.7 GB of codes to 2.0 GB
 of nodes. It holds either of that bundle's two largest artefacts outright
-but not both at once. The point of the number is not that it is optimal;
-it is that raising it is now a memory decision someone can make.
+but not both at once. The default is a starting point: raising it is now a
+memory decision someone can make.
 
 **A floor of 64 items per entry.** A zero-item artefact still retains
 0.00–0.08 MB, about what 64 items weigh. Without a floor a flood of tiny
@@ -231,7 +230,7 @@ over-budget read evicting the entire working set on its way to evicting
 itself. Refusing keeps resident weight under the bound at every instant.
 `resolve_cache_info()["refused"]` counts them.
 
-**How a large entry actually gets here, which is narrower than it looks.**
+**A large entry arrives by one narrow route.**
 Measured while fixing #386: ordinary reads on the 2021 Census Profile bundle leave the
 cache holding *floor-weight entries only* — a `Metadataflow`, a
 `MetadataStructure`, a `LazyHierarchy`, 64 apiece. #378 rerouted item
@@ -323,8 +322,7 @@ local.resolve_cache_info()
 #  "hits": 9123, "misses": 50, "refused": 0}
 ```
 
-Wire into ops dashboards. **Watch `weight`, not `entries`** — that is the
-whole of #386: an entry is an artefact, artefacts differ in size by four
+Wire into ops dashboards. **Watch `weight`, not `entries`**, as #386 showed: an entry is an artefact, artefacts differ in size by four
 orders of magnitude, and five of them can be 4.4 GB. `entries` is still
 reported because a hit rate is per lookup rather than per item.
 
@@ -405,7 +403,7 @@ used both directions — `to_*` converters (domain → DTO) encoded via a shared
 on read. This replaced the original hand-built `dict[str, Any]` + orjson
 design in **milestone #8**. orjson was removed as a dependency.
 
-**Is validation coupled to serialize?** Yes, again. `serialize()` once took
+**Validation is coupled to serialize again.** `serialize()` once took
 `validate=False` by default, on the reasoning that coupling cost the majority
 of JSON serialize time. That was reversed: #205 found five distinct ways to
 build a message the SDMX schema rejects, and the measured cost is 4–9% of
@@ -414,7 +412,7 @@ and runs `check_serialisable` first, raising one accumulated `ValidationError`
 before any bytes are produced; `validate=False` skips it deliberately. See the
 `serialize` docstring.
 
-**Why the switch to msgspec?** The original decision (below) settled on
+**The switch to msgspec.** The original decision (below) settled on
 dict + orjson and explicitly deferred msgspec. It was revisited because the
 motivation was never purely raw speed:
 
@@ -449,8 +447,8 @@ migrated separately (#183) and benchmarked flat-to-faster on the large case.
 A profile of the migrated writer settled a question the table above left open.
 Both libraries have a domain-model → wire-Struct conversion (`to_*` for us,
 `from_model` for pysdmx) — the encode itself is only ~6% of serialize time in
-each; the conversion is ~90%+. So the residual gap to pysdmx was never "we
-convert and they don't." It was two things:
+each; the conversion is ~90%+. The residual gap to pysdmx came from two
+things:
 
 1. **They are lossy, we are lossless.** pysdmx's model stores one best-match
    `name: str`; its JSON emits only `name`. We model a full
