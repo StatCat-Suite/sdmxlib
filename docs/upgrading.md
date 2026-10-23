@@ -19,6 +19,56 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## sdmxlib owns `bundle.manifest.json`
+
+0.72.0 publishes a bundle as an artefact with `sdmxlib.bundle.write_manifest`, and
+`LocalRegistry.bundle` reads the manifest when one is there. A manifest records:
+
+- a fresh `token` per publication, which caches key on;
+- a sha256 for every file;
+- the observation count per dataflow;
+- the store schema version, checked before `meta.duckdb` is opened.
+
+**A `bundle.manifest.json` that is not sdmxlib's is refused.** A builder that
+wrote its own file under that name, without a `format_version`, now gets
+`sl.ManifestError` when the bundle is opened. Republish the bundle with
+sdmxlib's writer, keeping any fields of your own in `product`:
+
+```python
+from sdmxlib.bundle import Producer, write_manifest
+from sdmxlib.testing import Dim, Shape, synthetic_bundle
+
+# Stands in for your builder's output.
+synthetic_bundle("out/my-bundle", Shape(dimensions=(Dim(codes=10),), observations=50))
+
+write_manifest(
+    "out/my-bundle",
+    bundle_id="my-bundle",
+    producer=Producer(name="my-builder", version="1.2"),
+    product={"vintage": "2021"},
+)
+```
+
+Write it last, once nothing else in the directory will change. A bundle without
+a manifest still opens; pass `require_manifest=True` to refuse one.
+
+A manifest whose store schema differs from this sdmxlib's is refused with
+`sl.StoreSchemaError` before `meta.duckdb` is touched, as a store is (below).
+
+New with it, none of them breaking:
+
+- `check_bundle` checks a bundle against its manifest and itself.
+- `fetch_bundle` lands one dataflow from an SDMX REST source as a bundle.
+- `sdmxlib.testing.synthetic_bundle` and `profile_bundle` build and profile
+  bundles.
+- `apply_overlays`, `effective_token` and `fold_overlays` handle annotation
+  overlays.
+- The command line is a separate package, released with sdmxlib at the same
+  version: `uv tool install sdmxlib-cli` gives `sdmxlib bundle check` and
+  `sdmxlib bundle fetch`.
+
+---
+
 ## A store on another schema version is refused, not emptied
 
 Opening a `LocalRegistry` (or `LocalRegistry.bundle`) whose store holds
