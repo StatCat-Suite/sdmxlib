@@ -1,6 +1,7 @@
 """Publishing a bundle: inventory it, count it, and write its manifest last (GH-66)."""
 
 import hashlib
+import re
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from importlib import metadata
@@ -10,18 +11,22 @@ import duckdb
 
 from sdmxlib.local.registry import LocalRegistry
 from sdmxlib.model.binding import DataflowBinding
+from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.storage._manifest import (
     DATA_PATH,
     FORMAT_VERSION,
     MANIFEST_NAME,
+    ArtefactEntry,
     BindingCount,
     BundleFile,
     Manifest,
     ManifestError,
     Producer,
     Provenance,
+    Tier,
     encode_manifest,
     read_manifest,
+    storage_version_of,
 )
 from sdmxlib.storage.schema import get_schema_version, meta_value
 
@@ -54,28 +59,66 @@ _CHUNK = 1 << 20
 
 def sha256_of(path: Path) -> str:
     """The sha256 of a file, read in chunks so a large one stays out of memory."""
-    digest = hashlib.sha256()
+    return digests_of(path)[0]
+
+
+def digests_of(path: Path) -> tuple[str, str]:
+    """The sha256 and md5 of a file, lowercase hex, from one read in chunks."""
+    sha256, md5 = hashlib.sha256(), hashlib.md5(usedforsecurity=False)
     with path.open("rb") as handle:
         while chunk := handle.read(_CHUNK):
-            digest.update(chunk)
-    return digest.hexdigest()
+            sha256.update(chunk)
+            md5.update(chunk)
+    return sha256.hexdigest(), md5.hexdigest()
 
 
-def inventory(root: Path) -> tuple[BundleFile, ...]:
+#: The publication files a server needs before it is ready (design §7.1).
+_TIER_1 = frozenset({"meta.duckdb", "lake.ducklake"})
+
+
+def tier_of(path: str, root: str, tiers: Mapping[str, Tier]) -> Tier:
+    """A file's placement tier: the longest prefix of `path` in `tiers`, else the default.
+
+    The default is 1 for ``meta.duckdb`` and ``lake.ducklake``, 3 for a data
+    file, and 2 for any other publication file, such as a search index.
+
+    Args:
+        path: The file's ``/``-separated path under its root.
+        root: ``publication`` or ``data``.
+        tiers: Overrides, by path prefix, for publication files.
+
+    Returns:
+        1, 2 or 3.
+    """
+    if root == "data":
+        return 3
+    matches = [prefix for prefix in tiers if path.startswith(prefix)]
+    if matches:
+        return tiers[max(matches, key=len)]
+    return 1 if path in _TIER_1 else 2
+
+
+def inventory(root: Path, tiers: Mapping[str, Tier] | None = None) -> tuple[BundleFile, ...]:
     """Every file in the publication directory `root` but the manifest, sorted by ``/``-separated path.
 
     Args:
         root: The publication directory.
+        tiers: Placement tier overrides by path prefix, as `write_manifest`.
 
     Returns:
-        Each file's path from the root, size and sha256.
+        Each file's path from the root, size, digests and tier.
     """
     skip = {MANIFEST_NAME, f"{MANIFEST_NAME}.tmp"}
     files = sorted(p for p in root.rglob("*") if p.is_file() and p.relative_to(root).as_posix() not in skip)
-    return tuple(
-        BundleFile(path=p.relative_to(root).as_posix(), size=p.stat().st_size, sha256=sha256_of(p), root="publication")
-        for p in files
-    )
+    entries: list[BundleFile] = []
+    for p in files:
+        path = p.relative_to(root).as_posix()
+        sha256, md5 = digests_of(p)
+        tier = tier_of(path, "publication", tiers or {})
+        entries.append(
+            BundleFile(path=path, size=p.stat().st_size, sha256=sha256, md5=md5, root="publication", tier=tier)
+        )
+    return tuple(entries)
 
 
 def lake_files(conn: duckdb.DuckDBPyConnection, data: Path) -> list[str]:
@@ -118,10 +161,59 @@ def _data_inventory(
         size = (data / path).stat().st_size
         earlier = carried.get(path)
         if earlier is not None and earlier.size == size:
-            files.append(BundleFile(path=path, size=size, sha256=earlier.sha256, root="data", carried_from=token))
+            files.append(
+                BundleFile(
+                    path=path,
+                    size=size,
+                    sha256=earlier.sha256,
+                    md5=earlier.md5,
+                    root="data",
+                    tier=3,
+                    carried_from=token,
+                )
+            )
         else:
-            files.append(BundleFile(path=path, size=size, sha256=sha256_of(data / path), root="data"))
+            sha256, md5 = digests_of(data / path)
+            files.append(BundleFile(path=path, size=size, sha256=sha256, md5=md5, root="data", tier=3))
     return files
+
+
+def _ducklake_versions(conn: duckdb.DuckDBPyConnection) -> tuple[str | None, str | None]:
+    """The DuckLake extension's version, and the format the attached ``lake`` catalog records."""
+    (extension,) = conn.execute(
+        "SELECT extension_version FROM duckdb_extensions() WHERE extension_name = 'ducklake'"
+    ).fetchone() or (None,)
+    (spec,) = conn.execute(
+        "SELECT value FROM __ducklake_metadata_lake.ducklake_metadata WHERE key = 'version'"
+    ).fetchone() or (None,)
+    return extension, spec
+
+
+def _artefacts(conn: duckdb.DuckDBPyConnection) -> tuple[ArtefactEntry, ...]:
+    """Every maintainable artefact in the store but the bindings, by URN."""
+    rows = conn.execute(
+        "SELECT urn, is_final, is_partial FROM sdmx.artefact WHERE artefact_type <> 'DataflowBinding' ORDER BY urn"
+    ).fetchall()
+    return tuple(
+        ArtefactEntry(urn=urn, stability="semantic" if final else "legacy", partial=partial)
+        for urn, final, partial in rows
+    )
+
+
+#: A binding's `structural_version` tag: ``AGENCY:ID(VERSION)``.
+_TAG = re.compile(r"^(?P<agency>[^:]+):(?P<id>[^(]+)\((?P<version>[^)]+)\)$")
+
+
+def _structure_urn(binding: DataflowBinding) -> str:
+    """The URN of the data structure a binding was written against, from its tag."""
+    found = _TAG.match(binding.structural_version)
+    if found is None:
+        msg = (
+            f"the binding of {binding.dataflow.urn} records structural_version "
+            f"{binding.structural_version!r}, which is not AGENCY:ID(VERSION)"
+        )
+        raise ManifestError(msg)
+    return str(DataStructure.urn_for(agency=found["agency"], id=found["id"], version=found["version"]))
 
 
 def write_manifest(
@@ -132,6 +224,7 @@ def write_manifest(
     product: dict[str, object] | None = None,
     extensions: dict[str, dict[str, object]] | None = None,
     provenance: Provenance | None = None,
+    tiers: Mapping[str, Tier] | None = None,
 ) -> Manifest:
     """Publish the publication at `path`, which `LocalRegistry.build` started: write its manifest.
 
@@ -157,6 +250,10 @@ def write_manifest(
         product: Producer-specific fields, carried and not interpreted.
         extensions: Sections owned by other packages, by name.
         provenance: Where a fetched bundle came from; `fetch_bundle` supplies it.
+        tiers: Placement tiers for publication files, by path prefix, the
+            longest matching prefix winning: ``{"search/": 2}``. A file no
+            prefix matches is tier 1 for ``meta.duckdb`` and ``lake.ducklake``
+            and 2 otherwise; a data file is always 3.
 
     Returns:
         The manifest written.
@@ -182,12 +279,20 @@ def write_manifest(
         schema_version = get_schema_version(reg.connection) or ""
         bindings = sorted(reg.get_all(DataflowBinding), key=lambda b: str(b.dataflow.urn))
         counts = tuple(
-            BindingCount(dataflow=str(b.dataflow.urn), observations=reg.obs(b.dataflow).count()) for b in bindings
+            BindingCount(
+                dataflow=str(b.dataflow.urn),
+                observations=reg.obs(b.dataflow).count(),
+                structural_version=_structure_urn(b),
+            )
+            for b in bindings
         )
         referenced: list[str] = []
-        if (root / "lake.ducklake").exists():
+        lake = (root / "lake.ducklake").exists()
+        if lake:
             reg._data_plane()  # ATTACHes the lake
             referenced = lake_files(reg.connection, data)
+        ducklake, spec = _ducklake_versions(reg.connection) if lake else (None, None)
+        artefacts = _artefacts(reg.connection)
     # Closing the last connection checkpoints a database, so a log left by a
     # builder that exited is gone by now. One that remains means another
     # connection still holds the database for writing, and its log holds
@@ -208,9 +313,16 @@ def write_manifest(
         producer=producer,
         sdmxlib_version=metadata.version("sdmxlib"),
         schema_version=schema_version,
+        duckdb_version=duckdb.__version__,
+        duckdb_storage_version=max(
+            storage_version_of(root / name) for name in ("meta.duckdb", "lake.ducklake") if (root / name).exists()
+        ),
+        ducklake_version=ducklake,
+        ducklake_spec_version=spec,
         data_path=DATA_PATH,
-        files=(*_data_inventory(data, referenced, _carried(root, previous), previous), *inventory(root)),
+        files=(*_data_inventory(data, referenced, _carried(root, previous), previous), *inventory(root, tiers)),
         bindings=counts,
+        artefacts=artefacts,
         product=product or {},
         extensions=extensions or {},
         provenance=provenance,

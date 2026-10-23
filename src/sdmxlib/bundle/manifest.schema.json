@@ -3,7 +3,7 @@
   "$defs": {
     "Manifest": {
       "title": "Manifest",
-      "description": "`bundle.manifest.json`: written last, so a directory without one is unpublished.\n\nAttributes:\n    format_version: The manifest format, ``major.minor``.\n    bundle_id: The producer's stable name for the bundle, kept across\n        rebuilds. Identifies *which* bundle, never which publication.\n    token: A UUIDv7 minted when the publication's build starts, and the\n        name of its directory. Changes on every rebuild, never on a read;\n        what a cache or an ETag keys on.\n    previous_token: The publication this one extends, or None for the\n        first of its bundle.\n    created_at: When the manifest was written (UTC).\n    producer: What built the bundle.\n    sdmxlib_version: The sdmxlib that wrote the manifest.\n    schema_version: The store schema of ``meta.duckdb``, checked before the\n        file is opened.\n    data_path: Where the data files live, relative to the publication\n        directory: `DATA_PATH`.\n    files: Every file of the publication but the manifest, and every data\n        file its lake catalog references, sorted by root and path.\n    bindings: Observation counts per bound dataflow, sorted by URN.\n    product: Producer-specific fields, carried and not interpreted.\n    extensions: Sections owned by other packages (statcatlib's search\n        index, say), by name; carried and not interpreted.\n    provenance: Where a fetched bundle came from; None for\n        one built from data the producer holds.",
+      "description": "`bundle.manifest.json`: written last, so a directory without one is unpublished.\n\nAttributes:\n    format_version: The manifest format, ``major.minor``.\n    bundle_id: The producer's stable name for the bundle, kept across\n        rebuilds. Identifies *which* bundle, never which publication.\n    token: A UUIDv7 minted when the publication's build starts, and the\n        name of its directory. Changes on every rebuild, never on a read;\n        what a cache or an ETag keys on.\n    previous_token: The publication this one extends, or None for the\n        first of its bundle.\n    created_at: When the manifest was written (UTC).\n    producer: What built the bundle.\n    sdmxlib_version: The sdmxlib that wrote the manifest.\n    schema_version: The store schema of ``meta.duckdb``, checked before the\n        file is opened.\n    duckdb_version: The DuckDB release that wrote the DuckDB files.\n    duckdb_storage_version: The newest storage version among the DuckDB\n        files, as their headers record it (`storage_version_of`). A reader\n        refuses one newer than its engine before opening any file.\n    ducklake_version: The DuckLake extension that wrote ``lake.ducklake``,\n        or None for a publication without one.\n    ducklake_spec_version: The DuckLake format the catalog records, or\n        None for a publication without one. A reader refuses one newer\n        than its own.\n    data_path: Where the data files live, relative to the publication\n        directory: `DATA_PATH`.\n    files: Every file of the publication but the manifest, and every data\n        file its lake catalog references, sorted by root and path.\n    bindings: Observation counts per bound dataflow, sorted by URN.\n    artefacts: Every maintainable artefact in the store but the\n        bindings, sorted by URN.\n    product: Producer-specific fields, carried and not interpreted.\n    extensions: Sections owned by other packages (statcatlib's search\n        index, say), by name; carried and not interpreted.\n    provenance: Where a fetched bundle came from; None for\n        one built from data the producer holds.",
       "type": "object",
       "properties": {
         "format_version": {
@@ -37,6 +37,32 @@
         "schema_version": {
           "type": "string"
         },
+        "duckdb_version": {
+          "type": "string"
+        },
+        "duckdb_storage_version": {
+          "type": "integer"
+        },
+        "ducklake_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ducklake_spec_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "data_path": {
           "type": "string"
         },
@@ -50,6 +76,12 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/BindingCount"
+          }
+        },
+        "artefacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ArtefactEntry"
           }
         },
         "product": {
@@ -90,9 +122,14 @@
         "producer",
         "sdmxlib_version",
         "schema_version",
+        "duckdb_version",
+        "duckdb_storage_version",
+        "ducklake_version",
+        "ducklake_spec_version",
         "data_path",
         "files",
-        "bindings"
+        "bindings",
+        "artefacts"
       ]
     },
     "Producer": {
@@ -114,7 +151,7 @@
     },
     "BundleFile": {
       "title": "BundleFile",
-      "description": "One file of the bundle: where it is, its size and sha256.\n\nAttributes:\n    path: ``/``-separated, relative to the directory `root` names.\n    size: In bytes.\n    sha256: Of the file's contents.\n    root: ``publication`` for a file in the publication directory,\n        ``data`` for a data file under the manifest's `data_path`.\n    carried_from: The token of the manifest `size` and `sha256` were\n        copied from, for a data file an earlier publication listed; None\n        for one hashed by this publication.",
+      "description": "One file of the bundle: where it is, its digests, and its placement tier.\n\nAttributes:\n    path: ``/``-separated, relative to the directory `root` names.\n    size: In bytes.\n    sha256: Of the file's contents, lowercase hex.\n    md5: Of the file's contents, lowercase hex. The ``Content-MD5`` an\n        upload sets is the base64 of the same digest.\n    root: ``publication`` for a file in the publication directory,\n        ``data`` for a data file under the manifest's `data_path`.\n    tier: The producer's default placement: 1 pulled before a server is\n        ready, 2 pulled lazily to local disk, 3 read remotely by byte range.\n    carried_from: The token of the manifest `size`, `sha256` and `md5`\n        were copied from, for a data file an earlier publication listed;\n        None for one hashed by this publication.",
       "type": "object",
       "properties": {
         "path": {
@@ -126,10 +163,20 @@
         "sha256": {
           "type": "string"
         },
+        "md5": {
+          "type": "string"
+        },
         "root": {
           "enum": [
             "data",
             "publication"
+          ]
+        },
+        "tier": {
+          "enum": [
+            1,
+            2,
+            3
           ]
         },
         "carried_from": {
@@ -148,12 +195,14 @@
         "path",
         "size",
         "sha256",
-        "root"
+        "md5",
+        "root",
+        "tier"
       ]
     },
     "BindingCount": {
       "title": "BindingCount",
-      "description": "How many observations a dataflow's binding holds, as DuckLake counts them.",
+      "description": "How many observations a dataflow's binding holds, as DuckLake counts them.\n\nAttributes:\n    dataflow: The bound dataflow's URN.\n    observations: The row count of the binding's table.\n    structural_version: The URN of the data structure the binding was\n        written against.",
       "type": "object",
       "properties": {
         "dataflow": {
@@ -161,11 +210,39 @@
         },
         "observations": {
           "type": "integer"
+        },
+        "structural_version": {
+          "type": "string"
         }
       },
       "required": [
         "dataflow",
-        "observations"
+        "observations",
+        "structural_version"
+      ]
+    },
+    "ArtefactEntry": {
+      "title": "ArtefactEntry",
+      "description": "One maintainable artefact in the store.\n\nAttributes:\n    urn: Its URN, at its pinned version.\n    stability: ``semantic`` for a final semantic version (three numeric\n        parts, no extension, major at least 1), which SDMX 3.0 holds\n        immutable; ``legacy`` for any other.\n    partial: Whether it is a partial item scheme, a subset of the full one.",
+      "type": "object",
+      "properties": {
+        "urn": {
+          "type": "string"
+        },
+        "stability": {
+          "enum": [
+            "legacy",
+            "semantic"
+          ]
+        },
+        "partial": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "urn",
+        "stability",
+        "partial"
       ]
     },
     "Provenance": {

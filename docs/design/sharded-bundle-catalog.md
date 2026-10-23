@@ -163,7 +163,7 @@ bundles/<bundle_id>/
 
 - Two constructors, two types. `LocalRegistry.build(path)` wires the layout writable (`meta.duckdb`, `labels.duckdb`, the lake with its `DATA_PATH`) and returns `LocalRegistry` with the write surface; `fetch_bundle`, `synthetic_bundle` and `fold_overlays` build through it. `LocalRegistry.bundle(path)` requires `bundle.manifest.json`, opens read-only, and returns `BundleRegistry`, a type carrying `get`, `query`, `obs`, `dsd`, `binding_for` and `browse` and **no `sql()`**: in a shared engine a fully qualified name reaches any attached catalog, `search_path` scopes unqualified names only, so a request-reachable raw SQL surface would read other bundles. The `require_manifest=` argument goes.
 - Read-only open: the DuckDB files with `access_mode=READ_ONLY`, the lake with `ATTACH ... (READ_ONLY, OVERRIDE_DATA_PATH ...)`. Any number of processes may hold a published bundle open. Each process MUST set `temp_directory` outside the publication directory (the default is `<file>.tmp` beside the database, inside the publication).
-- A reader MUST compare `duckdb_storage_version` and `ducklake_spec_version` with its engine before opening any file. It refuses a storage version **newer** than its engine reads (`StoreFormatError`, naming both); older storage versions open, as DuckDB allows. `ducklake_spec_version` and the sdmxlib `schema_version` stay exact-match.
+- A reader MUST compare `duckdb_storage_version` and `ducklake_spec_version` with its engine before opening any file. It refuses a storage version **newer** than its engine reads (`StoreFormatError`, naming both); older storage versions open, as DuckDB allows. `ducklake_spec_version` follows the same rule: DuckLake 1.1 reads the census bundle's 1.0 catalog read-only without migrating it (the file's sha256 is unchanged), so only a newer spec is refused. The sdmxlib `schema_version` stays exact-match.
 - A reader MUST resolve data files through `data_path` and attach `labels.duckdb` according to the pool's tier policy (§7.1).
 - A reader MUST ignore `bundle.manifest.json.sig` in the `files` check (reserved for a detached signature).
 
@@ -450,7 +450,7 @@ Layered bundles (`requires`) remain the recorded alternative and stay rejected.
 |---|---|---|---|
 | sdmxlib `schema_version` | manifest | exact | sdmxlib reader (exists) |
 | DuckDB storage version | manifest | refuse newer | sdmxlib reader (new) |
-| DuckLake spec version | manifest | exact | sdmxlib reader (new) |
+| DuckLake spec version | manifest | refuse newer | sdmxlib reader (new) |
 | `canonical_form` | manifest | known values | index builder, cache keys |
 | statcat `schema_version` | `statcat._meta` | exact | statcatlib `Catalog.open()` (statcatlib#39, in progress) |
 | statcat `index_version` | manifest `extensions.statcat` | known values | statcatlib `Catalog.open()` (new) |
@@ -546,7 +546,7 @@ Each product bundle carries per-language LanceDB tables over its own datasets, c
 5. A writer fix never reaches a cached query → render version in the key. §7.4.
 6. Engine-hash fingerprints change on a DuckDB upgrade → MD5. §4.4.
 7. Manifest has no integrity of its own → `manifest_sha256` in the index; reserved `.sig`. §6.3, §4.3.
-8. Engine versions unrecorded → required fields; refuse newer storage, exact DuckLake spec. §4.2, §9.1.
+8. Engine versions unrecorded → required fields; refuse newer storage and newer DuckLake spec. §4.2, §9.1.
 9. Schema bump forces a lockstep fleet rebuild → two-schema index; per-schema routing; fingerprint-verified rebuilds. §9.2.
 10. One delta invalidates every dataflow in a bundle → binding-level keys. §7.4.
 11. Overlay `scope` and per-type merge hooks change bytes without changing the token → applied digest; per-type hook ids; `null` scope defined. §5.

@@ -11,13 +11,13 @@ from pathlib import Path
 import duckdb
 from attrs import frozen
 
-from sdmxlib.bundle._write import lake_files, sha256_of
+from sdmxlib.bundle._write import digests_of, lake_files
 from sdmxlib.local.registry import BundleRegistry, LocalRegistry
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.metadataset import MetadataSet
 from sdmxlib.model.validation import reference_issues
-from sdmxlib.storage._manifest import MANIFEST_NAME, Manifest, ManifestError, read_manifest
+from sdmxlib.storage._manifest import MANIFEST_NAME, Manifest, ManifestError, StoreFormatError, read_manifest
 from sdmxlib.storage.schema import StoreSchemaError
 
 #: The ATTACH alias `LocalRegistry.bundle` gives the bundle's DuckLake catalog.
@@ -75,8 +75,8 @@ def check_bundle(path: str | Path, *, references: bool = True, extensions: Mappi
     """Check a published bundle: its manifest, files, lake, bindings and references.
 
     - **manifest** — it parses, in a format this build reads.
-    - **files** — every file the manifest lists is present with its size and
-      sha256, and nothing else is in the publication directory. The shared
+    - **files** — every file the manifest lists is present with its size,
+      sha256 and md5, and nothing else is in the publication directory. The shared
       ``data/`` holds other publications' files too, so only its listed
       files are checked.
     - **lake** — every file the current snapshot references exists at the
@@ -89,8 +89,9 @@ def check_bundle(path: str | Path, *, references: bool = True, extensions: Mappi
       one (about 30 s and 5 GB on a 2.6 GB census bundle); ``references=False``
       skips it.
 
-    A manifest that cannot be read, or a store on another schema version, ends
-    the run there: nothing after it can be checked against either.
+    A manifest that cannot be read, or a store on another schema version or in
+    a DuckDB or DuckLake format this engine cannot read, ends the run there:
+    nothing after it can be checked against either.
 
     Args:
         path: The publication directory.
@@ -111,7 +112,7 @@ def check_bundle(path: str | Path, *, references: bool = True, extensions: Mappi
     checked.append("files")
     try:
         reg = LocalRegistry.bundle(root)
-    except (StoreSchemaError, ManifestError) as exc:
+    except (StoreSchemaError, StoreFormatError, ManifestError) as exc:
         return Report(root, tuple(checked), (*findings, Finding("manifest", "meta.duckdb", str(exc))))
     with reg:
         if (root / "lake.ducklake").exists():
@@ -146,8 +147,8 @@ def _files(root: Path, manifest: Manifest) -> Iterable[Finding]:
             yield Finding("files", subject, "listed in the manifest but missing")
         elif (size := found.stat().st_size) != entry.size:
             yield Finding("files", subject, f"{size} bytes, the manifest says {entry.size}")
-        elif sha256_of(found) != entry.sha256:
-            yield Finding("files", subject, "contents differ from the manifest's sha256")
+        elif digests_of(found) != (entry.sha256, entry.md5):
+            yield Finding("files", subject, "contents differ from the manifest's sha256 or md5")
     for extra in on_disk:
         if extra.endswith(".wal"):
             # A database was not checkpointed before the manifest: its log holds
