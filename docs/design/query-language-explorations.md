@@ -13,9 +13,8 @@ proposed. If a section reads as a good idea, read its verdict.
 
 ### Bare, un-rooted paths in `filter()`
 
-The question deserves answering from scratch rather than by appeal to the
-choice already made: why can a bare, un-rooted path not be the spelling, fully
-typed?
+This section answers from scratch, without appeal to the choice already made,
+why a bare, un-rooted path cannot be the spelling, fully typed.
 
 **Ambiguity is not the blocker.** Re-measured with a *minimal* edge set — only
 real FK columns, no convenience shortcuts, which is what an implementation
@@ -38,8 +37,7 @@ two different things here. Column-level typing — `.id` exists, `== "CL_GEO"`
 yields a predicate — is trivially available for a bare path. Reachability
 typing — *a route from `Dataflow` to `Concept` exists* — is not.
 
-The reason is the cleanest fact in this design: **in form B the path is the
-proof.**
+**In form B the path is the proof.**
 
 ```
 q.dataflow.dsd.components.any(...)   ok   every dot is a declared edge, checked
@@ -50,7 +48,7 @@ q.dataflow.dsd.components.concept    error: Cannot access attribute "concept"
 ```
 
 Writing the path *constructs a machine-checked witness* that the route exists.
-The verbosity is not a tax paid for safety; it is the proof term. A bare
+The verbosity is the proof term. A bare
 reference offers no proof, so there is nothing to check. Validating one
 statically would require the type system to decide "does a path exist from
 `DataflowRow` to `ConceptRow` in a graph declared at runtime" — a constraint
@@ -65,20 +63,19 @@ that: `Many` cannot be dotted through, which forces `.any()` and puts the
 cardinality at the call site. This blocker survives even where the path is
 unique.
 
-**A coherent bare design does exist.** Stated fairly, because it is buildable
-and the objection to it is not any of the individual costs:
+**A coherent bare design does exist.** It is buildable, and the objection to it
+lies outside its individual costs:
 
 - resolve unique paths; error listing candidates when ambiguous
 - to-many hops compile to `EXISTS`, preserving row count
 - projection through a to-many refused, or forced through `list()`
 
 That is Django's `__` lookups with `EXISTS` substituted for `INNER JOIN` —
-Django without the duplicate-row footgun measured under "To-many edges". It
+Django without the duplicate-row footgun measured under "To-many edges", and it
 would work.
 
-**The reason not to ship it alongside form B** is none of the above. It is that
-**a shorter unchecked spelling next to a longer checked one means the checked
-one stops being used.** Callers drift to the brief form, and the static
+**Form B rules it out for a different reason: a shorter unchecked spelling
+next to a longer checked one means the checked one stops being used.** Callers drift to the brief form, and the static
 guarantee becomes theoretical while remaining documented. That objection holds
 even if every path in the schema were unique, and it is why this is a
 either/or rather than a "support both, prefer B" — the same reasoning that
@@ -98,7 +95,7 @@ JOIN` is the duplicate-row footgun) and gives up only the **path**. It types
 without trouble — `def any[C](self, p: Pred[C]) -> Pred[R]` — but that is the
 problem rather than the recommendation: being generic over every row kind, it
 also accepts `q.dsd.any(q.metadataflow.id == "MDF")`, which is unreachable.
-Both checkers pass it. There is nothing left to check.
+Both checkers pass it, because nothing in it names a route to check.
 
 The concrete failure, run against a fixture where concept `REF_AREA` defaults
 to `CL_GEO`, `CPI` uses it as a dimension but **overrides** the codelist to
@@ -136,8 +133,8 @@ is the likely choice — `DataStructure` already carries three `ItemList`s, and
 the survey's largest bucket (21 sites) is role-specific — but it is a decision,
 not a fact.
 
-**So naming the edge is not overhead; it is the only place the role and the
-route can be stated.** Where the parent has several to-many edges, the explicit
+**So the edge name is the only place the role and the route can be
+stated.** Where the parent has several to-many edges, the explicit
 form is also the shorter one:
 
 ```python
@@ -263,13 +260,12 @@ every edge is named, the inner predicate must be rooted at the child —
 
 **This separates two things this document had been treating as one.**
 
-> `.any()` is not what makes a path strict. Naming every edge is. `.any()`'s
-> job is the **quantifier**.
+> Naming every edge is what makes a path strict. `.any()`'s job is the
+> **quantifier**.
 
-Read that way the comparison rearranges. Mechanism 5 fails not for lack of
-`.any()` — it *has* `.any()` — but because it names no edges. Mechanism 1
-succeeds not because of `.any()` but because `dimensions` plus a child-rooted
-predicate names them all. And dot-through reaches the same strictness with no
+Read that way the comparison rearranges. Mechanism 5 *has* `.any()` and fails
+because it names no edges. Mechanism 1 succeeds because `dimensions` plus a
+child-rooted predicate names them all. And dot-through reaches the same strictness with no
 namespace ceremony, because the path never leaves the parent's accessor:
 
 ```python
@@ -281,8 +277,8 @@ Both are `Pred[DsdRow]`; both type clean on both checkers; the two readings
 that were ambiguous under a bare inner predicate are now two distinct
 spellings.
 
-**Which leaves exactly one thing `.any()` carried that dot-through drops.**
-The quantifier — and it looks recoverable as a modifier rather than a wrapper:
+**Dot-through drops one thing `.any()` carried: the quantifier.** It looks
+recoverable as a modifier rather than a wrapper:
 
 ```python
 sl.q.dsd.dimensions.codelist.id == "CL_GEO"             # exists — the default
@@ -326,4 +322,4 @@ express the `(dataflow, component)` grain, because that upward edge is to-one
 per row and it is the flat shape `structure_frame` already returns. The
 sentence "which no single base relation expresses" was reasoning about
 *downward* edges only and did not notice the upward reading. Left in place
-because the correction is the interesting part.
+because the correction records where the reasoning went wrong.

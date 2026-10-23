@@ -13,8 +13,7 @@ one class makes it hold in one place: a clause added for one root is added
 for every root.
 
 It was written down because the rule was already *implemented* and never
-*written*, which is the worst of both: consistent behaviour nobody could
-check. #264 shipped a first implementation that broke it and was caught only
+*written*, so nobody could check the behaviour against it. #264 shipped a first implementation that broke it and was caught only
 by a hand-written test.
 
 ## The principle
@@ -22,7 +21,7 @@ by a hand-written test.
 > **Every row-set composition refines the query. Nothing a later caller adds
 > can undo what an earlier call established.**
 
-The reason is not aesthetic. Queries here are built by more than one party — a
+Queries here are built by more than one party — a
 helper scopes a query to an agency, a federation layer caps it, a caller pages
 it — and refinement is what makes that safe. Under last-wins semantics a
 caller's `.limit(10_000)` silently undoes a helper's `.limit(100)`, which is
@@ -160,7 +159,7 @@ q.limit(1)                    ['0']
 q.limit(1).filter(id != '0')  ['1']    ← a row the query being refined did not contain
 ```
 
-Not a surprise — a violation. So `filter`, `qualify` and `order_by` raise
+That violates the principle. So `filter`, `qualify` and `order_by` raise
 `SliceError` on an already-sliced query. Both readings of the composition are
 defensible ("filter the whole set, then cap" and "of the first n, the ones
 matching"), and the language refuses rather than picking one silently.
@@ -178,7 +177,7 @@ paging is made of them.
 ## Two families, two names
 
 `order_by` is the SQL query language. `ItemList` and `ArtefactList` keep
-**`sort_by`**, and that is deliberate rather than an unfinished rename: they
+**`sort_by`**, by design: they
 sort in Python, take a key function, and mirror `sorted(key=, reverse=)` —
 including a `descending=` flag, which the SQL side replaced with a per-key
 `.desc()`.
@@ -197,7 +196,7 @@ no accessor.)
 
 ## The intermediate representation (#273)
 
-**Yes, and it is the `Plan`.** `src/sdmxlib/query/_plan.py` holds what a query
+**The `Plan` is the intermediate representation.** `src/sdmxlib/query/_plan.py` holds what a query
 *says* — root, predicates, qualifiers, order keys, default order, the
 `unordered` flag, cursor, limit, offset — and `Query` holds a `Plan` plus how
 to run it. `query-pushdown.md` §2 argues why that is enough: the one
