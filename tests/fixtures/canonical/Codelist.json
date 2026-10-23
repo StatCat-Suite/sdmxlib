@@ -1,0 +1,195 @@
+{
+  "$class": "Codelist",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "CL-ANN",
+      "text": {
+        "en": "CL-TEXT-en",
+        "fr": "CL-TEXT-fr"
+      },
+      "title": "CL-TITLE",
+      "type": "CL-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/CL",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/CL/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "CL-VALUE"
+    }
+  ],
+  "codes": [
+    {
+      "$class": "Code",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "CODE-PARENT-ANN",
+          "text": {
+            "en": "CODE-PARENT-TEXT-en",
+            "fr": "CODE-PARENT-TEXT-fr"
+          },
+          "title": "CODE-PARENT-TITLE",
+          "type": "CODE-PARENT-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/CODE-PARENT",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/CODE-PARENT/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "CODE-PARENT-VALUE"
+        }
+      ],
+      "description": {
+        "en": "CODE-PARENT-DESC-en",
+        "fr": "CODE-PARENT-DESC-fr"
+      },
+      "id": "PARENT",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/code-parent",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/code-parent",
+          "urn": null
+        }
+      ],
+      "name": {
+        "en": "CODE-PARENT-NAME-en",
+        "fr": "CODE-PARENT-NAME-fr"
+      },
+      "parent_id": null,
+      "uri": "https://example.org/uri/code-parent"
+    },
+    {
+      "$class": "Code",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "CODE-CHILD-ANN",
+          "text": {
+            "en": "CODE-CHILD-TEXT-en",
+            "fr": "CODE-CHILD-TEXT-fr"
+          },
+          "title": "CODE-CHILD-TITLE",
+          "type": "CODE-CHILD-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/CODE-CHILD",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/CODE-CHILD/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "CODE-CHILD-VALUE"
+        }
+      ],
+      "description": {
+        "en": "CODE-CHILD-DESC-en",
+        "fr": "CODE-CHILD-DESC-fr"
+      },
+      "id": "CHILD",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/code-child",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/code-child",
+          "urn": null
+        }
+      ],
+      "name": {
+        "en": "CODE-CHILD-NAME-en",
+        "fr": "CODE-CHILD-NAME-fr"
+      },
+      "parent_id": "PARENT",
+      "uri": "https://example.org/uri/code-child"
+    }
+  ],
+  "description": {
+    "en": "CL-DESC-en",
+    "fr": "CL-DESC-fr"
+  },
+  "extensions": [],
+  "id": "CL",
+  "is_external_reference": true,
+  "is_partial": true,
+  "is_partial_language": true,
+  "legacy_is_final": true,
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/CL",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/CL",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "name": {
+    "en": "CL-NAME-en",
+    "fr": "CL-NAME-fr"
+  },
+  "service_url": "https://example.org/registry/CL",
+  "structure_url": "https://example.org/structure/CL.xml",
+  "uri": "https://example.org/uri/CL",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

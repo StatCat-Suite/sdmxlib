@@ -12,7 +12,8 @@ an ETag keys on. ``LocalRegistry.bundle(publication)`` opens it read-only.
 one dataflow from an SDMX REST source as a published bundle, its provenance
 recorded. `apply_overlays` changes display annotations without a rebuild,
 `effective_token` is what a cache keys on when it does, and `fold_overlays`
-writes overlays into a new publication for good. The manifest's JSON Schema
+writes overlays into a new publication for good. `canonical_json` is the
+defined text of an artefact that a fingerprint hashes. The manifest's JSON Schema
 ships beside it, for producers outside Python: `manifest_schema`.
 
 From a shell, ``sdmxlib bundle check``, ``sdmxlib bundle copy`` and
@@ -34,6 +35,7 @@ Example:
 
 from importlib import resources
 
+from sdmxlib.bundle._canonical import CANONICAL_FORM, canonical_json
 from sdmxlib.bundle._check import Check, Finding, Report, check_bundle
 from sdmxlib.bundle._copy import copy_bundle
 from sdmxlib.bundle._fetch import fetch_bundle
@@ -69,6 +71,7 @@ from sdmxlib.storage._manifest import (
 )
 
 __all__ = [
+    "CANONICAL_FORM",
     "DATA_PATH",
     "DUCKLAKE_SPEC_VERSION",
     "FORMAT_VERSION",
@@ -92,6 +95,7 @@ __all__ = [
     "StoreFormatError",
     "Tier",
     "apply_overlays",
+    "canonical_json",
     "check_bundle",
     "copy_bundle",
     "effective_token",

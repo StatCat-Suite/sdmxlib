@@ -1,0 +1,108 @@
+{
+  "$class": "ConceptSchemeMap",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "CSM-ANN",
+      "text": {
+        "en": "CSM-TEXT-en",
+        "fr": "CSM-TEXT-fr"
+      },
+      "title": "CSM-TITLE",
+      "type": "CSM-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/CSM",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/CSM/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "CSM-VALUE"
+    }
+  ],
+  "description": {
+    "en": "CSM-DESC-en",
+    "fr": "CSM-DESC-fr"
+  },
+  "id": "CSM@SS",
+  "is_external_reference": true,
+  "is_partial_language": true,
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/CSM",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/CSM",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "maps": [
+    {
+      "$class": "ItemMap",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "ITEMMAP-ANN",
+          "text": {
+            "en": "ITEMMAP-TEXT-en",
+            "fr": "ITEMMAP-TEXT-fr"
+          },
+          "title": "ITEMMAP-TITLE",
+          "type": "ITEMMAP-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/ITEMMAP",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/ITEMMAP/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "ITEMMAP-VALUE"
+        }
+      ],
+      "source_id": "PARENT",
+      "target_id": "CHILD",
+      "valid_from": "2020-01-01",
+      "valid_to": "2030-12-31"
+    }
+  ],
+  "name": {
+    "en": "CSM-NAME-en",
+    "fr": "CSM-NAME-fr"
+  },
+  "service_url": "https://example.org/registry/SS",
+  "source": "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=AG:CS(1.0)",
+  "structure_url": "https://example.org/structure/SS.xml",
+  "target": "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=AG:CS(1.0)",
+  "uri": "https://example.org/uri/CSM",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

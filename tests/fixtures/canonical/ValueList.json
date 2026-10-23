@@ -1,0 +1,118 @@
+{
+  "$class": "ValueList",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "VL-ANN",
+      "text": {
+        "en": "VL-TEXT-en",
+        "fr": "VL-TEXT-fr"
+      },
+      "title": "VL-TITLE",
+      "type": "VL-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/VL",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/VL/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "VL-VALUE"
+    }
+  ],
+  "description": {
+    "en": "VL-DESC-en",
+    "fr": "VL-DESC-fr"
+  },
+  "id": "VL",
+  "is_external_reference": true,
+  "is_partial_language": true,
+  "items": [
+    {
+      "$class": "ValueItem",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "VL-KG-ANN",
+          "text": {
+            "en": "VL-KG-TEXT-en",
+            "fr": "VL-KG-TEXT-fr"
+          },
+          "title": "VL-KG-TITLE",
+          "type": "VL-KG-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/VL-KG",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/VL-KG/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "VL-KG-VALUE"
+        }
+      ],
+      "description": {
+        "en": "VL-KG-DESC-en",
+        "fr": "VL-KG-DESC-fr"
+      },
+      "id": "kg",
+      "name": {
+        "en": "VL-KG-NAME-en",
+        "fr": "VL-KG-NAME-fr"
+      }
+    },
+    {
+      "$class": "ValueItem",
+      "annotations": [],
+      "description": {},
+      "id": "m 2",
+      "name": {}
+    }
+  ],
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/VL",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/VL",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "name": {
+    "en": "VL-NAME-en",
+    "fr": "VL-NAME-fr"
+  },
+  "service_url": "https://example.org/registry/VL",
+  "structure_url": "https://example.org/structure/VL.xml",
+  "uri": "https://example.org/uri/VL",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

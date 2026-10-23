@@ -436,3 +436,33 @@ it.
 `tiers=` (`--tiers 1,2` from a shell) copies only the files of those placement
 tiers, which is what a server holds when it reads tier 3 remotely. Such a copy
 is incomplete by intent: `check_bundle` reports the files it left out.
+
+## 9. Canonical text of an artefact
+
+An artefact fingerprint hashes the artefact's canonical text, which
+`sdmxlib.bundle.canonical_json` produces. Two artefacts with equal content
+give byte-equal text, and a change to any field the model holds changes it.
+The rules below are canonical form `1`, `sdmxlib.bundle.CANONICAL_FORM`; a
+change to any of them is a new form, and fingerprints made at different forms
+are never compared.
+
+The text is compact JSON in UTF-8 with every object's keys sorted, built from
+the model object as follows:
+
+| value | text |
+| --- | --- |
+| a model object (an artefact, item, component, facet, annotation, …) | an object holding `"$class"`, its class name, and every field the class takes at construction, `null` included; fields the class derives itself are left out |
+| `maintainer` | the agency's id: it refers to an Agency item, whose own content belongs to its scheme's text |
+| a reference | its URN, never followed |
+| an international string | an object of language tag to text |
+| a list or tuple, including items and annotations | an array, in its order |
+| a set | an array sorted by each element's canonical text |
+| an enum | its member's name, such as `"ALLOWED"` |
+| a datetime | UTC, `YYYY-MM-DDTHH:MM:SS.ffffffZ` |
+| a date | `YYYY-MM-DD` |
+| a float | its shortest round-trip form; a non-finite float is refused |
+| a string, integer, boolean or null | itself |
+
+Any other value is refused, so a new kind of field cannot encode as something
+ambiguous. The text does not depend on the wire format an artefact was read
+from: the fields SDMX-JSON cannot carry are in it.

@@ -1,0 +1,60 @@
+{
+  "$class": "StructureSet",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "SS-ANN",
+      "text": {
+        "en": "SS-TEXT-en",
+        "fr": "SS-TEXT-fr"
+      },
+      "title": "SS-TITLE",
+      "type": "SS-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/SS",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/SS/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "SS-VALUE"
+    }
+  ],
+  "description": {
+    "en": "SS-DESC-en",
+    "fr": "SS-DESC-fr"
+  },
+  "id": "SS",
+  "is_external_reference": true,
+  "is_partial_language": true,
+  "legacy_is_final": true,
+  "maintainer": "AG",
+  "maps": [
+    "urn:sdmx:org.sdmx.infomodel.structuremapping.RepresentationMap=AG:RM@SS(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.structuremapping.StructureMap=AG:SM@SS(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.structuremapping.ConceptSchemeMap=AG:CSM@SS(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.structuremapping.OrganisationSchemeMap=AG:OSM@SS(1.0)"
+  ],
+  "name": {
+    "en": "SS-NAME-en",
+    "fr": "SS-NAME-fr"
+  },
+  "related_structures": [
+    "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)"
+  ],
+  "service_url": "https://example.org/registry/SS",
+  "structure_url": "https://example.org/structure/SS.xml",
+  "uri": "https://example.org/uri/SS",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

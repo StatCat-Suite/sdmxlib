@@ -1,0 +1,164 @@
+{
+  "$class": "DataProviderScheme",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "DATA_PROVIDERS-ANN",
+      "text": {
+        "en": "DATA_PROVIDERS-TEXT-en",
+        "fr": "DATA_PROVIDERS-TEXT-fr"
+      },
+      "title": "DATA_PROVIDERS-TITLE",
+      "type": "DATA_PROVIDERS-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/DATA_PROVIDERS",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/DATA_PROVIDERS/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "DATA_PROVIDERS-VALUE"
+    }
+  ],
+  "description": {
+    "en": "DATA_PROVIDERS-DESC-en",
+    "fr": "DATA_PROVIDERS-DESC-fr"
+  },
+  "id": "DATA_PROVIDERS",
+  "is_external_reference": true,
+  "is_partial": true,
+  "is_partial_language": true,
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/DATA_PROVIDERS",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/DATA_PROVIDERS",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "name": {
+    "en": "DATA_PROVIDERS-NAME-en",
+    "fr": "DATA_PROVIDERS-NAME-fr"
+  },
+  "providers": [
+    {
+      "$class": "DataProvider",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "PROVIDER-ANN",
+          "text": {
+            "en": "PROVIDER-TEXT-en",
+            "fr": "PROVIDER-TEXT-fr"
+          },
+          "title": "PROVIDER-TITLE",
+          "type": "PROVIDER-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/PROVIDER",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/PROVIDER/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "PROVIDER-VALUE"
+        }
+      ],
+      "contacts": [
+        {
+          "$class": "Contact",
+          "department": {
+            "en": "DEPT-en",
+            "fr": "DEPT-fr"
+          },
+          "emails": [
+            "contact@example.org"
+          ],
+          "faxes": [
+            "+1-555-0101"
+          ],
+          "id": "CONTACT-ID",
+          "name": {
+            "en": "CONTACT-en",
+            "fr": "CONTACT-fr"
+          },
+          "phones": [
+            "+1-555-0100"
+          ],
+          "role": {
+            "en": "ROLE-en",
+            "fr": "ROLE-fr"
+          },
+          "uris": [
+            "https://example.org/contact"
+          ],
+          "x400s": [
+            "x400-address"
+          ]
+        }
+      ],
+      "description": {
+        "en": "PROVIDER-DESC-en",
+        "fr": "PROVIDER-DESC-fr"
+      },
+      "id": "P1",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/provider",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/provider",
+          "urn": null
+        }
+      ],
+      "name": {
+        "en": "PROVIDER-NAME-en",
+        "fr": "PROVIDER-NAME-fr"
+      },
+      "uri": "https://example.org/uri/provider"
+    }
+  ],
+  "service_url": "https://example.org/registry/DATA_PROVIDERS",
+  "structure_url": "https://example.org/structure/DATA_PROVIDERS.xml",
+  "uri": "https://example.org/uri/DATA_PROVIDERS",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

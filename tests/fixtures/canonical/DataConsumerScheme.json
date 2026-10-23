@@ -1,0 +1,164 @@
+{
+  "$class": "DataConsumerScheme",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "DATA_CONSUMERS-ANN",
+      "text": {
+        "en": "DATA_CONSUMERS-TEXT-en",
+        "fr": "DATA_CONSUMERS-TEXT-fr"
+      },
+      "title": "DATA_CONSUMERS-TITLE",
+      "type": "DATA_CONSUMERS-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/DATA_CONSUMERS",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/DATA_CONSUMERS/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "DATA_CONSUMERS-VALUE"
+    }
+  ],
+  "consumers": [
+    {
+      "$class": "DataConsumer",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "CONSUMER-ANN",
+          "text": {
+            "en": "CONSUMER-TEXT-en",
+            "fr": "CONSUMER-TEXT-fr"
+          },
+          "title": "CONSUMER-TITLE",
+          "type": "CONSUMER-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/CONSUMER",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/CONSUMER/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "CONSUMER-VALUE"
+        }
+      ],
+      "contacts": [
+        {
+          "$class": "Contact",
+          "department": {
+            "en": "DEPT-en",
+            "fr": "DEPT-fr"
+          },
+          "emails": [
+            "contact@example.org"
+          ],
+          "faxes": [
+            "+1-555-0101"
+          ],
+          "id": "CONTACT-ID",
+          "name": {
+            "en": "CONTACT-en",
+            "fr": "CONTACT-fr"
+          },
+          "phones": [
+            "+1-555-0100"
+          ],
+          "role": {
+            "en": "ROLE-en",
+            "fr": "ROLE-fr"
+          },
+          "uris": [
+            "https://example.org/contact"
+          ],
+          "x400s": [
+            "x400-address"
+          ]
+        }
+      ],
+      "description": {
+        "en": "CONSUMER-DESC-en",
+        "fr": "CONSUMER-DESC-fr"
+      },
+      "id": "C1",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/consumer",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/consumer",
+          "urn": null
+        }
+      ],
+      "name": {
+        "en": "CONSUMER-NAME-en",
+        "fr": "CONSUMER-NAME-fr"
+      },
+      "uri": "https://example.org/uri/consumer"
+    }
+  ],
+  "description": {
+    "en": "DATA_CONSUMERS-DESC-en",
+    "fr": "DATA_CONSUMERS-DESC-fr"
+  },
+  "id": "DATA_CONSUMERS",
+  "is_external_reference": true,
+  "is_partial": true,
+  "is_partial_language": true,
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/DATA_CONSUMERS",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/DATA_CONSUMERS",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "name": {
+    "en": "DATA_CONSUMERS-NAME-en",
+    "fr": "DATA_CONSUMERS-NAME-fr"
+  },
+  "service_url": "https://example.org/registry/DATA_CONSUMERS",
+  "structure_url": "https://example.org/structure/DATA_CONSUMERS.xml",
+  "uri": "https://example.org/uri/DATA_CONSUMERS",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

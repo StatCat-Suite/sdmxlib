@@ -1,0 +1,863 @@
+{
+  "$class": "DataStructure",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "DSD-ANN",
+      "text": {
+        "en": "DSD-TEXT-en",
+        "fr": "DSD-TEXT-fr"
+      },
+      "title": "DSD-TITLE",
+      "type": "DSD-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/DSD",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/DSD/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "DSD-VALUE"
+    }
+  ],
+  "attribute_descriptor_annotations": [
+    {
+      "$class": "Annotation",
+      "id": "ATTRLIST-ANN",
+      "text": {
+        "en": "ATTRLIST-TEXT-en",
+        "fr": "ATTRLIST-TEXT-fr"
+      },
+      "title": "ATTRLIST-TITLE",
+      "type": "ATTRLIST-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/ATTRLIST",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/ATTRLIST/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "ATTRLIST-VALUE"
+    }
+  ],
+  "attribute_descriptor_links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/attrlist",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/attrlist",
+      "urn": null
+    }
+  ],
+  "attribute_descriptor_uri": "https://example.org/uri/attrlist",
+  "attributes": [
+    {
+      "$class": "Attribute",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "ATTR-ANN",
+          "text": {
+            "en": "ATTR-TEXT-en",
+            "fr": "ATTR-TEXT-fr"
+          },
+          "title": "ATTR-TITLE",
+          "type": "ATTR-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/ATTR",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/ATTR/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "ATTR-VALUE"
+        }
+      ],
+      "attachment": "SERIES",
+      "attachment_groups": [],
+      "concept": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+      "concept_role": [
+        "role-attr"
+      ],
+      "enumeration_format": {
+        "$class": "Facet",
+        "decimals": null,
+        "end_time": "2030-12-31",
+        "end_value": 99.0,
+        "interval": 2.0,
+        "is_multilingual": false,
+        "is_sequence": true,
+        "max_length": 10,
+        "max_value": 99.0,
+        "min_length": 1,
+        "min_value": 1.0,
+        "pattern": "[0-9]+",
+        "sentinel_values": [],
+        "start_time": "2020-01-01",
+        "start_value": 1.0,
+        "time_interval": "P1D",
+        "type": "Integer"
+      },
+      "id": "ATTR",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/attr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/attr",
+          "urn": null
+        }
+      ],
+      "max_occurs": null,
+      "min_occurs": 0,
+      "optional_dimensions": [
+        "DIM"
+      ],
+      "related_dimensions": [
+        "DIM"
+      ],
+      "related_group": null,
+      "related_measures": [
+        "OBS_VALUE"
+      ],
+      "representation": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+      "uri": "https://example.org/uri/attr",
+      "usage": "MANDATORY"
+    },
+    {
+      "$class": "Attribute",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "ATTR-MEAS-ANN",
+          "text": {
+            "en": "ATTR-MEAS-TEXT-en",
+            "fr": "ATTR-MEAS-TEXT-fr"
+          },
+          "title": "ATTR-MEAS-TITLE",
+          "type": "ATTR-MEAS-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/ATTR-MEAS",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/ATTR-MEAS/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "ATTR-MEAS-VALUE"
+        }
+      ],
+      "attachment": "OBSERVATION",
+      "attachment_groups": [],
+      "concept": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+      "concept_role": [],
+      "enumeration_format": null,
+      "id": "ATTR_MEAS",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/attr-meas",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/attr-meas",
+          "urn": null
+        }
+      ],
+      "max_occurs": 1,
+      "min_occurs": 1,
+      "optional_dimensions": [],
+      "related_dimensions": null,
+      "related_group": null,
+      "related_measures": null,
+      "representation": null,
+      "uri": "https://example.org/uri/attr-meas",
+      "usage": "OPTIONAL"
+    },
+    {
+      "$class": "Attribute",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "ATTR-GRP-ANN",
+          "text": {
+            "en": "ATTR-GRP-TEXT-en",
+            "fr": "ATTR-GRP-TEXT-fr"
+          },
+          "title": "ATTR-GRP-TITLE",
+          "type": "ATTR-GRP-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/ATTR-GRP",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/ATTR-GRP/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "ATTR-GRP-VALUE"
+        }
+      ],
+      "attachment": "GROUP",
+      "attachment_groups": [],
+      "concept": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+      "concept_role": [],
+      "enumeration_format": null,
+      "id": "ATTR_GRP",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/attr-grp",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/attr-grp",
+          "urn": null
+        }
+      ],
+      "max_occurs": 1,
+      "min_occurs": 1,
+      "optional_dimensions": [],
+      "related_dimensions": null,
+      "related_group": "GRP",
+      "related_measures": null,
+      "representation": null,
+      "uri": "https://example.org/uri/attr-grp",
+      "usage": "OPTIONAL"
+    }
+  ],
+  "description": {
+    "en": "DSD-DESC-en",
+    "fr": "DSD-DESC-fr"
+  },
+  "dimension_descriptor_annotations": [
+    {
+      "$class": "Annotation",
+      "id": "DIMLIST-ANN",
+      "text": {
+        "en": "DIMLIST-TEXT-en",
+        "fr": "DIMLIST-TEXT-fr"
+      },
+      "title": "DIMLIST-TITLE",
+      "type": "DIMLIST-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/DIMLIST",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/DIMLIST/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "DIMLIST-VALUE"
+    }
+  ],
+  "dimension_descriptor_links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/dimlist",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/dimlist",
+      "urn": null
+    }
+  ],
+  "dimension_descriptor_uri": "https://example.org/uri/dimlist",
+  "dimensions": [
+    {
+      "$class": "Dimension",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "DIM-ANN",
+          "text": {
+            "en": "DIM-TEXT-en",
+            "fr": "DIM-TEXT-fr"
+          },
+          "title": "DIM-TITLE",
+          "type": "DIM-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/DIM",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/DIM/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "DIM-VALUE"
+        }
+      ],
+      "concept": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+      "concept_role": [
+        "role-dim"
+      ],
+      "enumeration_format": {
+        "$class": "Facet",
+        "decimals": null,
+        "end_time": "2030-12-31",
+        "end_value": 99.0,
+        "interval": 2.0,
+        "is_multilingual": false,
+        "is_sequence": true,
+        "max_length": 10,
+        "max_value": 99.0,
+        "min_length": 1,
+        "min_value": 1.0,
+        "pattern": "[0-9]+",
+        "sentinel_values": [],
+        "start_time": "2020-01-01",
+        "start_value": 1.0,
+        "time_interval": "P1D",
+        "type": "Integer"
+      },
+      "id": "DIM",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/dim",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/dim",
+          "urn": null
+        }
+      ],
+      "representation": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+      "uri": "https://example.org/uri/dim"
+    }
+  ],
+  "evolving_structure": true,
+  "groups": [
+    {
+      "$class": "Group",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "GRP-ANN",
+          "text": {
+            "en": "GRP-TEXT-en",
+            "fr": "GRP-TEXT-fr"
+          },
+          "title": "GRP-TITLE",
+          "type": "GRP-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/GRP",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/GRP/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "GRP-VALUE"
+        }
+      ],
+      "attachment_constraint": null,
+      "dimension_ids": [
+        "DIM"
+      ],
+      "id": "GRP",
+      "uri": "https://example.org/uri/grp"
+    }
+  ],
+  "id": "DSD",
+  "is_external_reference": true,
+  "is_partial_language": true,
+  "legacy_is_final": true,
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/DSD",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/DSD",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "measure_descriptor_annotations": [
+    {
+      "$class": "Annotation",
+      "id": "MEASLIST-ANN",
+      "text": {
+        "en": "MEASLIST-TEXT-en",
+        "fr": "MEASLIST-TEXT-fr"
+      },
+      "title": "MEASLIST-TITLE",
+      "type": "MEASLIST-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/MEASLIST",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/MEASLIST/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "MEASLIST-VALUE"
+    }
+  ],
+  "measure_descriptor_links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/measlist",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/measlist",
+      "urn": null
+    }
+  ],
+  "measure_descriptor_uri": "https://example.org/uri/measlist",
+  "measure_dimension": {
+    "$class": "MeasureDimension",
+    "annotations": [
+      {
+        "$class": "Annotation",
+        "id": "MEASDIM-ANN",
+        "text": {
+          "en": "MEASDIM-TEXT-en",
+          "fr": "MEASDIM-TEXT-fr"
+        },
+        "title": "MEASDIM-TITLE",
+        "type": "MEASDIM-TYPE",
+        "urls": [
+          {
+            "$class": "AnnotationURL",
+            "lang": null,
+            "type": null,
+            "url": "https://example.org/MEASDIM",
+            "urn": null
+          },
+          {
+            "$class": "AnnotationURL",
+            "lang": "fr",
+            "type": "PDF",
+            "url": "https://example.org/MEASDIM/fr",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+          }
+        ],
+        "value": "MEASDIM-VALUE"
+      }
+    ],
+    "concept": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+    "concept_role": [
+      "role-measdim"
+    ],
+    "id": "MEASURE_DIM",
+    "representation": "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=AG:CS(1.0)",
+    "uri": "https://example.org/uri/measdim"
+  },
+  "measures": [
+    {
+      "$class": "Measure",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "MEAS-ANN",
+          "text": {
+            "en": "MEAS-TEXT-en",
+            "fr": "MEAS-TEXT-fr"
+          },
+          "title": "MEAS-TITLE",
+          "type": "MEAS-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/MEAS",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/MEAS/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "MEAS-VALUE"
+        }
+      ],
+      "concept": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+      "concept_role": [
+        "role-meas"
+      ],
+      "enumeration_format": {
+        "$class": "Facet",
+        "decimals": null,
+        "end_time": "2030-12-31",
+        "end_value": 99.0,
+        "interval": 2.0,
+        "is_multilingual": false,
+        "is_sequence": true,
+        "max_length": 10,
+        "max_value": 99.0,
+        "min_length": 1,
+        "min_value": 1.0,
+        "pattern": "[0-9]+",
+        "sentinel_values": [],
+        "start_time": "2020-01-01",
+        "start_value": 1.0,
+        "time_interval": "P1D",
+        "type": "Integer"
+      },
+      "id": "OBS_VALUE",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/meas",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/meas",
+          "urn": null
+        }
+      ],
+      "max_occurs": 3,
+      "min_occurs": 1,
+      "representation": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+      "uri": "https://example.org/uri/meas",
+      "usage": "MANDATORY"
+    }
+  ],
+  "metadata": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD(1.0)",
+  "metadata_attributes": [
+    {
+      "$class": "MetadataAttributeUsage",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "MAU-ANN",
+          "text": {
+            "en": "MAU-TEXT-en",
+            "fr": "MAU-TEXT-fr"
+          },
+          "title": "MAU-TITLE",
+          "type": "MAU-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/MAU",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/MAU/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "MAU-VALUE"
+        }
+      ],
+      "attachment": "SERIES",
+      "id": "MA",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/mau",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        }
+      ],
+      "optional_dimensions": [
+        "DIM"
+      ],
+      "related_dimensions": [
+        "DIM"
+      ],
+      "related_group": null,
+      "uri": "https://example.org/uri/mau"
+    },
+    {
+      "$class": "MetadataAttributeUsage",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "MAU-GRP-ANN",
+          "text": {
+            "en": "MAU-GRP-TEXT-en",
+            "fr": "MAU-GRP-TEXT-fr"
+          },
+          "title": "MAU-GRP-TITLE",
+          "type": "MAU-GRP-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/MAU-GRP",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/MAU-GRP/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "MAU-GRP-VALUE"
+        }
+      ],
+      "attachment": "GROUP",
+      "id": "MA_CHILD",
+      "links": [],
+      "optional_dimensions": [],
+      "related_dimensions": null,
+      "related_group": "GRP",
+      "uri": null
+    }
+  ],
+  "name": {
+    "en": "DSD-NAME-en",
+    "fr": "DSD-NAME-fr"
+  },
+  "service_url": "https://example.org/registry/DSD",
+  "structure_url": "https://example.org/structure/DSD.xml",
+  "time_dimension": {
+    "$class": "TimeDimension",
+    "annotations": [
+      {
+        "$class": "Annotation",
+        "id": "TD-ANN",
+        "text": {
+          "en": "TD-TEXT-en",
+          "fr": "TD-TEXT-fr"
+        },
+        "title": "TD-TITLE",
+        "type": "TD-TYPE",
+        "urls": [
+          {
+            "$class": "AnnotationURL",
+            "lang": null,
+            "type": null,
+            "url": "https://example.org/TD",
+            "urn": null
+          },
+          {
+            "$class": "AnnotationURL",
+            "lang": "fr",
+            "type": "PDF",
+            "url": "https://example.org/TD/fr",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+          }
+        ],
+        "value": "TD-VALUE"
+      }
+    ],
+    "concept": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+    "id": "TIME_PERIOD",
+    "links": [
+      {
+        "$class": "Link",
+        "hreflang": "en",
+        "rel": "metadata",
+        "type": "PDF",
+        "url": "https://example.org/link/td",
+        "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+      },
+      {
+        "$class": "Link",
+        "hreflang": null,
+        "rel": "alternate",
+        "type": null,
+        "url": "https://example.org/alternate/td",
+        "urn": null
+      }
+    ],
+    "representation": {
+      "$class": "Facet",
+      "decimals": null,
+      "end_time": "2030-12",
+      "end_value": null,
+      "interval": null,
+      "is_multilingual": false,
+      "is_sequence": null,
+      "max_length": null,
+      "max_value": null,
+      "min_length": null,
+      "min_value": null,
+      "pattern": null,
+      "sentinel_values": [
+        {
+          "$class": "SentinelValue",
+          "description": {
+            "en": "TIME-SENTINEL-DESC-en",
+            "fr": "TIME-SENTINEL-DESC-fr"
+          },
+          "name": {
+            "en": "TIME-SENTINEL-NAME-en",
+            "fr": "TIME-SENTINEL-NAME-fr"
+          },
+          "value": "-1"
+        },
+        {
+          "$class": "SentinelValue",
+          "description": {},
+          "name": {
+            "en": "TIME-NA-NAME-en",
+            "fr": "TIME-NA-NAME-fr"
+          },
+          "value": "NA"
+        }
+      ],
+      "start_time": "2020-01",
+      "start_value": null,
+      "time_interval": null,
+      "type": "ObservationalTimePeriod"
+    },
+    "uri": "https://example.org/uri/td"
+  },
+  "uri": "https://example.org/uri/DSD",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}
