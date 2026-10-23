@@ -594,7 +594,12 @@ release-4-merge:
     NOTES=$(just release-notes "${VER}")
     gh release create "${VER}" --verify-tag --title "${VER}" --notes "${NOTES}"
     git branch -D "${BRANCH}"
-    git push origin --delete "${BRANCH}"
+    # The repo deletes a merged PR's branch itself (delete-branch-on-merge,
+    # GH-58), so the remote branch is usually gone already. Delete it only if it
+    # is still there, so a real failure to delete still stops the recipe (GH-89).
+    if git ls-remote --exit-code --heads origin "${BRANCH}" >/dev/null; then
+        git push origin --delete "${BRANCH}"
+    fi
     git switch --detach "${VER}"
     echo "Released ${VER} on GitHub; checked out at the tag"
     echo "Next: just release-5-pypi"
