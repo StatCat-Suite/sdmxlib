@@ -113,8 +113,8 @@ print(reg.query(q).filter(q.id == "CL_FREQ").one().id)     # 'CL_FREQ'
 - `.select(...).collect()` — a `polars.DataFrame` of the columns you named
 - `.stream()` — an Arrow batch reader, for results too large to hold
 
-`.one()` raising on "not exactly one" is the point of it: a lookup that
-silently returns the first of several is a bug you find much later. Reach for
+`.one()` raises on anything but exactly one, because a lookup that silently
+returns the first of several hides a bug until much later. Reach for
 `.one_or_none()` when absence is an ordinary answer, and `.first()` only when
 you genuinely mean "any of them".
 
@@ -129,11 +129,11 @@ reg.query(sl.q.dataflow).collect()  # list[Dataflow]
 reg.query(sl.q.artefact).collect()  # list[Maintainable] — the root is polymorphic
 ```
 
-Two of them say something worth reading twice. `sl.q.codelist` and
-`sl.q.hierarchy` build a `LazyCodelist` and a `LazyHierarchy` — the same
-objects a `LocalRegistry` hands back from `get`, whose `codes` / `nodes` are
-queries rather than materialised lists. The declaration says so rather than
-naming `Codelist` and leaving you to find out.
+Two of them build lazy artefacts. `sl.q.codelist` and `sl.q.hierarchy` build
+a `LazyCodelist` and a `LazyHierarchy` — the same objects a `LocalRegistry`
+hands back from `get`, whose `codes` / `nodes` are queries rather than
+materialised lists. The declared type names them, so a type checker knows
+`codes` is a query.
 
 Roots that name a *part* of an artefact — `sl.q.component`, `sl.q.concept`,
 `sl.q.annotation` and eighteen others — build nothing, because a dimension has
@@ -159,15 +159,14 @@ So: reach for `collect()` when the next step is *navigation* — following
 scale. `count()` and `ids()` never leave the database at all.
 
 `collect(annotations=False)` skips the annotation read where you do not need
-it — half of `q.code`'s 2372 ms above. Annotations are read *by default* and
-you have to ask to skip them, on purpose: a silently empty `.annotations` is
-wrong data, not fast data, and a caller who does not know to ask must not get
-it.
+it — half of `q.code`'s 2372 ms above. Annotations are read *by default*
+because a silently empty `.annotations` is wrong data; skipping them must be a
+choice the caller makes.
 
 ## 4. Paths
 
-So far every filter has been about the root itself. The interesting questions
-are about *related* things: codes of a codelist, dimensions of a structure,
+So far every filter has been about the root itself. Most questions involve
+*related* things: codes of a codelist, dimensions of a structure,
 the structure behind a dataflow.
 
 You write those as attribute access, and the query language turns them into
@@ -232,9 +231,9 @@ print(reg.query(q).filter(q.id == "FR").select(en=q.name["en"], fr=q.name["fr"])
 # [{'en': 'France', 'fr': 'France'}]
 ```
 
-There is no default language anywhere in sdmxlib. `name` alone will not
-project, because picking a language for you is exactly the kind of guess that
-produces a report in the wrong one.
+Every multilingual API in sdmxlib takes the language explicitly. `name` alone
+will not project, because a guessed language produces a report in the wrong
+one.
 
 ## 6. Searching text
 
@@ -442,8 +441,8 @@ trade = reg.query(q.component).filter(q.component.dsd.id == "DSD_TRADE").select(
 print(reg.query(q.codelist).filter(q.codelist.urn.is_in(trade)).ids())   # ['CL_AREA', 'CL_FREQ', 'CL_UNIT']
 ```
 
-This is worth internalising early: when a path does not exist, the question is
-usually still one query — asked from the other end.
+When a path does not exist, the question is usually still one query, asked
+from the other end.
 
 ## 14. Seeing what actually runs
 
@@ -476,8 +475,8 @@ with sl.LocalRegistry(":memory:") as store, sl.RestRegistry(sl.Provider.ECB, sto
 The `store=` is where the fetched artefacts land, so a second query does not
 re-ask for what the first already pulled.
 
-You do not write the query differently. What changes is where the rows come
-from — which is why the earlier sections never mentioned it.
+The query is written the same way; only the source of the rows changes, so
+the earlier sections did not need to mention it.
 
 ## 16. When you need SQL
 

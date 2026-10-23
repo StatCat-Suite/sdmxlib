@@ -273,7 +273,7 @@ with sl.LocalRegistry("bis_cbpol.duckdb") as local:
     print(type(real_cl).__name__)  # Codelist
 ```
 
-!!! warning "An eager read is not a request-path operation on a large artefact"
+!!! warning "Keep eager reads of large artefacts off the request path"
 
     It builds a Python object per item and resolves each one's references, so
     it costs what the object graph weighs. Measured on a real bundle:
@@ -454,15 +454,13 @@ info = local.resolve_cache_info()
 #  "hits": 9123, "misses": 50, "refused": 0}
 ```
 
-**Why the bound is in items, not entries.** An entry is a whole artefact,
-and artefacts differ in size by four orders of magnitude — a codelist of
-579,951 codes retains ~400 MB, an empty dataflow ~0.08 MB. A bound of
-"256 entries" could therefore hold 4.4 GB while reporting 2% full, which
-is the bug it was there to prevent (#386).
+**The bound counts items.** An entry is a whole artefact, and artefacts
+differ in size by four orders of magnitude — a codelist of 579,951 codes
+retains ~400 MB, an empty dataflow ~0.08 MB. A bound of "256 entries" could
+therefore hold 4.4 GB while reporting 2% full (#386).
 
-Measured, so a number in items reads as memory: **~0.7 KB per code and
-~2.1 KB per hierarchy node**. So the 1,000,000-item default is roughly
-0.7–2.0 GB. Artefacts holding no items weigh a floor of 64, which is what
+Measured per item: **~0.7 KB per code and ~2.1 KB per hierarchy node**, so the
+1,000,000-item default is roughly 0.7–2.0 GB. Artefacts holding no items weigh a floor of 64, which is what
 they actually retain, and is what stops a flood of small ones being
 unbounded.
 
@@ -507,7 +505,7 @@ full graph, not as a default.
 
 `LocalRegistry.from_connection()` wraps a `duckdb.DuckDBPyConnection` you
 already have, for shared-database workflows (e.g. sharing a DuckDB file with
-cataloglib). The constructor takes a path, not a connection:
+statcatlib). The constructor takes a path, not a connection:
 
 ```python
 import duckdb

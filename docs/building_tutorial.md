@@ -780,9 +780,9 @@ print("DEPRECATED" in cl.codes["CS"].annotations)  # True
 ## 11. Using Polars for Bulk Construction
 
 For large codelists from database exports or CSV files, read the frame with
-Polars and build the codes from its rows. There is no bulk-construction
-helper: `iter_rows(named=True)` is already the whole of it, and a helper would
-only rename the three column arguments.
+Polars and build the codes from its rows with `iter_rows(named=True)`. A
+bulk-construction helper would only rename the three column arguments, so
+sdmxlib has none.
 
 ```python
 import polars as pl
@@ -876,10 +876,10 @@ enforce the SDMX information model's rules that one artefact can break on its
 own, and the rules every wire format adds to them, so no artefact you hold
 breaks one. `validate` checks what only a message can know — its references
 resolve and nothing is in it twice — and `serialize` what the target format
-can carry. Not every IM
-rule is a check. Some cannot be broken at all, because the model's types
-cannot hold the violation: a time dimension has no enumeration to code it
-with. Others are knowingly not checked. Rules that relate one artefact to
+can carry. The IM's rules
+fall into four kinds, and the checks above are the first. Some cannot be broken at all,
+because the model's types cannot hold the violation: a time dimension has no
+enumeration to code it with. Others are knowingly not checked. Rules that relate one artefact to
 another fall here, such as a partial codelist against the full one, or a
 constraint's values against their components' representations. So does a
 data set's conformance to its DSD. `tests/support/im_rules.py` lists every

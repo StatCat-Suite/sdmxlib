@@ -6,9 +6,8 @@ the *numbers*: which rows, aggregated how, labelled in which language.
 
 It is the same path language, rooted at a dataflow instead of a structural
 relation. If you have read the metadata tutorial, most of this will look
-familiar; the differences are the interesting part, and they come from one
-fact — an observation table is not part of the SDMX graph, so the library has
-to be told where it is.
+familiar. The differences arise because an observation table sits outside the
+SDMX graph, so the library has to be told where it is.
 
 ## What a binding is
 
@@ -26,8 +25,8 @@ print(binding.measure_column_map)            # {'OBS_VALUE': 'OBS_VALUE'}
 That map is what lets you write `REF_AREA` and have it work even when the
 column is called `geo_code`. You will not usually build a binding by hand —
 whatever loads the observations records one beside them, and a published
-bundle (`sl.LocalRegistry.bundle(path)`) carries its own — but knowing it
-exists explains the shape of everything below.
+bundle (`sl.LocalRegistry.bundle(path)`) carries its own. The rest of this
+tutorial depends on the map it holds.
 
 ## The catalogue used here
 
@@ -68,8 +67,8 @@ print(obs.filter(obs.col("REF_AREA") == "CA").frame().height)   # 3
 ```
 
 `obs.col("REF_AREA")` goes through the binding's map. If the table's column
-were `geo_code`, this line would be unchanged — which is the point: your code
-talks about the DSD, and the binding absorbs whatever the storage calls things.
+were `geo_code`, this line would be unchanged: your code talks about the DSD,
+and the binding absorbs whatever the storage calls things.
 
 Get the id wrong and you are told, with the alternatives:
 
@@ -81,9 +80,9 @@ except KeyError as err:
 # "'COUNTRY' is not a component of this dataflow. It has: FREQ, OBS_STATUS, OBS_VALUE, REF_AREA, TIME_PERIOD"
 ```
 
-That check is the reason this API exists. The interface it replaced took SQL
-text — `where=["REF_AREA = 'CA'"]` — so a typo became either a database error
-at the wrong layer or, with values from a request, something worse.
+This API exists for that check. The interface it replaced took SQL text —
+`where=["REF_AREA = 'CA'"]` — so a typo became a database error at the wrong
+layer, and a value from a request became an SQL injection risk.
 
 ## 3. Filtering
 
@@ -102,8 +101,8 @@ the common period formats.
 print(obs.filter(obs.col("OBS_STATUS") == "P").frame().height)   # 3
 ```
 
-Attributes filter exactly like dimensions. Nothing in the query language cares
-which role a component plays; the binding knows, and that is enough.
+Attributes filter exactly like dimensions. The query language treats every
+component role the same; the binding records which is which.
 
 ### Matching text
 
@@ -194,8 +193,7 @@ print(rows.with_columns(pl.col("mean").round(2)).to_dicts())
 # [{'REF_AREA': 'CA', 'mean': 4.7}, {'REF_AREA': 'MX', 'mean': 6.37}, {'REF_AREA': 'US', 'mean': 5.6}]
 ```
 
-Rounding a float is a display concern, and pushing it into the query would buy
-nothing. The boundary is worth knowing deliberately: **filtering and
+Rounding a float is a display concern, so it stays in polars. **Filtering and
 aggregating happen in the database, over rows you never materialise;
 everything after `.collect()` happens in memory, over rows you did.**
 
@@ -257,9 +255,8 @@ reader = obs.stream()
 print(sum(batch.num_rows for batch in reader))   # 9
 ```
 
-Nine rows do not need streaming. Nine hundred million do, and the query is
-written identically — which is the point of showing it here rather than in a
-performance note.
+Nine rows do not need streaming; nine hundred million do, and the query is
+written the same way for both.
 
 ## 9. Filtering from a request
 

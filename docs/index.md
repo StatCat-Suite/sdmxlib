@@ -11,8 +11,8 @@ inspect schema changes between DSD versions.
 !!! note "Upgrading?"
     The registry API, the query language and the resolution modes all changed
     after 0.48, and every model class is frozen since 0.68.
-    [Upgrading](upgrading.md) lists every breaking change with a before/after —
-    there are no deprecation shims to lean on.
+    [Upgrading](upgrading.md) lists every breaking change with a before/after;
+    each takes effect in its release, with no deprecation period.
 
 ## What it does
 
