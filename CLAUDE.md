@@ -146,6 +146,39 @@ from 1, so a bare number would collide with the GitLab one the tree already
 means. GitHub links `GH-N` by itself. The 31 issues still open at the move were
 re-created on GitHub, each carrying a "Moved from GitLab #N" line.
 
+## Commits
+
+Conventional commits, `type(scope): subject`, with the issue as `(GH-N)` at
+the end. git-cliff builds `CHANGELOG.md` from the subjects (`cliff.toml`), so
+the type is where an entry lands, and a subject it does not parse is dropped
+from the release notes — not filed under "Other".
+
+- `feat` / `model` → Features, `fix` → Bug Fixes, `docs`, `perf`, `refactor`,
+  `test`, and `chore` → Miscellaneous.
+- `!` after the type or scope (`fix!:`, `feat(query)!:`) is a breaking change:
+  it heads the entry under Breaking Changes, bumps the minor while we are
+  pre-1.0, and makes `release-3-pr` require a `docs/upgrading.md` change since
+  the last tag (`just release-check-upgrading`).
+- `ci`, `chore(release)` and merge commits are skipped.
+
+## Related repos
+
+The two other StatCat-Suite libraries build on this one, so a breaking change
+here lands there. Each has its own maintainers and agents: from here they are
+read-only, and a change they need is an issue on their tracker
+(`StatCat-Suite/<repo>#N`).
+
+- `../statcatlib` — the catalog bundle format. Publishes through
+  `sdmxlib.bundle` (`write_manifest(extensions=...)`, wrapping
+  `check_bundle`), injects a `SqlRelation` into the path language, and reads
+  `storage.schema.SCHEMA_VERSION`.
+- `../sdmxlib-rest` — an SDMX-REST server over a `LocalRegistry`: the model
+  artefacts, `DataflowBinding`, `obs()` and `ObsQuery`.
+
+Both pin sdmxlib by range in their `pyproject.toml`. Before a breaking release,
+`git grep` the name in both checkouts and write the move in
+`docs/upgrading.md`.
+
 ## Key files
 
 | File                              | Purpose                                                                                                                                                                |
