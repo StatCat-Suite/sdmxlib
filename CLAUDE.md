@@ -140,8 +140,12 @@ representation they use if we are unsure.
 
 Issues live on GitHub (StatCat-Suite/sdmxlib). The project moved from GitLab
 in October 2026, and the tree cites the GitLab tracker about 4,350 times as a
-bare `#N` — `#492`, `#75`. Those keep meaning GitLab
-(gitlab.com/pinax-suite/sdmxlib, an archive now) and are not rewritten.
+bare `#N` (an issue), `!N` (a merge request) or `%N` (a milestone). Those keep
+their GitLab numbers and are not rewritten. **Read them in
+`history/gitlab/`**: `#492` is `history/gitlab/issues/492.md`, `!600` is
+`merge_requests/600.md`, `%15` is `milestones/15.md`, exported with their
+comments so no one needs GitLab (GH-85). Text that described StatCan-internal
+systems was withheld from the export; its README says how much.
 
 **Write a GitHub issue or PR as `GH-N`**, never a bare `#N`: GitHub numbers
 from 1, so a bare number would collide with the GitLab one the tree already
@@ -154,8 +158,10 @@ and the issue. Keep a reference only where the reader needs the issue: an
 open limitation or follow-up, a measurement or decision recorded there, or a
 test pinning a regression. In user docs (`docs/` outside `docs/design/`) and
 in public docstrings, which render in the API reference, either link the
-issue in full (`[GitLab #422](https://gitlab.com/pinax-suite/sdmxlib/-/issues/422)`)
-or leave it out. The CHANGELOG and released history are left as written.
+issue in full or leave it out: a GitHub issue as
+`[GH-19](https://github.com/StatCat-Suite/sdmxlib/issues/19)`, a GitLab one
+through the export, as
+`[#422](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/gitlab/issues/422.md)`. The CHANGELOG and released history are left as written.
 
 ## Commits
 
