@@ -1,0 +1,214 @@
+{
+  "$class": "GeographicCodelist",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "CL_GEO-ANN",
+      "text": {
+        "en": "CL_GEO-TEXT-en",
+        "fr": "CL_GEO-TEXT-fr"
+      },
+      "title": "CL_GEO-TITLE",
+      "type": "CL_GEO-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/CL_GEO",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/CL_GEO/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "CL_GEO-VALUE"
+    }
+  ],
+  "codes": [
+    {
+      "$class": "GeoFeatureSetCode",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "GEO-EU-ANN",
+          "text": {
+            "en": "GEO-EU-TEXT-en",
+            "fr": "GEO-EU-TEXT-fr"
+          },
+          "title": "GEO-EU-TITLE",
+          "type": "GEO-EU-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/GEO-EU",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/GEO-EU/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "GEO-EU-VALUE"
+        }
+      ],
+      "description": {
+        "en": "GEO-EU-DESC-en",
+        "fr": "GEO-EU-DESC-fr"
+      },
+      "id": "EU",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/geo-eu",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/geo-eu",
+          "urn": null
+        }
+      ],
+      "name": {
+        "en": "GEO-EU-NAME-en",
+        "fr": "GEO-EU-NAME-fr"
+      },
+      "parent_id": null,
+      "uri": "https://example.org/uri/geo-eu",
+      "value": "POLYGON((0 0, 10 0, 10 10, 0 0))"
+    },
+    {
+      "$class": "GeoFeatureSetCode",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "GEO-BE-ANN",
+          "text": {
+            "en": "GEO-BE-TEXT-en",
+            "fr": "GEO-BE-TEXT-fr"
+          },
+          "title": "GEO-BE-TITLE",
+          "type": "GEO-BE-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/GEO-BE",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/GEO-BE/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "GEO-BE-VALUE"
+        }
+      ],
+      "description": {
+        "en": "GEO-BE-DESC-en",
+        "fr": "GEO-BE-DESC-fr"
+      },
+      "id": "BE",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/geo-be",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/geo-be",
+          "urn": null
+        }
+      ],
+      "name": {
+        "en": "GEO-BE-NAME-en",
+        "fr": "GEO-BE-NAME-fr"
+      },
+      "parent_id": "EU",
+      "uri": "https://example.org/uri/geo-be",
+      "value": "POLYGON((0 0, 1 0, 1 1, 0 0))"
+    }
+  ],
+  "description": {
+    "en": "CL_GEO-DESC-en",
+    "fr": "CL_GEO-DESC-fr"
+  },
+  "extensions": [
+    {
+      "$class": "CodelistExtension",
+      "codelist": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+      "prefix": "GEO_",
+      "selection": {
+        "$class": "CodeSelection",
+        "members": [
+          {
+            "$class": "MemberValue",
+            "cascade": "INCLUDE_DESCENDANTS",
+            "value": "PARENT"
+          }
+        ],
+        "mode": "EXCLUDE"
+      }
+    }
+  ],
+  "id": "CL_GEO",
+  "is_external_reference": true,
+  "is_partial": true,
+  "is_partial_language": true,
+  "legacy_is_final": true,
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/CL_GEO",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/CL_GEO",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "name": {
+    "en": "CL_GEO-NAME-en",
+    "fr": "CL_GEO-NAME-fr"
+  },
+  "service_url": "https://example.org/registry/CL_GEO",
+  "structure_url": "https://example.org/structure/CL_GEO.xml",
+  "uri": "https://example.org/uri/CL_GEO",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

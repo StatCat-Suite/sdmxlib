@@ -1,0 +1,103 @@
+{
+  "$class": "AttachmentConstraint",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "ATC-ANN",
+      "text": {
+        "en": "ATC-TEXT-en",
+        "fr": "ATC-TEXT-fr"
+      },
+      "title": "ATC-TITLE",
+      "type": "ATC-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/ATC",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/ATC/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "ATC-VALUE"
+    }
+  ],
+  "attachment": {
+    "$class": "ConstraintAttachment",
+    "data_provider": null,
+    "data_sets": [],
+    "data_structures": [
+      "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)"
+    ],
+    "dataflows": [],
+    "provision_agreements": [],
+    "queryable_data_sources": [],
+    "simple_data_sources": []
+  },
+  "data_key_sets": [
+    {
+      "$class": "DataKeySet",
+      "is_included": true,
+      "keys": [
+        {
+          "$class": "DataKey",
+          "annotations": [],
+          "components": [],
+          "valid_from": null,
+          "valid_to": null,
+          "values": [
+            [
+              "DIM",
+              "A"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "$class": "DataKeySet",
+      "is_included": false,
+      "keys": [
+        {
+          "$class": "DataKey",
+          "annotations": [],
+          "components": [],
+          "valid_from": null,
+          "valid_to": null,
+          "values": [
+            [
+              "DIM",
+              "B"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "description": {
+    "en": "ATC-DESC-en",
+    "fr": "ATC-DESC-fr"
+  },
+  "id": "ATC",
+  "is_external_reference": true,
+  "is_partial_language": true,
+  "legacy_is_final": true,
+  "maintainer": "AG",
+  "name": {
+    "en": "ATC-NAME-en",
+    "fr": "ATC-NAME-fr"
+  },
+  "service_url": "https://example.org/registry/ATC",
+  "structure_url": "https://example.org/structure/ATC.xml",
+  "uri": "https://example.org/uri/ATC",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

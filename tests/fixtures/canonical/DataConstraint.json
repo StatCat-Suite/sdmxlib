@@ -1,0 +1,211 @@
+{
+  "$class": "DataConstraint",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "CC-ANN",
+      "text": {
+        "en": "CC-TEXT-en",
+        "fr": "CC-TEXT-fr"
+      },
+      "title": "CC-TITLE",
+      "type": "CC-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/CC",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/CC/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "CC-VALUE"
+    }
+  ],
+  "attachment": {
+    "$class": "ConstraintAttachment",
+    "data_provider": null,
+    "data_sets": [],
+    "data_structures": [],
+    "dataflows": [
+      "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)"
+    ],
+    "provision_agreements": [],
+    "queryable_data_sources": [],
+    "simple_data_sources": []
+  },
+  "constraint_type": "ALLOWED",
+  "data_key_sets": [],
+  "description": {
+    "en": "CC-DESC-en",
+    "fr": "CC-DESC-fr"
+  },
+  "id": "CC",
+  "is_external_reference": true,
+  "is_partial_language": true,
+  "legacy_is_final": true,
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/CC",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/CC",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "name": {
+    "en": "CC-NAME-en",
+    "fr": "CC-NAME-fr"
+  },
+  "reference_period": {
+    "$class": "ReferencePeriod",
+    "end_period": "2030-12-31T00:00:00.000000Z",
+    "start_period": "2020-01-01T00:00:00.000000Z"
+  },
+  "regions": [
+    {
+      "$class": "CubeRegion",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "REGION-ANN",
+          "text": {
+            "en": "REGION-TEXT-en",
+            "fr": "REGION-TEXT-fr"
+          },
+          "title": "REGION-TITLE",
+          "type": "REGION-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/REGION",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/REGION/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "REGION-VALUE"
+        }
+      ],
+      "components": [
+        {
+          "$class": "ComponentValueSet",
+          "component_id": "ATTR",
+          "include": false,
+          "remove_prefix": true,
+          "time_range": null,
+          "values": [
+            {
+              "$class": "RegionValue",
+              "cascade": "INCLUDE_DESCENDANTS",
+              "lang": "en",
+              "valid_from": null,
+              "valid_to": null,
+              "value": "CHILD"
+            }
+          ]
+        },
+        {
+          "$class": "ComponentValueSet",
+          "component_id": "ATTR_MEAS",
+          "include": true,
+          "remove_prefix": false,
+          "time_range": {
+            "$class": "TimeRange",
+            "end": {
+              "$class": "TimeBound",
+              "inclusive": false,
+              "period": "2025-06-30T00:00:00Z"
+            },
+            "start": null,
+            "valid_from": null,
+            "valid_to": null
+          },
+          "values": []
+        }
+      ],
+      "include": true,
+      "keys": [
+        {
+          "$class": "KeyValue",
+          "dimension_id": "DIM",
+          "include": true,
+          "remove_prefix": true,
+          "time_range": null,
+          "valid_from": "2020-01-01",
+          "valid_to": "2030-12-31",
+          "values": [
+            {
+              "$class": "RegionValue",
+              "cascade": "INCLUDE_DESCENDANTS",
+              "lang": null,
+              "valid_from": "2020-01-01",
+              "valid_to": "2030-12-31",
+              "value": "PARENT"
+            }
+          ]
+        },
+        {
+          "$class": "KeyValue",
+          "dimension_id": "TIME_PERIOD",
+          "include": false,
+          "remove_prefix": false,
+          "time_range": {
+            "$class": "TimeRange",
+            "end": {
+              "$class": "TimeBound",
+              "inclusive": false,
+              "period": "2030-12-31T00:00:00Z"
+            },
+            "start": {
+              "$class": "TimeBound",
+              "inclusive": false,
+              "period": "2020-01-01T00:00:00Z"
+            },
+            "valid_from": "2021-01-01",
+            "valid_to": "2029-12-31"
+          },
+          "valid_from": null,
+          "valid_to": null,
+          "values": []
+        }
+      ]
+    }
+  ],
+  "release_calendar": {
+    "$class": "ReleaseCalendar",
+    "offset": "P0D",
+    "periodicity": "P1M",
+    "tolerance": "P5D"
+  },
+  "service_url": "https://example.org/registry/CC",
+  "structure_url": "https://example.org/structure/CC.xml",
+  "uri": "https://example.org/uri/CC",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

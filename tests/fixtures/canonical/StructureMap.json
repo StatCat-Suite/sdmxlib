@@ -1,0 +1,437 @@
+{
+  "$class": "StructureMap",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "SM-ANN",
+      "text": {
+        "en": "SM-TEXT-en",
+        "fr": "SM-TEXT-fr"
+      },
+      "title": "SM-TITLE",
+      "type": "SM-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/SM",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/SM/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "SM-VALUE"
+    }
+  ],
+  "date_pattern_maps": [
+    {
+      "$class": "DatePatternMap",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "PATTERN-ANN",
+          "text": {
+            "en": "PATTERN-TEXT-en",
+            "fr": "PATTERN-TEXT-fr"
+          },
+          "title": "PATTERN-TITLE",
+          "type": "PATTERN-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/PATTERN",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/PATTERN/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "PATTERN-VALUE"
+        }
+      ],
+      "component_maps": [
+        [
+          "TIME_PERIOD",
+          "TIME_PERIOD"
+        ]
+      ],
+      "frequency_dimension": null,
+      "id": "PATTERN",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/pattern",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/pattern",
+          "urn": null
+        }
+      ],
+      "locale": "en",
+      "mapped_frequencies": [],
+      "resolve_period": "END_OF_PERIOD",
+      "source_pattern": "yyyyMM",
+      "target_frequency_id": "M",
+      "uri": "https://example.org/uri/pattern"
+    },
+    {
+      "$class": "DatePatternMap",
+      "annotations": [],
+      "component_maps": [
+        [
+          "TIME_PERIOD",
+          "TIME_PERIOD"
+        ]
+      ],
+      "frequency_dimension": "DIM",
+      "id": "PATTERN_BY_FREQ",
+      "links": [],
+      "locale": "fr",
+      "mapped_frequencies": [
+        "FFM"
+      ],
+      "resolve_period": null,
+      "source_pattern": "dd/MM/yyyy",
+      "target_frequency_id": null,
+      "uri": null
+    }
+  ],
+  "description": {
+    "en": "SM-DESC-en",
+    "fr": "SM-DESC-fr"
+  },
+  "epoch_maps": [
+    {
+      "$class": "EpochMap",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "EPOCH-ANN",
+          "text": {
+            "en": "EPOCH-TEXT-en",
+            "fr": "EPOCH-TEXT-fr"
+          },
+          "title": "EPOCH-TITLE",
+          "type": "EPOCH-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/EPOCH",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/EPOCH/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "EPOCH-VALUE"
+        }
+      ],
+      "base_period": "1970-01-01",
+      "component_maps": [
+        [
+          "TIME_PERIOD",
+          "TIME_PERIOD"
+        ]
+      ],
+      "epoch_period": "DAY",
+      "frequency_dimension": "DIM",
+      "id": "EPOCH",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/epoch",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/epoch",
+          "urn": null
+        }
+      ],
+      "mapped_frequencies": [
+        "FFM"
+      ],
+      "resolve_period": "START_OF_PERIOD",
+      "target_frequency_id": null,
+      "uri": "https://example.org/uri/epoch"
+    },
+    {
+      "$class": "EpochMap",
+      "annotations": [],
+      "base_period": "2000-01-01",
+      "component_maps": [
+        [
+          "TIME_PERIOD",
+          "TIME_PERIOD"
+        ]
+      ],
+      "epoch_period": "SECOND",
+      "frequency_dimension": null,
+      "id": "EPOCH_M",
+      "links": [],
+      "mapped_frequencies": [],
+      "resolve_period": null,
+      "target_frequency_id": "M",
+      "uri": null
+    }
+  ],
+  "fixed_value_maps": [
+    {
+      "$class": "FixedValueMap",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "FIXED-ANN",
+          "text": {
+            "en": "FIXED-TEXT-en",
+            "fr": "FIXED-TEXT-fr"
+          },
+          "title": "FIXED-TITLE",
+          "type": "FIXED-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/FIXED",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/FIXED/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "FIXED-VALUE"
+        }
+      ],
+      "source_id": "ATTR",
+      "target_id": null,
+      "values": [
+        "X"
+      ]
+    },
+    {
+      "$class": "FixedValueMap",
+      "annotations": [],
+      "source_id": null,
+      "target_id": "ATTR",
+      "values": [
+        "Y",
+        "Z"
+      ]
+    }
+  ],
+  "frequency_format_mappings": [
+    {
+      "$class": "FrequencyFormatMapping",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "FFM-ANN",
+          "text": {
+            "en": "FFM-TEXT-en",
+            "fr": "FFM-TEXT-fr"
+          },
+          "title": "FFM-TITLE",
+          "type": "FFM-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/FFM",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/FFM/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "FFM-VALUE"
+        }
+      ],
+      "date_pattern": "yyyy-MM",
+      "frequency_id": "M",
+      "id": "FFM",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/ffm",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/ffm",
+          "urn": null
+        }
+      ],
+      "uri": "https://example.org/uri/ffm"
+    }
+  ],
+  "id": "SM@SS",
+  "is_extension": true,
+  "is_external_reference": true,
+  "is_partial_language": true,
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/SM",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/SM",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "maps": [
+    {
+      "$class": "ComponentMap",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "COMPMAP-ANN",
+          "text": {
+            "en": "COMPMAP-TEXT-en",
+            "fr": "COMPMAP-TEXT-fr"
+          },
+          "title": "COMPMAP-TITLE",
+          "type": "COMPMAP-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/COMPMAP",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/COMPMAP/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "COMPMAP-VALUE"
+        }
+      ],
+      "representation_map": "urn:sdmx:org.sdmx.infomodel.structuremapping.RepresentationMap=AG:RM@SS(1.0)",
+      "sources": [
+        "DIM"
+      ],
+      "targets": [
+        "DIM"
+      ],
+      "to_text_format": null,
+      "to_value_type": null
+    },
+    {
+      "$class": "ComponentMap",
+      "annotations": [],
+      "representation_map": "urn:sdmx:org.sdmx.infomodel.structuremapping.RepresentationMap=AG:SM_VALUE_MAP_2@SS(1.0)",
+      "sources": [
+        "DIM"
+      ],
+      "targets": [
+        "DIM"
+      ],
+      "to_text_format": null,
+      "to_value_type": null
+    },
+    {
+      "$class": "ComponentMap",
+      "annotations": [],
+      "representation_map": null,
+      "sources": [
+        "DIM"
+      ],
+      "targets": [
+        "DIM"
+      ],
+      "to_text_format": {
+        "$class": "Facet",
+        "decimals": 2,
+        "end_time": "2030-12-31",
+        "end_value": 99.0,
+        "interval": 2.0,
+        "is_multilingual": false,
+        "is_sequence": true,
+        "max_length": 10,
+        "max_value": 99.0,
+        "min_length": 1,
+        "min_value": 1.0,
+        "pattern": "[0-9]+",
+        "sentinel_values": [],
+        "start_time": "2020-01-01",
+        "start_value": 1.0,
+        "time_interval": "P1D",
+        "type": "Integer"
+      },
+      "to_value_type": "NAME"
+    }
+  ],
+  "name": {
+    "en": "SM-NAME-en",
+    "fr": "SM-NAME-fr"
+  },
+  "service_url": "https://example.org/registry/SS",
+  "source": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)",
+  "structure_url": "https://example.org/structure/SS.xml",
+  "target": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)",
+  "uri": "https://example.org/uri/SM",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

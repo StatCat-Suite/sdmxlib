@@ -92,6 +92,10 @@ The format itself, field by field, is [the bundle format](bundle.md).
 
 ---
 
+::: sdmxlib.bundle.canonical_json
+
+---
+
 ::: sdmxlib.bundle.fetch_bundle
 
 ---

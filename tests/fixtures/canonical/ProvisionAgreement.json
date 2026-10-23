@@ -1,0 +1,71 @@
+{
+  "$class": "ProvisionAgreement",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "PA-ANN",
+      "text": {
+        "en": "PA-TEXT-en",
+        "fr": "PA-TEXT-fr"
+      },
+      "title": "PA-TITLE",
+      "type": "PA-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/PA",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/PA/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "PA-VALUE"
+    }
+  ],
+  "data_provider": "urn:sdmx:org.sdmx.infomodel.base.DataProvider=AG:DATA_PROVIDERS(1.0).P1",
+  "dataflow": "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)",
+  "description": {
+    "en": "PA-DESC-en",
+    "fr": "PA-DESC-fr"
+  },
+  "id": "PA",
+  "is_external_reference": true,
+  "is_partial_language": true,
+  "legacy_is_final": true,
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/PA",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/PA",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "name": {
+    "en": "PA-NAME-en",
+    "fr": "PA-NAME-fr"
+  },
+  "service_url": "https://example.org/registry/PA",
+  "structure_url": "https://example.org/structure/PA.xml",
+  "uri": "https://example.org/uri/PA",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

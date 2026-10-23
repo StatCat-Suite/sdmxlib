@@ -1,0 +1,57 @@
+{
+  "$class": "HierarchicalCodelist",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "HCL-ANN",
+      "text": {
+        "en": "HCL-TEXT-en",
+        "fr": "HCL-TEXT-fr"
+      },
+      "title": "HCL-TITLE",
+      "type": "HCL-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/HCL",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/HCL/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "HCL-VALUE"
+    }
+  ],
+  "description": {
+    "en": "HCL-DESC-en",
+    "fr": "HCL-DESC-fr"
+  },
+  "hierarchies": [
+    "urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=AG:H@HCL(1.0)"
+  ],
+  "id": "HCL",
+  "included_codelists": [
+    "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)"
+  ],
+  "is_external_reference": true,
+  "is_partial_language": true,
+  "legacy_is_final": true,
+  "maintainer": "AG",
+  "name": {
+    "en": "HCL-NAME-en",
+    "fr": "HCL-NAME-fr"
+  },
+  "service_url": "https://example.org/registry/HCL",
+  "structure_url": "https://example.org/structure/HCL.xml",
+  "uri": "https://example.org/uri/HCL",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

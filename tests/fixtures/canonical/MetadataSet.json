@@ -1,0 +1,122 @@
+{
+  "$class": "MetadataSet",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "MDS-ANN",
+      "text": {
+        "en": "MDS-TEXT-en",
+        "fr": "MDS-TEXT-fr"
+      },
+      "title": "MDS-TITLE",
+      "type": "MDS-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/MDS",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/MDS/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "MDS-VALUE"
+    }
+  ],
+  "attributes": [
+    {
+      "$class": "ReportedAttribute",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "MDS-ATTR-ANN",
+          "text": {
+            "en": "MDS-ATTR-TEXT-en",
+            "fr": "MDS-ATTR-TEXT-fr"
+          },
+          "title": "MDS-ATTR-TITLE",
+          "type": "MDS-ATTR-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/MDS-ATTR",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/MDS-ATTR/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "MDS-ATTR-VALUE"
+        }
+      ],
+      "children": [
+        {
+          "$class": "ReportedAttribute",
+          "annotations": [],
+          "children": [],
+          "id": "CHILD",
+          "uri": null,
+          "value": "child"
+        }
+      ],
+      "id": "PARENT",
+      "uri": "https://example.org/uri/MDS-ATTR",
+      "value": {
+        "en": "parent-en",
+        "fr": "parent-fr"
+      }
+    }
+  ],
+  "description": {
+    "en": "MDS-DESC-en",
+    "fr": "MDS-DESC-fr"
+  },
+  "id": "MDS",
+  "is_external_reference": true,
+  "is_partial_language": true,
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/MDS",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/MDS",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "name": {
+    "en": "MDS-NAME-en",
+    "fr": "MDS-NAME-fr"
+  },
+  "service_url": "https://example.org/registry/MDS",
+  "structure": "urn:sdmx:org.sdmx.infomodel.metadatastructure.Metadataflow=AG:MDF(1.0)",
+  "structure_url": "https://example.org/structure/MDS.xml",
+  "targets": [
+    "urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=AG:CATS(1.0)"
+  ],
+  "uri": "https://example.org/uri/MDS",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0.0"
+}

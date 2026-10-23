@@ -1,0 +1,71 @@
+{
+  "$class": "HierarchyAssociation",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "HA-ANN",
+      "text": {
+        "en": "HA-TEXT-en",
+        "fr": "HA-TEXT-fr"
+      },
+      "title": "HA-TITLE",
+      "type": "HA-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/HA",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/HA/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "HA-VALUE"
+    }
+  ],
+  "context_object": "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)",
+  "description": {
+    "en": "HA-DESC-en",
+    "fr": "HA-DESC-fr"
+  },
+  "id": "HA",
+  "is_external_reference": true,
+  "is_partial_language": true,
+  "linked_hierarchy": "urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=AG:H@HCL(1.0)",
+  "linked_object": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)",
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/HA",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/HA",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "name": {
+    "en": "HA-NAME-en",
+    "fr": "HA-NAME-fr"
+  },
+  "service_url": "https://example.org/registry/HA",
+  "structure_url": "https://example.org/structure/HA.xml",
+  "uri": "https://example.org/uri/HA",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

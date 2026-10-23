@@ -1,0 +1,504 @@
+{
+  "$class": "Hierarchy",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "H-ANN",
+      "text": {
+        "en": "H-TEXT-en",
+        "fr": "H-TEXT-fr"
+      },
+      "title": "H-TITLE",
+      "type": "H-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/H",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/H/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "H-VALUE"
+    }
+  ],
+  "description": {
+    "en": "H-DESC-en",
+    "fr": "H-DESC-fr"
+  },
+  "has_formal_levels": true,
+  "id": "H@HCL",
+  "is_external_reference": true,
+  "is_partial_language": true,
+  "levels": [
+    {
+      "$class": "Level",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "LEVEL-ANN",
+          "text": {
+            "en": "LEVEL-TEXT-en",
+            "fr": "LEVEL-TEXT-fr"
+          },
+          "title": "LEVEL-TITLE",
+          "type": "LEVEL-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/LEVEL",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/LEVEL/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "LEVEL-VALUE"
+        }
+      ],
+      "coding_format": {
+        "$class": "Facet",
+        "decimals": null,
+        "end_time": null,
+        "end_value": 99.0,
+        "interval": 2.0,
+        "is_multilingual": false,
+        "is_sequence": true,
+        "max_length": 10,
+        "max_value": 99.0,
+        "min_length": 1,
+        "min_value": 1.0,
+        "pattern": "[0-9]+",
+        "sentinel_values": [],
+        "start_time": null,
+        "start_value": 1.0,
+        "time_interval": null,
+        "type": "Numeric"
+      },
+      "description": {
+        "en": "LEVEL-DESC-en",
+        "fr": "LEVEL-DESC-fr"
+      },
+      "id": "L1",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/level",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/level",
+          "urn": null
+        }
+      ],
+      "name": {
+        "en": "LEVEL-NAME-en",
+        "fr": "LEVEL-NAME-fr"
+      },
+      "uri": "https://example.org/uri/level"
+    },
+    {
+      "$class": "Level",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "LEVEL-2-ANN",
+          "text": {
+            "en": "LEVEL-2-TEXT-en",
+            "fr": "LEVEL-2-TEXT-fr"
+          },
+          "title": "LEVEL-2-TITLE",
+          "type": "LEVEL-2-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/LEVEL-2",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/LEVEL-2/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "LEVEL-2-VALUE"
+        }
+      ],
+      "coding_format": {
+        "$class": "Facet",
+        "decimals": null,
+        "end_time": null,
+        "end_value": 99.0,
+        "interval": 2.0,
+        "is_multilingual": false,
+        "is_sequence": true,
+        "max_length": 10,
+        "max_value": 99.0,
+        "min_length": 1,
+        "min_value": 1.0,
+        "pattern": "[0-9]+",
+        "sentinel_values": [],
+        "start_time": null,
+        "start_value": 1.0,
+        "time_interval": null,
+        "type": "Numeric"
+      },
+      "description": {
+        "en": "LEVEL-2-DESC-en",
+        "fr": "LEVEL-2-DESC-fr"
+      },
+      "id": "L2",
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/level-2",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/level-2",
+          "urn": null
+        }
+      ],
+      "name": {
+        "en": "LEVEL-2-NAME-en",
+        "fr": "LEVEL-2-NAME-fr"
+      },
+      "uri": "https://example.org/uri/level-2"
+    }
+  ],
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/H",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/H",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "name": {
+    "en": "H-NAME-en",
+    "fr": "H-NAME-fr"
+  },
+  "service_url": "https://example.org/registry/HCL",
+  "structure_url": "https://example.org/structure/HCL.xml",
+  "tree": [
+    {
+      "$class": "HierarchicalCode",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "HCODE-ANN",
+          "text": {
+            "en": "HCODE-TEXT-en",
+            "fr": "HCODE-TEXT-fr"
+          },
+          "title": "HCODE-TITLE",
+          "type": "HCODE-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/HCODE",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/HCODE/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "HCODE-VALUE"
+        }
+      ],
+      "children": [
+        {
+          "$class": "HierarchicalCode",
+          "annotations": [
+            {
+              "$class": "Annotation",
+              "id": "HCODE-LEAF-ANN",
+              "text": {
+                "en": "HCODE-LEAF-TEXT-en",
+                "fr": "HCODE-LEAF-TEXT-fr"
+              },
+              "title": "HCODE-LEAF-TITLE",
+              "type": "HCODE-LEAF-TYPE",
+              "urls": [
+                {
+                  "$class": "AnnotationURL",
+                  "lang": null,
+                  "type": null,
+                  "url": "https://example.org/HCODE-LEAF",
+                  "urn": null
+                },
+                {
+                  "$class": "AnnotationURL",
+                  "lang": "fr",
+                  "type": "PDF",
+                  "url": "https://example.org/HCODE-LEAF/fr",
+                  "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+                }
+              ],
+              "value": "HCODE-LEAF-VALUE"
+            }
+          ],
+          "children": [],
+          "code": "urn:sdmx:org.sdmx.infomodel.codelist.Code=AG:CL(1.0).CHILD",
+          "id": "LEAF",
+          "level": {
+            "$class": "Level",
+            "annotations": [
+              {
+                "$class": "Annotation",
+                "id": "LEVEL-2-ANN",
+                "text": {
+                  "en": "LEVEL-2-TEXT-en",
+                  "fr": "LEVEL-2-TEXT-fr"
+                },
+                "title": "LEVEL-2-TITLE",
+                "type": "LEVEL-2-TYPE",
+                "urls": [
+                  {
+                    "$class": "AnnotationURL",
+                    "lang": null,
+                    "type": null,
+                    "url": "https://example.org/LEVEL-2",
+                    "urn": null
+                  },
+                  {
+                    "$class": "AnnotationURL",
+                    "lang": "fr",
+                    "type": "PDF",
+                    "url": "https://example.org/LEVEL-2/fr",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+                  }
+                ],
+                "value": "LEVEL-2-VALUE"
+              }
+            ],
+            "coding_format": {
+              "$class": "Facet",
+              "decimals": null,
+              "end_time": null,
+              "end_value": 99.0,
+              "interval": 2.0,
+              "is_multilingual": false,
+              "is_sequence": true,
+              "max_length": 10,
+              "max_value": 99.0,
+              "min_length": 1,
+              "min_value": 1.0,
+              "pattern": "[0-9]+",
+              "sentinel_values": [],
+              "start_time": null,
+              "start_value": 1.0,
+              "time_interval": null,
+              "type": "Numeric"
+            },
+            "description": {
+              "en": "LEVEL-2-DESC-en",
+              "fr": "LEVEL-2-DESC-fr"
+            },
+            "id": "L2",
+            "links": [
+              {
+                "$class": "Link",
+                "hreflang": "en",
+                "rel": "metadata",
+                "type": "PDF",
+                "url": "https://example.org/link/level-2",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+              },
+              {
+                "$class": "Link",
+                "hreflang": null,
+                "rel": "alternate",
+                "type": null,
+                "url": "https://example.org/alternate/level-2",
+                "urn": null
+              }
+            ],
+            "name": {
+              "en": "LEVEL-2-NAME-en",
+              "fr": "LEVEL-2-NAME-fr"
+            },
+            "uri": "https://example.org/uri/level-2"
+          },
+          "links": [
+            {
+              "$class": "Link",
+              "hreflang": "en",
+              "rel": "metadata",
+              "type": "PDF",
+              "url": "https://example.org/link/hcode-leaf",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+            },
+            {
+              "$class": "Link",
+              "hreflang": null,
+              "rel": "alternate",
+              "type": null,
+              "url": "https://example.org/alternate/hcode-leaf",
+              "urn": null
+            }
+          ],
+          "uri": "https://example.org/uri/hcode-leaf",
+          "valid_from": null,
+          "valid_to": null,
+          "version": null
+        }
+      ],
+      "code": "urn:sdmx:org.sdmx.infomodel.codelist.Code=AG:CL(1.0).PARENT",
+      "id": "NODE",
+      "level": {
+        "$class": "Level",
+        "annotations": [
+          {
+            "$class": "Annotation",
+            "id": "LEVEL-ANN",
+            "text": {
+              "en": "LEVEL-TEXT-en",
+              "fr": "LEVEL-TEXT-fr"
+            },
+            "title": "LEVEL-TITLE",
+            "type": "LEVEL-TYPE",
+            "urls": [
+              {
+                "$class": "AnnotationURL",
+                "lang": null,
+                "type": null,
+                "url": "https://example.org/LEVEL",
+                "urn": null
+              },
+              {
+                "$class": "AnnotationURL",
+                "lang": "fr",
+                "type": "PDF",
+                "url": "https://example.org/LEVEL/fr",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+              }
+            ],
+            "value": "LEVEL-VALUE"
+          }
+        ],
+        "coding_format": {
+          "$class": "Facet",
+          "decimals": null,
+          "end_time": null,
+          "end_value": 99.0,
+          "interval": 2.0,
+          "is_multilingual": false,
+          "is_sequence": true,
+          "max_length": 10,
+          "max_value": 99.0,
+          "min_length": 1,
+          "min_value": 1.0,
+          "pattern": "[0-9]+",
+          "sentinel_values": [],
+          "start_time": null,
+          "start_value": 1.0,
+          "time_interval": null,
+          "type": "Numeric"
+        },
+        "description": {
+          "en": "LEVEL-DESC-en",
+          "fr": "LEVEL-DESC-fr"
+        },
+        "id": "L1",
+        "links": [
+          {
+            "$class": "Link",
+            "hreflang": "en",
+            "rel": "metadata",
+            "type": "PDF",
+            "url": "https://example.org/link/level",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+          },
+          {
+            "$class": "Link",
+            "hreflang": null,
+            "rel": "alternate",
+            "type": null,
+            "url": "https://example.org/alternate/level",
+            "urn": null
+          }
+        ],
+        "name": {
+          "en": "LEVEL-NAME-en",
+          "fr": "LEVEL-NAME-fr"
+        },
+        "uri": "https://example.org/uri/level"
+      },
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/hcode",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/hcode",
+          "urn": null
+        }
+      ],
+      "uri": "https://example.org/uri/hcode",
+      "valid_from": "2020-01-01T00:00:00.000000Z",
+      "valid_to": "2030-12-31T00:00:00.000000Z",
+      "version": "1.0"
+    }
+  ],
+  "uri": "https://example.org/uri/H",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}

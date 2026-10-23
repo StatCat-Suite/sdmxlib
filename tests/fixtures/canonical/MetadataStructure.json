@@ -1,0 +1,598 @@
+{
+  "$class": "MetadataStructure",
+  "annotations": [
+    {
+      "$class": "Annotation",
+      "id": "MSD-ANN",
+      "text": {
+        "en": "MSD-TEXT-en",
+        "fr": "MSD-TEXT-fr"
+      },
+      "title": "MSD-TITLE",
+      "type": "MSD-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/MSD",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/MSD/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "MSD-VALUE"
+    }
+  ],
+  "attribute_list_annotations": [
+    {
+      "$class": "Annotation",
+      "id": "MALIST-ANN",
+      "text": {
+        "en": "MALIST-TEXT-en",
+        "fr": "MALIST-TEXT-fr"
+      },
+      "title": "MALIST-TITLE",
+      "type": "MALIST-TYPE",
+      "urls": [
+        {
+          "$class": "AnnotationURL",
+          "lang": null,
+          "type": null,
+          "url": "https://example.org/MALIST",
+          "urn": null
+        },
+        {
+          "$class": "AnnotationURL",
+          "lang": "fr",
+          "type": "PDF",
+          "url": "https://example.org/MALIST/fr",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+        }
+      ],
+      "value": "MALIST-VALUE"
+    }
+  ],
+  "attribute_list_links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/malist",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/malist",
+      "urn": null
+    }
+  ],
+  "attribute_list_uri": "https://example.org/uri/malist",
+  "attributes": [
+    {
+      "$class": "MetadataAttribute",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "MA-ANN",
+          "text": {
+            "en": "MA-TEXT-en",
+            "fr": "MA-TEXT-fr"
+          },
+          "title": "MA-TITLE",
+          "type": "MA-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/MA",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/MA/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "MA-VALUE"
+        }
+      ],
+      "children": [
+        {
+          "$class": "MetadataAttribute",
+          "annotations": [
+            {
+              "$class": "Annotation",
+              "id": "MA-CHILD-ANN",
+              "text": {
+                "en": "MA-CHILD-TEXT-en",
+                "fr": "MA-CHILD-TEXT-fr"
+              },
+              "title": "MA-CHILD-TITLE",
+              "type": "MA-CHILD-TYPE",
+              "urls": [
+                {
+                  "$class": "AnnotationURL",
+                  "lang": null,
+                  "type": null,
+                  "url": "https://example.org/MA-CHILD",
+                  "urn": null
+                },
+                {
+                  "$class": "AnnotationURL",
+                  "lang": "fr",
+                  "type": "PDF",
+                  "url": "https://example.org/MA-CHILD/fr",
+                  "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+                }
+              ],
+              "value": "MA-CHILD-VALUE"
+            }
+          ],
+          "children": [],
+          "concept": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).CHILD",
+          "enumeration_format": null,
+          "id": "MA_CHILD",
+          "is_presentational": false,
+          "links": [
+            {
+              "$class": "Link",
+              "hreflang": "en",
+              "rel": "metadata",
+              "type": "PDF",
+              "url": "https://example.org/link/ma-child",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+            },
+            {
+              "$class": "Link",
+              "hreflang": null,
+              "rel": "alternate",
+              "type": null,
+              "url": "https://example.org/alternate/ma-child",
+              "urn": null
+            }
+          ],
+          "max_occurs": 1,
+          "min_occurs": 0,
+          "representation": null,
+          "uri": "https://example.org/uri/ma-child"
+        }
+      ],
+      "concept": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+      "enumeration_format": {
+        "$class": "Facet",
+        "decimals": null,
+        "end_time": "2030-12-31",
+        "end_value": 99.0,
+        "interval": 2.0,
+        "is_multilingual": false,
+        "is_sequence": true,
+        "max_length": 10,
+        "max_value": 99.0,
+        "min_length": 1,
+        "min_value": 1.0,
+        "pattern": "[0-9]+",
+        "sentinel_values": [],
+        "start_time": "2020-01-01",
+        "start_value": 1.0,
+        "time_interval": "P1D",
+        "type": "Integer"
+      },
+      "id": "MA",
+      "is_presentational": true,
+      "links": [
+        {
+          "$class": "Link",
+          "hreflang": "en",
+          "rel": "metadata",
+          "type": "PDF",
+          "url": "https://example.org/link/ma",
+          "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+        },
+        {
+          "$class": "Link",
+          "hreflang": null,
+          "rel": "alternate",
+          "type": null,
+          "url": "https://example.org/alternate/ma",
+          "urn": null
+        }
+      ],
+      "max_occurs": 9,
+      "min_occurs": 1,
+      "representation": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+      "uri": "https://example.org/uri/ma"
+    }
+  ],
+  "description": {
+    "en": "MSD-DESC-en",
+    "fr": "MSD-DESC-fr"
+  },
+  "id": "MSD",
+  "is_external_reference": true,
+  "is_partial_language": true,
+  "legacy_is_final": true,
+  "links": [
+    {
+      "$class": "Link",
+      "hreflang": "en",
+      "rel": "metadata",
+      "type": "PDF",
+      "url": "https://example.org/link/MSD",
+      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)"
+    },
+    {
+      "$class": "Link",
+      "hreflang": null,
+      "rel": "alternate",
+      "type": null,
+      "url": "https://example.org/alternate/MSD",
+      "urn": null
+    }
+  ],
+  "maintainer": "AG",
+  "name": {
+    "en": "MSD-NAME-en",
+    "fr": "MSD-NAME-fr"
+  },
+  "report_structures": [
+    {
+      "$class": "ReportStructure",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "REPORT-ANN",
+          "text": {
+            "en": "REPORT-TEXT-en",
+            "fr": "REPORT-TEXT-fr"
+          },
+          "title": "REPORT-TITLE",
+          "type": "REPORT-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/REPORT",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/REPORT/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "REPORT-VALUE"
+        }
+      ],
+      "attribute_ids": [
+        "MA"
+      ],
+      "id": "REPORT",
+      "target_ids": [
+        "TARGET"
+      ],
+      "uri": "https://example.org/uri/report"
+    }
+  ],
+  "service_url": "https://example.org/registry/MSD",
+  "structure_url": "https://example.org/structure/MSD.xml",
+  "targets": [
+    {
+      "$class": "MetadataTarget",
+      "annotations": [
+        {
+          "$class": "Annotation",
+          "id": "TARGET-ANN",
+          "text": {
+            "en": "TARGET-TEXT-en",
+            "fr": "TARGET-TEXT-fr"
+          },
+          "title": "TARGET-TITLE",
+          "type": "TARGET-TYPE",
+          "urls": [
+            {
+              "$class": "AnnotationURL",
+              "lang": null,
+              "type": null,
+              "url": "https://example.org/TARGET",
+              "urn": null
+            },
+            {
+              "$class": "AnnotationURL",
+              "lang": "fr",
+              "type": "PDF",
+              "url": "https://example.org/TARGET/fr",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+            }
+          ],
+          "value": "TARGET-VALUE"
+        }
+      ],
+      "id": "TARGET",
+      "target_objects": [
+        {
+          "$class": "TargetObject",
+          "annotations": [
+            {
+              "$class": "Annotation",
+              "id": "TARGET-COMP-ANN",
+              "text": {
+                "en": "TARGET-COMP-TEXT-en",
+                "fr": "TARGET-COMP-TEXT-fr"
+              },
+              "title": "TARGET-COMP-TITLE",
+              "type": "TARGET-COMP-TYPE",
+              "urls": [
+                {
+                  "$class": "AnnotationURL",
+                  "lang": null,
+                  "type": null,
+                  "url": "https://example.org/TARGET-COMP",
+                  "urn": null
+                },
+                {
+                  "$class": "AnnotationURL",
+                  "lang": "fr",
+                  "type": "PDF",
+                  "url": "https://example.org/TARGET-COMP/fr",
+                  "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)"
+                }
+              ],
+              "value": "TARGET-COMP-VALUE"
+            }
+          ],
+          "id": "COMP",
+          "kind": "IdentifiableObjectTarget",
+          "object_type": "DataStructure",
+          "representation": {
+            "$class": "Facet",
+            "decimals": null,
+            "end_time": null,
+            "end_value": null,
+            "interval": null,
+            "is_multilingual": false,
+            "is_sequence": null,
+            "max_length": null,
+            "max_value": null,
+            "min_length": null,
+            "min_value": null,
+            "pattern": null,
+            "sentinel_values": [],
+            "start_time": null,
+            "start_value": null,
+            "time_interval": null,
+            "type": "IdentifiableReference"
+          },
+          "uri": "https://example.org/uri/target-comp"
+        },
+        {
+          "$class": "TargetObject",
+          "annotations": [],
+          "id": "DATA_SET_TARGET",
+          "kind": "DataSetTarget",
+          "object_type": null,
+          "representation": {
+            "$class": "Facet",
+            "decimals": null,
+            "end_time": null,
+            "end_value": null,
+            "interval": null,
+            "is_multilingual": false,
+            "is_sequence": null,
+            "max_length": null,
+            "max_value": null,
+            "min_length": null,
+            "min_value": null,
+            "pattern": null,
+            "sentinel_values": [],
+            "start_time": null,
+            "start_value": null,
+            "time_interval": null,
+            "type": "DataSetReference"
+          },
+          "uri": null
+        }
+      ],
+      "uri": "https://example.org/uri/target"
+    },
+    {
+      "$class": "MetadataTarget",
+      "annotations": [],
+      "id": "TARGET_KEYDESCRIPTORVALUESTARGET",
+      "target_objects": [
+        {
+          "$class": "TargetObject",
+          "annotations": [
+            {
+              "$class": "Annotation",
+              "id": null,
+              "text": {},
+              "title": null,
+              "type": "KeyDescriptorValuesTarget",
+              "urls": [],
+              "value": null
+            }
+          ],
+          "id": "DIMENSION_DESCRIPTOR_VALUES_TARGET",
+          "kind": "KeyDescriptorValuesTarget",
+          "object_type": null,
+          "representation": {
+            "$class": "Facet",
+            "decimals": null,
+            "end_time": null,
+            "end_value": null,
+            "interval": null,
+            "is_multilingual": false,
+            "is_sequence": null,
+            "max_length": null,
+            "max_value": null,
+            "min_length": null,
+            "min_value": null,
+            "pattern": null,
+            "sentinel_values": [],
+            "start_time": null,
+            "start_value": null,
+            "time_interval": null,
+            "type": "KeyValues"
+          },
+          "uri": "https://example.org/uri/dimension_descriptor_values_target"
+        }
+      ],
+      "uri": null
+    },
+    {
+      "$class": "MetadataTarget",
+      "annotations": [],
+      "id": "TARGET_DATASETTARGET",
+      "target_objects": [
+        {
+          "$class": "TargetObject",
+          "annotations": [
+            {
+              "$class": "Annotation",
+              "id": null,
+              "text": {},
+              "title": null,
+              "type": "DataSetTarget",
+              "urls": [],
+              "value": null
+            }
+          ],
+          "id": "DATA_SET_TARGET",
+          "kind": "DataSetTarget",
+          "object_type": null,
+          "representation": {
+            "$class": "Facet",
+            "decimals": null,
+            "end_time": null,
+            "end_value": null,
+            "interval": null,
+            "is_multilingual": false,
+            "is_sequence": null,
+            "max_length": null,
+            "max_value": null,
+            "min_length": null,
+            "min_value": null,
+            "pattern": null,
+            "sentinel_values": [],
+            "start_time": null,
+            "start_value": null,
+            "time_interval": null,
+            "type": "DataSetReference"
+          },
+          "uri": "https://example.org/uri/data_set_target"
+        }
+      ],
+      "uri": null
+    },
+    {
+      "$class": "MetadataTarget",
+      "annotations": [],
+      "id": "TARGET_CONSTRAINTCONTENTTARGET",
+      "target_objects": [
+        {
+          "$class": "TargetObject",
+          "annotations": [
+            {
+              "$class": "Annotation",
+              "id": null,
+              "text": {},
+              "title": null,
+              "type": "ConstraintContentTarget",
+              "urls": [],
+              "value": null
+            }
+          ],
+          "id": "CONSTRAINT_CONTENT_TARGET",
+          "kind": "ConstraintContentTarget",
+          "object_type": null,
+          "representation": {
+            "$class": "Facet",
+            "decimals": null,
+            "end_time": null,
+            "end_value": null,
+            "interval": null,
+            "is_multilingual": false,
+            "is_sequence": null,
+            "max_length": null,
+            "max_value": null,
+            "min_length": null,
+            "min_value": null,
+            "pattern": null,
+            "sentinel_values": [],
+            "start_time": null,
+            "start_value": null,
+            "time_interval": null,
+            "type": "AttachmentConstraintReference"
+          },
+          "uri": "https://example.org/uri/constraint_content_target"
+        }
+      ],
+      "uri": null
+    },
+    {
+      "$class": "MetadataTarget",
+      "annotations": [],
+      "id": "TARGET_REPORTPERIODTARGET",
+      "target_objects": [
+        {
+          "$class": "TargetObject",
+          "annotations": [
+            {
+              "$class": "Annotation",
+              "id": null,
+              "text": {},
+              "title": null,
+              "type": "ReportPeriodTarget",
+              "urls": [],
+              "value": null
+            }
+          ],
+          "id": "REPORT_PERIOD_TARGET",
+          "kind": "ReportPeriodTarget",
+          "object_type": null,
+          "representation": {
+            "$class": "Facet",
+            "decimals": null,
+            "end_time": null,
+            "end_value": null,
+            "interval": null,
+            "is_multilingual": false,
+            "is_sequence": null,
+            "max_length": null,
+            "max_value": null,
+            "min_length": null,
+            "min_value": null,
+            "pattern": null,
+            "sentinel_values": [],
+            "start_time": null,
+            "start_value": null,
+            "time_interval": null,
+            "type": "ObservationalTimePeriod"
+          },
+          "uri": "https://example.org/uri/report_period_target"
+        }
+      ],
+      "uri": null
+    }
+  ],
+  "uri": "https://example.org/uri/MSD",
+  "valid_from": "2020-01-01T00:00:00.000000Z",
+  "valid_to": "2030-12-31T00:00:00.000000Z",
+  "version": "1.0"
+}
