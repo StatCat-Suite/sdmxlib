@@ -53,7 +53,9 @@ def _schema_fields() -> dict[str, dict[str, str]]:
 def test_the_spec_documents_every_schema_definition_field_by_field() -> None:
     documented = _tables(_SPEC.read_text(encoding="utf-8"))
     shipped = _schema_fields()
-    assert len(shipped) == 8, "Manifest, Producer, BundleFile, BindingCount, Provenance and three overlay types"
+    assert len(shipped) == 9, (
+        "Manifest, Producer, BundleFile, BindingCount, ArtefactEntry, Provenance and three overlay types"
+    )
     assert documented == shipped, "docs/bundle.md's field tables differ from the shipped schemas"
 
 

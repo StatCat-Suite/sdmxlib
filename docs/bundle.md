@@ -73,9 +73,14 @@ two spaces, but a reader MUST NOT depend on the layout.
 | `producer` | required | What built the bundle: a `Producer`. |
 | `sdmxlib_version` | required | The version of sdmxlib that wrote the manifest. |
 | `schema_version` | required | The store schema of `meta.duckdb`, such as `"2.48"` (§4). |
+| `duckdb_version` | required | The DuckDB release that wrote the DuckDB files, such as `"2.0.0"`. |
+| `duckdb_storage_version` | required | The newest storage version among `meta.duckdb` and `lake.ducklake`, the integer each file's header records (§4). |
+| `ducklake_version` | required | The DuckLake extension that wrote `lake.ducklake`, or `null` for a publication without one. |
+| `ducklake_spec_version` | required | The DuckLake format the catalog records, such as `"1.1"`, or `null` for a publication without one (§4). |
 | `data_path` | required | Where the data files live, relative to the publication directory: `"../data/"`. |
 | `files` | required | Every file in the publication directory except the manifest, and every data file the lake catalog references, as `BundleFile`s sorted by `root`, then `path`. |
 | `bindings` | required | One `BindingCount` per bound dataflow, sorted by `dataflow`. |
+| `artefacts` | required | One `ArtefactEntry` per maintainable artefact in the store but the `DataflowBinding`s, sorted by `urn`. |
 | `product` | optional | The producer's own fields, as a JSON object. Readers carry it and do not interpret it. |
 | `extensions` | optional | Sections owned by other packages, keyed by package name, each a JSON object. Readers carry them and do not interpret them. |
 | `provenance` | optional | Where a fetched bundle came from: a `Provenance`, or `null`. |
@@ -94,8 +99,10 @@ two spaces, but a reader MUST NOT depend on the layout.
 | `path` | required | The file's path, `/`-separated, relative to the directory `root` names. |
 | `size` | required | Its size in bytes. |
 | `sha256` | required | The SHA-256 of its contents, as lowercase hex. |
+| `md5` | required | The MD5 of its contents, as lowercase hex. An upload's `Content-MD5` header is the base64 of the same 16 bytes. |
 | `root` | required | `"publication"` for a file in the publication directory, `"data"` for a data file under `data_path`. |
-| `carried_from` | optional | For a data file, the `token` of the manifest whose `size` and `sha256` this entry copies; `null` for one hashed by this publication. |
+| `tier` | required | The producer's default placement: `1` pulled before a server is ready, `2` pulled lazily to local disk, `3` read remotely by byte range (§7). |
+| `carried_from` | optional | For a data file, the `token` of the manifest whose `size`, `sha256` and `md5` this entry copies; `null` for one hashed by this publication. |
 
 ### `BindingCount`
 
@@ -103,6 +110,15 @@ two spaces, but a reader MUST NOT depend on the layout.
 | --- | --- | --- |
 | `dataflow` | required | The bound dataflow's URN. |
 | `observations` | required | How many observation rows the binding's table holds. |
+| `structural_version` | required | The URN of the data structure the binding was written against. |
+
+### `ArtefactEntry`
+
+| field | presence | meaning |
+| --- | --- | --- |
+| `urn` | required | The artefact's URN, at its pinned version. |
+| `stability` | required | `"semantic"` for a final semantic version (three numeric parts, no extension, major at least 1), which SDMX 3.0 holds immutable; `"legacy"` for any other. |
+| `partial` | required | `true` for a partial item scheme, a subset of the full one. |
 
 ### `Provenance`
 
@@ -177,14 +193,23 @@ returns a `BundleRegistry`, which has the read methods and no writes and no
 `sql()`. `LocalRegistry.build(bundle)` starts a publication, writable, for a
 builder (§7).
 
-### The schema check
+### The schema and engine checks
 
-When a manifest is present, a reader MUST compare its `schema_version` with
-the store schema it reads **before opening `meta.duckdb`**. If they differ it
-MUST refuse the bundle and leave the file unopened. sdmxlib raises
-`StoreSchemaError`; its readers accept one exact schema version,
-`sdmxlib.storage.schema.SCHEMA_VERSION`. A bundle is never migrated in place:
-it is rebuilt from its source with a matching sdmxlib.
+A reader MUST check three versions from the manifest **before opening any
+file**, and refuse the publication, leaving its files unopened, if one fails:
+
+| version | rule | sdmxlib raises |
+| --- | --- | --- |
+| `schema_version` | equal to the store schema the reader reads, `sdmxlib.storage.schema.SCHEMA_VERSION` | `StoreSchemaError` |
+| `duckdb_storage_version` | at most the storage version the reader's DuckDB writes: DuckDB reads every older one | `StoreFormatError` |
+| `ducklake_spec_version` | `null`, or at most the DuckLake format the reader's DuckLake writes, `sdmxlib.bundle.DUCKLAKE_SPEC_VERSION`: DuckLake reads an older catalog read-only without migrating it | `StoreFormatError` |
+
+DuckDB numbers its storage versions in each file's header (bytes 12 to 19, a
+little-endian integer after the `DUCK` magic): 64 for files compatible with
+DuckDB 1.0, 65 with 1.2, 67 with 1.4, 68 with 1.5.
+
+A bundle is never migrated in place: it is rebuilt from its source with a
+matching sdmxlib.
 
 ### Bindings
 
@@ -325,8 +350,8 @@ in order and reports every finding, not only the first:
 | check | passes when | on failure |
 | --- | --- | --- |
 | `manifest` | the manifest parses, in a format this reader reads (§2) | the run stops |
-| `files` | every listed file is present with its `size` and `sha256`, and no unlisted file is in the publication directory; `data/` is shared, so only its listed files are checked | continues |
-| `manifest` | the manifest's `schema_version` is the reader's, so `meta.duckdb` can be opened (§4) | the run stops |
+| `files` | every listed file is present with its `size`, `sha256` and `md5`, and no unlisted file is in the publication directory; `data/` is shared, so only its listed files are checked | continues |
+| `manifest` | the manifest's `schema_version`, `duckdb_storage_version` and `ducklake_spec_version` pass the reader's checks, so the files can be opened (§4) | the run stops |
 | `lake` | every file the current snapshot references exists at the size DuckLake recorded, and every file the catalog references from any snapshot it keeps is in the manifest; runs only when `lake.ducklake` exists | continues |
 | `bindings` | the store's bindings are the manifest's, and each table holds the count the manifest gives | continues |
 | `references` | every reference in the store resolves to an artefact in the store; `references=False` or `--no-references` skips it | continues |
@@ -362,9 +387,14 @@ every check.
    found in a published bundle.
 3. Add any files of your own to the publication directory.
 4. Call `write_manifest(publication, bundle_id=..., producer=...)` last, with
-   `product`, `extensions` and `provenance` as needed. It inventories the
+   `product`, `extensions`, `provenance` and `tiers` as needed. `tiers` maps
+   a path prefix to a placement tier, the longest matching prefix winning:
+   `{"search/": 2}`. A publication file no prefix matches is tier 1 if it is
+   `meta.duckdb` or `lake.ducklake` and tier 2 otherwise; a data file is
+   always tier 3. It inventories the
    publication's files and every data file its catalog references, counts
-   each binding's rows through DuckLake, and writes the manifest to a
+   each binding's rows through DuckLake, records the engine versions and
+   every artefact, and writes the manifest to a
    temporary file renamed into place, so a reader never sees half of one. A
    data file the previous publication's manifest lists at the same size keeps
    that manifest's `sha256`, with `carried_from` naming its token, so a
@@ -376,19 +406,6 @@ has a manifest, and a change is a new publication. A builder that wrote its
 own `bundle.manifest.json` before this format MUST republish with
 `write_manifest`, moving its own fields into `product`
 ([Upgrading](upgrading.md#sdmxlib-owns-bundlemanifestjson)).
-
-## 8. Copying a publication
-
-`copy_bundle(source, destination)` copies a published publication, and
-`sdmxlib bundle copy SRC DST` runs it from a shell. It is how a server
-receives a bundle and how a mirror is made. It copies the files the manifest
-lists, the data files into the `data_path` beside `destination`, checks each
-against its `size` and `sha256`, and copies the manifest last, byte for byte.
-A data file already at the destination with the listed digest is kept, so
-receiving the next publication of a bundle copies only its new data files. An
-interrupted copy leaves a directory without a manifest, which readers refuse
-and `check_bundle` reports as unpublished; running the copy again completes
-it.
 
 sdmxlib also produces bundles itself:
 
@@ -402,3 +419,20 @@ sdmxlib also produces bundles itself:
 - `sdmxlib.testing.profile_bundle(path, flow)` reads the `Shape` of one
   dataflow in a real bundle (counts and fan-outs, never values), so a
   synthetic bundle can stand in for it.
+
+## 8. Copying a publication
+
+`copy_bundle(source, destination)` copies a published publication, and
+`sdmxlib bundle copy SRC DST` runs it from a shell. It is how a server
+receives a bundle and how a mirror is made. It copies the files the manifest
+lists, the data files into the `data_path` beside `destination`, checks each
+against its `size`, `sha256` and `md5`, and copies the manifest last, byte for byte.
+A data file already at the destination with the listed digest is kept, so
+receiving the next publication of a bundle copies only its new data files. An
+interrupted copy leaves a directory without a manifest, which readers refuse
+and `check_bundle` reports as unpublished; running the copy again completes
+it.
+
+`tiers=` (`--tiers 1,2` from a shell) copies only the files of those placement
+tiers, which is what a server holds when it reads tier 3 remotely. Such a copy
+is incomplete by intent: `check_bundle` reports the files it left out.

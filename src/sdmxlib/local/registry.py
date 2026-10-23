@@ -94,7 +94,14 @@ from sdmxlib.session import SessionFactory
 from sdmxlib.storage import readers, resolve, writers
 from sdmxlib.storage._kinds import CLASS_TO_NAME
 from sdmxlib.storage._kinds import NAME_TO_CLASS as _TYPE_REGISTRY
-from sdmxlib.storage._manifest import DATA_PATH, MANIFEST_NAME, Manifest, ManifestError, read_manifest
+from sdmxlib.storage._manifest import (
+    DATA_PATH,
+    MANIFEST_NAME,
+    Manifest,
+    ManifestError,
+    read_manifest,
+    refuse_engine_mismatch,
+)
 from sdmxlib.storage.lazy import LazyCodelist, LazyHierarchy
 from sdmxlib.storage.readers import make_lazy_codelist
 from sdmxlib.storage.schema import (
@@ -1405,6 +1412,8 @@ class BundleRegistry(SessionFactory):
 
         Raises:
             StoreSchemaError: If the bundle was built on another schema version.
+            StoreFormatError: If its DuckDB storage version or its DuckLake
+                format is newer than this build reads.
             ManifestError: If there is no manifest, or it is malformed or in a
                 format this build cannot read.
         """
@@ -1417,6 +1426,7 @@ class BundleRegistry(SessionFactory):
                 f"opened. Rebuild it from its source with this sdmxlib, or read it with the one that built it."
             )
             raise StoreSchemaError(msg)
+        refuse_engine_mismatch(manifest, root)
         registry = BundleRegistry._over_bundle(root, root / manifest.data_path, resolve_cache_items=resolve_cache_items)
         registry._manifest = manifest
         return registry.open()
@@ -2327,7 +2337,9 @@ class LocalRegistry(BundleRegistry):
         publication = bundle / token
         if previous is not None:
             source = bundle / previous
-            if read_manifest(source).data_path != DATA_PATH:
+            extended = read_manifest(source)
+            refuse_engine_mismatch(extended, source)
+            if extended.data_path != DATA_PATH:
                 msg = f"{source} keeps its data files outside {bundle / 'data'}, so a publication cannot extend it"
                 raise ManifestError(msg)
             publication.mkdir(parents=True)

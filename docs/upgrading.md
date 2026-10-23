@@ -49,13 +49,29 @@ follows.
   returns its manifest; the publication it read is left as it was.
 - `fetch_bundle` and `synthetic_bundle` take the bundle directory and return
   the manifest; the publication is `<path>/<manifest.token>/`.
-- `BundleFile` has `root` (`"publication"` or `"data"`) and `carried_from`;
-  `Manifest` has `previous_token` and `data_path`.
+- New manifest fields, all written by `write_manifest`:
+  - `Manifest`: `previous_token`, `data_path`, `duckdb_version`,
+    `duckdb_storage_version`, `ducklake_version`, `ducklake_spec_version` and
+    `artefacts` (one `ArtefactEntry` per artefact, with `stability` and
+    `partial`);
+  - `BundleFile`: `root` (`"publication"` or `"data"`), `md5`, `tier` and
+    `carried_from`;
+  - `BindingCount`: `structural_version`, the URN of the data structure the
+    binding was written against. A binding whose `structural_version` tag is
+    not `AGENCY:ID(VERSION)` makes `write_manifest` raise `ManifestError`.
+- `write_manifest(..., tiers={"search/": 2})` sets the placement tier of a
+  producer's own files by path prefix.
+- `LocalRegistry.bundle` refuses, before opening any file, a publication
+  whose DuckDB storage version is newer than the running DuckDB writes, or
+  whose DuckLake format is newer than `sdmxlib.bundle.DUCKLAKE_SPEC_VERSION`.
+  It raises the new `sl.StoreFormatError`, naming both versions. Older
+  versions of either open.
 - `check_bundle` no longer reports a data file it does not list: `data/` is
   shared, and a file there may belong to another publication. It reports a
   file the lake references and the manifest omits.
-- `copy_bundle(source, destination)` and `sdmxlib bundle copy` copy a
-  publication with its manifest last.
+- `copy_bundle(source, destination, tiers=...)` and
+  `sdmxlib bundle copy --tiers 1,2` copy a publication, or the files of some
+  placement tiers, with its manifest last.
 
 ```python
 from sdmxlib.bundle import Producer, write_manifest

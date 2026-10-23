@@ -8,13 +8,14 @@ unpublished.
 
 import os
 import shutil
+from collections.abc import Collection
 from pathlib import Path
 
-from sdmxlib.bundle._write import sha256_of
-from sdmxlib.storage._manifest import MANIFEST_NAME, BundleFile, Manifest, ManifestError, read_manifest
+from sdmxlib.bundle._write import digests_of
+from sdmxlib.storage._manifest import MANIFEST_NAME, BundleFile, Manifest, ManifestError, Tier, read_manifest
 
 
-def copy_bundle(source: str | Path, destination: str | Path) -> Manifest:
+def copy_bundle(source: str | Path, destination: str | Path, *, tiers: Collection[Tier] = (1, 2, 3)) -> Manifest:
     """Copy the publication at `source` to `destination`, verify it, and write its manifest last.
 
     Copies the files the manifest lists: the publication's own into
@@ -24,10 +25,16 @@ def copy_bundle(source: str | Path, destination: str | Path) -> Manifest:
     bundle shares it. Every copied file is checked against the manifest before
     the manifest itself is copied, byte for byte.
 
+    `tiers` limits the copy to the files of those placement tiers: a server
+    pulls tiers 1 and 2 and reads tier 3 remotely, so ``tiers=(1, 2)`` is what
+    it holds. A copy without every tier is incomplete by intent, and
+    `check_bundle` reports the files it left out.
+
     Args:
         source: A published publication directory.
         destination: The publication directory to create, conventionally
             ``<bundle>/<token>/`` under another root.
+        tiers: Which placement tiers to copy.
 
     Returns:
         The manifest copied.
@@ -43,6 +50,8 @@ def copy_bundle(source: str | Path, destination: str | Path) -> Manifest:
         msg = f"{dst} is already published; a publication is never rewritten"
         raise ManifestError(msg)
     for entry in manifest.files:
+        if entry.tier not in tiers:
+            continue
         frm, to = _locations(src, dst, manifest, entry)
         if entry.root == "data" and _matches(to, entry):
             continue
@@ -73,4 +82,4 @@ def _locations(src: Path, dst: Path, manifest: Manifest, entry: BundleFile) -> t
 
 
 def _matches(file: Path, entry: BundleFile) -> bool:
-    return file.is_file() and file.stat().st_size == entry.size and sha256_of(file) == entry.sha256
+    return file.is_file() and file.stat().st_size == entry.size and digests_of(file) == (entry.sha256, entry.md5)

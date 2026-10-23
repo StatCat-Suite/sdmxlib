@@ -55,6 +55,26 @@ def test_copy_writes_a_publication_that_checks_clean(tmp_path: Path) -> None:
     assert check_bundle(destination, references=False).ok
 
 
+def test_copy_takes_the_tiers_to_copy(tmp_path: Path) -> None:
+    """A table this size has a data file, tier 3, which `--tiers 1,2` leaves out."""
+    source = make_bundle(tmp_path / "src" / "b", 200_000)
+    write_manifest(source, bundle_id="b", producer=Producer(name="t", version="1"))
+    assert any((tmp_path / "src" / "b" / "data").rglob("*.parquet"))
+    destination = tmp_path / "dst" / "b" / source.name
+    result = _RUNNER.invoke(app, ["bundle", "copy", str(source), str(destination), "--tiers", "1, 2"])
+    assert result.exit_code == 0, result.output
+    assert sorted(p.name for p in destination.iterdir()) == ["bundle.manifest.json", "lake.ducklake", "meta.duckdb"]
+    assert not (tmp_path / "dst" / "b" / "data").exists()
+
+
+def test_copy_refuses_a_tier_that_is_not_one(tmp_path: Path) -> None:
+    source = _published(tmp_path / "src" / "b")
+    result = _RUNNER.invoke(app, ["bundle", "copy", str(source), str(tmp_path / "dst"), "--tiers", "1,4"])
+    assert result.exit_code == 2
+    assert "'4' is not a tier; give 1, 2 or 3" in result.output
+    assert not (tmp_path / "dst").exists()
+
+
 def test_an_unpublished_bundle_is_one_manifest_finding(tmp_path: Path) -> None:
     result = _RUNNER.invoke(app, ["bundle", "check", str(make_bundle(tmp_path / "b", 10))])
     assert result.exit_code == 1

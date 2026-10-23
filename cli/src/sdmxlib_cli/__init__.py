@@ -12,7 +12,7 @@ import typer
 
 import sdmxlib as sl
 from sdmxlib.api.providers import ProviderInfo
-from sdmxlib.bundle import check_bundle, copy_bundle, fetch_bundle
+from sdmxlib.bundle import Tier, check_bundle, copy_bundle, fetch_bundle
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.urn import SdmxUrn
 
@@ -107,11 +107,30 @@ def fetch(
 def copy(
     source: Annotated[Path, typer.Argument(help="The published publication directory.")],
     destination: Annotated[Path, typer.Argument(help="The publication directory to create.")],
+    *,
+    tiers: Annotated[
+        str, typer.Option(help="Placement tiers to copy, comma-separated: 1,2 for what a server holds.")
+    ] = "1,2,3",
 ) -> None:
     """Copy a publication's listed files, verify them, and write its manifest last.
 
     Data files go to the shared data directory beside the destination, and one
     already there at the listed digest is kept. Prints the token copied.
+
+    Raises:
+        BadParameter: If a tier is not 1, 2 or 3.
     """
-    manifest = copy_bundle(source, destination)
+    chosen: list[Tier] = []
+    for part in tiers.split(","):
+        match part.strip():
+            case "1":
+                chosen.append(1)
+            case "2":
+                chosen.append(2)
+            case "3":
+                chosen.append(3)
+            case other:
+                msg = f"{other!r} is not a tier; give 1, 2 or 3, comma-separated"
+                raise typer.BadParameter(msg)
+    manifest = copy_bundle(source, destination, tiers=chosen)
     typer.echo(f"{destination}: {manifest.bundle_id}, token {manifest.token}; {len(manifest.files)} files")

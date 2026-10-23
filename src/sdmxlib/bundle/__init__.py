@@ -53,22 +53,28 @@ from sdmxlib.bundle._overlay import (
 from sdmxlib.bundle._write import inventory, write_manifest
 from sdmxlib.storage._manifest import (
     DATA_PATH,
+    DUCKLAKE_SPEC_VERSION,
     FORMAT_VERSION,
     MANIFEST_NAME,
+    ArtefactEntry,
     BindingCount,
     BundleFile,
     Manifest,
     ManifestError,
     Producer,
     Provenance,
+    StoreFormatError,
+    Tier,
     read_manifest,
 )
 
 __all__ = [
     "DATA_PATH",
+    "DUCKLAKE_SPEC_VERSION",
     "FORMAT_VERSION",
     "MANIFEST_NAME",
     "OVERLAY_FORMAT",
+    "ArtefactEntry",
     "BindingCount",
     "BundleFile",
     "Check",
@@ -83,6 +89,8 @@ __all__ = [
     "Producer",
     "Provenance",
     "Report",
+    "StoreFormatError",
+    "Tier",
     "apply_overlays",
     "check_bundle",
     "copy_bundle",

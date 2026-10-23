@@ -164,7 +164,15 @@ Conforming bundles of any shape, deterministic from a seed, for tests and stress
 
 ---
 
+::: sdmxlib.bundle.ArtefactEntry
+
+---
+
 ::: sdmxlib.bundle.ManifestError
+
+---
+
+::: sdmxlib.bundle.StoreFormatError
 
 ---
 

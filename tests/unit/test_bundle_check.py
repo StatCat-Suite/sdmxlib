@@ -78,7 +78,7 @@ def test_a_changed_file_of_the_same_size_fails_its_checksum(tmp_path: Path) -> N
     data[len(data) // 2] ^= 0xFF
     file.write_bytes(bytes(data))
     findings = [f for f in check_bundle(root, references=False).findings if f.check == "files"]
-    assert findings == [Finding("files", _listed(root, file), "contents differ from the manifest's sha256")]
+    assert findings == [Finding("files", _listed(root, file), "contents differ from the manifest's sha256 or md5")]
 
 
 def test_a_file_added_after_publishing_is_not_in_the_manifest(tmp_path: Path) -> None:

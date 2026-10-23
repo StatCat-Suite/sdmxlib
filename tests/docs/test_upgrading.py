@@ -211,4 +211,22 @@ def test_build_starts_publications_over_a_shared_data_directory() -> None:
     assert bundle.FORMAT_VERSION.partition(".")[0] == "2"
     assert {"root", "carried_from"} <= set(bundle.BundleFile.__struct_fields__)
     assert {"previous_token", "data_path"} <= set(bundle.Manifest.__struct_fields__)
+
+
+def test_the_manifest_records_engines_artefacts_tiers_and_md5() -> None:
+    """The same section's GH-124 fields, the `tiers=` arguments and `StoreFormatError`."""
+    assert {
+        "duckdb_version",
+        "duckdb_storage_version",
+        "ducklake_version",
+        "ducklake_spec_version",
+        "artefacts",
+    } <= set(bundle.Manifest.__struct_fields__)
+    assert {"md5", "tier"} <= set(bundle.BundleFile.__struct_fields__)
+    assert "structural_version" in bundle.BindingCount.__struct_fields__
+    assert {"stability", "partial"} <= set(bundle.ArtefactEntry.__struct_fields__)
+    for function in (bundle.write_manifest, bundle.copy_bundle):
+        assert "tiers" in inspect.signature(function, annotation_format=annotationlib.Format.FORWARDREF).parameters
+    assert issubclass(sl.StoreFormatError, Exception)
+    assert bundle.StoreFormatError is sl.StoreFormatError
     assert callable(bundle.copy_bundle)
