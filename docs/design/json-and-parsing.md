@@ -67,8 +67,7 @@ structure, metadata and data messages each decode their envelope into a Struct
 in one pass, so there is no `-> Any` to navigate and no per-section
 `msgspec.convert` fan-out (#200).
 
-Two conclusions from that work are worth keeping, because the obvious answer
-was wrong both times:
+Two conclusions from that work contradict the obvious answer:
 
 - **A `TypedDict` per section would have been a downgrade.** That was the
   original proposal (#176), made when the seam was `orjson.loads -> Any`. Once
@@ -117,8 +116,8 @@ this document is about.
   storage round-trip gaps) are exactly this: fields on the wire that the model
   didn't carry, dropped on round-trip.
 - **Under-parsing** — leaving core structural data as trees: pushes `["k"]["k"]`
-  navigation and per-step narrowing onto every consumer, and throws away the
-  library's entire value proposition.
+  navigation and per-step narrowing onto every consumer, and defeats the
+  purpose of a typed domain model.
 
 ## Where sdmxlib sits today
 

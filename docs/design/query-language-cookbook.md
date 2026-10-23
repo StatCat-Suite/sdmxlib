@@ -309,7 +309,7 @@ reg.query(q.dsd).filter(
 ```
 
 Written as two dotted predicates this asks "some dimension is REF_AREA, and some
-dimension uses CL_AREA", which is not the question. See
+dimension uses CL_AREA", a different question. See
 `query-language-examples.md` §3.
 
 ## 13. Shapes that look like self-joins
@@ -355,7 +355,8 @@ reg.query(q.dataflow).select(q.dataflow.id, q.dataflow.name["fr"]).collect().wit
 )
 ```
 
-There is no default language anywhere, so the fallback language is always named.
+Every API takes the language explicitly, so the fallback language is always
+named.
 
 ## 15. As of a date
 
@@ -414,8 +415,8 @@ with sl.RestRegistry(sl.Provider.ECB) as ecb:
     exr.explain()    # the SQL, and a line saying the rows are fetched first
 ```
 
-The one thing REST asks for that a local store does not: **a scan that leaves
-anything to filter locally must name an agency**, or the terminal raises
+Over REST, **a scan that leaves anything to filter locally must name an
+agency**, or the terminal raises
 `PushdownError` naming the column to add — rather than downloading every
 agency's dataflows to keep three. A bare listing, or equality on id or version,
 needs none. Pass `store=` to keep what is fetched across sessions. The rules are

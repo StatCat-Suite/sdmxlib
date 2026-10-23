@@ -76,7 +76,7 @@ guards in the suite were verified this way rather than assumed.
 `(mtime, size)`. A probe that writes a broken file and restores it milliseconds
 later usually produces a file of the *same size* at the *same mtime* to the
 filesystem's resolution — so the broken bytecode stays cached while the `.py`
-on disk is correct. The symptom is nasty: `inspect.getsource` shows the right
+on disk is correct. The symptom: `inspect.getsource` shows the right
 code, `git diff` is clean, and the behaviour is the old one.
 
 That happened while verifying the #268 join-splice test. It presented as a
@@ -107,8 +107,7 @@ milliseconds and runs in `just ci`.
 
 **179 mutants: 145 killed, 27 survived, 3 timeout, 3 segfault, 1 no-tests.**
 
-The 27 is worth stating plainly: it is *exactly* the count the #213 pilot
-reported. Months of test work landed in between and killed none of them. That
+The 27 is *exactly* the count the #213 pilot reported. Months of test work landed in between and killed none of them. That
 is the calibration #253 asked for on how much four aggregate properties pin —
 and the answer is that they pin aggregate claims. Every survivor was in a
 *lookup*, a *sort*, a *projection* or a *message*: places where the question is
