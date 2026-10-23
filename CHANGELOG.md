@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.72.0] - 2026-10-23
+
+The bundle as a published, checkable artefact (GH-56). See `docs/upgrading.md`.
+
+### Breaking Changes
+
+- **bundle**: sdmxlib owns `bundle.manifest.json`. `LocalRegistry.bundle` reads it when present, and a file there that is not sdmxlib's (a builder's own, without `format_version`) is refused with `sl.ManifestError`: republish the bundle with `sdmxlib.bundle.write_manifest`. A manifest on another store schema is refused with `sl.StoreSchemaError` before `meta.duckdb` is opened
+
+### Features
+
+- **bundle**: `write_manifest` publishes a bundle: a fresh `token` per publication (what caches key on), a sha256 per file, observation counts per dataflow, the store schema version; `bundle(require_manifest=)` and `LocalRegistry.manifest` (GH-66)
+- **bundle**: `check_bundle` checks a bundle against its manifest and itself: files, the DuckLake catalog, bindings, and the structural closure (GH-67)
+- **bundle**: `fetch_bundle` lands one dataflow from an SDMX REST source as a published bundle, narrowed by SDMX key and period, its provenance in the manifest (format 1.1) (GH-68)
+- **testing**: `sdmxlib.testing.synthetic_bundle` builds conforming bundles of any shape from a seed; `profile_bundle` reads the shape of a real one (GH-69)
+- **bundle**: annotation overlays: `apply_overlays`, `effective_token` and `fold_overlays` change display annotations without a rebuild (GH-70)
+- **cli**: `sdmxlib-cli`, a separate package released with sdmxlib at the same version: `sdmxlib bundle check` and `sdmxlib bundle fetch` (`uv tool install sdmxlib-cli`) (GH-67, GH-68)
+
+### Bug Fixes
+
+- **local**: A bundle opened twice in one process attaches its lake once, instead of failing with "database with name "lake" already exists"
+
+### Documentation
+
+- **upgrading**: sdmxlib owns `bundle.manifest.json`
+
 ## [0.71.0] - 2026-10-22
 
 ### Breaking Changes
