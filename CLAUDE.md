@@ -4,8 +4,8 @@
 
 sdmxlib fetches and models SDMX structural metadata (DataStructures, Codelists,
 Dataflows, etc.) from SDMX REST APIs. Users navigate a typed graph of artefacts
-through plain attribute access. Observation data is handled by Polars, not by
-this library.
+through plain attribute access. Observations are queried through `obs()` and
+come back as Polars frames.
 
 ## SDMX glossary
 
@@ -30,7 +30,7 @@ this library.
   `MetadataReport` layer; we follow the standard.
 - **ReportedAttribute**: one populated attribute within a MetadataSet (id +
   scalar/InternationalString value + optional recursive children). Repetition
-  uses sibling siblings with the same id, never a values list.
+  uses sibling attributes with the same id, never a values list.
 - **MetadataMessage**: wire-format envelope carrying populated MetadataSets
   (`<mes:GenericMetadata>` in SDMX-ML 3.0; metadata-schema envelope in SDMX-JSON
   2.0). Sibling to `StructureMessage`.
@@ -74,11 +74,11 @@ summary:
   _symptom_. If you can't name the slow line, you don't cache (see the issue
   #155 case study: a "58 s label map" that measured 8 ms — the real cost was LLM
   round-trip time, mis-attributed).
-- **Decision hierarchy, in order:** (1) profile — is it actually slow? (2)
-  fixable as physical layout at build time? fix that. (3) input immutable within
-  a bundle/artefact version? **bake it** into the bundle (like `code.depth` /
-  `code.ancestor_ids`), don't runtime-cache. (4) only if genuinely per-process →
-  runtime cache.
+- **Decision hierarchy, in order:** (1) profile it, and stop if it is fast.
+  (2) If physical layout at build time fixes it, fix that. (3) If the input is
+  immutable within a bundle or artefact version, **bake it** into the bundle
+  (like `code.depth` / `code.ancestor_ids`) instead of caching at runtime.
+  (4) Only if the cost is genuinely per-process, add a runtime cache.
 - **Runtime caches** must be single-flight (not just a lock), bounded,
   invalidation tied to a lifecycle, placed at the _source_ of the cost, and
   routed through the shared primitive — not a fresh module global. Contract:
@@ -270,20 +270,22 @@ just mutate-scope    # what only_mutate covers, and how big
 `just ci` includes `bench-bundle-assertions` — the real-bundle tests that
 *assert a property*, without the eight that only report a number. It costs
 ~2 min on a machine holding the 2.6 GB bundle and skips in ~0 s on one that is
-not, **saying so on its own line**: a tier the gate never runs cannot fail, and
-#386 proved it by renaming a `LocalRegistry` keyword past a green `just check`
-and 6,284 green unit tests. The measurements stay opt-in as `just bench-bundle`.
+not, **saying so on its own line**. It is in the gate because #386 renamed
+`LocalRegistry`'s `resolve_cache_size` to `resolve_cache_items` past a green
+`just check` and 6,284 green unit tests, and only this tier failed, with 19
+errors. The measurements stay opt-in as
+`just bench-bundle`.
 
 **`just ci` is the gate, and it runs locally.** Hosted CI runs no tests — only
 `.github/workflows/docs.yml`, which publishes the docs to GitHub Pages. So
 nothing merges on a green hosted run; it merges on a green `just ci`.
 
-That is a hosting decision and **not** a licence to shape the suite around a
-runner budget. Test design here is not cost-constrained: Hypothesis explores at
-full width (the `ci` profile differs from `dev` only by `derandomize`, for
-reproducibility — not by example count), mutation testing runs whatever scope
-is useful, and the suite is free to grow. If hosted compute is bought later,
-restore the quality jobs from git history; none of the above should change.
+Running the gate locally is a hosting decision, and test design ignores
+compute cost: Hypothesis explores at full width (the `ci` profile differs from
+`dev` only by `derandomize`, for reproducibility), mutation testing runs
+whatever scope is useful, and the suite grows as needed. If hosted compute is
+bought later, restore the quality jobs from git history and keep all of the
+above.
 
 Coverage: use `--cov=sdmxlib`, not `--cov=sdmxlib.model.<module>`. The
 module-scoped form fails to collect with the same `_duckdb` shadowing error
@@ -315,15 +317,13 @@ documented against `mutate_only_covered_lines` in `pyproject.toml`
 
 ### A guard has to stay able to fail
 
-CLAUDE.md says twice that *a finding that cannot fail is a finding nobody acts
-on*, and `tests/bench/test_bundle_reads.py` adds that *a guard that has only
-ever passed is not known to be a guard*. Both are about writing one correctly
-to begin with — watch it fail before trusting it.
+Write a guard so it can fail, and watch it fail before trusting it ("Ruff
+warnings fail the gate too" below, and `tests/bench/test_bundle_reads.py`).
 
-This is the other half: a guard that **was** correct, **was** watched to fail,
-and later stopped being able to. Nothing it asserts changed; its *subject*
-moved. Four of those turned up in a single session (#403), each a different
-mechanism, and three surfaced only because unrelated work forced a re-run.
+This section covers a guard that **was** correct, **was** watched to fail, and
+later lost the ability: its assertion stayed the same while its *subject*
+moved. #403 found four in one session, each by a different mechanism, and
+three surfaced only because unrelated work forced a re-run.
 
 **1. Assert the exact quantity when it is knowable.** `sites == len(_MARKERS)`
 fails when its subject moves — it caught a guard reading a file that had become
@@ -340,8 +340,9 @@ and `sdmx_ml31` were compared function by function for a year; once both became
 said nothing. It now also asserts each shared class really carries the
 implementation.
 
-**3. A guard that starts at zero needs a sabotage test.** Green and broken are
-the same output. `tools/check_docstrings.py` parsed pydoclint's `stdout`, which
+**3. A guard that starts at zero needs a sabotage test.** A guard that finds
+nothing prints the same output whether the tree is clean or the guard is
+broken. `tools/check_docstrings.py` parsed pydoclint's `stdout`, which
 is empty — it reported a clean tree on a file pydoclint had just flagged, and
 only a deliberate sabotage found it.
 
@@ -350,10 +351,9 @@ only a deliberate sabotage found it.
 fell to 9, and the proxy failed — correctly, but by luck: a number above 20
 would have kept it green while it measured something that no longer existed.
 
-None of this is automatable. *Is this assertion still capable of failing* is
-not decidable, and mutation testing is the nearest tool — which is #324's
-subject and out of `just ci` on cost. It is a written rule and a review
-question, like the two sentences it extends.
+No tool checks these four rules: whether an assertion can still fail is
+undecidable. Mutation testing comes closest; it is #324's subject and stays
+out of `just ci` for its run time. Apply the rules in review.
 
 ### Differential properties and the oracles (the query language)
 
@@ -370,16 +370,14 @@ expectation is derived independently rather than read off the implementation.
 | `tests/unit/test_properties_query_code.py` | the properties, over `q.code` |
 | `tests/unit/test_properties_query_hcode.py` | the properties, over `q.hcode` |
 
-Both oracles predate the compiler they now check, and that is the point of
-having written them as *specifications* rather than as second implementations:
-they share no code with any compiler, so the #306 migration deleted the old
-DSLs without deleting the covered thing and re-deriving its coverage
-afterwards. What did not port is the five recursive predicates — the path
-language has none by design, and
-`test_the_recursive_predicates_are_absent_by_design` says so rather than
-leaving the gap to read as missing coverage.
+Both oracles predate the compiler they now check. They were written as
+*specifications* and share no code with any compiler, so the #306 migration
+deleted the old DSLs and kept their coverage. The five recursive predicates
+did not port: the path language has none by design, and
+`test_the_recursive_predicates_are_absent_by_design` records that so the gap
+does not read as missing coverage.
 
-Four rules keep them worth having. Each was paid for.
+Four rules keep the oracles useful; each came from a defect.
 
 **1. An oracle shares no code with the module it tests, and the two oracles
 share no code with each other.** They re-derive depth and ancestry by walking
@@ -387,15 +385,16 @@ share no code with each other.** They re-derive depth and ancestry by walking
 storage writer bakes — so every differential property is *also* checking the
 bake against a fresh traversal, the invariant `docs/design/caching.md` implies
 but nothing else enforces. The two oracles restate rather than import their
-lookalike parts, because two oracles sharing a helper can be wrong the same way
-— the one failure mode differential testing cannot catch.
+lookalike parts, because two oracles that share a helper can be wrong the
+same way, and differential testing cannot catch that.
 
 **2. An oracle states what the library does, not what it should do.** Where the
 behaviour is surprising, model it and cite the issue arguing about it. Both
 oracles fold case for `contains`/`starts_with`/`ends_with` while `==` stays
 case-sensitive (#222); both treat annotation predicates as existence-scoped
-because the compiler reaches them through an inner JOIN. Smoothing a surprise
-into the oracle hides it; encoding it with a pointer keeps the question alive.
+because the compiler reaches them through an inner JOIN. An oracle that smooths
+over a surprise hides it; one that encodes it with an issue reference keeps the
+question open.
 
 **3. Every predicate kind gets a property, and the count is asserted.** Both
 files carry a `test_every_predicate_kind_is_covered` that enumerates
@@ -413,15 +412,15 @@ ids *differ* from the code ids they reference, so a compiler assuming
 `node_id == code_id` fails rather than passes. When adding a strategy for a
 query property, measure that it discriminates before trusting the green.
 
-**What differential testing cannot do, and the mitigation.** The four rules
-above make the oracles trustworthy against each other. They cannot make either
-one right about something *both* believe. `is_in("CA")` silently meant
+**Limits of differential testing.** The four rules above make the oracles
+trustworthy against each other. Both can still be wrong about something they
+*both* believe. `is_in("CA")` silently meant
 `is_in(["C", "A"])` and shipped in #261: the strategies only generate
 well-formed input, so no example reached a bare string; both checkers correctly
 allowed it, because `str` really does satisfy `Iterable[object]`; and had an
 example reached it, `oracle.in_set("CA")` returned `['C', 'A']` too — the
-property would have passed. Rule 1 exists to reduce exactly this, but sharing
-*Python's iteration semantics* is not sharing code, so it did not bite.
+property would have passed. Rule 1 reduces this risk, but the two shared
+*Python's iteration semantics*, which rule 1 does not cover.
 
 The mitigation is a third implementation outside the shared assumptions. For
 these DSLs that means polars, SQLAlchemy, or the database itself — polars
@@ -442,15 +441,14 @@ default width does not find everything. Both defects fixed in !249's second
 commit were invisible at default width and fell out at 20×, including one found
 via a filter fragment of `":"`, a needle made only of punctuation, which folds
 to the empty string and matches every non-null label. No hand-written example
-would have tried that.
+covered it.
 
 **When a property fails, triage before editing either side:** *SQL bug* /
 *oracle bug* / *underspecified DSL*. All three have happened. #222 (LIKE
 metacharacters) and the `.any(depth=n)` bound that was parsed and then dropped
 were SQL bugs. The two fixed in !249 were oracle bugs. #255 — one relation
 folded accents and punctuation in label search and the other did not — is the
-third kind, and the most valuable outcome: a question the DSL had never
-answered.
+third kind, and exposed a question the DSL had never answered.
 
 ### SDMX-ML XSD validation
 
@@ -492,9 +490,6 @@ when SDMX-TWG publishes a new schema tag.
   - Multi-line SQL → triple-quoted `"""..."""` / `f"""..."""`.
   - The split is on line count, not on length. A 120-character one-liner stays
     in `"..."`; a 30-character two-liner uses `"""..."""`.
-  - An earlier version of this file said "always triple-quote." That was
-    idiosyncratic and was removed — see merge request !51 and its follow-up
-    CLAUDE.md update.
 - Always use parameterized queries (`$name` style preferred) for values.
 - Never use f-strings or concatenation to interpolate values into SQL.
   Identifier-only interpolation (table/view/alias names that came from a
@@ -592,9 +587,8 @@ prose otherwise.
 
 `just check-docstrings` enforces it — **`ruff.toml`'s `convention = "google"`
 does not.** That setting checks a docstring's *structure* (summary line, blank
-lines, punctuation) and never reads its markup or rejects a NumPy section, so
-it looks like the gate and is not: in the sibling statcatlib project (then
-pinax) the same line sat declared and unenforced while 98 Sphinx roles and 13
+lines, punctuation) and never reads its markup or rejects a NumPy section. In
+the sibling statcatlib project (then pinax) the same line sat declared and unenforced while 98 Sphinx roles and 13
 NumPy-sectioned docstrings accumulated under it (#374).
 
 Three arms, all at zero here: a grep for roles and literal blocks, a match for
@@ -625,7 +619,7 @@ rule is catching and why it should change, and let the maintainer decide.
 `# type: ignore[...]`, `# pyright: ignore[...]`, `# pyrefly: ignore[...]`, or
 ruff's block forms (`# ruff: disable[...]` / `# ruff: enable[...]` /
 `# ruff: ignore[...]` / `# ruff: file-ignore[...]`, stabilised in ruff
-0.15/0.16) is a request, not a decision. Default to fixing the underlying
+0.15/0.16) needs the maintainer's approval. Default to fixing the underlying
 defect. A suppression is only justified once the finding is _demonstrated_ to be
 a tool bug — ideally with a minimal repro — and the maintainer has agreed. The
 block forms deserve extra scepticism: they silence a _range_, so they age worse
@@ -643,18 +637,19 @@ pyrefly became the only checker (#425).
 **Checker versions carry upper bounds.** `uv.lock` is gitignored (published
 library), so every fresh `uv sync` resolves the dev group anew — an unbounded
 floor means a checker release lands in `just ci` with no commit of ours in
-between. With ruff on `select = ["ALL"]` that is not hypothetical: 0.16.0
-stabilised 12 preview rules. Bump `ruff` / `pyrefly` deliberately, in their own PR,
-with the new findings fixed in the same change.
+between. With ruff on `select = ["ALL"]` this has happened: 0.16.0 stabilised
+12 preview rules. Bump `ruff` / `pyrefly` deliberately, in their own PR, with
+the new findings fixed in the same change.
 
-Why this is worth the friction: in the pyrefly 1.2 upgrade, all five full-preset
+In the pyrefly 1.2 upgrade, all five full-preset
 findings looked like tooling limitations and all five were real defects (an
 `SdmxUrn[Any]` masking a covariance violation, a `hasattr` duck-test neither
 checker could narrow, two `attrs.has` TypeGuards applied to discarded
 `type(obj)` call expressions, and an invariant `Ref[A|B]` returned as
 `Ref[A] | Ref[B]`). Every one was fixed in code. The single genuine tool bug —
 `implicit-any-lambda` — was repro'd in isolation first, then turned off in
-config with the repro recorded in a comment. That is the bar.
+config with the repro recorded in a comment. Turning a rule off needs that
+standard of evidence.
 
 ## Typing conventions (Any / object / generics)
 
@@ -678,10 +673,9 @@ annotated); everything else is on.
 
 **Both linters run "everything on, then subtract, with a written reason."** ruff
 at `select = ["ALL"]` + an annotated `ignore` list; pyrefly at
-`preset = "all"` + an annotated `[errors]` deny-list. The point of that shape is
-that a _new_ rule in the next release arrives as a visible finding instead of
-silently not running. The subtractions are measured — each deny-list entry
-carries the count that justified it — never guessed.
+`preset = "all"` + an annotated `[errors]` deny-list. With that shape, a _new_
+rule in the next release arrives as a visible finding. The subtractions are
+measured: each deny-list entry carries the count that justified it.
 
 pyrefly was previously scoped to `implicit-any` alone via `preset = "off"`,
 because ≤1.1.x mismodeled attrs `field(converter=…)`. 1.2.0 fixed that. Going
@@ -697,7 +691,7 @@ with no code-level fix, came back on with 1.4, which fixed it.
 `unknown-return-type`) and `open-unpacking`, `uninitialized-instance-variable`
 and `method-assign`. src/ and bench/ went to zero with one new suppression — a
 pyrefly gap, `__attrs_post_init__` not counted as an initializer, repro beside
-it. The fixes that mattered: unpacked TypedDicts are closed (PEP 728, hence
+it. Three fixes changed the code's shape. Unpacked TypedDicts are closed (PEP 728, hence
 `typing-extensions`); mixins state their fields as properties the attrs
 subclasses override, not bare annotations (a protocol base made `isinstance`
 misses 5x slower); and the query accessors' late edges are `_Late`
@@ -716,7 +710,8 @@ imported only under `if TYPE_CHECKING:` raises `NameError` there, which broke
 __future__ import annotations` is not the way out — it makes each annotation
 a string `typing.get_type_hints` cannot resolve against a PEP 695 parameter.
 So neither appears, but for a genuine import cycle, which says why beside it
-(`model/base.py`'s `Agency`). `tests/unit/test_runtime_annotations.py`
+(`model/base.py`'s `Agency`, and `local/data_store.py`'s `from __future__`
+for `LocalRegistry`). `tests/unit/test_runtime_annotations.py`
 evaluates every public signature.
 
 **`object` by default, `Any` almost never.** `object` is inert — the checker
@@ -746,7 +741,7 @@ payloads) and **narrow immediately**.
   reads is an unused argument to ruff.
 - **`dict[str, object]` over `dict[str, Any]`** for heterogeneous maps you'll
   narrow; localize the one unsafe `object -> T` step to the accessor (e.g. a
-  `get[T]` return with `# type: ignore[return-value]`). Prefer a **`TypedDict`**
+  `get[T]` return with an approved `# pyrefly: ignore[...]`). Prefer a **`TypedDict`**
   (with `ReadOnly` / `Required` / `NotRequired`) for known-shape payloads.
 
 **Recover types, don't erase them.**
@@ -768,12 +763,11 @@ probes.
 domain objects inward. `Any` must not leak into `sdmxlib.model`. The model layer
 stays pure and fully typed.
 
-That boundary is **linted, not just described**: `ANN401` (no `Any`-annotated
-parameters) is on **everywhere in `src/`**, with no per-directory exemptions. It
-formerly exempted `formats/**`, `storage/**` and `local/**` on the reasoning
-that `Any` is legitimate at the msgspec/lxml/duckdb boundary — true of the
-boundary, false of the code: #202/#203/#204 typed every one of those parameters,
-mostly with Protocols that already existed (`SupportsUrn`, `SupportsId`,
+That boundary is **linted**: `ANN401` (no `Any`-annotated parameters) is on
+**everywhere in `src/`**, with no per-directory exemptions. It formerly
+exempted `formats/**`, `storage/**` and `local/**` on the reasoning that `Any`
+is legitimate at the msgspec/lxml/duckdb boundary. #202/#203/#204 typed every
+one of those parameters instead, mostly with Protocols that already existed (`SupportsUrn`, `SupportsId`,
 `MaintainableArtefact`). Lifting the exemption then produced a single finding,
 so a directory-wide ignore was covering exactly one justified site. `src/` now
 carries **zero** `Any`-annotated parameters or locals, and an `Any` parameter
@@ -790,8 +784,8 @@ arbitrary attribute, and `storage.readers.get_artefact`, which dispatches on a
 runtime artefact-type column so no static type describes its result
 (`Registry.get` is the typed entry point built over it).
 
-**What `ANN401` does *not* cover, and what does.** It reads the annotation, not
-the type inside it — so `def f(x: Any)` is a finding and
+**`ANN401` and generic arguments.** It reads the annotation, not the type
+inside it — so `def f(x: Any)` is a finding and
 `def f(x: dict[str, Any])` is silent. An audit after %15 found **112 of 171**
 occurrences were the second form, meaning the paragraph above was true of about
 four sites and read as though it were true of all of them. No linter in the
@@ -799,20 +793,17 @@ stack has a rule for the generic-argument case, so `just check-any` carries a
 **ratchet** instead: `tools/count_any.py` counts real uses (comments,
 docstrings and imports excluded) and fails if the total moves off
 `tools/any_baseline.txt` in either direction. Rising means a new one slipped
-in; *falling* also fails, because a ratchet nobody tightens stops ratcheting —
-the fix is one `--write`. Lowering the baseline is a visible diff, which is the
-point. %16 walks the remaining count down by category.
+in; *falling* also fails, so a drop is recorded with `--write` and shows as a
+lowered baseline in the diff. %16 walks the remaining count down by category.
 
 **Ruff warnings fail the gate too** (`just lint`). Ruff exits 0 on a
 `warning:` line, so two of them — a literal `# noqa` appearing inside a doc
 comment, which ruff reads as a malformed directive — survived three milestones
-of work. They survived precisely because they were noisy and got filtered out
-of check output as routine. A finding that cannot fail is a finding nobody
-acts on. Revisit if ruff grows a native warnings-as-errors flag; 0.16 has
+of work. They survived because they were noisy and were filtered out of check
+output as routine; a finding that does not fail the gate gets ignored. Revisit if ruff grows a native warnings-as-errors flag; 0.16 has
 none.
 
-Two more `Any` sources worth naming, both now clean and both regression-guarded
-by pyrefly's `no-any-return-explicit`: a bare `msgspec.json.decode(b)` returns
+Two more `Any` sources are clean and regression-guarded by pyrefly's `no-any-return-explicit`: a bare `msgspec.json.decode(b)` returns
 `Any` (pass `type=...`), and `getattr(obj, name, None)` returns `Any` (annotate
 the receiving local).
 
@@ -821,9 +812,8 @@ the receiving local).
 in any form** — always `# pyrefly: ignore[kind]`, so a _different_ error at
 that line still surfaces.
 
-`# type: ignore[code]` is not a lesser evil, it is the same evil: no mypy runs
-here, so for both checkers the bracket is decorative and the comment is a
-blanket line suppression. That is how one `# type: ignore[arg-type]` in
+`# type: ignore[code]` suppresses the whole line: no mypy runs here, so the
+bracket is decorative. That is how one `# type: ignore[arg-type]` in
 `api/client.py` came to be hiding 17 distinct errors (#196). `src/` now contains
 **zero** of them (#195); `tests/` still carries 23, each live — a dead one fails
 `unused-type-ignore`. Converting them is a suppression change and goes through
@@ -832,29 +822,29 @@ approval like any other.
 ## The public / private barrier (`_name`)
 
 No linter enforces this — ruff's SLF001 measures something else (see rule 5) —
-so the rule lives here or nowhere. It is written down because the code was
+so this section is the only statement of it. It is written down because the code was
 already broadly consistent while the _reason_ was unstated, which made every new
 class a fresh judgement call.
 
-The numbers behind it, measured rather than recalled (#207): the behavioural
+The numbers behind it, measured in #207: the behavioural
 layer is 77 % private attributes, the attrs domain model 1 %. Neither figure
 alone is meaningful — the first counts only classes with a hand-written
 `__init__`, which here are almost all infrastructure (connections, locks,
 caches, facades, builders) where private state is correct; the second counts a
-representation of the SDMX specification, where public fields are the point, not
-an encapsulation decision.
+representation of the SDMX specification, where the spec sets which fields are
+public.
 
 **1. Domain-_artefact_ fields are public.** The attrs classes representing SDMX
 artefacts take their surface from the spec — `Codelist.id` is public because
-SDMX says a codelist has an id, not because we weighed encapsulation. Their
+SDMX says a codelist has an id. Their
 private fields are _derived_ state the class maintains and invalidates itself:
 `_flat`, `_parent_of`, `_codes`, `_str_cache`.
 
 This keys on the **class, not the directory** — an audit found two correct
 exceptions living under `model/`: `Ref._resolved` is resolution state, and
 `rollup.AncestorMap` is a behavioural class holding a DuckDB connection.
-Rule 2 governs those, as it does everything under `query/`. So: domain artefact → rule 1, machinery →
-rule 2, wherever it lives. A new private field on an _artefact_ should be a
+Rule 2 governs those, as it does everything under `query/`. A domain artefact
+follows rule 1 and machinery follows rule 2, wherever it lives. A new private field on an _artefact_ should be a
 cache or an index, or it probably belongs on a different class.
 
 **2. In behavioural classes, `_name` means invariant-bearing.** Use it when you
