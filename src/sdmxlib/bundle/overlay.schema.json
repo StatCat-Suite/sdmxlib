@@ -1,0 +1,127 @@
+{
+  "$ref": "#/$defs/Overlay",
+  "$defs": {
+    "Overlay": {
+      "title": "Overlay",
+      "description": "A versioned overlay document: an id, and its entries in order.",
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OverlayEntry"
+          }
+        }
+      },
+      "required": [
+        "format_version",
+        "id",
+        "entries"
+      ],
+      "additionalProperties": false
+    },
+    "OverlayEntry": {
+      "title": "OverlayEntry",
+      "description": "One change: which targets, what to do, to annotations of which type.\n\nAttributes:\n    selector: ``*``, a class name, ``AGENCY:ID``, or a URN.\n    op: ``set`` replaces the type's annotations (through a merge hook),\n        ``add`` appends one, ``remove`` drops them all.\n    type: The annotation type it acts on.\n    annotation: What ``set`` and ``add`` write; absent for ``remove``.\n    scope: A label carried through and not interpreted: a server may\n        choose which entries apply to which audience.",
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string"
+        },
+        "op": {
+          "enum": [
+            "add",
+            "remove",
+            "set"
+          ]
+        },
+        "type": {
+          "type": "string"
+        },
+        "annotation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OverlayAnnotation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "scope": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "selector",
+        "op",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "OverlayAnnotation": {
+      "title": "OverlayAnnotation",
+      "description": "The annotation a `set` or `add` writes. Its type is the entry's.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "text": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {}
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  }
+}
