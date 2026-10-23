@@ -1004,8 +1004,8 @@ class Col[R: RowKind](AnyCol):
         `Descending` is the one the existing DSLs already use — direction
         marked on the *key* rather than a `descending=[...]` list parallel to
         the keys, as SQLAlchemy, ibis and Django all do. Shared rather than
-        restated so `.desc()` means one thing across every DSL here, which is
-        the whole point of the migration this milestone ends in.
+        restated so `.desc()` means one thing across every DSL here, as the
+        migration this milestone ends in requires.
 
         There is no `asc()`: an unmarked key is ascending.
         """

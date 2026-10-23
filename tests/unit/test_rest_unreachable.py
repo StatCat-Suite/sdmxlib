@@ -96,8 +96,8 @@ def test_a_404_is_absent_not_unreachable() -> None:
 
 
 def test_a_404_and_a_dead_source_are_distinguishable() -> None:
-    """The whole point of §5.8, in one test: the two facts a caller must act
-    on differently must not arrive looking the same."""
+    """§5.8 in one test: the two facts a caller must act on differently
+    must arrive distinguishable."""
     with _registry(lambda _r: httpx.Response(404)) as absent:
         assert absent.get(_URN) is None
     with _registry(_refusing(httpx.ConnectError("refused"))) as dead, pytest.raises(sl.RegistryUnavailable):

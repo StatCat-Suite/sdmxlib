@@ -115,7 +115,7 @@ def test_resolving_items_puts_no_items_in_the_shared_cache(reg):
 
 
 def test_the_cache_does_not_overflow_on_one_read(reg):
-    """The whole point: one read must not churn the cache from end to end."""
+    """One read must not churn the cache from end to end."""
     reg.get(Hierarchy.urn_for(agency="SDMX", id="H_BIG", version="1.0"), eager=True)
     assert len(_cached(reg)) < 256
 

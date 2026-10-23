@@ -223,7 +223,7 @@ def test_node_to_hierarchy(reg: sl.LocalRegistry) -> None:
 
 def test_node_to_code(reg: sl.LocalRegistry) -> None:
     """A node places a code that lives in some codelist — a different relation
-    with a different key, which is the whole point of keeping them apart."""
+    with a different key, which is why they are kept apart."""
     assert sorted(reg.query(q.hcode).filter(q.hcode.code.id == "ON").ids()) == ["ONT", "ONT"]
     frame = reg.query(q.hcode).order_by(q.hcode.id).select(node=q.hcode.id, code=q.hcode.code.name["en"]).collect()
     assert dict(zip(frame["node"].to_list(), frame["code"].to_list(), strict=True)) == {

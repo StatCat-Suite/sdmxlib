@@ -1417,7 +1417,7 @@ def validate(msg: StructureMessage | MetadataMessage) -> None:
 def _collect_known_urns(artefacts: Iterable[MaintainableArtefact]) -> set[str]:
     """Every artefact URN the message carries, scheme-level and item-level.
 
-    **Item URNs are the whole point.** This used to expand items for
+    **Item URNs are what this adds.** This used to expand items for
     `ConceptScheme` and nothing else, so every `Code`, `Category`, `Dimension`
     and `MetadataAttribute` reference failed to resolve against a message
     plainly containing its target — and `_collect_refs`, on the other side of

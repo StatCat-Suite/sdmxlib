@@ -255,7 +255,7 @@ def test_a_stored_codelist_builds_the_same_ref_without_materialising() -> None:
 def test_every_ref_to_urn_resolves_under_validate_references(
     codelist: Codelist, dsd: sl.DataStructure, concepts: sl.ConceptScheme
 ) -> None:
-    """The whole point, stated as the check #404 added.
+    """The check #404 added.
 
     A hand-built URN that names the wrong parent is reported broken. Every URN
     `ref_to` builds must survive the closed-world check — which is what says the

@@ -50,7 +50,7 @@ def from_conn():
     with duckdb.connect(":memory:") as conn:
         # The observations table a binding points at. Created here because
         # `from_connection` exists for callers who bring their own attached
-        # data — reaching the data plane is the whole point of the fixture.
+        # data, so the fixture must reach the data plane.
         conn.execute("CREATE SCHEMA IF NOT EXISTS data")
         conn.execute("CREATE TABLE IF NOT EXISTS data.obs (GEO VARCHAR, OBS_VALUE DOUBLE)")
         yield sl.LocalRegistry.from_connection(conn)

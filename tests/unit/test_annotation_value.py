@@ -12,9 +12,9 @@ has**, and this one did not exist. A field nobody modelled cannot be observed
 missing.
 
 2.1 genuinely cannot carry it — its `AnnotationType` has four children — so
-that direction is a declared limit in `formats/gaps.py`, not a defect. The
-asymmetry is the whole point of the file: three formats must keep it and one
-must be honest about dropping it.
+that direction is a declared limit in `formats/gaps.py`, not a defect. This file
+pins the asymmetry: three formats must keep it and one must declare dropping
+it.
 """
 
 from __future__ import annotations

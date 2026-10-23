@@ -278,7 +278,7 @@ for _witness in (_SelfRef, _SelfRefWithRef):
 
 
 def test_code_cannot_reach_a_ref():
-    """The whole point. If this ever becomes True, the 52% comes back.
+    """A Code reaches no Ref. If this ever becomes True, the 52% comes back.
 
     It would become True legitimately — a `Code` gaining an outgoing edge is a
     model change, not a bug — and then this test is the prompt to re-measure

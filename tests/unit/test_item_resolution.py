@@ -398,7 +398,7 @@ def test_the_store_declines_an_absent_item(stored: Any) -> None:
 def test_a_lazy_codelist_is_asked_for_one_code_not_all_of_them(monkeypatch: pytest.MonkeyPatch, stored: Any) -> None:
     """The store hands back a `LazyCodelist`, whose codes are a query.
 
-    Reading them to find one would be the whole point of the facade lost: the
+    Reading them to find one would defeat the facade: the
     bundle this library is measured against holds 579,951 codes in a single
     codelist. The subscript is the targeted lookup, so the assertion is that it
     is what gets called — **once**, not once per candidate field.

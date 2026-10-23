@@ -125,7 +125,7 @@ def test_it_needs_no_change_to_is_in(reg, codes) -> None:
 
 
 def test_the_values_never_reach_the_parameter_list(reg, codes) -> None:
-    """The whole point, stated as a bind count.
+    """The values reach no bind parameter, counted.
 
     The eager path binds every element — as one list parameter since #411,
     one placeholder each before it — and the registered path binds none of

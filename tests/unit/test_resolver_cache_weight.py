@@ -36,7 +36,7 @@ pytestmark = pytest.mark.unit
 
 
 def _codelist(id_: str, n: int) -> sl.Codelist:
-    """A codelist of `n` codes — `n` is the whole point, so it is the argument."""
+    """A codelist of `n` codes; the tests vary `n`, so it is the argument."""
     return sl.Codelist(
         id=id_,
         maintainer="AG",

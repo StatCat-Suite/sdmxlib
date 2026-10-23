@@ -228,7 +228,7 @@ def test_a_membership_hop_does_not_trim(reg: sl.LocalRegistry) -> None:
 
 
 def test_the_two_directions_still_answer_differently(reg: sl.LocalRegistry) -> None:
-    """The whole point of trimming only the forward direction. If it applied to
+    """Trimming applies to the forward direction only. If it applied to
     both, these would collapse into each other."""
     geo = reg.query(q.code).filter(q.code.codelist.id == "CL_GEO")
     assert sorted(geo.filter(q.code.parent.id == "W").ids()) == ["CA", "MX"]

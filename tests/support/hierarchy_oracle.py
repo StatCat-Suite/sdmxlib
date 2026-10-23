@@ -172,7 +172,7 @@ def caseless_matches(value: str | None, op: str, needle: str) -> bool:
 
     Restated rather than imported from `tests.support.oracle`, per the rule
     that two oracles sharing a helper can be wrong the same way. The
-    lower-vs-casefold trap is written out there; the short version is that SQL
+    lower-vs-casefold trap is written out there: SQL
     agrees with `str.lower`, not with `str.casefold`, and this oracle used
     casefold until #222 without ever failing for it.
     """

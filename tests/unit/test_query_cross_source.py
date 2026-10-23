@@ -13,7 +13,7 @@ database's rows. Measured before the fix, with two registries whose codelists
 disagreed about which codes are named "Ontario" — `b` alone answered
 ``['ON', 'QC']``, and the composed filter returned `a`'s answer, ``['ON']``.
 
-The refusal is the whole point, so `test_the_disagreement_is_what_makes_this_
+The refusal is what this file tests, so `test_the_disagreement_is_what_makes_this_
 matter` builds registries that *disagree*: against two identical registries
 every assertion here would pass for the wrong reason.
 """

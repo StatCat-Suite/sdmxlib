@@ -48,7 +48,7 @@ def _a_ref_takes_the_same_overload(reg: LocalRegistry, ref: Ref[Codelist]) -> No
     assert_type(reg.get(ref), LazyCodelist | None)
 
 
-# and these must not type-check — the whole point of the change:
+# and these must not type-check, which is what the change is for:
 #
 #   reg.get(sl.Hierarchy.urn_for(agency="AG", id="H")).codes         # no `codes`
 #   reg.get(sl.Hierarchy.urn_for(agency="AG", id="H")).tree          # no `tree`

@@ -152,7 +152,7 @@ class Session:
         """A cached artefact, if it is known at least this completely.
 
         `None` otherwise — including when the artefact *is* held but less
-        completely than asked, which is the whole point: that case must go to
+        completely than asked. That case must go to
         the provider, and returning the shallower object is #344.
 
         Same `latest` rule as `get` — see there for why.
