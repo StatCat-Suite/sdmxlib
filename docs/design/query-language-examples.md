@@ -237,8 +237,8 @@ every   -> ['A', 'D']           null-safe — what the compiler emits
 dimension is not counted as a violation. The compiler negates with `IS NOT TRUE`,
 so a child whose column is NULL counts as one: here
 `q.dsd.components.every(q.component.codelist.id != "CL_UNIT")` is `[]`, because
-each DSD's `OBS_VALUE` measure has no codelist. `D` is vacuous truth — correct
-logic, guaranteed surprise.
+each DSD's `OBS_VALUE` measure has no codelist. `D` is vacuous truth: correct
+logic that surprises most readers.
 
 `every` and `any` nest freely, including across two to-many edges:
 
@@ -442,8 +442,8 @@ REF_AREA      CPI               PRICES      OECD
 ```
 
 Two defects in one path: rows **multiplied** (one component twice) and rows
-**dropped** (GDP backs no dataflow and the join was inner). Neither is
-announced.
+**dropped** (GDP backs no dataflow and the join was inner). Neither raises an
+error.
 
 **The lesson for the edge declaration.** Cardinality cannot be inferred from a
 name, and getting it wrong is silent. So it is not declared at all: `_edges.py`
@@ -743,11 +743,13 @@ obs.qualify(obs.col("OBS_VALUE").rank(descending=True).over(obs.col("REF_AREA"))
 obs.col("NOPE")                                    # refused: KeyError listing the components
 ```
 
-Columns come from the DSD at runtime, so they are named by string and typed
-`Untyped`: comparisons, orderings, aggregates, windows and `.str` work; static
-checking of the name does not. `obs["REF_AREA"]` is **not** a column — on a
-`Query` a string subscript looks a row up by id, and observations have none.
-**Not built:** `q.obs`, `obs.text()` / `obs.num()`, `.labelled()`.
+Columns come from the DSD at runtime, so they are named by string.
+`obs.col(id)` is typed `Untyped`: comparisons, orderings, aggregates, windows
+and `.str` work, and the literal's kind is checked as the filter is built
+(#511), but the name is not checked statically. `obs.text(id)` and
+`obs.num(id)` give exact `Str` / `Num` static types. `obs["REF_AREA"]` is
+**not** a column — on a `Query` a string subscript looks a row up by id, and
+observations have none. **Not built:** `q.obs`, `.labelled()`.
 
 Over REST, `==` and `is_in` on a key dimension push into the data key, attribute
 filters into SDMX 3.0's `c[...]`, and the rest runs locally on what came back.
