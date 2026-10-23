@@ -22,7 +22,10 @@ into a spurious failure.
 """
 
 import os
+import sys
+import types
 
+import pytest
 from hypothesis import HealthCheck, settings
 
 # ── Fork safety on macOS (#252) ──────────────────────────────────────────────
@@ -50,6 +53,43 @@ from hypothesis import HealthCheck, settings
 # decide not to. Measured: with it set, `getproxies_macosx_sysconf` is never
 # called.
 os.environ.setdefault("no_proxy", "*")
+
+# ── Worker titles on macOS ───────────────────────────────────────────────────
+#
+# pytest-xdist renames each worker before every test (`[pytest-xdist running]
+# tests/…::test_…`) when `setproctitle` is installed, and mutmut installs it.
+# On Darwin each rename re-registers the process with LaunchServices
+# (`_LSApplicationCheckIn`, `_LSSetApplicationInformationItem`), so every test
+# cost a round trip to `launchservicesd`. Measured over the unit tier as `just
+# ci` runs it: 92 s of tests kept `launchservicesd` busy for 141 s of CPU and
+# three UI agents (cursor, Shortcuts, attributed-string) for 33 s more, which
+# is what made the machine lag. With the renames gone, neither did any work
+# above the machine's background rate.
+#
+# So on Darwin a worker's title is left alone, as mutmut's own
+# `use_setproctitle` defaults to off there; the cost is the test name in `ps`.
+# The rename cannot be reached through `xdist.remote`: execnet runs that file's
+# source in each worker as `__channelexec__`, a namespace of its own that bound
+# `setproctitle` before any conftest loaded. `WorkerInteractor` is registered
+# by then, and its `__init__`'s globals *are* that namespace, so the name is
+# replaced there. `test_xdist_worker_titles.py` checks the running worker.
+
+
+def _no_title(title: str) -> None:
+    """Leave the worker's process title alone (see above)."""
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """In an xdist worker on Darwin, stop the per-test process rename."""
+    if sys.platform != "darwin" or not hasattr(config, "workerinput"):
+        return
+    for plugin in config.pluginmanager.get_plugins():
+        if type(plugin).__name__ != "WorkerInteractor":
+            continue
+        init = getattr(type(plugin), "__init__", None)
+        if isinstance(init, types.FunctionType) and "setproctitle" in init.__globals__:
+            init.__globals__["setproctitle"] = _no_title
+
 
 _EXAMPLES = 100
 
