@@ -830,6 +830,17 @@ def test_to_registry():
         assert loaded_cl.codes["A"].name["en"] == "Annual"
 
 
+def test_to_registry_leaves_the_threads_read_cursor_open():
+    """GH-115: `to_registry` used the thread's cached read cursor as a context
+    manager, which closes it, and every later read on the thread failed."""
+    with LocalRegistry(":memory:") as local:
+        local.add(_make_cl())
+        local.to_registry()
+        cl_urn = Codelist.urn_for(agency="SDMX", id="CL_FREQ", version="1.0")
+        assert present(local.get(cl_urn)).id == "CL_FREQ"
+        assert len(local.get_all(Codelist)) == 1
+
+
 # ── File persistence ────────────────────────────────────────────────────────
 
 

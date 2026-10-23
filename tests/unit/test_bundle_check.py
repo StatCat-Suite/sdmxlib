@@ -128,6 +128,20 @@ def test_an_extension_check_runs_and_reports_under_its_name(tmp_path: Path) -> N
     assert _found(report) == {("search", "search/index")}
 
 
+def test_an_extension_reads_the_registry_after_the_references_check(tmp_path: Path) -> None:
+    """GH-115: the references check read the store through a cursor it then
+    closed, and every extension after it got "Connection already closed".
+    The extension reports what it read, so the finding proves the read worked."""
+
+    def bindings(root: Path, manifest: object, reg: sl.LocalRegistry) -> list[Finding]:
+        found = reg.get_all(sl.DataflowBinding)
+        return [Finding("bindings-seen", str(b.dataflow.urn), "read after references") for b in found]
+
+    report = check_bundle(_published(tmp_path / "b", rows=10), extensions={"bindings-seen": bindings})
+    assert report.checked == (*_ALL, "bindings-seen")
+    assert _found(report) == {("bindings-seen", str(FLOW.urn))}
+
+
 def test_a_store_on_another_schema_ends_the_run(tmp_path: Path) -> None:
     root = _published(tmp_path / "b", rows=10)
     path = root / MANIFEST_NAME
