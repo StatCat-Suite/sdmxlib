@@ -419,10 +419,9 @@ class ObsQuery(Query[ObsRow]):
     def col(self, component_id: str) -> Untyped[ObsRow]:
         """The column for one SDMX component. See `Observations.__getitem__`.
 
-        Declared `Untyped`, which is what it always returned (#413). It said
-        `Col` — the lie #347 corrected on `__getitem__` and left here — so the
-        operators `Untyped` really offers were invisible to every checker and
-        every reader: the comparisons, and `.str`'s `contains`, `starts_with`,
+        Declared `Untyped`, which is what it returns, so every checker and
+        every reader sees the operators it offers: the comparisons, and
+        `.str`'s `contains`, `starts_with`,
         `ends_with` and `caseless` rung. Those four are SDMX-REST's `co`, `nc`
         (negated), `sw` and `ew`, with the `LIKE` escaping done by
         `_label_match` rather than by each consumer.
@@ -434,7 +433,7 @@ class ObsQuery(Query[ObsRow]):
         return root[component_id]
 
     def text(self, component_id: str) -> Str[ObsRow]:
-        """The column for one component as text — exact `Str[ObsRow]` where `col` gives `Untyped` (#511).
+        """The column for one component as text — exact `Str[ObsRow]` where `col` gives `Untyped`.
 
         `col` has one signature for every id, so it cannot promise a type; this
         is where a caller states the expectation and the model checks it:
@@ -447,7 +446,7 @@ class ObsQuery(Query[ObsRow]):
         return self._root().text(component_id)
 
     def num(self, component_id: str) -> Num[ObsRow]:
-        """The column for one component as a number — exact `Num[ObsRow]` (#511).
+        """The column for one component as a number — exact `Num[ObsRow]`.
 
         ``obs.num("OBS_VALUE") > 1.5``, with `Num`'s aggregates and arithmetic
         visible to a checker. See `Observations.num`.
@@ -497,7 +496,7 @@ class ObsQuery(Query[ObsRow]):
         raise TypeError(msg)
 
     def filter_components(self, component_filter: ComponentFilter) -> Self:
-        """Narrow by an SDMX REST component filter — a key, structurally (#329).
+        """Narrow by an SDMX REST component filter — a key, structurally.
 
         `ComponentFilter` is what a dotted key plus `c[DIM]=…` parameters parse
         into, and it was the one *typed* thing the SQL-text API took. It is
@@ -508,8 +507,8 @@ class ObsQuery(Query[ObsRow]):
 
         `None` means unconstrained and contributes nothing. `[]` means the
         permitted set is empty and matches no row — `is_in([])` compiles to
-        `1 = 0`, the reading polars and SQLAlchemy both take and the one #256
-        argued from first principles. A `SqlRelation` value stays lazy, as a
+        `1 = 0`, the reading polars and SQLAlchemy both take. A `SqlRelation`
+        value stays lazy, as a
         subquery.
 
         Args:
@@ -545,7 +544,7 @@ class ObsQuery(Query[ObsRow]):
         """The dataflow's `DataStructure`, or `None` for a query a store built without one.
 
         What the retired `Dataset` exposed piecemeal — `dimensions`,
-        `measures`, `wide_dimension` — is this structure's to answer (#516):
+        `measures`, `wide_dimension` — is this structure's to answer:
         ``obs.structure.dimensions.ids()``, ``obs.structure.measure_dimension``.
         A registry's `obs(flow)` always resolves it; only
         `DuckDBDataStore.obs(binding)` without `dsd=` leaves it out.
@@ -692,7 +691,7 @@ class ObsQuery(Query[ObsRow]):
         forms the index. One measure fills the cells; several give a column
         per measure per value. Attributes are not carried.
 
-        A `pl.DataFrame`, not a `LazyFrame` (#516), as every other terminal's
+        A `pl.DataFrame`, not a `LazyFrame`, as every other terminal's
         result is: the query has run by the time a pivot can start, so
         laziness after it would push nothing back into the fetch, and when
         the axis's enumeration is unresolved its columns can only be read

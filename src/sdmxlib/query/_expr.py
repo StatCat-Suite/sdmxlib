@@ -500,8 +500,8 @@ class Agg[R: RowKind](AnyAgg):
         fetched every row. Same `Descending` marker a column uses, so the
         spelling does not change with what is being sorted.
 
-        Declared here rather than on `AnyAgg` — which is where it lived until
-        #299 — so the key names the row kind. `AnyAgg` is the non-generic base
+        Declared here rather than on `AnyAgg` so the key names the row kind.
+        `AnyAgg` is the non-generic base
         the compiler narrows to and is not exported, so a signature returning
         `Descending[AnyAgg]` asked a caller to name a type they cannot import.
         Moving it down rather than overriding it is what `Col.desc` already
@@ -876,9 +876,8 @@ class Col[R: RowKind](AnyCol):
 
         Numeric columns only. The compiler carries no column types, so a
         `sum` over text is refused by DuckDB — `No function matches the given
-        name and argument types 'sum(VARCHAR)'` — rather than here. That is
-        the honest position while the types are not available; #327 records
-        it as the open question.
+        name and argument types 'sum(VARCHAR)'` — rather than here, because the
+        compiler carries no column types to check it against.
         """
         return Agg[R]("sum", (self,), _where(where))
 
@@ -889,8 +888,7 @@ class Col[R: RowKind](AnyCol):
         SQL spelling the way `n_unique` becomes `count(DISTINCT …)`.
 
         **Nulls are skipped, not counted as zero**, so the mean of `[2, NULL]`
-        is 2 rather than 1. SQL and polars agree on this, which is worth
-        stating because #326 records a case where they do not.
+        is 2 rather than 1. SQL and polars agree on this.
         """
         return Agg[R]("mean", (self,))
 
@@ -973,12 +971,12 @@ class Col[R: RowKind](AnyCol):
         would otherwise sit, so the parameter can name the row kind. `AnyCol`
         is the non-generic base the compiler reads and is not part of the
         public surface — a signature mentioning it asks a caller to name a type
-        they cannot import (#299).
+        they cannot import.
 
         Without an order an aggregate returns whatever the scan produced, which
         is not an order at all — the hazard `__key__` already removes from
         `ORDER BY`, where two rows equal on the caller's keys "come back in
-        whatever order the scan produced" (#327). The default is unchanged:
+        whatever order the scan produced". The default is unchanged:
         an unsorted `list()` is still scan-ordered, because adding an
         `ORDER BY` to every aggregate costs a sort nobody asked for.
         """
@@ -1028,13 +1026,13 @@ class Col[R: RowKind](AnyCol):
         binds and a round trip.
 
         A bare `str` is rejected: `is_in("CA")` silently meaning
-        `is_in(["C", "A"])` shipped once (#261), found only by placing the API
+        `is_in(["C", "A"])` shipped once, found only by placing the API
         beside polars, which rejects it.
 
         Raises:
             TypeError: On a `str`/`bytes`, or on a relation with more than one
                 column — `IN` needs exactly one, and a column-count error at
-                the database names neither the call site nor the fix (#274).
+                the database names neither the call site nor the fix.
         """
         if _is_relation(values):
             columns = values.columns
@@ -1720,8 +1718,9 @@ class Untyped[R: RowKind](Col[R]):
 
     **Why not simply put ordering on `Col`.** `Version` extends `Str` and
     overrides only `sort_column`, so an inherited text `>=` would make
-    `version >= "1.10"` **true** for `1.9` — #311 as a predicate rather than as
-    an `ORDER BY`. Today that mistake is unspellable, and widening the base
+    `version >= "1.10"` **true** for `1.9`: text ordering of versions, as a
+    predicate rather than as an `ORDER BY`. Today that mistake is unspellable,
+    and widening the base
     would make it spellable everywhere in order to fix it in one place. A
     column class that opts in leaves the structural surface exactly as tight as
     it was.
@@ -1741,7 +1740,7 @@ class Untyped[R: RowKind](Col[R]):
     ) -> None:
         """`component_id` is the SDMX id this column was asked for by.
 
-        `kind`, when known, is what the column holds (#511): a literal of the
+        `kind`, when known, is what the column holds: a literal of the
         other kind is refused as the predicate is built. Unknown — no DSD
         type and no stored type to read — checks nothing, as before.
         """
@@ -2721,10 +2720,10 @@ class Cols[R: RowKind, A = object](AnyCols):
     be handed to a query over another. `A` is what `collect()` builds from this
     relation's rows, and it is pinned by the accessor *class* rather than left
     free — `_Code` always collects `Code`, at whatever root the path started
-    from. Roots that build nothing pin `Never`; that is 16 of the 37 (#396).
+    from. Roots that build nothing pin `Never`; that is 16 of the 37.
 
     `A` defaults to `object`, which is what `collect()` returned for every root
-    before #396. That default is what let the map be filled in per accessor
+    before `A` existed. That default is what let the map be filled in per accessor
     rather than in one edit: an accessor that pins nothing behaves exactly as
     it did, and `Cols[R]` keeps meaning what it meant.
     """

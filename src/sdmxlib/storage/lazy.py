@@ -68,7 +68,7 @@ class LazyCodelist:
 
     **``codes`` is where it deliberately differs.** It returns a `Query`,
     a lazy plan for SQL-pushed filtering and hierarchy navigation, where a
-    plain `Codelist` returns a materialised `ItemList`. Since #306 that plan is
+    plain `Codelist` returns a materialised `ItemList`. That plan is
     not iterable, has no ``len()`` and answers no ``in``: those ran SQL without
     saying so, which is what stops a planner pushing anything down.
 
@@ -248,7 +248,7 @@ class LazyCodelist:
 
     @property
     def codes(self) -> Query[CodeRow, Code]:
-        """This codelist's codes, as a lazy query (#306).
+        """This codelist's codes, as a lazy query.
 
         Ordered by declaration position, as the *default* order rather than as
         a caller's `order_by`. The path language's own default is its `__key__`
@@ -297,7 +297,7 @@ class LazyCodelist:
         """Build a resolved `Ref` to a code in this codelist — see `Codelist.ref_to`.
 
         Works without materialising: the existence check goes through this
-        class's own subscript, which is one targeted query (#407).
+        class's own subscript, which is one targeted query.
 
         Raises:
             KeyError: If no code with this id is in the codelist.
@@ -529,7 +529,7 @@ class LazyCodelist:
         """Direct SQL: every code id, without creating `Code` objects.
 
         The lazy half of `CodelistLike.code_ids` — 92 ms against 2,854 ms to
-        materialise, on a 579,951-code codelist (#398).
+        materialise, on a 579,951-code codelist.
         """
         return self.codes.ids()
 
@@ -537,17 +537,17 @@ class LazyCodelist:
         """Direct SQL: ``{code_id: Code}`` for exactly *ids*; unknown ids are absent.
 
         The lazy half of `CodelistLike.codes_for` — one batched read whose cost
-        follows ``len(ids)``, where `materialize` builds every code (#410).
+        follows ``len(ids)``, where `materialize` builds every code.
         Not through `self.codes.filter(...is_in(ids))`: that binds the ids,
         converted one at a time — linear, and ~80 us each without pandas
-        installed (#411) — where `resolve.codes_by_id` matches against a
+        installed — where `resolve.codes_by_id` matches against a
         registered Arrow buffer.
         """
         return resolve.codes_by_id(self._conn, self._urn, set(ids))
 
     @classmethod
     def codes_for_each(cls, requests: Sequence[tuple[Self, Collection[str]]]) -> list[dict[str, Code]]:
-        """Direct SQL: every request's codes in one batched read per store (#441).
+        """Direct SQL: every request's codes in one batched read per store.
 
         The lazy half of `CodelistLike.codes_for_each`. Requests are grouped by
         connection, and two asking the same codelist share its branch of
@@ -575,8 +575,8 @@ class LazyCodelist:
     def code_map(self, *, lang: str) -> dict[str, str]:
         """Direct SQL: ``{code_id: label}`` without creating Code objects.
 
-        Memoised per instance per ``lang`` with a single-flight build lock
-        (#155): the first caller runs the SQL projection, concurrent
+        Memoised per instance per ``lang`` with a single-flight build lock: the
+        first caller runs the SQL projection, concurrent
         callers for the same ``lang`` block on the lock and then return the
         hot cache rather than each re-running the query. The returned dict
         is the cached instance — treat it as read-only.
@@ -601,23 +601,20 @@ class LazyCodelist:
         to avoid loading what nobody asked for, and most callers never ask.
         Uncached for the reason `code_map` is cached and this is not: one small
         query, and a cache would need invalidating on every write.
-
-        Its absence was half of #322 — the attribute did not exist at all, so
-        `materialize()` could only return an artefact with none.
         """
         loaded = resolve.annotations_for_urns(_cur(self._conn), [self._urn])
         return loaded.get(self._urn, Annotations.EMPTY)
 
     @property
     def links(self) -> tuple[Link, ...]:
-        """This artefact's links (#422), read on demand for the reason `annotations` is."""
+        """This artefact's links, read on demand for the reason `annotations` is."""
         return resolve.links_for_urns(_cur(self._conn), [self._urn]).get(self._urn, ())
 
     @property
     def extensions(self) -> tuple[CodelistExtension, ...]:
         """The codelists this one extends, read on demand.
 
-        On the proxy for the same reason `annotations` is (#322): if only the
+        On the proxy for the same reason `annotations` is: if only the
         eager reader carried them, `get()` and `get(eager=True)` would answer
         differently about what codes this list is composed of.
         """
@@ -666,10 +663,10 @@ class LazyCodelist:
         **Every field the proxy holds is passed on.** Omitting one made the two
         read paths disagree — `lazy.uri` returned the stored value and
         `lazy.materialize().uri` returned `None` — so materialising for an
-        unrelated reason silently changed the answer (#322). `valid_from`,
+        unrelated reason silently changed the answer. `valid_from`,
         `valid_to`, `uri` and `annotations` were all missing.
 
-        Checked as `get(eager=True)` is (#492): a codelist that breaks a rule
+        Checked as `get(eager=True)` is: a codelist that breaks a rule
         `Registry.add` enforces raises `SdmxConformanceError`.
         """
         return checked("Codelist", self._urn, self._build)
@@ -888,11 +885,11 @@ class LazyHierarchy:
 
     @property
     def nodes(self) -> Query[HCodeRow, HierarchicalCode]:
-        """This hierarchy's placements, as a lazy query (#306).
+        """This hierarchy's placements, as a lazy query.
 
         Ordered by the path language's `node_urn` tiebreak, which is total and
         stable across calls — what keyset paging needs — but not declaration
-        order. That is stored now (`position`, #439) and `materialize` restores
+        order. That is stored now (`position`) and `materialize` restores
         it; order by `q.hcode.position` here to ask for it.
         """
         return build(
@@ -979,12 +976,12 @@ class LazyHierarchy:
         return self.nodes.filter(q_accessors.q.hcode.children.count() == 0)
 
     def narrower(self, path: str) -> Query[HCodeRow, HierarchicalCode]:
-        """Direct children of *path*. A node's id rather than its path is refused (#514)."""
+        """Direct children of *path*. A node's id rather than its path is refused."""
         self._refuse_bare_id(path)
         return self.nodes.filter(q_accessors.q.hcode.parent.nested_id == path)
 
     def broader(self, path: str) -> HierarchicalCode | None:
-        """Direct parent of *path*. ``None`` for roots; a node's id rather than its path is refused (#514)."""
+        """Direct parent of *path*. ``None`` for roots; a node's id rather than its path is refused."""
         self._refuse_bare_id(path)
         parent_of = q_accessors.q.hcode.children.nested_id == path
         found = _artefacts(self.nodes.filter(parent_of).collect(), HierarchicalCode)
@@ -993,7 +990,7 @@ class LazyHierarchy:
     def narrower_transitive(
         self, path: str, *, depth: int | None = None, include_self: bool = False
     ) -> Query[HCodeRow, HierarchicalCode]:
-        """All descendants of *path*. ``depth`` bounds hops. A node's id rather than its path is refused (#514)."""
+        """All descendants of *path*. ``depth`` bounds hops. A node's id rather than its path is refused."""
         self._refuse_bare_id(path)
         node = q_accessors.q.hcode
         found = node.ancestors.nested_id == path
@@ -1006,7 +1003,7 @@ class LazyHierarchy:
     def broader_transitive(
         self, path: str, *, depth: int | None = None, include_self: bool = False
     ) -> Query[HCodeRow, HierarchicalCode]:
-        """All ancestors of *path*. ``depth`` bounds hops. A node's id rather than its path is refused (#514)."""
+        """All ancestors of *path*. ``depth`` bounds hops. A node's id rather than its path is refused."""
         self._refuse_bare_id(path)
         node = q_accessors.q.hcode
         found = node.descendants.nested_id == path
@@ -1023,7 +1020,7 @@ class LazyHierarchy:
         by province needs each geography mapped to its province. Compiled, not
         materialised: the mapping stays in the database and composes into a
         join, where applications previously traversed the tree in Python and
-        registered the result as a view (#274).
+        registered the result as a view.
 
         A node at the level maps to itself; a node with no ancestor there is
         absent rather than ``NULL``. Same semantics as
@@ -1036,7 +1033,7 @@ class LazyHierarchy:
                 itself. Defaults to True, unlike the transitive walks, because
                 this is a mapping rather than a closure — excluding the
                 identity leaves every node at the level with no image, so a
-                province would have no province (#274).
+                province would have no province.
 
         Returns:
             A two-column ``(node_id, rollup_id)`` relation.
@@ -1135,16 +1132,13 @@ class LazyHierarchy:
         to avoid loading what nobody asked for, and most callers never ask.
         Uncached for the reason `code_map` is cached and this is not: one small
         query, and a cache would need invalidating on every write.
-
-        Its absence was half of #322 — the attribute did not exist at all, so
-        `materialize()` could only return an artefact with none.
         """
         loaded = resolve.annotations_for_urns(_cur(self._conn), [self._urn])
         return loaded.get(self._urn, Annotations.EMPTY)
 
     @property
     def links(self) -> tuple[Link, ...]:
-        """This artefact's links (#422), read on demand for the reason `annotations` is."""
+        """This artefact's links, read on demand for the reason `annotations` is."""
         return resolve.links_for_urns(_cur(self._conn), [self._urn]).get(self._urn, ())
 
     #: `Hierarchy` members this class deliberately does not have, and the lazy
@@ -1204,7 +1198,7 @@ class LazyHierarchy:
         ``HierarchicalCode`` gets its children list at construction
         time — no post-construction mutation.
 
-        Checked as `get(eager=True)` is (#492): a hierarchy that breaks a rule
+        Checked as `get(eager=True)` is: a hierarchy that breaks a rule
         `Registry.add` enforces raises `SdmxConformanceError`.
         """
         return checked("Hierarchy", self._urn, self._build)

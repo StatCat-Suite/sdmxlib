@@ -643,7 +643,7 @@ class Push[R: RowKind]:
 class PushdownError(ValueError):
     """A query cannot be run against this backend without fetching too much.
 
-    Raised rather than answered, per §5 and the whole of %11: a valid result
+    Raised rather than answered, per §5 of the pushdown design: a valid result
     or an error naming the problem, never a plausible-looking wrong one. The
     problem here is invisible in the result — the rows come back correct, just
     at the cost of having fetched every artefact in the registry to filter
