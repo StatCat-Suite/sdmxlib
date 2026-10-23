@@ -24,14 +24,14 @@ since each suite reaches code the other never runs:
 Over all 1,290, including what each suite never reaches: properties killed
 440, examples 755, and 535 survived both.
 
-**The properties killed a strict subset.** Not "fewer" — a subset: every
-mutant they caught, the examples caught too, and the examples caught 106 more.
+**The properties killed a strict subset.** Every mutant they caught, the
+examples caught too, and the examples caught 106 more.
 The 106 cluster in `_constraint_clause`, `_facet_clause` and `_conjoin`.
 
 ### Limits of that result
 
-It does **not** say the property files are redundant, and they are not being
-deleted. Three reasons, and the first is the one that matters:
+The result does not make the property files redundant, and they stay. Three
+reasons, the first the most important:
 
 **Mutation kills and found defects are different measurements.** The properties
 have caught real bugs no example did — a filter fragment of `":"`, punctuation
@@ -47,20 +47,20 @@ documented finds came from `just test-properties` at 20×, and CLAUDE.md already
 records that both defects fixed in !249's second commit were invisible at
 default width. So this measures the properties with most of their search
 switched off. Re-running the properties arm under the `deep` profile is the
-obvious follow-up and was not done here: it multiplies an already 15-minute run
+next step and was not done here: it multiplies an already 15-minute run
 and pushes more mutants past their CPU budget (see below).
 
-**A property is worth what it *specifies*, not only what it kills.** The
-oracles are the executable statement of what a predicate means. That value is
-in the reading as much as the running.
+**A property also has value as a specification.** The oracles are the
+executable statement of what a predicate means, and reading them teaches as
+much as running them.
 
 ### Caveats on these numbers
 
 * **Run-to-run variance.** Two runs of the properties arm gave 454 kills / 0
   timeouts and 440 kills / 13 timeouts. Hypothesis tests are slow enough that
   the per-mutant CPU budget sometimes expires, so the properties' kill count is
-  a slight *under*-estimate — which, note, cuts in their favour and does not
-  change the qualitative result.
+  a slight *under*-estimate; correcting it would favour them slightly and
+  leaves the result unchanged.
 * `mutate_only_covered_lines = false` is forced off by the `_duckdb` import
   interaction documented in `pyproject.toml`, so uncovered lines yield
   uninteresting survivors.
@@ -70,7 +70,7 @@ in the reading as much as the running.
   balanced for size, because the question is what each suite *can* catch, not
   what it catches per file.
 
-## The scope, and why it is what it is
+## The scope and its reasons
 
 #304 asked for `code_query.py`, `hierarchy_query.py` and `_query_common.py`
 (1,402 statements). #306 deleted all three. The work moved into `_expr.py`,
@@ -84,22 +84,21 @@ own decision rather than arriving as a side effect of this one.
 
 ## The `_compile.py` baseline, and the first triage installment
 
-Against the **whole** unit suite — the honest baseline, and the one to quote:
+Against the **whole** unit suite, the baseline to quote:
 
 | | mutants | killed | survived | timeout | no tests |
 | --- | --- | --- | --- | --- | --- |
 | before the triage | 1,290 | 1,127 (87.4%) | 163 | 0 | 0 |
 | after | 1,290 | 1,147 (88.9%) | 143 | 0 | 0 |
 
-Note what the earlier two-arm comparison could *not* tell you: it reported 196
-mutants neither arm killed, but 33 of those die to test files in neither arm.
-A survivor set is only meaningful against the suite you actually ship.
+The earlier two-arm comparison reported 196 mutants neither arm killed, but 33
+of those die to test files in neither arm. A survivor set is meaningful only
+against the suite that ships.
 
 ### What the first cluster found
 
 `_window` held 23 survivors, the largest group. Triaging them found **a real
-defect, not a test gap** — which is the outcome #218 hoped for and did not
-promise.
+defect**, the outcome #218 hoped for.
 
 `col.count().over(...)` compiled to `count(*)` for every windowed count. The
 counted column was dropped from the SQL **while its bind parameters were still
@@ -134,13 +133,13 @@ which is all that was tested.
   `window()` supplies `order_ref` whenever `column.source` is non-empty, and
   an empty source cannot construct a `Win`. Removing the fallback means
   tightening the parameter to non-optional and moving the caller's guard,
-  which is a bigger change than this triage should smuggle in.
+  which is a bigger change than this triage covers.
 
 ## Installment 2: the two discriminator clauses, and a broken runner
 
 ### The runner was broken
 
-Before a single survivor could be read, the run had to work. It did not:
+The run did not work at first:
 
     failed to collect stats. runner returned 1
     1610 mutants   killed 0   survived 0   no-coverage 0
@@ -152,11 +151,11 @@ else, so that read raised `FileNotFoundError` there and took the **stats
 phase** down with it — and mutation testing is not in `just ci`, so every run
 since that test landed reported zero of everything and no one saw it.
 
-Exactly the trap `test_count_any.py` documents against #284, one directory
+`test_count_any.py` documents the same trap against #284, one directory
 over: *"`tools/` is outside the trees mutmut copies … which is exactly what
 #284 did, unnoticed."* Two instances now, both found only when someone next
-tried to run mutation. A third is a matter of time; the shape to watch for is
-a test reading anything outside `src/` and `tests/`.
+tried to run mutation. Watch for a test reading anything outside `src/` and
+`tests/`.
 
 The guard is keyed on `docs/` being absent **entirely**, not on the file
 missing, so a deleted cookbook page still fails in a real tree rather than
@@ -188,8 +187,8 @@ value.** All three `_edges.FACETS` are single (`("Dimension",)`,
 in `accessors.py` are `("artefact_type", ("Something",))`. The multi-value
 `IN (...)` branch is unreachable through `q.*`.
 
-Classified as **dead code by declaration, not by design** — the third kind, and
-a new one for this file. Both docstrings state the capability (a facet "may
+Classified as **dead code by declaration**: the code supports it and no
+declaration uses it yet. It is the third kind, new to this file. Both docstrings state the capability (a facet "may
 cover several stored kinds even when the domain exposes one name") and a facet
 spanning `Dimension` and `TimeDimension` is an obvious future one. So the
 branch stays and is now pinned directly, rather than waiting for whoever
@@ -202,7 +201,7 @@ text, same rows. Only an assertion on the emitted SQL separates those, so
 `tests/unit/test_query_compile_clauses.py` asserts text and params rather than
 result sets.
 
-One bonus kill outside the two clusters: `_conjoin__mutmut_5`, from asserting
+One more kill outside the two clusters: `_conjoin__mutmut_5`, from asserting
 that an empty clause is *dropped* by `_conjoin` rather than merely falsy.
 
 ### The 162 that remain
@@ -212,7 +211,7 @@ that an empty clause is *dropped* by `_conjoin` rather than merely falsy.
      9  _Scope._agg_subquery     6  _Scope.order        5  _Scope.grouped_having
      5  _Scope.compile           5  _check_distinct_order
 
-`_Scope._agg_body_from` is the obvious next installment: the largest cluster,
+`_Scope._agg_body_from` is the next installment: the largest cluster,
 and aggregate-subquery construction is where a wrong join or a dropped
 correlation returns plausible numbers rather than an error.
 
@@ -568,7 +567,7 @@ So is the reader's `get("version", "1.0")` on the three organisation schemes.
 ### A dangling level, in both readers
 
 A hierarchical code naming a level its hierarchy does not define was read
-with no level, in 3.x and in 2.1. The reference vanished without a word.
+with no level, in 3.x and in 2.1. The reference was dropped with no warning.
 Both readers now go through `_common.node_level`, which refuses the
 hierarchy and names the node and the level.
 
@@ -809,7 +808,7 @@ All 17 that fell to `test_json_writer_mutant_gaps.py` were, as with both SDMX-ML
 | a misfit wildcard expanded anyway | 1 | validation refuses the input first: `validate` refuses a codelist whose wildcards cannot be expanded before a writer runs |
 | `msgspec.json.format` without `indent` | 1 | its default is 2 |
 
-**SDMX-JSON data sources are refused rightly.** The 2.0 structure schema puts queryable and simple data sources on a data constraint, and the reader reads them. The 2.1 schema dropped both. sdmxlib's `"json"` output must validate against 2.0 and 2.1 alike, so `check_serialisable` refuses them and `gaps.py` declares the loss.
+**SDMX-JSON data sources are refused correctly.** The 2.0 structure schema puts queryable and simple data sources on a data constraint, and the reader reads them. The 2.1 schema dropped both. sdmxlib's `"json"` output must validate against 2.0 and 2.1 alike, so `check_serialisable` refuses them and `gaps.py` declares the loss.
 
 ## The runner moved to mutmut 3.8
 
@@ -824,7 +823,7 @@ mode and keeps two things of its own:
 * **preloading the native extensions.** Without it the stats child exits -6
   (`SIGABRT`) loading pyarrow.
 
-**The first port measured nothing at import, and nobody noticed.** It kept
+**The first port never activated a mutant in import-time code.** It kept
 3.8's default `forkserver_warmup = "collect"`. The fork server collects the
 suite once, before any mutant is chosen, and every child inherits the
 imported modules. So code that runs at import was never mutated in a child:
@@ -932,8 +931,8 @@ diffing survivors per function against the baseline's 189:
 - The 4 segfaults were re-run in a fresh process: all 4 killed.
 - The 2 timeouts (`compile_page`, `_after_sql`) are genuine infinite loops. A
   mutant that ignores the keyset cursor pages forever, so a paging test catches
-  each by never ending. That is detection, but a slow one: a page-count bound in
-  that test would fail fast, which is that installment's to add.
+  each by never ending. That detects them slowly; a page-count bound in that
+  test would fail fast, and that installment should add it.
 
 ## Installment 12 (#324): `_window`, and two dead entries
 
@@ -963,8 +962,8 @@ moved**.
 
 ## Unmeasured scope
 
-Stated rather than left as an absence, per #218's ruling that the triage is the
-artifact and the percentage is not:
+Listed per #218's ruling that the triage is the artifact and the percentage
+is not:
 
 * **Full-scope wall-clock.** 2,300 statements against the whole unit suite has
   not been timed since the scope changed. The old 923-statement figure (~4.5 h)
