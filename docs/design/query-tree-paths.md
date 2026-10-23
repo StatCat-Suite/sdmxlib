@@ -34,15 +34,14 @@ transitive reduction. `ancestors`/`descendants` is its **transitive closure**.
 Each edge is declared once and read in both directions, so `children` cannot
 drift from `parent`, and `descendants` cannot drift from `ancestors`.
 
-So the mathematical intuition — "these feel similar" — is right, and the answer
-is that they are similar in exactly the way `q.dsd.components` and
-`q.component.dsd` are similar. Two of the four names are inverses, not new
-concepts.
+The four feel similar because they are similar in exactly the way
+`q.dsd.components` and `q.component.dsd` are. Two of the four names are
+inverses, not new concepts.
 
 ### The closure is a stored fact beside the direct edge
 
-Because the language has no recursion, deliberately. `descendants` is not
-`children` applied repeatedly; it is a separate stored fact — the writer bakes
+The language has no recursion, deliberately, so `descendants` is not
+`children` applied repeatedly: it is a separate stored fact — the writer bakes
 each row's ancestor list, so the closure is a column read rather than a
 recursive CTE. See §5.
 
@@ -57,8 +56,8 @@ q.code.descendants.id == "ON"   # -> ['CA', 'W']    everything above ON
 
 ## 2. Cardinality is the operational difference
 
-Three of the four are to-many. **`parent` is the only to-one**, and that is not
-a naming detail — it decides what you may do with the path.
+Three of the four are to-many. **`parent` is the only to-one**, and that
+decides what you may do with the path.
 
 ```python
 # parent is to-one -> it has a single value per row, so it projects
@@ -151,8 +150,8 @@ maintains the invariant, and only `reg.sql()` can break it behind its back.
 
 Removing the column then settled what trimming had only made harmless. The two
 spellings were identical in behaviour, so the remaining question — "which do I
-write?" — had no answer that referred to anything the query *did*. A choice
-with no consequence attached is not an affordance.
+write?" — had no answer that referred to anything the query *did*, so the
+second spelling went.
 
 ### It generalises past trees
 
@@ -182,7 +181,7 @@ nothing for the common case.
 
 ### Choosing a spelling
 
-`parent.id` — there is nothing else to write. Trimming made the two spellings
+Write `parent.id`; it is the only spelling. Trimming made the two spellings
 compile to one statement, and once they did, keeping both would only have
 asked every reader to choose between names with no difference behind them.
 The hop *reads* as "the row it points at" and costs what the stored reference
@@ -192,7 +191,7 @@ costs.
 
 ## 4. How this compares
 
-All claims below were run, not recalled.
+Every claim below was run against the library it describes.
 
 ### Django — creates the pair, then makes it one thing
 
@@ -203,7 +202,7 @@ parent = models.ForeignKey("self", null=True, related_name="children", ...)
 yields fields `['children', 'id', 'parent']`, and the field's `attname` — the
 database column — is `parent_id`. Django *generates* both names from one
 declaration, which is the strongest statement of the convention: the pair is
-not a redundancy anyone chose, it is what a foreign key is.
+what a foreign key is.
 
 And it trims. On Django 6.1, `parent__id` and `parent_id` produce byte-identical
 SQL in every form, including the two where a half-done rewrite would show:
@@ -272,8 +271,8 @@ rather than a method. mptt's `node.get_descendants()` is a method on an
 instance and returns a QuerySet; ours is `q.code.descendants`, usable anywhere a
 path is — inside `.any()`, inside a projection, inside a `group_by` key.
 
-That is possible only because the closure is *stored*. It is not a cleverness
-we could apply to an arbitrary graph.
+That is possible only because the closure is *stored*, which an arbitrary
+graph does not allow.
 
 ---
 
@@ -295,7 +294,7 @@ EXISTS (SELECT 1 FROM sdmx.code s1
           AND s1.code_id = ?)
 ```
 
-…except in the one case that turns out to be the common one. When the far side
+…except in the common case. When the far side
 is asked for *nothing but the key it was joined on* — `ancestors.id == X`,
 which is what `narrower_transitive` is — that subquery joins a table solely to
 assert that a constant appears in a list `s0` already carries. #349 collapses
@@ -311,14 +310,13 @@ reported. `ancestors.level.id == "PR"` keeps its join, and so does
 `ancestors.id.is_in([...])`; `_member_collapse` in `query/_compile.py` states
 the guards and why each one bounds the rewrite.
 
-The collapse is not a second way to be right about ancestry — it is the *same*
-assumption as the bake, made once more. It drops the requirement that the
+The collapse makes the *same* assumption as the bake, once more. It drops the requirement that the
 ancestor row exist and the requirement that it share the scope column, and
 both come back as one property of the writer, which
 `test_ancestor_ids_are_referentially_intact` now asserts over every membership
 edge rather than leaving to the second bullet below.
 
-Two consequences worth stating:
+Two consequences:
 
 - **The bake is load-bearing.** `tests/unit/test_properties_query_code.py`
   compares this against an oracle that walks `parent_id` freshly, so a
@@ -380,9 +378,8 @@ nest came back flat on read *and* on round-trip write. The storage column had
 been added as though support existed, so the DDL implied a capability the model
 never gained.
 
-That is why it survived: **an un-populated column is an absence, and absences
-do not fail tests.** Every individual leg looked fine. It took an inventory of
-un-wired traversals to notice, not a red test.
+It survived because **an unpopulated column fails no test.** Every individual
+leg looked fine, and an inventory of un-wired traversals found it.
 
 `Concept` now carries `parent_id` — flat with a reference, like `Code`, which
 is what the wire declares; `Category` nests instead, and the two shapes are not
@@ -391,7 +388,7 @@ interchangeable. Both format readers and writers carry it, the 2.1 `<Ref>` and
 `depth` / `ancestor_ids` so `q.concept` has the same four names as `q.code`:
 `parent`, `children`, `ancestors`, `descendants`.
 
-One trap worth recording: `Parent` sits on `ConceptBaseType` and
+One trap: `Parent` sits on `ConceptBaseType` and
 `CoreRepresentation` on the extension, so the XSD sequences Parent **first**.
 Emitting them the other way round produces a document our own reader accepts
 and every validator rejects — the class of writer bug pure round-trip testing
