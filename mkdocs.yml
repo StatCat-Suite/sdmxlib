@@ -113,6 +113,11 @@ nav:
           - Mutation testing: design/mutation-testing.md
           - What the mutation runs measured: design/mutation-evidence.md
 
+# Links the tracker references the docs cite: `#N` / `!N` / `%N` to the GitLab
+# export under history/gitlab/, `GH-N` to the GitHub issue (GH-85).
+hooks:
+  - tools/mkdocs_issue_links.py
+
 plugins:
   - search
   - mkdocstrings:
