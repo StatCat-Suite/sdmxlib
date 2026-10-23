@@ -4,7 +4,8 @@
 ``parquet/`` — and this names what a given bundle is. `write_manifest`
 publishes one: a file inventory with a sha256 per file, observation counts per
 binding, and a fresh ``token``, the value a cache or an ETag keys on.
-`read_manifest` reads it back, refusing a format it cannot read. The manifest's
+`read_manifest` reads it back, refusing a format it cannot read, and
+`check_bundle` checks a bundle against it and against itself. The manifest's
 JSON Schema ships beside it, for producers outside Python: `manifest_schema`.
 
 Example:
@@ -18,6 +19,7 @@ Example:
 
 from importlib import resources
 
+from sdmxlib.bundle._check import Check, Finding, Report, check_bundle
 from sdmxlib.bundle._write import inventory, write_manifest
 from sdmxlib.storage._manifest import (
     FORMAT_VERSION,
@@ -35,9 +37,13 @@ __all__ = [
     "MANIFEST_NAME",
     "BindingCount",
     "BundleFile",
+    "Check",
+    "Finding",
     "Manifest",
     "ManifestError",
     "Producer",
+    "Report",
+    "check_bundle",
     "inventory",
     "manifest_schema",
     "read_manifest",

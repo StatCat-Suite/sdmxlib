@@ -10,7 +10,6 @@ import json
 import uuid
 from pathlib import Path
 
-import duckdb
 import jsonschema
 import pytest
 
@@ -24,45 +23,13 @@ from sdmxlib.bundle import (
     read_manifest,
     write_manifest,
 )
-from sdmxlib.model.binding import DataflowBinding
-from sdmxlib.model.dataflow import Dataflow
-from sdmxlib.model.datastructure import DataStructure, Dimension, Measure
-from sdmxlib.model.organisation import Agency
-from sdmxlib.model.ref import Ref
 from sdmxlib.storage._manifest import generate_schema
-from tests.support.factories import concept_ref
+from tests.support.bundles import FLOW as _FLOW
+from tests.support.bundles import make_bundle as _bundle
 
 pytestmark = pytest.mark.unit
 
 _PRODUCER = Producer(name="test-builder", version="1.0")
-_DSD = DataStructure(
-    id="DSD",
-    maintainer=Agency(id="SDMX"),
-    version="1.0",
-    name={"en": "DSD"},
-    dimensions=[Dimension(id="GEO", concept=concept_ref("GEO"))],
-    measures=[Measure(id="OBS_VALUE", concept=concept_ref("OBS_VALUE"))],
-)
-_FLOW = Dataflow(id="F", maintainer=Agency(id="SDMX"), version="1.0", name={"en": "F"}, structure=Ref.to(_DSD))
-
-
-def _bundle(root: Path, rows: int) -> Path:
-    """A bundle of `rows` observations, bound to `_FLOW`. DuckLake inlines a
-    small table into its catalog and writes a large one to parquet."""
-    root.mkdir()
-    conn = duckdb.connect(":memory:")
-    conn.execute("INSTALL ducklake")
-    conn.execute("LOAD ducklake")
-    conn.execute(f"ATTACH 'ducklake:{root}/lake.ducklake' AS lake (DATA_PATH '{root}/parquet/')")
-    conn.execute("CREATE SCHEMA lake.d")
-    conn.execute(
-        f"CREATE TABLE lake.d.obs AS SELECT 'G' || (range % 7) AS GEO, range::DOUBLE AS OBS_VALUE FROM range({rows})"
-    )
-    conn.close()
-    with sl.LocalRegistry(root / "meta.duckdb") as reg:
-        reg.add_all([_DSD, _FLOW])
-        reg.add(DataflowBinding.from_dsd(_DSD, dataflow=Ref.to(_FLOW), schema="d", table="obs", database_role="lake"))
-    return root
 
 
 @pytest.fixture
@@ -82,7 +49,7 @@ def test_reading_a_bundle_changes_neither_its_token_nor_its_files(bundle: Path) 
     """What a cache keyed on the token relies on."""
     published = write_manifest(bundle, bundle_id="b", producer=_PRODUCER)
     with sl.LocalRegistry.bundle(bundle, require_manifest=True) as reg:
-        assert reg.get_all(Dataflow)
+        assert reg.get_all(sl.Dataflow)
         assert reg.obs(_FLOW.urn).frame().height == 200_000
         manifest = reg.manifest
         assert manifest is not None
