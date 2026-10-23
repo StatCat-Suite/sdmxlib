@@ -45,8 +45,8 @@ ignore = [
   # ── Type annotations ──────────────────────────────────────────────────────
   # ANN401 is NOT ignored globally. It used to be, on the rationale that "Any
   # is legitimate for **kwargs and dunder args". Enabled here it becomes the
-  # lint that enforces CLAUDE.md's typed-core/untyped-shell boundary, with the
-  # shell (formats/, storage/, local/) exempted in per-file-ignores below.
+  # lint that enforces CLAUDE.md's typed-core/untyped-shell boundary, on in
+  # every directory of src/ — see the shell note in per-file-ignores below.
   #
   # `flake8-annotations.allow-star-arg-any` is deliberately NOT set. The one
   # genuine pass-through star-kwarg (httpx options, #196) was the obvious
@@ -55,7 +55,7 @@ ignore = [
   # must not reach — and is invisible in review afterwards. It turned out not
   # to be needed at all: PEP 692 `Unpack[TypedDict]` types that pass-through
   # exactly, with no `Any` and no suppression. Reach for that first.
-  "FA", # flake8-future-annotations — Python 3.12+, no __future__ needed
+  "FA", # flake8-future-annotations — 3.14's lazy annotations (PEP 649) need no __future__
 
   # ── Docstring style ───────────────────────────────────────────────────────
   "D105", # undocumented-magic-method — dunder methods are self-evident (__iter__, __len__, etc.)
@@ -95,10 +95,9 @@ ignore = [
   # and SQL fragments inside long docstring blocks, it false-positives more
   # than it helps. Genuine dead code is caught in review.
   "ERA001", # commented-out-code
-  # PEP 749 (lazy annotations, accepted for 3.14) makes the TYPE_CHECKING
-  # ceremony that TC enforces obsolete. Until 3.14 is our minimum, eating
-  # the cost of a few non-TYPE_CHECKING annotations beats churning every
-  # import block in the codebase twice.
+  # PEP 749 (lazy annotations, 3.14, our minimum) makes the TYPE_CHECKING
+  # ceremony that TC enforces obsolete — and CLAUDE.md requires annotation
+  # names to be imported for real, since `inspect.signature` evaluates them.
   "TC", # flake8-type-checking
 ]
 
@@ -142,19 +141,8 @@ max-positional-args = 8
 # but parameterise.
 "src/sdmxlib/storage/**/*.py" = ["S608"]
 "src/sdmxlib/local/**/*.py" = ["S608"]
-"src/sdmxlib/model/code_query.py" = ["S608"]
-"src/sdmxlib/model/hierarchy_query.py" = ["S608"]
-# The shared half of those two compilers (#267) — same code, same reason.
-"src/sdmxlib/model/_query_common.py" = ["S608"]
-# The artefact-spine compiler (#276) — fourth module of the same kind. Its
-# relationship predicates build correlated EXISTS clauses over fixed table
-# names and the row alias; every value is a bind.
-"src/sdmxlib/model/artefact_query.py" = ["S608"]
-# The reported-value compiler (#281) — fifth, same shape: one correlated
-# EXISTS into `metadata_target`, fixed table names, every value a bind.
-"src/sdmxlib/model/metadata_query.py" = ["S608"]
-# The path compiler (#306) — same shape again, and the identifiers are the
-# tightest of the set: table and column names come from the declared edge
+# The path compiler (#306), which replaced the five per-relation compilers
+# that used to be listed here: table and column names come from the declared edge
 # graph, which `tests/unit/test_query_edges.py` checks against the live schema
 # on every run, and aliases are generated here. Every value is a bind, and
 # `test_values_are_parameterised` asserts a hostile literal never reaches the

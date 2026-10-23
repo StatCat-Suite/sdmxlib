@@ -35,8 +35,6 @@ overload implementation, a type alias the comparison cannot expand).
     uv run python tools/check_return_widening.py --check  # exit 1 on a finding
 """
 
-from __future__ import annotations
-
 import ast
 import importlib
 import inspect

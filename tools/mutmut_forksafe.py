@@ -43,8 +43,6 @@ Drop-in for `mutmut`, same arguments:
     uv run python tools/mutmut_forksafe.py results
 """
 
-from __future__ import annotations
-
 from typing import TYPE_CHECKING, override
 
 from mutmut import __main__ as mutmut_main

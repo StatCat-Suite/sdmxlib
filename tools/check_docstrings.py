@@ -40,8 +40,6 @@ one rule.
     uv run python tools/check_docstrings.py --check   # exit 1 if any
 """
 
-from __future__ import annotations
-
 import argparse
 import re
 import subprocess

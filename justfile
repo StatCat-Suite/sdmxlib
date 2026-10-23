@@ -72,7 +72,7 @@ check-docstrings:
 # No linter in the stack has a rule for it, so this is a ratchet rather than
 # a rule: the same technique the pyrefly deny-list uses, where a number that
 # cannot grow stands in for a check nobody has written. Each issue in %16
-# lowers `bench/any_baseline.txt`, and lowering it is a visible diff.
+# lowers `tools/any_baseline.txt`, and lowering it is a visible diff.
 [group('dev')]
 check-any:
     #!/usr/bin/env bash

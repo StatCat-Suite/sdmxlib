@@ -52,8 +52,6 @@ its test — see `SELF_EXEMPT` for why a scanner cannot scan its own fixtures.
     uv run python tools/check_indexes.py --check    # exit 1 if any finding
 """
 
-from __future__ import annotations
-
 import argparse
 import re
 import subprocess

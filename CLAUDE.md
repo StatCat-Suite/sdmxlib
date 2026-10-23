@@ -243,7 +243,7 @@ and 6,284 green unit tests. The measurements stay opt-in as `just bench-bundle`.
 
 **`just ci` is the gate, and it runs locally.** Hosted CI runs no tests — only
 `.github/workflows/docs.yml`, which publishes the docs to GitHub Pages. So
-nothing merges on a green pipeline; it merges on a green `just ci`.
+nothing merges on a green hosted run; it merges on a green `just ci`.
 
 That is a hosting decision and **not** a licence to shape the suite around a
 runner budget. Test design here is not cost-constrained: Hypothesis explores at
@@ -543,10 +543,10 @@ other's error — which is why `# pyright: ignore[...]` existed here until
 pyrefly became the only checker (#425).
 
 **Checker versions carry upper bounds.** `uv.lock` is gitignored (published
-library), so CI resolves the dev group fresh every pipeline — an unbounded floor
-means a checker release lands in CI with no commit of ours in between. With ruff
-on `select = ["ALL"]` that is not hypothetical: 0.16.0 stabilised 12 preview
-rules. Bump `ruff` / `pyrefly` deliberately, in their own MR,
+library), so every fresh `uv sync` resolves the dev group anew — an unbounded
+floor means a checker release lands in `just ci` with no commit of ours in
+between. With ruff on `select = ["ALL"]` that is not hypothetical: 0.16.0
+stabilised 12 preview rules. Bump `ruff` / `pyrefly` deliberately, in their own PR,
 with the new findings fixed in the same change.
 
 Why this is worth the friction: in the pyrefly 1.2 upgrade, all five full-preset
@@ -597,7 +597,7 @@ with no code-level fix, came back on with 1.4, which fixed it.
 
 **pyrefly 1.4** added implicit-`Any` rules (`unknown-attribute-access`,
 `unknown-return-type`) and `open-unpacking`, `uninitialized-instance-variable`
-and `method-assign`. src/ and bench/ went to zero with one suppression — a
+and `method-assign`. src/ and bench/ went to zero with one new suppression — a
 pyrefly gap, `__attrs_post_init__` not counted as an initializer, repro beside
 it. The fixes that mattered: unpacked TypedDicts are closed (PEP 728, hence
 `typing-extensions`); mixins state their fields as properties the attrs
@@ -727,7 +727,7 @@ that line still surfaces.
 here, so for both checkers the bracket is decorative and the comment is a
 blanket line suppression. That is how one `# type: ignore[arg-type]` in
 `api/client.py` came to be hiding 17 distinct errors (#196). `src/` now contains
-**zero** of them (#195); `tests/` still carries 28, each live — a dead one fails
+**zero** of them (#195); `tests/` still carries 23, each live — a dead one fails
 `unused-type-ignore`. Converting them is a suppression change and goes through
 approval like any other.
 
