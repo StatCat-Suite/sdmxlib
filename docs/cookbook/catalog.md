@@ -81,13 +81,11 @@ WS_CREDIT_GAP                  CL_BIS_IF_REF_AREA             44 codes
 `reg.query()` returns the path language's `Query`, and it refines: `.filter()`,
 `.order_by()`, `.limit()`, `.select()` all compose.
 
-What changed in #306 is *where each clause runs*, and that it is no longer a
-secret. SDMX REST accepts one constraint on a collection request — the agency —
-so the planner pushes that and runs everything else over the materialised rows.
-The old `Query[T]` offered the same-looking `.filter()` over a fetched list,
-which made a full catalogue download read as a bounded request; now the split
-is planned rather than implied, and a query that would push nothing is refused
-instead.
+The planner decides *where each clause runs*, and `explain()` shows it. SDMX
+REST accepts one constraint on a collection request — the agency — so the
+planner pushes that and runs everything else over the materialised rows. A
+query that would push nothing is refused, so a full catalogue download never
+reads as a bounded request.
 
 ```python
 with sl.RestRegistry(sl.Provider.SDMX_GLOBAL) as reg:
@@ -112,11 +110,7 @@ three rows in it. The error names the column to add.
 
 ### The query decides the resolution depth
 
-This is the part that changed most. There used to be three terminals —
-`browse()`, `fetch()`, `resolve()` — and picking the wrong one meant either a
-missing reference or a download you did not need.
-
-Now the depth follows from the question. The planner reads which relations your
+The depth follows from the question. The planner reads which relations your
 filters and projections reach, and covers each one — sometimes by deepening
 `references=`, sometimes by scanning that relation separately:
 
@@ -161,8 +155,8 @@ above state both.
 
 ### When you want one named artefact, ask for it
 
-Do **not** fetch a catalogue and pick one out of it. `reg.get()` is a single
-request for a single artefact:
+For one named artefact, use `reg.get()`: a single request for a single
+artefact, with no catalogue fetched:
 
 ```python
 # One request, by identity

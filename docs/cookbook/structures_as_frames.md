@@ -43,8 +43,8 @@ exists to hide — `reg.sql()` and `sl.schema` are where physical names live.
 
 Note `parent.id` — a *hop* to the parent code, then its id — rather than a
 `parent_id` column. The join trims away, because the id of the row you reached
-by `parent_id` is the `parent_id` you started from. One spelling, no join, and
-nothing to get wrong.
+by `parent_id` is the `parent_id` you started from. So there is one spelling,
+and it costs no join.
 
 It also needs the `alias`: `code.id` and `code.parent.id` both spell `id`, and
 two columns of one name are refused rather than silently renamed. Either name
@@ -98,8 +98,8 @@ roots = cl.codes.filter(sl.q.code.parent.id.is_null()).select(sl.q.code.id)
 cl.codes.filter(sl.q.code.parent.id.is_in(roots)).collect()
 ```
 
-The projection is what splices, not the query: a bare `Query` selects every
-column of its relation, and `IN` needs exactly one. Asking for the wrong one
+A projection splices; a bare `Query` selects every column of its relation,
+and `IN` needs exactly one. Asking for the wrong one
 says so, naming the columns it found.
 
 ## Counting and aggregating
@@ -125,8 +125,8 @@ h.nodes.group_by(sl.q.hcode.level.id).len().collect()
 └──────┴─────┘
 ```
 
-The null group is not a bug. Levels are optional in SDMX 3.0, so nodes without
-one are counted rather than dropped.
+The null group holds the nodes without a level. Levels are optional in SDMX
+3.0, so those nodes are counted rather than dropped.
 
 `.agg()` takes named aggregates:
 
@@ -158,11 +158,10 @@ with whichever one follows — polars spells it the same way. `unique()` can onl
 be ordered by itself: a distinct aggregate collapses the rows another key would
 have come from, so `sort()` works there and `sort_by()` is refused.
 
-The last four are worth a caveat on *structural* metadata: the only numeric
-column in a codelist is `depth`, and its average is a fact about how someone
-drew the tree rather than about the data. They exist because the same
-expression language is being pointed at observation values, where the average
-is the point. `min()` and `max()` order text too, so those two are useful here
+The last four say little about *structural* metadata: the only numeric column
+in a codelist is `depth`, and its average is a fact about how someone drew the
+tree rather than about the data. They exist because the same expression
+language runs over observation values, where an average is meaningful. `min()` and `max()` order text too, so those two are useful here
 — `sl.q.code.children.id.min()` is each code's alphabetically first child.
 
 `sum` and `mean` need a numeric column and the compiler does not know column
@@ -172,7 +171,7 @@ matches the given name and argument types `sum(VARCHAR)`"*.
 ### Filtering the groups: `having()`
 
 `filter()` asks about a row, and `group_by()` has replaced rows with groups —
-so it refuses, and should. The question about a *group* is `having()`:
+so it refuses. The question about a *group* is `having()`:
 
 ```python
 reg.query(sl.q.dataflow).group_by(sl.q.dataflow.agency).agg(
@@ -180,9 +179,8 @@ reg.query(sl.q.dataflow).group_by(sl.q.dataflow.agency).agg(
 ).having(sl.q.dataflow.id.count() > 1).collect()
 ```
 
-The aggregate is written out again rather than named by its output alias. That
-is deliberate: `n` labels the *result*, while `HAVING` runs before the result
-exists, and SQL dialects disagree about whether the alias is visible there.
+The aggregate is written out again rather than named by its output alias,
+because `n` labels the *result*, while `HAVING` runs before the result exists, and SQL dialects disagree about whether the alias is visible there.
 Writing the aggregate says what is computed without depending on it.
 
 `having()` needs a `group_by()`. An aggregate over the root's own fan-out is a
@@ -303,8 +301,8 @@ assert counts.filter(pl.col("n") > 1).collect().height == 1
 ```
 
 `pl.len()` after `agg` is the length of the resulting frame, not of the group.
-No error, just the wrong answer — which is why polars also needs a separate
-`having()`.
+It raises no error and returns the wrong answer, which is why polars also needs
+a separate `having()`.
 
 ### Restricting on a count, without grouping
 
@@ -349,8 +347,7 @@ deduplicated against each other. polars divides `Expr.unique()` and
 cl.codes.select(sl.q.code.depth).unique().collect()
 ```
 
-**It is full-row only and takes no arguments**, which is a decision rather than
-an omission. A subset form — "distinct by agency, keep the rest" — fails twice
+**It is full-row only and takes no arguments**, by design. A subset form — "distinct by agency, keep the rest" — fails twice
 over. It would not commute with `filter`, since `filter(keep).unique(agency)`
 and `unique(agency).filter(keep)` return different rows, and every other clause
 in this DSL commutes with `filter` except slicing. And it leaves *which* row of
@@ -452,9 +449,9 @@ there is nothing to opt into.
 
 ## Writing the SQL yourself
 
-You can — `sdmx.code` and `sdmx.hierarchy_node` are ordinary DuckDB tables on
-the same connection, and `reg.sql(...)` is the supported hatch. Three things
-you give up by doing it:
+`sdmx.code` and `sdmx.hierarchy_node` are ordinary DuckDB tables on the same
+connection, and `reg.sql(...)` is the supported hatch. Hand-written SQL gives
+up three things the DSL keeps:
 
 - **The schema is not frozen yet.** Column names and layout still move between
   versions. Queries written through the DSL move with them.
@@ -464,12 +461,12 @@ you give up by doing it:
   statement.
 - **The scope filter is automatic.** A query reached through an artefact is
   already narrowed to the right URN. Forgetting that clause in hand-written SQL
-  returns rows from every codelist in the bundle, which is a bug that looks
-  like data.
+  returns rows from every codelist in the bundle, and nothing flags them as
+  wrong.
 
 The hatch is also a *terminal*: `reg.sql(...)` does not splice back into the
-DSL. Once you leave, you are out, which is deliberate — the two carry different
-contracts and mixing them would blur which one is in force.
+DSL, because the two carry different contracts and mixing them would blur which
+one is in force.
 
 ## See also
 

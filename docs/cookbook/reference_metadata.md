@@ -161,9 +161,8 @@ it.
 ## Reported values
 
 `ReportedAttribute.value` is a primitive union — `str | int | float |
-bool | InternationalString | None`. There are no value subclasses; the
-MSD declares whether a string scalar is a code id, a date, free text,
-etc.
+bool | InternationalString | None` — and the MSD declares whether a string
+scalar is a code id, a date, free text, etc.
 
 ```python
 sl.ReportedAttribute(id="FREQ", value="A")  # code id (scalar str)
@@ -294,8 +293,8 @@ assert ms_via_flow.structure.urn.artefact_class == "Metadataflow"
 assert ms_via_provision.structure.urn.artefact_class == "MetadataProvisionAgreement"
 ```
 
-There is no direct-MSD reference in the model, so passing a
-`MetadataStructure` is rejected rather than silently accepted — wrap it in a
+The model reaches an MSD only through a Metadataflow or a provision
+agreement, so passing a `MetadataStructure` is rejected — wrap it in a
 Metadataflow:
 
 <!-- test: raises -->
@@ -483,9 +482,8 @@ type information is not needed.
 
 ### Finding what has metadata at all
 
-The other direction: not "what does this set say" but "which artefacts has
-anything been said about". Every artefact carries `described_by`, the metadata
-targets naming it:
+The other direction asks which artefacts anything has been said about. Every
+artefact carries `described_by`, the metadata targets naming it:
 
 ```python
 reg.query(q.dataflow).filter(q.dataflow.described_by.metadata_set.id.is_not_null()).ids()
@@ -516,10 +514,6 @@ under = (
     .select(urn=q.reported_attribute.metadata_set.urn)
 )
 ```
-
-This replaced `sl.artefact.has_metadata()`, retired with `ArtefactQuery` in
-#306. The predicate compiled to exactly this; the difference is that the
-subtree arm is now visible at the call site rather than a keyword argument.
 
 ---
 

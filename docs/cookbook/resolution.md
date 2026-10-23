@@ -24,11 +24,10 @@ is no mode to choose there. See "Catalogue scanning" below.
 | `get(urn, resolve=True, partial=False)`| `detail=full` + `references=descendants`             | Same, but codelists contain every code rather than the constrained ones.         |
 | `get(urn, resolve=[sl.Codelist])`      | `detail=referencepartial` + `references=codelist`    | Only references of the types you name.                                           |
 
-**The default differs between registries, and that is not an inconsistency.**
+**The default differs between registries because the cost does.**
 `RestRegistry.get` does not resolve, because following a reference is another
 round trip; `LocalRegistry.get` takes no `resolve=` at all, because locally a
-reference finds its target in the store when you call it — a join away. Each states the
-default its cost implies rather than agreeing on a number neither would pick.
+reference finds its target in the store when you call it — a join away.
 
 ---
 
@@ -61,10 +60,9 @@ A stub's references point at artefacts that were never fetched, so calling
 lists — call `get(urn, resolve=True)` when you need to navigate inside an
 artefact, or let the query reach the DSD (below) so the planner fetches it.
 
-`collect()` returns a plain list, so narrow it with Python. There is nothing to
-chain before it: SDMX REST takes one constraint on a collection request — the
-agency — so any other narrowing happens after the download whichever way it is
-written, and writing it here says so.
+`collect()` returns a plain list, so narrow it with Python. SDMX REST takes one
+constraint on a collection request — the agency — so any other narrowing
+happens after the download however it is written.
 
 ```python
 with sl.RestRegistry(sl.Provider.ECB) as reg:
@@ -166,8 +164,8 @@ with sl.RestRegistry(sl.Provider.ECB) as reg:
     dsd = reg.get(sl.DataStructure.urn_for(agency="ECB", id="ECB_EXR1"), resolve=[sl.Codelist])
 ```
 
-For a *collection*, you no longer choose: `reg.query()` derives the depth from
-what the query reaches, and asks for that. Fetching one level short would not
+For a *collection*, `reg.query()` derives the depth from what the query
+reaches, and asks for that. Fetching one level short would not
 raise — the query would evaluate against a relation that was never downloaded
 and answer nothing — so it is derived rather than left to the caller.
 

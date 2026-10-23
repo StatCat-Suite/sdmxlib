@@ -148,9 +148,8 @@ with sl.RestRegistry(sl.Provider.ESTAT) as reg:
 ```
 
 **The format is asked for, never guessed.** `fmt` is required and becomes the
-`Accept` header, so SDMX-ML and SDMX-JSON are reachable — before this they were
-not, because the client only ever sent `text/csv`. Two checks keep the argument
-honest:
+`Accept` header, so SDMX-ML and SDMX-JSON are both reachable. Two checks keep
+the argument honest:
 
 - a destination whose extension contradicts `fmt` is refused before the
   request goes out (`.xml` holding CSV bytes misleads every later reader of the
@@ -179,9 +178,8 @@ media types, and `data+xml` only appears at 3.0:
 | `SDMX_ML_3_1` | `application/vnd.sdmx.data+xml;version=3.1.0` |
 
 A download costs **exactly one request** — it needs no DSD, because there is no
-key to widen and no columns to interpret. That is the sharpest way to see how
-it differs from `obs()`, which resolves the structure first so it can
-name columns by component id.
+key to widen and no columns to interpret. `obs()`, by contrast, resolves the
+structure first so it can name columns by component id.
 
 ---
 
@@ -212,7 +210,7 @@ doubles.
 
 ### `chunk_rows` sets the batch size
 
-Read that table again: 1,000 and 50,000 measure **identically**. Chunk size
+In that table, 1,000 and 50,000 measure **identically**. Chunk size
 decides the batch your consumer receives — size it for a writer's preferred
 batch or an HTTP chunk — and starts costing anything only once it is large
 enough to be a buffer in its own right.
@@ -226,10 +224,10 @@ enough to be a buffer in its own right.
     what `chunk_rows` says — measured at **210 MB on 4M rows and 368 MB on
     8M**, identical at `chunk_rows` of 1,000 and 50,000.
 
-    This is the trap worth knowing, because there is no error and no warning.
-    A caller who reaches for `stream()` because `frame()` ran out of memory,
-    and then adds `.order_by(...)`, gets the memory back and no clue why —
-    and `chunk_rows`, the obvious knob, does nothing.
+    No error or warning marks it. A caller who reaches for `stream()` because
+    `frame()` ran out of memory, then adds `.order_by(...)`, is back to the
+    same memory use with no indication why, and `chunk_rows` does not change
+    it.
 
 ```text
 obs.filter(...).stream()                      # bounded — 5 MB
@@ -246,8 +244,8 @@ and order within each partition.
 
 ### `frame()` can drop the tiebreak too — `order_by(None)`
 
-`stream()` used to be the only terminal that could. Every other one sorted on
-all of the dataflow's dimensions, whether the caller cared or not:
+By default every terminal except `stream()` sorts on all of the dataflow's
+dimensions, whether the caller needs the order or not:
 
 ```sql
 ORDER BY s0.FREQ NULLS LAST, s0.REF_AREA NULLS LAST, s0.CHARACTERISTIC NULLS LAST,
@@ -271,7 +269,7 @@ with sl.LocalRegistry("lake.duckdb") as local:
     frame = obs.filter(obs.col("REF_AREA") == "CAN").order_by(None).frame()
 ```
 
-Three states, and the middle one is not the last one:
+There are three states:
 
 ```text
 obs.order_by(obs.col("TIME_PERIOD"))   # sort, then the tiebreak
@@ -283,8 +281,8 @@ obs.order_by(None)                     # no ORDER BY at all
 
     `limit`, `offset`, `after` and `page` all **raise** on a query that called
     `order_by(None)`. A window over an unspecified scan order silently skips
-    and repeats rows between calls, which is the whole reason the tiebreak is
-    there. Order it — `order_by()` restores the tiebreak alone — or read it
+    and repeats rows between calls, and the tiebreak exists to prevent that.
+    Order it — `order_by()` restores the tiebreak alone — or read it
     whole with `stream()`.
 
     Terminals that reduce rather than page (`count`, `exists`, `one`,
