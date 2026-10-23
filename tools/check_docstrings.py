@@ -52,6 +52,9 @@ from pathlib import Path
 #: a reader rather than API documentation, and the convention this enforces is
 #: about the published surface.
 TARGET = "src"
+#: Every tree checked: the library, and the `sdmxlib-cli` workspace member
+#: (GH-67). One that does not exist under the root is skipped.
+TARGETS = (TARGET, "cli/src")
 
 #: Sphinx/RST cross-reference roles. The list is the dialect, not the subset
 #: seen so far — a guard that only bans what already appeared bans nothing.
@@ -102,8 +105,13 @@ RULE_RE = re.compile(r"^\s*[-=~^]{3,}\s*$")
 Finding = tuple[str, int, str]
 
 
+def _targets(root: Path) -> list[str]:
+    return [target for target in TARGETS if (root / target).is_dir()]
+
+
 def _python_files(root: Path) -> list[Path]:
-    return sorted(p for p in (root / TARGET).rglob("*.py") if "__pycache__" not in p.parts)
+    files = (p for target in _targets(root) for p in (root / target).rglob("*.py"))
+    return sorted(p for p in files if "__pycache__" not in p.parts)
 
 
 def rst_markup(root: Path) -> list[Finding]:
@@ -150,7 +158,7 @@ def style_mismatches(root: Path) -> list[Finding]:
             "--check-style-mismatch=True",
             "--arg-type-hints-in-docstring=False",
             "--quiet",
-            TARGET,
+            *_targets(root),
         ],
         cwd=root,
         capture_output=True,
@@ -204,7 +212,7 @@ def main() -> int:
             print(f"          {file}:{line}  {message}")
 
     if not total:
-        print(f"{TARGET}/: docstrings are plain Google style")
+        print(f"{', '.join(f'{target}/' for target in _targets(root))}: docstrings are plain Google style")
         return 0
     if args.check:
         print(

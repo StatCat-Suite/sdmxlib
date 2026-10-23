@@ -22,7 +22,7 @@ default:
 lint:
     #!/usr/bin/env bash
     set -uo pipefail
-    out=$(uv run ruff check src tests bench 2>&1)
+    out=$(uv run ruff check src cli tests bench 2>&1)
     status=$?
     echo "$out"
     if [[ $status -ne 0 ]]; then exit $status; fi
@@ -46,7 +46,7 @@ typecheck:
 
 [group('dev')]
 checkfmt:
-    uv run ruff format --check src tests bench
+    uv run ruff format --check src cli tests bench
 
 # Docstrings stay pure Google style — no RST roles, no NumPy sections (#374).
 #
@@ -107,8 +107,8 @@ check: lint checkfmt check-docstrings check-any check-indexes typecheck
 # Format code
 [group('dev')]
 fmt:
-    uv run ruff format src tests bench
-    uv run ruff check --fix src tests bench
+    uv run ruff format src cli tests bench
+    uv run ruff check --fix src cli tests bench
 
 # ── Test ──────────────────────────────────────────────────────────────────────
 
@@ -545,7 +545,11 @@ release-3-pr:
     VER="${BRANCH#release/}"
     just release-check-upgrading "${VER}"
     uv version "${VER#v}"
-    git add CHANGELOG.md pyproject.toml
+    # sdmxlib-cli is released with sdmxlib at the same version, pinned to it
+    # (GH-67); `test_the_cli_is_locked_to_sdmxlibs_version` holds the three.
+    uv version --package sdmxlib-cli "${VER#v}"
+    sed -i.bak -E 's/"sdmxlib==[^"]+"/"sdmxlib=='"${VER#v}"'"/' cli/pyproject.toml && rm cli/pyproject.toml.bak
+    git add CHANGELOG.md pyproject.toml cli/pyproject.toml
     git commit -m "chore(release): ${VER}"
     git push -u origin "${BRANCH}"
     NOTES=$(just release-notes "${VER}")
@@ -654,6 +658,7 @@ release-5-pypi:
         exit 1
     fi
     rm -rf dist
-    uv build
+    # Every workspace package: sdmxlib and sdmxlib-cli, at one version (GH-67).
+    uv build --all-packages
     uv publish
     echo "Published ${VER} to PyPI"

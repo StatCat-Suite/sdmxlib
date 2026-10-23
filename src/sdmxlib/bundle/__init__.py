@@ -8,6 +8,10 @@ binding, and a fresh ``token``, the value a cache or an ETag keys on.
 `check_bundle` checks a bundle against it and against itself. The manifest's
 JSON Schema ships beside it, for producers outside Python: `manifest_schema`.
 
+From a shell, ``sdmxlib bundle check PATH`` runs `check_bundle`: it is the
+``sdmxlib-cli`` package (``uv tool install sdmxlib-cli``), released with this one,
+so the library itself never depends on typer.
+
 Example:
     from sdmxlib.bundle import Producer, write_manifest
 
