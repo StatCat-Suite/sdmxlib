@@ -28,10 +28,11 @@ _SPEC = ROOT / "docs" / "bundle.md"
 
 #: A heading naming a schema definition, then its table's rows up to the next blank line.
 _TABLE = re.compile(
-    r"^#{3,4} `(\w+)`\n\n(?:(?:[^|\n].*\n)+\n)?\| field \| presence \| meaning \|\n\| --- \| --- \| --- \|\n((?:\|.*\n)+)",
-    re.M,
+    r"^#{3,4} `(\w+)`\n\n(?:(?:[^|\n].*\n)+\n)?"  # the heading, then any paragraph
+    r"\| field \| presence \| meaning \|\n\| --- \| --- \| --- \|\n((?:\|.*\n)+)",  # the table
+    re.MULTILINE,
 )
-_ROW = re.compile(r"^\| `(\w+)` \| (required|optional) \|", re.M)
+_ROW = re.compile(r"^\| `(\w+)` \| (required|optional) \|", re.MULTILINE)
 
 
 def _tables(text: str) -> dict[str, dict[str, str]]:
@@ -80,9 +81,10 @@ def test_the_worked_digest_is_what_sdmxlib_computes() -> None:
     text = _SPEC.read_text(encoding="utf-8")
     example, canonical, digest = present(
         re.search(
-            r"This overlay:\n\n```json\n(.*?)```\n\nhas the canonical form\n\n```text\n(.*?)\n```\n\nand the digest `(\w+)`",
+            r"This overlay:\n\n```json\n(.*?)```\n\n"
+            r"has the canonical form\n\n```text\n(.*?)\n```\n\nand the digest `(\w+)`",
             text,
-            re.S,
+            re.DOTALL,
         )
     ).groups()
     overlay = msgspec.json.decode(example.encode(), type=Overlay)
