@@ -88,7 +88,7 @@ def fetch_bundle(
     endpoint, api = (source.url, source.api) if isinstance(source, ProviderInfo) else (source, api)
     retrieved_at = datetime.now(UTC)
     with (
-        LocalRegistry.bundle(root) as bundle,
+        LocalRegistry.build(root) as bundle,
         RestRegistry(source, store=bundle, api=api, id=source_id, **options) as remote,
     ):
         resolved = remote.get(flow, resolve=True)

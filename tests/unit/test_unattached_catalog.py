@@ -31,6 +31,7 @@ import pytest
 import sdmxlib as sl
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.ref import Ref
+from tests.support.bundles import publish
 from tests.support.factories import concept_ref
 
 pytestmark = pytest.mark.unit
@@ -153,5 +154,5 @@ def test_a_bundle_binding_works_in_a_bundle(tmp_path) -> None:
         )
         writer.add(DataflowBinding.from_dsd(_DSD, dataflow=Ref.to(_FLOW), schema="data", table="obs"))
 
-    with sl.LocalRegistry.bundle(tmp_path) as bundled:
+    with sl.LocalRegistry.bundle(publish(tmp_path)) as bundled:
         assert bundled.obs(_FLOW).count() == 1

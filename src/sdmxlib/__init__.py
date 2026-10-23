@@ -46,7 +46,7 @@ from sdmxlib.query._joins import PathError
 from sdmxlib.query._pushdown import PushdownError
 from sdmxlib.sql import SqlRelation
 from sdmxlib.formats import parse, read, serialize, to_json, to_xml
-from sdmxlib.local import LazyCodelist, LazyHierarchy, QueryPlan, LocalRegistry, SchemaInspector
+from sdmxlib.local import BundleRegistry, LazyCodelist, LazyHierarchy, QueryPlan, LocalRegistry, SchemaInspector
 from sdmxlib.local.data_store import DuckDBDataStore, DuckLakeVersionError
 from sdmxlib.local.sql import SidecarNotUniqueError
 from sdmxlib.rest import ComponentFilter, parse_components, widen_key
@@ -241,6 +241,7 @@ __all__ = [
     "AttributeUsage",
     "AvailabilityConstraint",
     "BearerToken",
+    "BundleRegistry",
     "CascadeSelection",
     "Categorisation",
     "Category",

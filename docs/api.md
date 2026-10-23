@@ -46,6 +46,10 @@ Routing across multiple registries by agency. Every registry — REST, local, in
 
 Persistent DuckDB-backed structural store, the in-memory registry, and the data plane that shares the store's connection.
 
+::: sdmxlib.local.registry.BundleRegistry
+
+---
+
 ::: sdmxlib.local.registry.LocalRegistry
 
 ---

@@ -212,7 +212,7 @@ def test_fold_writes_overlays_into_the_bundle_and_republishes(tmp_path: Path) ->
     after = fold_overlays(root, [_overlay(_entry("AG:CL_FREQ", "set", "ORDER", "folded"))])
     assert after.token != before.token
     assert (after.bundle_id, after.producer, after.product) == (before.bundle_id, before.producer, before.product)
-    with sl.LocalRegistry.bundle(root, require_manifest=True) as reg:
+    with sl.LocalRegistry.bundle(root) as reg:
         assert _titles(reg.get(_FREQ.urn, eager=True), "ORDER") == ["folded"]
     report = check_bundle(root, references=False)
     assert report.ok, "\n".join(map(str, report.findings))

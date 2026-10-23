@@ -105,14 +105,13 @@ def shapes(bundle_conn):
 
 @pytest.fixture(scope="session")
 def data_plane_bundle(bundle, tmp_path_factory):
-    """A **copy** of the bundle, so the observation tier can open it for write.
+    """A **copy** of the bundle, republished, which `LocalRegistry.bundle()` then opens read-only.
 
-    `LocalRegistry.bundle()` opens `meta.duckdb` read-write, and DuckDB's file
-    lock is exclusive — so pointing it at the real directory would lock the
-    thing being measured, which is what `_bundle.connect()` chose read-only to
-    avoid. Copying sidesteps that without duplicating `bundle()`'s ATTACH spec
-    in the test suite, and it means this tier exercises the public constructor
-    #387 fixed rather than a hand-rolled stand-in.
+    The copy is what `write_manifest` writes into: sdmxlib owns
+    `bundle.manifest.json`, and the real bundle may carry its builder's older
+    one, which `bundle()` refuses. Republishing a copy leaves the source
+    untouched. Opening it through `bundle()` means this tier exercises the
+    public constructor #387 fixed rather than a hand-rolled stand-in.
 
     Cheap where it matters: 2.6 GB clones in ~3 s on APFS, once per session.
 

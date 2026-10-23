@@ -48,7 +48,7 @@ def test_each_publication_mints_a_new_token_over_the_same_checksums(bundle: Path
 def test_reading_a_bundle_changes_neither_its_token_nor_its_files(bundle: Path) -> None:
     """What a cache keyed on the token relies on."""
     published = write_manifest(bundle, bundle_id="b", producer=_PRODUCER)
-    with sl.LocalRegistry.bundle(bundle, require_manifest=True) as reg:
+    with sl.LocalRegistry.bundle(bundle) as reg:
         assert reg.get_all(sl.Dataflow)
         assert reg.obs(_FLOW.urn).frame().height == 200_000
         manifest = reg.manifest
@@ -98,11 +98,13 @@ def test_a_manifest_on_another_schema_is_refused_before_the_store_is_opened(bund
         sl.LocalRegistry.bundle(bundle)
 
 
-def test_an_unpublished_bundle_opens_unless_a_manifest_is_required(bundle: Path) -> None:
-    with sl.LocalRegistry.bundle(bundle) as reg:
-        assert reg.manifest is None
+def test_an_unpublished_bundle_is_refused_by_bundle_and_opens_to_build(bundle: Path) -> None:
+    """`bundle()` opens published bundles only; a directory still being built
+    opens with `build()`, writable, and has no manifest yet (GH-122)."""
     with pytest.raises(ManifestError, match="not a published bundle"):
-        sl.LocalRegistry.bundle(bundle, require_manifest=True)
+        sl.LocalRegistry.bundle(bundle)
+    with sl.LocalRegistry.build(bundle) as reg:
+        assert reg.manifest is None
 
 
 def test_the_shipped_schema_is_the_models_and_a_written_manifest_meets_it(bundle: Path) -> None:
@@ -119,5 +121,5 @@ def test_a_builders_own_manifest_is_refused_by_name(bundle: Path) -> None:
     with pytest.raises(ManifestError, match=r"not an sdmxlib bundle manifest .*write_manifest"):
         sl.LocalRegistry.bundle(bundle)
     write_manifest(bundle, bundle_id="b", producer=_PRODUCER)
-    with sl.LocalRegistry.bundle(bundle, require_manifest=True) as reg:
+    with sl.LocalRegistry.bundle(bundle) as reg:
         assert reg.manifest is not None

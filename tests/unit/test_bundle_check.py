@@ -133,7 +133,7 @@ def test_an_extension_reads_the_registry_after_the_references_check(tmp_path: Pa
     closed, and every extension after it got "Connection already closed".
     The extension reports what it read, so the finding proves the read worked."""
 
-    def bindings(root: Path, manifest: object, reg: sl.LocalRegistry) -> list[Finding]:
+    def bindings(root: Path, manifest: object, reg: sl.BundleRegistry) -> list[Finding]:
         found = reg.get_all(sl.DataflowBinding)
         return [Finding("bindings-seen", str(b.dataflow.urn), "read after references") for b in found]
 

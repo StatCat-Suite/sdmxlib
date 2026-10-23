@@ -59,7 +59,7 @@ def test_a_bundle_on_another_schema_is_refused_and_kept(tmp_path: Path) -> None:
     bundle.mkdir()
     _store(bundle / "meta.duckdb", stamped="2.19")
     with pytest.raises(sl.StoreSchemaError):
-        sl.LocalRegistry.bundle(bundle)
+        sl.LocalRegistry.build(bundle)
     assert _artefacts(bundle / "meta.duckdb") == 1
 
 

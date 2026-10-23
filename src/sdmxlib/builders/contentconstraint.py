@@ -31,7 +31,7 @@ from typing import Literal
 
 import duckdb
 
-from sdmxlib.local.registry import LocalRegistry
+from sdmxlib.local.registry import BundleRegistry
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.constraint import (
     ComponentValueSet,
@@ -51,7 +51,7 @@ from sdmxlib.rest import ComponentFilter, parse_components
 
 
 def build_dataflow_constraint(
-    registry: LocalRegistry,
+    registry: BundleRegistry,
     dataflow_urn: SdmxUrn[Dataflow],
     *,
     name: InternationalString | dict[str, str],
@@ -73,7 +73,7 @@ def build_dataflow_constraint(
     right source for an "actual availability" statement.
 
     Args:
-        registry: An open `LocalRegistry`. Used to look up the
+        registry: An open registry: a published `BundleRegistry` or a `LocalRegistry`. Used to look up the
             binding and (when ``conn`` is omitted) the DuckDB connection.
         dataflow_urn: URN of the dataflow to describe.
         name: The constraint's name, in each language it has. Required: SDMX
@@ -135,7 +135,7 @@ def build_dataflow_constraint(
 
 
 def build_component_availability(
-    registry: LocalRegistry,
+    registry: BundleRegistry,
     dataflow_urn: SdmxUrn[Dataflow],
     *,
     name: InternationalString | dict[str, str],
@@ -179,7 +179,7 @@ def build_component_availability(
       leave the cube non-empty if added to the key.
 
     Args:
-        registry: An open `LocalRegistry`.
+        registry: An open registry: a published `BundleRegistry` or a `LocalRegistry`.
         dataflow_urn: URN of the dataflow to describe.
         name: The constraint's name, in each language it has. Required: SDMX
             requires one, and which language is the caller's to say (#492).
@@ -280,7 +280,7 @@ def build_component_availability(
     )
 
 
-def _resolve_key_slot_ids(registry: LocalRegistry, dataflow_urn: SdmxUrn[Dataflow], api: ApiVersion) -> list[str]:
+def _resolve_key_slot_ids(registry: BundleRegistry, dataflow_urn: SdmxUrn[Dataflow], api: ApiVersion) -> list[str]:
     """Resolve the DSD's key-dimension ids (SDMX-key order) for the dataflow.
 
     Mirrors the dataflow → DSD hop `LocalRegistry.dsd` does for labelling: fetch the
