@@ -35,8 +35,6 @@ Rooting on the extension instead is the reading that looks right and is not:
 See `tests/unit/test_query_dataflow.py`.
 """
 
-from __future__ import annotations
-
 import functools
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Never

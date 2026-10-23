@@ -45,8 +45,6 @@ minutes per group. Keep groups to two or three files: that is what keeps the
 parent light, and it is the whole point.
 """
 
-from __future__ import annotations
-
 import argparse
 import json
 import pathlib

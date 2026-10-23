@@ -107,11 +107,11 @@ dev = [
   # its tests run in `just ci` with everything else.
   "sdmxlib-cli",
   # Checker versions carry UPPER bounds. uv.lock is gitignored (published
-  # library), so CI resolves the dev group fresh on every pipeline — an
-  # unbounded floor means a checker release lands in CI unannounced. With
-  # ruff on `select = ["ALL"]` that is not hypothetical: ruff 0.16.0
-  # stabilised 12 preview rules and would have turned CI red with no commit
-  # of ours in between. Bump these deliberately, in their own MR.
+  # library), so every fresh `uv sync` resolves the dev group anew — an
+  # unbounded floor means a checker release lands in `just ci` unannounced.
+  # With ruff on `select = ["ALL"]` that is not hypothetical: ruff 0.16.0
+  # stabilised 12 preview rules and would have turned the gate red with no
+  # commit of ours in between. Bump these deliberately, in their own PR.
   "catppuccin[pygments]>=2.5.0",
   "types-lxml>=2025.3.30",
   # Stubs for the two untyped test-only imports, so pyrefly checks tests/ without

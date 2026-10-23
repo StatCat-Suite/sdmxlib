@@ -13,6 +13,11 @@ External catalogs (DuckLake, raw Parquet, S3 via httpfs) can be
 file-handle juggling.
 """
 
+# `local.registry` imports this module at runtime, so `LocalRegistry` can only
+# be imported under TYPE_CHECKING. String annotations keep the public
+# signatures that name it (`registry`, `from_registry`) evaluable;
+# `test_runtime_annotations.py` fails without this line. No class here takes a
+# PEP 695 parameter, which strings would hide from `get_type_hints`.
 from __future__ import annotations
 
 import threading

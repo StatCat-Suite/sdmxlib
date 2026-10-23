@@ -42,8 +42,7 @@ Occurrences of the bare name ``Any`` used as a *type*, per file:
 
 This is a text scan rather than an AST walk on purpose. It has to agree with
 what a reader greps for, and an AST walk would disagree about string
-annotations, which this codebase uses freely under
-``from __future__ import annotations``.
+annotations, which this codebase writes as quoted forward references.
 
 ## Usage
 
@@ -51,8 +50,6 @@ annotations, which this codebase uses freely under
     python tools/count_any.py --check    # fail if above baseline
     python tools/count_any.py --write    # record the current count as baseline
 """
-
-from __future__ import annotations
 
 import argparse
 import ast

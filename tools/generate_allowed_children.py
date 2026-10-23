@@ -58,8 +58,6 @@ message header (#447), and nothing else.
 fails when the shipped module differs from it.
 """
 
-from __future__ import annotations
-
 import argparse
 import sys
 from collections import defaultdict

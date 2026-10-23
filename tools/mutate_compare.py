@@ -39,8 +39,6 @@ is the answer.
 Each arm is `label=comma,separated,test,files`. Two or more arms.
 """
 
-from __future__ import annotations
-
 import argparse
 import json
 import pathlib
