@@ -51,13 +51,15 @@ follows.
   the manifest; the publication is `<path>/<manifest.token>/`.
 - New manifest fields, all written by `write_manifest`:
   - `Manifest`: `previous_token`, `data_path`, `duckdb_version`,
-    `duckdb_storage_version`, `ducklake_version`, `ducklake_spec_version` and
-    `artefacts` (one `ArtefactEntry` per artefact, with `stability` and
-    `partial`);
+    `duckdb_storage_version`, `ducklake_version`, `ducklake_spec_version`,
+    `canonical_form`, `content_fingerprint` and `artefacts` (one
+    `ArtefactEntry` per artefact, with `stability`, `partial` and
+    `fingerprint`);
   - `BundleFile`: `root` (`"publication"` or `"data"`), `md5`, `tier` and
     `carried_from`;
   - `BindingCount`: `structural_version`, the URN of the data structure the
-    binding was written against. A binding whose `structural_version` tag is
+    binding was written against, and its table `fingerprint` and
+    `structure_fingerprint` (see [the bundle format](bundle.md), §9). A binding whose `structural_version` tag is
     not `AGENCY:ID(VERSION)` makes `write_manifest` raise `ManifestError`.
 - `write_manifest(..., tiers={"search/": 2})` sets the placement tier of a
   producer's own files by path prefix.

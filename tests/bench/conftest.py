@@ -20,6 +20,10 @@ import sdmxlib as sl
 from sdmxlib.bundle import Producer, write_manifest
 from tests.bench import _bundle
 
+#: What the bundle fixtures did that the summary should say: a 6.5-minute
+#: republish is worth a line, and so is a run that reused one.
+_NOTES: list[str] = []
+
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     for item in items:
@@ -43,6 +47,8 @@ def pytest_terminal_summary(terminalreporter: pytest.TerminalReporter) -> None:
     Only fires when bundle tests were actually collected, so a plain
     ``just bench`` (which deselects them) prints nothing.
     """
+    for note in _NOTES:
+        terminalreporter.write_line(note)
     reasons: dict[str, int] = {}
     for report in terminalreporter.stats.get("skipped", []):
         longrepr = getattr(report, "longrepr", None)
@@ -121,7 +127,13 @@ def data_plane_bundle(bundle, tmp_path_factory):
     the copied store as `build` stamps it, and ``parquet/`` becomes the
     bundle's ``data/``. Returns the publication directory.
 
-    Cheap where it matters: 2.6 GB clones in ~3 s on APFS, once per session.
+    **Cached across sessions** (GH-127). Publishing computes every fingerprint,
+    about 6.5 minutes on the census bundle, so the published copy is kept under
+    ``$SDMXLIB_BENCH_CACHE`` (``~/.cache/sdmxlib/bench`` by default), keyed on
+    the source bundle and on everything publishing depends on: the store
+    schema, the manifest format, the canonical form, DuckDB's version and the
+    source of the publishing modules. A change to any of them republishes, and
+    the summary says which happened.
 
     Skips — naming the missing file — when the bundle has no data plane, so a
     structural-only directory still runs every other benchmark.
@@ -136,7 +148,17 @@ def data_plane_bundle(bundle, tmp_path_factory):
     stale = _bundle.schema_skip_reason_for(bundle)
     if stale:
         pytest.skip(stale)
-    root = tmp_path_factory.mktemp("bundle") / bundle.name
+    key = _bundle.publication_key(bundle)
+    cached = _bundle.cached_publication(key)
+    if cached is not None:
+        _NOTES.append(f"bundle tier: reused the census publication cached under {cached.parent.parent}")
+        return cached
+    _NOTES.append(f"bundle tier: republished the census bundle with fingerprints (key {key[:12]})")
+    return _bundle.cache_publication(key, lambda root: _republish(bundle, root))
+
+
+def _republish(bundle, root):
+    """`bundle`, in the single-directory layout, as a publication under `root`, published."""
     with sl.LocalRegistry.build(root) as started:
         publication = started.publication
     for name in ("meta.duckdb", "lake.ducklake"):
@@ -149,8 +171,8 @@ def data_plane_bundle(bundle, tmp_path_factory):
     # Published on the copy (GH-66): sdmxlib owns `bundle.manifest.json`, and
     # a bundle built before it may carry its builder's own format, which
     # `bundle()` refuses. Republishing the copy runs `write_manifest` at full
-    # scale — checksums over every file, counts from the real lake — and
-    # leaves the source bundle untouched.
+    # scale — checksums over every file, counts from the real lake, and every
+    # fingerprint (about 6.5 minutes) — and leaves the source bundle untouched.
     write_manifest(publication, bundle_id=bundle.name, producer=Producer(name="sdmxlib-bench", version="0"))
     return publication
 

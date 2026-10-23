@@ -9,9 +9,18 @@ from pathlib import Path
 
 import duckdb
 
+from sdmxlib.bundle._canonical import CANONICAL_FORM
+from sdmxlib.bundle._fingerprint import (
+    References,
+    artefact_fingerprint,
+    bundle_fingerprint,
+    structure_fingerprint,
+    table_fingerprint,
+)
 from sdmxlib.local.registry import LocalRegistry
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.datastructure import DataStructure
+from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.storage._manifest import (
     DATA_PATH,
     FORMAT_VERSION,
@@ -189,15 +198,49 @@ def _ducklake_versions(conn: duckdb.DuckDBPyConnection) -> tuple[str | None, str
     return extension, spec
 
 
-def _artefacts(conn: duckdb.DuckDBPyConnection) -> tuple[ArtefactEntry, ...]:
-    """Every maintainable artefact in the store but the bindings, by URN."""
-    rows = conn.execute(
+def _artefacts(reg: LocalRegistry) -> tuple[ArtefactEntry, ...]:
+    """Every maintainable artefact in the store but the bindings, by URN, each fingerprinted.
+
+    Read one at a time and dropped, so memory holds one artefact: on the
+    census bundle the largest, a 499,138-node hierarchy, sets the peak.
+    """
+    rows = reg.connection.execute(
         "SELECT urn, is_final, is_partial FROM sdmx.artefact WHERE artefact_type <> 'DataflowBinding' ORDER BY urn"
     ).fetchall()
-    return tuple(
-        ArtefactEntry(urn=urn, stability="semantic" if final else "legacy", partial=partial)
-        for urn, final, partial in rows
-    )
+    entries: list[ArtefactEntry] = []
+    for urn, final, partial in rows:
+        artefact = reg.get(SdmxUrn.parse(urn), eager=True)
+        if artefact is None:
+            msg = f"{urn} is listed in sdmx.artefact but reads as missing"
+            raise ManifestError(msg)
+        entries.append(
+            ArtefactEntry(
+                urn=urn,
+                stability="semantic" if final else "legacy",
+                partial=partial,
+                fingerprint=artefact_fingerprint(artefact),
+            )
+        )
+    return tuple(entries)
+
+
+def _bindings(reg: LocalRegistry, artefacts: tuple[ArtefactEntry, ...]) -> tuple[BindingCount, ...]:
+    """Each binding's count, data structure and fingerprints, by dataflow URN."""
+    fingerprints = {a.urn: a.fingerprint for a in artefacts}
+    references = References(reg.connection, fingerprints)
+    counts: list[BindingCount] = []
+    for binding in sorted(reg.get_all(DataflowBinding), key=lambda b: str(b.dataflow.urn)):
+        dataflow, structure = str(binding.dataflow.urn), _structure_urn(binding)
+        counts.append(
+            BindingCount(
+                dataflow=dataflow,
+                observations=reg.obs(binding.dataflow).count(),
+                structural_version=structure,
+                fingerprint=table_fingerprint(reg.connection, binding),
+                structure_fingerprint=structure_fingerprint(references.closure(dataflow, [structure]), fingerprints),
+            )
+        )
+    return tuple(counts)
 
 
 #: A binding's `structural_version` tag: ``AGENCY:ID(VERSION)``.
@@ -277,22 +320,14 @@ def write_manifest(
             raise ManifestError(msg)
         previous = meta_value(reg.connection, "previous_token")
         schema_version = get_schema_version(reg.connection) or ""
-        bindings = sorted(reg.get_all(DataflowBinding), key=lambda b: str(b.dataflow.urn))
-        counts = tuple(
-            BindingCount(
-                dataflow=str(b.dataflow.urn),
-                observations=reg.obs(b.dataflow).count(),
-                structural_version=_structure_urn(b),
-            )
-            for b in bindings
-        )
         referenced: list[str] = []
         lake = (root / "lake.ducklake").exists()
         if lake:
             reg._data_plane()  # ATTACHes the lake
             referenced = lake_files(reg.connection, data)
         ducklake, spec = _ducklake_versions(reg.connection) if lake else (None, None)
-        artefacts = _artefacts(reg.connection)
+        artefacts = _artefacts(reg)
+        counts = _bindings(reg, artefacts)
     # Closing the last connection checkpoints a database, so a log left by a
     # builder that exited is gone by now. One that remains means another
     # connection still holds the database for writing, and its log holds
@@ -323,6 +358,10 @@ def write_manifest(
         files=(*_data_inventory(data, referenced, _carried(root, previous), previous), *inventory(root, tiers)),
         bindings=counts,
         artefacts=artefacts,
+        canonical_form=CANONICAL_FORM,
+        content_fingerprint=bundle_fingerprint(
+            {a.urn: a.fingerprint for a in artefacts}, {b.dataflow: b.fingerprint for b in counts}
+        ),
         product=product or {},
         extensions=extensions or {},
         provenance=provenance,

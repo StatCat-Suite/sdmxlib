@@ -1,0 +1,9 @@
+{
+  "canonical_form": "1",
+  "duckdb_version": "2.0.0",
+  "typed_row_text": "{\"s\":\"text\",\"i\":42,\"i32\":7,\"d\":1.5,\"d_inexact\":0.1,\"dec\":12.34,\"b\":true,\"dt\":\"2021-05-01\",\"ts\":\"2021-05-01 12:34:56.789\",\"n\":null,\"escaped\":\"é\\\"\\\\\"}",
+  "typed_row_fingerprint": "1521101132602137571:1",
+  "synthetic_content_fingerprint": "247f89a8980dbebc172be65c87f70fade133b0e9300cbb73627fb7ca42aa3baf",
+  "synthetic_table_fingerprint": "93910618162199249800:40",
+  "synthetic_structure_fingerprint": "793d6059da50b1ab574bb4e3b58d15f4cc3c365fc33d4db63f6d9a9c4cc46fcf"
+}

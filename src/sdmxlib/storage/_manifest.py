@@ -189,11 +189,19 @@ class BindingCount(msgspec.Struct, frozen=True, kw_only=True):
         observations: The row count of the binding's table.
         structural_version: The URN of the data structure the binding was
             written against.
+        fingerprint: The table fingerprint of the binding's table,
+            ``<sum>:<count>``: what the observations are, whatever files
+            hold them.
+        structure_fingerprint: The structure fingerprint of the dataflow:
+            what its structural closure is, the artefacts referring to it
+            included.
     """
 
     dataflow: str
     observations: int
     structural_version: str
+    fingerprint: str
+    structure_fingerprint: str
 
 
 class ArtefactEntry(msgspec.Struct, frozen=True, kw_only=True):
@@ -205,11 +213,13 @@ class ArtefactEntry(msgspec.Struct, frozen=True, kw_only=True):
             parts, no extension, major at least 1), which SDMX 3.0 holds
             immutable; ``legacy`` for any other.
         partial: Whether it is a partial item scheme, a subset of the full one.
+        fingerprint: The SHA-256 of its canonical text, lowercase hex.
     """
 
     urn: str
     stability: Literal["semantic", "legacy"]
     partial: bool
+    fingerprint: str
 
 
 class Provenance(msgspec.Struct, frozen=True, kw_only=True):
@@ -273,6 +283,11 @@ class Manifest(msgspec.Struct, frozen=True, kw_only=True):
         bindings: Observation counts per bound dataflow, sorted by URN.
         artefacts: Every maintainable artefact in the store but the
             bindings, sorted by URN.
+        canonical_form: The version of the canonical text every fingerprint
+            here hashes. Fingerprints at different forms are never compared.
+        content_fingerprint: The bundle fingerprint: every artefact
+            fingerprint and every table fingerprint, so two publications
+            with equal content have equal ones.
         product: Producer-specific fields, carried and not interpreted.
         extensions: Sections owned by other packages (statcatlib's search
             index, say), by name; carried and not interpreted.
@@ -296,6 +311,8 @@ class Manifest(msgspec.Struct, frozen=True, kw_only=True):
     files: tuple[BundleFile, ...]
     bindings: tuple[BindingCount, ...]
     artefacts: tuple[ArtefactEntry, ...]
+    canonical_form: str
+    content_fingerprint: str | None = None
     product: dict[str, JsonValue] = msgspec.field(default_factory=dict)
     extensions: dict[str, dict[str, JsonValue]] = msgspec.field(default_factory=dict)
     provenance: Provenance | None = None
