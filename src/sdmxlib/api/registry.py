@@ -173,13 +173,13 @@ class RestRegistry:
             fetched (default 256). Bounds the fetch cache; eviction only
             means a later identical query fetches again.
         latest_ttl: Seconds a `latest` answer may be reused without asking,
-            *at minimum* (#339). A floor over what the provider's
+            *at minimum*. A floor over what the provider's
             `Cache-Control` allows, never a ceiling: it can rescue a provider
             whose `no-store` is appliance boilerplate, and cannot shorten a
             generous one. Defaults to 0 — obey the provider exactly. Wanting
             *less* is spelled with a pinned URN, which is not a pointer.
-        csv_media_type: The ``Accept`` `obs` fetches observations with
-            (GH-50). Defaults to the `ProviderInfo`'s, else the SDMX-CSV the
+        csv_media_type: The ``Accept`` `obs` fetches observations with.
+            Defaults to the `ProviderInfo`'s, else the SDMX-CSV the
             API version defines: 1.0 for 2.1, 2.0 for 3.0. Providers differ —
             ECB serves CSV only for ``text/csv``, Eurostat only for SDMX-CSV
             1.0 — so pass one when a bare URL's provider refuses the default.
@@ -209,7 +209,7 @@ class RestRegistry:
     Example:
         # Cache-mode federation: structural reads cached locally. A cache can
         # be fetched again, so it may be rebuilt when sdmxlib's store schema
-        # moves; any other store on an old schema is refused instead (GH-57).
+        # moves; any other store on an old schema is refused instead.
         with (
             sl.LocalRegistry("cache.duckdb", rebuild=True) as local,
             sl.RestRegistry(sl.Provider.ECB, store=local) as reg,
@@ -301,7 +301,7 @@ class RestRegistry:
         """The `InMemoryRegistry` populated by every artefact fetched so far.
 
         Artefacts from all ``get()``, ``query()``, ``fetch()``, and
-        ``resolve()`` calls accumulate here, every Ref bound to it (#492). Cross-request
+        ``resolve()`` calls accumulate here, every Ref bound to it. Cross-request
         Ref resolution happens automatically — a codelist fetched in one
         request resolves dimension Refs in a DSD fetched in another.
 
@@ -356,7 +356,7 @@ class RestRegistry:
 
     @property
     def refused(self) -> tuple[Refusal, ...]:
-        """Artefacts a provider served that this registry refused, each with why (#419).
+        """Artefacts a provider served that this registry refused, each with why.
 
         A registry's document is read artefact by artefact: one that
         contradicts the schema, or breaks a rule `add` enforces, is left out
@@ -616,7 +616,7 @@ class RestRegistry:
     # ── Generic entry points ──────────────────────────────────────────────────
 
     def query[R: "RowKind", A](self, root: Cols[R, A]) -> Query[R, A]:
-        """A lazy query over the relation `root` names, served over HTTP (#312).
+        """A lazy query over the relation `root` names, served over HTTP.
 
         The same entry point and the same language as `LocalRegistry.query`. What
         differs is where the rows come from: this plans the query against what
@@ -809,7 +809,7 @@ class RestRegistry:
 
         Args:
             target: A URN, or a `Ref` from graph traversal. Positional-only,
-                and the same two types every other `get` takes since #370.
+                and the same two types every other `get` takes.
             resolve: `False` for a skeleton, `True` for every reference, or a
                 sequence of artefact types to follow only those.
             partial: When resolving, trim referenced ItemSchemes by their
@@ -817,9 +817,9 @@ class RestRegistry:
             expect: The class the caller requires — the artefact is returned
                 when it is an instance, `None` otherwise. See below.
 
-        **`expect=` names the class and gets that class or None (#406).** A URN
+        **`expect=` names the class and gets that class or None.** A URN
         parsed from a string carries no type a checker can use, and what one
-        checker infers for `get(parse(...))` is not what another does (#399).
+        checker infers for `get(parse(...))` is not what another does.
         Passing the class states the expectation where the caller holds it:
 
             reg.get(SdmxUrn.parse(text), expect=MetadataSet)   # MetadataSet | None
@@ -833,7 +833,7 @@ class RestRegistry:
 
         Raises:
             SdmxConformanceError: If the provider served the artefact and it
-                was refused (#419) — see `refused`.
+                was refused — see `refused`.
         """
         urn = target_urn(target)
         try:

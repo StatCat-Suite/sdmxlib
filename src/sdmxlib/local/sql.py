@@ -56,7 +56,7 @@ from sdmxlib.session import cursor_for
 
 
 class SidecarNotUniqueError(ValueError):
-    """A series-attributes sidecar holds more than one row per join key (#412).
+    """A series-attributes sidecar holds more than one row per join key.
 
     The sidecar is joined as `LEFT JOIN … USING (<keys>)`, so every extra row
     per key multiplies each observation it matches. Nothing errors downstream:
@@ -107,7 +107,7 @@ class SchemaInspector:
     and re-running ``DESCRIBE`` on every query is pure redundant work. The
     memoisation is single-flight (a build lock, double-checked): concurrent
     callers for the same table run ``DESCRIBE`` once, not once per thread —
-    the store's read path is concurrent (per-thread cursors, #75/#80). When a
+    the store's read path is concurrent (per-thread cursors). When a
     table is rewritten (e.g. `DuckDBDataStore.write_observations`), call
     `invalidate` so a stale column list isn't served.
 
@@ -231,7 +231,7 @@ class SchemaInspector:
                 with the main table (no derivable join keys).
             SidecarNotUniqueError: If the sidecar holds more than one row for
                 some combination of those keys, which would multiply every
-                observation the join matches (#412).
+                observation the join matches.
         """
         main = f"{binding.database_role}.{binding.table_location}"
         sidecar_loc = binding.series_attributes_location

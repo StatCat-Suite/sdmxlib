@@ -49,7 +49,7 @@ class DuckLakeVersionError(Exception):  # mirrors RegistryUnavailable etc.
     Raised when ATTACH-ing a bundle whose DuckLake catalog format exceeds
     what the loaded ``ducklake`` extension supports. The fix is to align
     versions (upgrade ``duckdb`` >= 1.5.3 and/or the ``ducklake``
-    extension), not to migrate the bundle in place. See issue #156.
+    extension), not to migrate the bundle in place.
     """
 
 
@@ -183,9 +183,9 @@ class DuckDBDataStore(SessionFactory):
         For setup, DDL, and as the object another component derives its own
         handles from. **Not the handle to run queries on**: it is shared by
         every thread and `DuckDBPyConnection` is not thread-safe, which is why
-        the library executes on per-thread handles (#75/#80). Use `session` or
+        the library executes on per-thread handles. Use `session` or
         `execute` for custom SQL — they resolve that handle, share its session
-        state with the DSL, and cannot be captured by accident (#300).
+        state with the DSL, and cannot be captured by accident.
 
         Raises:
             RuntimeError: If the data store hasn't been opened.
@@ -375,7 +375,7 @@ class DuckDBDataStore(SessionFactory):
         return self.connection
 
     def inspect(self) -> SchemaInspector:
-        """Return this store's `SchemaInspector` — the custom-SQL seam (#163).
+        """Return this store's `SchemaInspector` — the custom-SQL seam.
 
         The inspector reflects the live DuckDB session (cached ``DESCRIBE``)
         and turns a `DataflowBinding` into a `QueryPlan`, so consumers who
@@ -466,7 +466,7 @@ class DuckDBDataStore(SessionFactory):
         raise KeyError(msg)
 
     def obs(self, binding: DataflowBinding, *, dsd: DataStructure | None = None) -> ObsQuery:
-        """A lazy query over this dataflow's observations (#297).
+        """A lazy query over this dataflow's observations.
 
         The same path language as `LocalRegistry.query`, rooted at a dataflow
         instead of at a structural relation — so a filter is a predicate over
@@ -660,8 +660,7 @@ class DuckDBDataStore(SessionFactory):
                 buys a query-side ``ORDER BY`` at 102 MB instead of 251 MB,
                 slightly cheaper scans, and better pruning. Paying once at
                 write for every read is usually right, and it is not right when
-                ingestion is the memory-constrained step, so the caller decides
-                (#330).
+                ingestion is the memory-constrained step, so the caller decides.
 
                 Physical column names, not SDMX ids: this method holds a source
                 and a target, never a binding, so an id would have nothing to

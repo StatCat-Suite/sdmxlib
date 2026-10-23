@@ -1363,7 +1363,7 @@ class DroppedArtefact:
 
     Attributes:
         urn: The artefact left out — for an `AvailabilityConstraint`, which has
-            no URN, `availability_label`'s name for it (#421).
+            no URN, `availability_label`'s name for it.
         cause: The artefact that caused it: `urn` itself when the artefact is a
             draft or of a class the target lacks, otherwise what it
             references, directly or through other artefacts the write leaves
@@ -1385,11 +1385,11 @@ def dropped(msg: StructureMessage, target: str) -> tuple[DroppedArtefact, ...]:
     SDMX-ML 2.1's version grammar has no form for an extension, so a draft
     (`1.0.0-draft`) cannot be written. Stripping the suffix would make a draft
     look final and could collide with a real `1.0.0`, so the artefact is left
-    out whole (#424).
+    out whole.
 
     An artefact of a class the target lacks is left out too (`_NO_SUCH_CLASS`):
-    a `ValueList` or a `HierarchyAssociation` from 2.1 (#422, #421), a
-    `HierarchicalCodelist` or a `StructureSet` from 3.x and SDMX-JSON (#421),
+    a `ValueList` or a `HierarchyAssociation` from 2.1, a
+    `HierarchicalCodelist` or a `StructureSet` from 3.x and SDMX-JSON,
     whose hierarchies or maps are written without it. Every target but
     SDMX-ML 3.1, the store included, leaves out an `AvailabilityConstraint`.
 

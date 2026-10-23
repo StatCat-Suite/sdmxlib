@@ -56,7 +56,7 @@ class SqlRelation(Protocol):
         single-column relation is what ``IN (<subquery>)`` needs; a rollup is
         two columns and is used as a join. Consumers that require one column
         should say so and reject the rest, instead of emitting SQL that fails
-        at the database with a column-count error (#274).
+        at the database with a column-count error.
         """
         ...
 

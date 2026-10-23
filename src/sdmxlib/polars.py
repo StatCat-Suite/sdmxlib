@@ -124,7 +124,7 @@ def schema(dsd: DataStructure, *, coded_as: CodedAs = "enum") -> dict[str, pl.Da
             ``"string"`` types them ``pl.String`` instead, which is what makes
             `validation_report` able to answer at all: a bad code is then a
             value in the frame rather than an exception, so the report can name
-            the column, the value and the count of every one (#408). The DSD
+            the column, the value and the count of every one. The DSD
             still drives every non-enumerated dtype either way.
 
     Example:
@@ -287,7 +287,7 @@ def label(
     no label fall back to the code id.
 
     **The one labelling path**: `Query.frame(labels=)` and
-    `Select.collect(labels=)` both come here (#517), so a result is
+    `Select.collect(labels=)` both come here, so a result is
     labelled the same way whichever terminal produced it.
 
     `columns` maps a component id to the column carrying it, for a frame whose
@@ -312,7 +312,7 @@ def label(
     names — `GEO` where the DSD says `REF_AREA` — matches nothing.
 
     That used to happen silently and return the frame unchanged, which is how
-    `catalog.query(with_labels=True)` (deleted in #329) came to be a no-op for
+    `catalog.query(with_labels=True)` (since deleted) came to be a no-op for
     any binding whose
     columns are not already SDMX ids. Nobody noticed because nothing failed.
     So a call that matches **no** component at all now raises: labelling

@@ -119,17 +119,17 @@ def parse(
     - XML envelopes are routed by root element (``<mes:Structure>`` vs
       ``<mes:GenericMetadata>``).
 
-    A structure document is read artefact by artefact (#435): one that
+    A structure document is read artefact by artefact: one that
     contradicts the schema is *refused* — recorded in
     `StructureMessage.refused`, never partly built — and the others are read.
-    So is one that breaks a rule `Registry.add` enforces (#419), and a
+    So is one that breaks a rule `Registry.add` enforces, and a
     reference another artefact holds into it is left unresolved.
     By default a refusal still fails the call, so nothing wrong is accepted
     silently; ``strict=False`` returns what was read, refusals attached.
 
     Content inside an artefact that the model has no field for yet — SDMX-ML
-    2.1's `RepresentationMapping` in a component map — is a different case
-    (#422): the artefact is built without it and the loss recorded in
+    2.1's `RepresentationMapping` in a component map — is a different case: the
+    artefact is built without it and the loss recorded in
     `StructureMessage.lost`. The read succeeds unless ``lossless=True``.
     SDMX-ML only, so far; the SDMX-JSON reader does not report losses yet.
 
@@ -148,8 +148,7 @@ def parse(
             `StructureMessage.lost` and `StructureMessage.assumed`.
             For SDMX-JSON they are found when `lost` is first read, and the
             message holds the document's bytes until then. True finds them
-            during the read instead, so the message keeps nothing extra
-            (#473).
+            during the read instead, so the message keeps nothing extra.
 
     Returns:
         The parsed message.
@@ -248,13 +247,13 @@ def serialize(
     Validates before emitting. `check_serialisable` runs first and raises
     ``ValidationError`` — with every issue accumulated, not just the first —
     so a message the target format cannot carry never reaches the wire. What
-    every format requires of an artefact alone is refused as it is built
-    (#492), so there is nothing of that left to check here.
+    every format requires of an artefact alone is refused as it is built, so
+    there is nothing of that left to check here.
 
     This used to default to ``False``, reasoning that "messages built through
     the typed model or read back by the parser are already well-formed". That
-    proved untrue often enough to matter — #205 found five distinct ways to
-    build a message the SDMX schema rejects — and the cost argument does not
+    proved untrue often enough to matter — five distinct ways to build a
+    message the SDMX schema rejects were found — and the cost argument does not
     hold either: validation measures 4-9% of serialisation, the *lower* figure
     being the larger payload, because the item-id checks vectorise above 64
     items.

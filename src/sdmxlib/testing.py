@@ -1,4 +1,4 @@
-"""Synthetic bundles: conforming, published, any shape, from a seed (GH-69).
+"""Synthetic bundles: conforming, published, any shape, from a seed.
 
 Real bundles of interesting size are built from data that cannot be published
 as fixtures. A synthetic one can: `synthetic_bundle` builds a bundle from a
@@ -10,7 +10,7 @@ bundle can mimic one that cannot leave the building.
 
 **Deterministic from a seed.** The same seed and shape give the same artefacts
 and the same observation rows. Not the same files: a publication's token is
-new each time and DuckDB's bytes vary between builds (GH-66), as for any
+new each time and DuckDB's bytes vary between builds, as for any
 rebuild.
 
 Observations are generated in DuckDB, not Python, so millions are cheap: row
