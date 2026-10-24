@@ -231,11 +231,57 @@ _hooks: _weakref.WeakKeyDictionary[duckdb.DuckDBPyConnection, list[SessionHook]]
 _handles: _weakref.WeakKeyDictionary[duckdb.DuckDBPyConnection, _weakref.WeakSet[duckdb.DuckDBPyConnection]] = (
     _weakref.WeakKeyDictionary()
 )
+#: The base connection a handle derives from, for a handle that is itself the
+#: parent of further handles: a store's per-thread read cursor, from which a
+#: query takes its own handle. Its hooks are the base's (`adopt`).
+_bases: _weakref.WeakKeyDictionary[duckdb.DuckDBPyConnection, _weakref.ref[duckdb.DuckDBPyConnection]] = (
+    _weakref.WeakKeyDictionary()
+)
 _hook_lock = _threading.Lock()
+
+
+def _base_of(handle: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyConnection:
+    """The base `handle` derives from, or `handle` itself; call it holding `_hook_lock`.
+
+    Held weakly, so a handle never keeps a closed store's connection alive.
+    """
+    ref = _bases.get(handle)
+    base = ref() if ref is not None else None
+    return handle if base is None else base
+
+
+def own_handle(conn: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyConnection:
+    """A new handle on `conn`, shared with nothing, with the hooks of `conn`'s base run on it.
+
+    For a reader that holds its handle until it is exhausted, such as an Arrow
+    stream: the thread's shared handle (`cursor_for`) would have its row buffer
+    overwritten by the next query on the thread.
+    """
+    handle = conn.cursor()
+    _apply_hooks(conn, handle)
+    return handle
+
+
+def adopt(base: duckdb.DuckDBPyConnection, handle: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyConnection:
+    """Record `handle` as derived from `base`, so a handle taken from it runs `base`'s hooks too.
+
+    A DuckDB cursor shares no session state with the connection it came from.
+    A store's read cursor is one, and a query on it takes a handle of its own
+    with `cursor_for`; without this that handle would miss the store's hooks,
+    such as the ``USE`` that points it at a bundle in a shared engine.
+
+    Returns:
+        `handle`, for chaining.
+    """
+    with _hook_lock:
+        _bases[handle] = _weakref.ref(_base_of(base))
+    return handle
 
 
 def _apply_hooks(base: duckdb.DuckDBPyConnection, handle: duckdb.DuckDBPyConnection) -> None:
     with _hook_lock:
+        base = _base_of(base)
+        _bases[handle] = _weakref.ref(base)
         fns = list(_hooks.get(base, ()))
         _handles.setdefault(base, _weakref.WeakSet()).add(handle)
     for fn in fns:

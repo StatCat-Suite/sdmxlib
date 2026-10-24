@@ -1,6 +1,6 @@
 """Low-level DuckDB SQL projections + per-thread cursor.
 
-A leaf module (stdlib + duckdb only, no sdmxlib imports) so both
+A leaf module (stdlib, duckdb and `sdmxlib.storage.schema`, itself a leaf) so both
 `sdmxlib.storage.readers` and `sdmxlib.storage.lazy` can depend on it
 without importing each other. Extracted from `readers` to break the
 ``readers`` ⇄ ``lazy`` import cycle: ``readers`` constructs Lazy facades
@@ -12,6 +12,8 @@ import threading
 import weakref
 
 import duckdb
+
+from sdmxlib.storage.schema import sdmx_cursor
 
 # Per-thread cursor store for the projections below (#80). Held weakly so a
 # closed Registry's connection doesn't pin a stale cursor entry (avoids the
@@ -27,8 +29,7 @@ def _thread_cursor(conn_or_cur: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyCon
         _thread_local.table = table
     cur = table.get(conn_or_cur)
     if cur is None:
-        cur = conn_or_cur.cursor()
-        cur.execute("SET search_path = 'sdmx'")
+        cur = sdmx_cursor(conn_or_cur)
         table[conn_or_cur] = cur
     return cur
 

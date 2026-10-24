@@ -83,6 +83,7 @@ def _data_store_with_conn(conn: _FakeConn, monkeypatch: pytest.MonkeyPatch) -> D
     ds._attach = attach
     ds._extensions = ["ducklake"]
     ds._azure_credentials = None
+    ds._catalog = "memory"
     return ds
 
 

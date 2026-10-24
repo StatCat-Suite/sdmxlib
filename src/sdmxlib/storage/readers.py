@@ -161,7 +161,12 @@ from sdmxlib.storage.resolve import (
 from sdmxlib.storage.resolve import (
     read_levels as _read_levels,
 )
-from sdmxlib.storage.schema import ENUMERATION_FORMAT_COLUMN_NAMES, FACET_COLUMN_NAMES, TO_TEXT_FORMAT_COLUMN_NAMES
+from sdmxlib.storage.schema import (
+    ENUMERATION_FORMAT_COLUMN_NAMES,
+    FACET_COLUMN_NAMES,
+    TO_TEXT_FORMAT_COLUMN_NAMES,
+    sdmx_cursor,
+)
 
 
 def _required(value: datetime | None, column: str) -> datetime:
@@ -2743,14 +2748,12 @@ def _facade_cursor(
     ``read`` when the caller already holds a per-call cursor — `get_artefact`
     always does — and otherwise a fresh one off ``conn``, so concurrent
     constructions never share a row buffer (#75). Opening one costs two
-    statements' worth (the cursor and its ``SET search_path``), which is why
+    statements' worth (the cursor and its ``USE``), which is why
     `get_artefact` passes its own instead (#426).
     """
     if read is not None:
         return read
-    cur = conn.cursor()
-    cur.execute("SET search_path = 'sdmx'")
-    return cur
+    return sdmx_cursor(conn)
 
 
 def make_lazy_codelist(

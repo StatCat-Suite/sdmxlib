@@ -36,7 +36,8 @@ from sdmxlib.model.ref import Ref
 from sdmxlib.model.representation import Facet
 from sdmxlib.query.observations import Observations, ObsQuery, Sidecar
 from sdmxlib.query.query import build
-from sdmxlib.session import SessionFactory, completed
+from sdmxlib.session import SessionFactory, adopt, completed
+from sdmxlib.storage.schema import sdmx_catalog, use_sdmx
 
 if TYPE_CHECKING:
     # `local.registry` imports this module at runtime: a cycle.
@@ -163,6 +164,9 @@ class DuckDBDataStore(SessionFactory):
         self._registry: BundleRegistry | None = None
         self._conn: duckdb.DuckDBPyConnection | None = None
         self._owns_connection = True
+        #: The catalog whose ``sdmx`` schema the handles read: the registry's,
+        #: or this file's own, read when it opens.
+        self._catalog: str | None = None
         # Per-thread read cursor (#80); see LocalRegistry._read_cursor.
         self._thread_local: threading.local = threading.local()
         # Lazily-bound schema inspector, shared by the internal query path
@@ -254,6 +258,7 @@ class DuckDBDataStore(SessionFactory):
         instance._registry = registry
         instance._conn = registry.connection
         instance._owns_connection = False
+        instance._catalog = registry._sdmx_catalog()
         instance._thread_local = threading.local()
         instance._inspector = None
         instance._inspector_lock = threading.Lock()
@@ -265,6 +270,7 @@ class DuckDBDataStore(SessionFactory):
         if self._conn is None:
             return
         extensions = list(self._extensions or [])
+        catalog = self._sdmx_catalog()
         # Auto-load the azure extension if we need to talk to abfss:// or
         # have credentials configured. Callers can override by listing
         # "azure" in extensions themselves — INSTALL/LOAD are idempotent.
@@ -274,9 +280,9 @@ class DuckDBDataStore(SessionFactory):
             for ext in extensions:
                 self._conn.execute(f"INSTALL {_sql_identifier(ext)}")
                 self._conn.execute(f"LOAD {_sql_identifier(ext)}")
-            # Loading extensions can change the search_path; reset to
-            # ``sdmx`` so any colocated LocalRegistry's internal queries stay clean.
-            self._conn.execute("SET search_path = 'sdmx'")
+            # Loading extensions can change the search_path; point it back
+            # at the store's ``sdmx`` so a colocated registry's queries stay clean.
+            use_sdmx(self._conn, catalog)
         if self._needs_azure():
             # Force the named curl transport adapter. The Azure SDK's
             # default transport on Linux uses a statically-linked HTTP
@@ -311,6 +317,7 @@ class DuckDBDataStore(SessionFactory):
         conn = self._conn
         if conn is None:  # guarded by caller; narrows the type here too
             return
+        catalog = self._sdmx_catalog()
         for alias, spec in (self._attach or {}).items():
             url, options = _split_attach_spec(spec)
             if _already_attached(conn, alias, url):
@@ -330,7 +337,13 @@ class DuckDBDataStore(SessionFactory):
                     )
                     raise DuckLakeVersionError(msg) from exc
                 raise
-        conn.execute("SET search_path = 'sdmx'")
+        use_sdmx(conn, catalog)
+
+    def _sdmx_catalog(self) -> str:
+        """The catalog this store's handles read: set from its registry, or read off its own connection."""
+        if self._catalog is None:
+            self._catalog = sdmx_catalog(self.connection)
+        return self._catalog
 
     def _needs_azure(self) -> bool:
         """True if Azure secret/extension setup is required for this session.
@@ -367,6 +380,7 @@ class DuckDBDataStore(SessionFactory):
         if self._conn is not None and self._owns_connection:
             self._conn.close()
         self._conn = None
+        self._catalog = None
         self._thread_local = threading.local()
         self._inspector = None
 
@@ -408,9 +422,7 @@ class DuckDBDataStore(SessionFactory):
         cur: duckdb.DuckDBPyConnection | None = getattr(self._thread_local, "cur", None)
         if cur is not None:
             return cur
-        conn = self.connection
-        cur = conn.cursor()
-        cur.execute("SET search_path = 'sdmx'")
+        cur = adopt(self.connection, use_sdmx(self.connection.cursor(), self._sdmx_catalog()))
         self._thread_local.cur = cur
         return cur
 

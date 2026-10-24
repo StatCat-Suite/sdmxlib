@@ -1605,6 +1605,36 @@ class ReadOnlySchemaError(StoreSchemaError):
     """
 
 
+def sdmx_catalog(conn: duckdb.DuckDBPyConnection) -> str:
+    """The catalog whose ``sdmx`` schema `conn` reads: its current database.
+
+    A store opened on its own file reads the file's catalog. A bundle in a
+    shared `BundleEngine` reads its own ``<prefix>__meta`` catalog, which its
+    handle selected with `use_sdmx` (GH-133).
+    """
+    (catalog,) = conn.execute("SELECT current_database()").fetchone() or ("memory",)
+    return str(catalog)
+
+
+def use_sdmx(handle: duckdb.DuckDBPyConnection, catalog: str) -> duckdb.DuckDBPyConnection:
+    """Point `handle` at `catalog`'s ``sdmx`` schema, so ``sdmx.<table>`` and a bare table name resolve there.
+
+    A DuckDB cursor is a session of its own and does not inherit its parent's
+    current database or search path, so every handle a store derives is
+    pointed explicitly.
+
+    Returns:
+        `handle`, for chaining.
+    """
+    handle.execute(f'USE "{catalog.replace(chr(34), chr(34) * 2)}".sdmx')
+    return handle
+
+
+def sdmx_cursor(conn: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyConnection:
+    """A new cursor on `conn`, reading the same ``sdmx`` schema `conn` reads."""
+    return use_sdmx(conn.cursor(), sdmx_catalog(conn))
+
+
 def connection_is_read_only(conn: duckdb.DuckDBPyConnection) -> bool:
     """Whether this connection's current database was attached read-only."""
     row = conn.execute("SELECT readonly FROM duckdb_databases() WHERE database_name = current_database()").fetchone()
