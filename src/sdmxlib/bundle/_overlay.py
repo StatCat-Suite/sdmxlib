@@ -37,12 +37,13 @@ from sdmxlib.model._refshape import item_fields
 from sdmxlib.model.annotations import Annotation
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.collections import ArtefactList, ItemList, SdmxItem
+from sdmxlib.model.istring import InternationalString
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.storage._manifest import Manifest, read_manifest
 
 #: The overlay format this build writes and reads (``1.x``).
-OVERLAY_FORMAT = "1.1"
+OVERLAY_FORMAT = "1.2"
 
 #: How an existing annotation and a `set` combine: given every annotation of
 #: the entry's type the target already has, and the new one, the annotations
@@ -122,12 +123,43 @@ class OverlayEntry(msgspec.Struct, frozen=True, kw_only=True, forbid_unknown_fie
     scope: str | None = None
 
 
-class Overlay(msgspec.Struct, frozen=True, kw_only=True, forbid_unknown_fields=True):
-    """A versioned overlay document: an id, and its entries in order."""
+class OverlayText(msgspec.Struct, frozen=True, kw_only=True, forbid_unknown_fields=True):
+    """One language of a name or description, set or removed. Only `fold_overlays` applies it.
+
+    A name is structure: it feeds search and every label map, so a change to
+    one is written into a new publication rather than applied as a response
+    is served (design §5.4).
+
+    Attributes:
+        selector: ``*``, a class name, ``AGENCY:ID``, or a URN, as for an entry.
+        op: ``set`` writes `text` as the `lang` text; ``remove`` drops the
+            `lang` text. A name keeps at least one language.
+        field: ``name`` or ``description``.
+        lang: The language tag it acts on.
+        text: What ``set`` writes; absent for ``remove``.
+        scope: As `OverlayEntry`'s.
+    """
+
+    selector: str
+    op: Literal["set", "remove"]
+    field: Literal["name", "description"]
+    lang: str
+    text: str | None = None
+    scope: str | None = None
+
+
+class Overlay(msgspec.Struct, frozen=True, kw_only=True, forbid_unknown_fields=True, omit_defaults=True):
+    """A versioned overlay document: an id, its annotation entries and its name and description texts, in order.
+
+    ``texts`` is left out of the document, and so of the digest, when it is
+    empty: an overlay that changes no name reads and digests as it did in
+    format 1.1.
+    """
 
     format_version: str
     id: str
     entries: tuple[OverlayEntry, ...]
+    texts: tuple[OverlayText, ...] = ()
 
 
 def read_overlay(path: str | Path) -> Overlay:
@@ -159,7 +191,28 @@ def read_overlay(path: str | Path) -> Overlay:
                 "gives no annotation" if entry.annotation is None else "removes, so gives no annotation"
             )
             raise OverlayError(msg)
+    for n, text in enumerate(overlay.texts):
+        if (text.text is None) != (text.op == "remove"):
+            msg = f"{path}: text {n} ({text.op} {text.field} {text.lang}) " + (
+                "gives no text" if text.text is None else "removes, so gives no text"
+            )
+            raise OverlayError(msg)
+        if not text.lang:
+            msg = f"{path}: text {n} ({text.op} {text.field}) names no language"
+            raise OverlayError(msg)
     return overlay
+
+
+def _refuse_texts(overlays: Sequence[Overlay]) -> None:
+    """Raise for an overlay that changes a name or description: those are folded, never served."""
+    for overlay in overlays:
+        if overlay.texts:
+            msg = (
+                f"overlay {overlay.id!r} changes {len(overlay.texts)} name or description text(s); "
+                "a name is structure, so it is written into a new publication with fold_overlays, "
+                "never applied while serving"
+            )
+            raise OverlayError(msg)
 
 
 def generate_overlay_schema() -> bytes:
@@ -181,7 +234,9 @@ def applied(overlay: Overlay, audience: str | None) -> Overlay:
     if audience is None:
         return overlay
     return msgspec.structs.replace(
-        overlay, entries=tuple(e for e in overlay.entries if e.scope is None or e.scope == audience)
+        overlay,
+        entries=tuple(e for e in overlay.entries if e.scope is None or e.scope == audience),
+        texts=tuple(t for t in overlay.texts if t.scope is None or t.scope == audience),
     )
 
 
@@ -215,6 +270,7 @@ def effective_token(
     """
     if not overlays:
         return manifest.token
+    _refuse_texts([applied(o, audience) for o in overlays])
     hooks = ",".join(f"{_plain(kind)}={hook.id}" for kind, hook in sorted((merge or {}).items())) or "default"
     digests = [overlay_digest(applied(o, audience)) for o in overlays]
     # ``v2`` names the format of the hashed text, so a server reading
@@ -265,7 +321,9 @@ def apply_overlays(
     Returns:
         A `StructureMessage` for a message, a list for a sequence.
     """
-    plan = _Plan([applied(o, audience) for o in overlays], merge or {})
+    selected = [applied(o, audience) for o in overlays]
+    _refuse_texts(selected)
+    plan = _Plan(selected, merge or {})
     if isinstance(target, StructureMessage):
         changes = {
             f.name: [plan.artefact(a) for a in value]
@@ -352,10 +410,16 @@ class _Plan:
             for m, entry in enumerate(overlay.entries)
         ]
         self._entries = [entry for *_, entry in sorted(ranked, key=lambda r: r[:3])]
+        texts = [
+            (_specificity(text.selector), n, m, text)
+            for n, overlay in enumerate(overlays)
+            for m, text in enumerate(overlay.texts)
+        ]
+        self._texts = [text for *_, text in sorted(texts, key=lambda r: r[:3])]
         self._merge = merge
         #: Whether any entry could select an item. When none can, an artefact's
         #: items are not walked: a 500,000-code codelist costs 0.28 s to walk.
-        self._reaches_items = any(_reaches_items(entry.selector) for entry in self._entries)
+        self._reaches_items = any(_reaches_items(e.selector) for e in [*self._entries, *self._texts])
 
     def artefact[A: MaintainableArtefact](self, artefact: A) -> A:
         """`artefact`, with its own annotations and its items' changed, or itself if nothing is."""
@@ -368,6 +432,7 @@ class _Plan:
         annotations = self._annotations(artefact, str(urn), artefact.sdmx_class, key)
         if annotations is not None:
             changes["annotations"] = annotations
+        changes |= self._named(artefact, str(urn), artefact.sdmx_class, key)
         if self._reaches_items:
             changes |= self._items(artefact, urn, path="", top=True)
         return attrs.evolve(artefact, **changes) if changes else artefact
@@ -382,6 +447,32 @@ class _Plan:
         for entry in selected:
             current = self._apply(entry, current)
         return current
+
+    def _named(self, owner: object, urn: str, cls: str, key: str | None) -> dict[str, object]:
+        """The ``name`` and ``description`` `owner` should have, by field, where a text selects it.
+
+        Raises:
+            OverlayError: If a text would remove a name's last language.
+        """
+        names = {"*", cls, urn} if key is None else {"*", cls, urn, key}
+        selected = [t for t in self._texts if t.selector in names]
+        if not selected:
+            return {}
+        fields: dict[str, dict[str, str]] = {}
+        for text in selected:
+            current = fields.get(text.field)
+            if current is None:
+                held: object = getattr(owner, text.field, None)
+                current = dict(held.as_dict()) if isinstance(held, InternationalString) else {}
+            if text.op == "set" and text.text is not None:
+                current[text.lang] = text.text
+            else:
+                current.pop(text.lang, None)
+            fields[text.field] = current
+        if "name" in fields and not fields["name"]:
+            msg = f"{urn}: removing the last language of its name; a name keeps at least one"
+            raise OverlayError(msg)
+        return {field: (value or None) if field == "description" else value for field, value in fields.items()}
 
     def _apply(self, entry: OverlayEntry, current: list[Annotation]) -> list[Annotation]:
         kept = [a for a in current if a.type != entry.type]
@@ -434,6 +525,7 @@ class _Plan:
         annotations = self._annotations(item, prefix + item_path, item_class, None)
         if annotations is not None:
             changes["annotations"] = annotations
+        changes |= self._named(item, prefix + item_path, item_class, None)
         changes |= self._items(item, scheme, path=item_path, top=False)
         return _evolve(item, **changes) if changes else item
 

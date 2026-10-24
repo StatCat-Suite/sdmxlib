@@ -3,7 +3,7 @@
   "$defs": {
     "Overlay": {
       "title": "Overlay",
-      "description": "A versioned overlay document: an id, and its entries in order.",
+      "description": "A versioned overlay document: an id, its annotation entries and its name and description texts, in order.\n\n``texts`` is left out of the document, and so of the digest, when it is\nempty: an overlay that changes no name reads and digests as it did in\nformat 1.1.",
       "type": "object",
       "properties": {
         "format_version": {
@@ -17,6 +17,13 @@
           "items": {
             "$ref": "#/$defs/OverlayEntry"
           }
+        },
+        "texts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OverlayText"
+          },
+          "default": []
         }
       },
       "required": [
@@ -121,6 +128,60 @@
         }
       },
       "required": [],
+      "additionalProperties": false
+    },
+    "OverlayText": {
+      "title": "OverlayText",
+      "description": "One language of a name or description, set or removed. Only `fold_overlays` applies it.\n\nA name is structure: it feeds search and every label map, so a change to\none is written into a new publication rather than applied as a response\nis served (design §5.4).\n\nAttributes:\n    selector: ``*``, a class name, ``AGENCY:ID``, or a URN, as for an entry.\n    op: ``set`` writes `text` as the `lang` text; ``remove`` drops the\n        `lang` text. A name keeps at least one language.\n    field: ``name`` or ``description``.\n    lang: The language tag it acts on.\n    text: What ``set`` writes; absent for ``remove``.\n    scope: As `OverlayEntry`'s.",
+      "type": "object",
+      "properties": {
+        "selector": {
+          "type": "string"
+        },
+        "op": {
+          "enum": [
+            "remove",
+            "set"
+          ]
+        },
+        "field": {
+          "enum": [
+            "description",
+            "name"
+          ]
+        },
+        "lang": {
+          "type": "string"
+        },
+        "text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "scope": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "selector",
+        "op",
+        "field",
+        "lang"
+      ],
       "additionalProperties": false
     }
   }

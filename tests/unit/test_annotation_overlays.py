@@ -23,6 +23,7 @@ from sdmxlib.bundle import (
     OverlayAnnotation,
     OverlayEntry,
     OverlayError,
+    OverlayText,
     Producer,
     applied,
     apply_overlays,
@@ -357,3 +358,96 @@ def test_fold_applies_only_the_audiences_entries(tmp_path: Path) -> None:
         kinds = {a.type for a in folded.annotations}
     assert {"ALL", "PUB"} <= kinds
     assert "INT" not in kinds
+
+
+# ── names and descriptions, folded only (GH-163) ───────────────────────
+
+
+def _text(
+    selector: str, op: str = "set", field: str = "name", lang: str = "fr", text: str | None = "x", **kw: object
+) -> OverlayText:
+    return msgspec.convert(
+        {"selector": selector, "op": op, "field": field, "lang": lang, "text": text, **kw}, OverlayText
+    )
+
+
+def _texts(*texts: OverlayText) -> Overlay:
+    return Overlay(format_version="1.2", id="names", entries=(), texts=texts)
+
+
+_CODE_A = "urn:sdmx:org.sdmx.infomodel.codelist.Code=AG:CL_FREQ(1.0).A"
+
+
+def _folded(tmp_path: Path, *overlays: Overlay, audience: str | None = None) -> tuple[Path, Path, Manifest, Manifest]:
+    root = make_bundle(tmp_path / "b", 10, extra=(_FREQ,))
+    before = write_manifest(root, bundle_id="b", producer=Producer(name="t", version="1"))
+    after = fold_overlays(root, list(overlays), audience=audience)
+    return root, root.parent / after.token, before, after
+
+
+def _code_a(publication: Path) -> sl.Code:
+    with sl.LocalRegistry.bundle(publication) as reg:
+        codelist = reg.get(_FREQ.urn, eager=True)
+        assert codelist is not None
+        return codelist.codes["A"]
+
+
+def test_a_folded_french_name_reads_back_and_the_earlier_publication_keeps_its_own(tmp_path: Path) -> None:
+    root, folded, before, after = _folded(tmp_path, _texts(_text(_CODE_A, text="Annuel")))
+    assert _code_a(folded).name.as_dict() == {"en": "Annual", "fr": "Annuel"}
+    assert _code_a(root).name.as_dict() == {"en": "Annual"}
+    fingerprints = {a.urn: a.fingerprint for a in before.artefacts}, {a.urn: a.fingerprint for a in after.artefacts}
+    assert fingerprints[0][str(_FREQ.urn)] != fingerprints[1][str(_FREQ.urn)], "the codelist's content changed"
+    assert check_bundle(folded, at="publish").ok
+
+
+def test_the_most_specific_text_wins(tmp_path: Path) -> None:
+    _, folded, _, _ = _folded(tmp_path, _texts(_text(_CODE_A, text="by urn"), _text("Code", text="by class")))
+    assert _code_a(folded).name.get("fr") == "by urn"
+
+
+def test_a_description_language_is_removed_and_a_names_last_one_is_refused(tmp_path: Path) -> None:
+    described = _texts(_text(_CODE_A, field="description", lang="en", text="yearly"))
+    _, folded, _, _ = _folded(
+        tmp_path, described, _texts(_text(_CODE_A, op="remove", field="description", lang="en", text=None))
+    )
+    assert _code_a(folded).description.as_dict() == {}, "no language left"
+    with pytest.raises(OverlayError, match="last language of its name"):
+        _folded(tmp_path / "again", _texts(_text(_CODE_A, op="remove", lang="en", text=None)))
+
+
+def test_a_text_scoped_to_another_audience_is_not_folded(tmp_path: Path) -> None:
+    _, folded, _, _ = _folded(tmp_path, _texts(_text(_CODE_A, text="interne", scope="internal")), audience="public")
+    assert _code_a(folded).name.as_dict() == {"en": "Annual"}
+
+
+def test_serving_refuses_a_name_change_and_names_fold(tmp_path: Path) -> None:
+    overlay = _texts(_text(_CODE_A))
+    with pytest.raises(OverlayError, match="fold_overlays"):
+        apply_overlays([_FREQ], [overlay])
+    manifest = write_manifest(make_bundle(tmp_path / "b", 10), bundle_id="b", producer=Producer(name="t", version="1"))
+    with pytest.raises(OverlayError, match="fold_overlays"):
+        effective_token(manifest, [overlay])
+    scoped = _texts(_text(_CODE_A, scope="internal"))
+    assert apply_overlays([_FREQ], [scoped], audience="public") == [_FREQ], "a text for another audience is not served"
+
+
+def test_an_overlay_without_texts_encodes_as_in_format_1_1() -> None:
+    overlay = _overlay(_entry("*"))
+    assert b"texts" not in msgspec.json.encode(overlay, order="sorted")
+
+
+@pytest.mark.parametrize(
+    ("text", "message"),
+    [
+        ({"selector": "*", "op": "set", "field": "name", "lang": "fr"}, "gives no text"),
+        ({"selector": "*", "op": "remove", "field": "name", "lang": "fr", "text": "x"}, "removes, so gives no text"),
+        ({"selector": "*", "op": "set", "field": "name", "lang": "", "text": "x"}, "names no language"),
+        ({"selector": "*", "op": "set", "field": "title", "lang": "fr", "text": "x"}, "not an overlay document"),
+    ],
+)
+def test_a_malformed_text_is_refused(tmp_path: Path, text: dict[str, object], message: str) -> None:
+    path = tmp_path / "o.json"
+    path.write_text(json.dumps({"format_version": "1.2", "id": "o", "entries": [], "texts": [text]}))
+    with pytest.raises(OverlayError, match=message):
+        read_overlay(path)

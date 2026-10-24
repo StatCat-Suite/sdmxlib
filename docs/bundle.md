@@ -5,7 +5,7 @@ one unit, once per release: each publication is a directory of its own.
 statcatlib writes bundles, sdmxlib-rest serves them, and sdmxlib reads,
 checks, copies and fetches them. This page is the contract between them.
 
-It describes **manifest format 2.0** and **overlay format 1.1**. sdmxlib's
+It describes **manifest format 2.0** and **overlay format 1.2**. sdmxlib's
 code is the reference implementation (`sdmxlib.bundle`,
 `LocalRegistry.bundle`), and the two JSON Schemas ship with it:
 `sdmxlib.bundle.manifest_schema()` and `sdmxlib.bundle.overlay_schema()`.
@@ -266,9 +266,10 @@ published bundle is a `files` finding (§6).
 
 | field | presence | meaning |
 | --- | --- | --- |
-| `format_version` | required | The overlay format, `major.minor`: `"1.1"` for this page. A `1.0` overlay reads the same; 1.1 defines `scope`. |
+| `format_version` | required | The overlay format, `major.minor`: `"1.2"` for this page. A `1.0` or `1.1` overlay reads the same; 1.1 defines `scope`, and 1.2 adds `texts`. |
 | `id` | required | The overlay's name. |
 | `entries` | required | `OverlayEntry`s, in document order. |
+| `texts` | optional | `OverlayText`s, in document order: names and descriptions to change. Only folding applies them (§5.6). |
 
 #### `OverlayEntry`
 
@@ -290,6 +291,19 @@ The annotation's type is the entry's `type`.
 | `title` | optional | The annotation title. |
 | `value` | optional | The annotation value. |
 | `text` | optional | The annotation text, as an object from language tag to string. |
+
+#### `OverlayText`
+
+One language of an artefact's or item's name or description.
+
+| field | presence | meaning |
+| --- | --- | --- |
+| `selector` | required | Which artefacts and items it applies to (§5.2). |
+| `op` | required | `"set"` or `"remove"` (§5.3). |
+| `field` | required | `"name"` or `"description"`. |
+| `lang` | required | The language tag it acts on. |
+| `text` | optional | The text `set` writes. It MUST be present for `set`, and absent or `null` for `remove`. |
+| `scope` | optional | As `OverlayEntry`'s. |
 
 A reader of overlay format `1.x` MUST refuse another major version, and MUST
 refuse a field it does not know at any level. Unlike the manifest, an overlay
@@ -353,7 +367,9 @@ never hold `,`, `=`, `@`, `:` or a newline.
 
 An overlay's digest is the lowercase hex SHA-256 of its canonical JSON. That
 JSON has no whitespace and sorts the keys of every object. Every field
-appears, with `null` for an absent optional and `{}` for an empty `text`.
+appears, with `null` for an absent optional and `{}` for an empty `text`,
+except `texts`, which is left out when it is empty, so an overlay that
+changes no name digests as it did in format 1.1.
 Non-ASCII characters are written as UTF-8, unescaped. This overlay:
 
 ```json
@@ -412,7 +428,16 @@ not moved with it.
 
 ### 5.6 Folding overlays into a bundle
 
-`fold_overlays` applies overlays to the store for good. It starts a new
+`fold_overlays` applies overlays to the store for good, its `texts`
+included. A text applies after the annotation entries, in the same order of
+specificity (§5.3): `set` writes the language's text and `remove` drops it.
+Removing the last language of a name is refused, since SDMX requires a
+name. A server MUST NOT apply an overlay with a `text` that applies to its
+audience: a name is structure, and feeds search and every label map, so it
+changes only through a new publication. `apply_overlays` and
+`effective_token` refuse one.
+
+It starts a new
 publication extending the one it reads, replaces every artefact an entry
 changes in the new `meta.duckdb`, and publishes it. The new manifest keeps
 `bundle_id`, `producer`, `product`, `extensions` and `provenance`, and has a

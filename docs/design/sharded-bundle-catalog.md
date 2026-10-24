@@ -255,7 +255,7 @@ A server that serves search MUST refuse at load any overlay with entries acting 
 
 ### 5.4 Names
 
-Decided (GH-134): an overlay MAY change a `name` or `description`, and only `fold_overlays` applies such an entry. GH-163 builds it.
+Decided (GH-134): an overlay MAY change a `name` or `description`, and only `fold_overlays` applies such an entry. Built in GH-163 as overlay format 1.2's `texts`: `OverlayText` entries that set or remove one language of a name or description.
 
 - **The format.** An overlay entry gains `name` and `description` operations on artefacts and items, set per language, beside the annotation operations. The common case is a mistyped French name on a code.
 - **Folded, never served.** `fold_overlays` writes the change into a new publication. `previous=` copies `meta.duckdb` and reuses every data file, so a one-word fix is a new token over the same lake. `apply_overlays` refuses an overlay carrying a name or description operation and names `fold_overlays`; a server therefore never applies one at load.
@@ -668,7 +668,7 @@ Order follows risk removed per unit of work. Synthetic bundles and `profile_bund
 
 ## 17. Open questions
 
-1. Name overlays (§5.4): settled in GH-134. Name and description operations, applied only by `fold_overlays`; GH-163 builds them.
+1. Name overlays (§5.4): settled in GH-134. Name and description operations, applied only by `fold_overlays`; built in GH-163.
 2. Whether `token` becomes `publication` in a later major.
 3. Detached signature format (minisign vs sigstore) when cross-agency sharing becomes concrete.
 4. Code search scope for the agent (§12).

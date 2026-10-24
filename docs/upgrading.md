@@ -93,6 +93,11 @@ follows.
   `database_role` on a bundle registry must go through `locate`.
 - New: `sdmxlib.formats.render.render_version(media_type)`, the version of
   each format's writer, for a server's cache keys (`docs/bundle.md` §5.5).
+- Overlay format 1.2 adds `texts`: `OverlayText` entries that set or
+  remove one language of a name or description. Only `fold_overlays`
+  applies them; `apply_overlays` and `effective_token` refuse an overlay
+  with one, naming `fold_overlays`. An overlay without `texts` reads and
+  digests as before.
 - Overlays are format 1.1, which defines `scope`: an entry applies to the
   audience it names, and a `null` scope to every audience.
   `apply_overlays`, `effective_token` and `fold_overlays` take `audience=`;
