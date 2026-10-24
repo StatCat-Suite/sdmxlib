@@ -11,7 +11,9 @@ fixture. Those are additionally marked ``bundle`` and deselected from
 this tier.
 """
 
+import os
 import shutil
+from pathlib import Path
 
 import duckdb
 import pytest
@@ -137,7 +139,16 @@ def data_plane_bundle(bundle, tmp_path_factory):
 
     Skips — naming the missing file — when the bundle has no data plane, so a
     structural-only directory still runs every other benchmark.
+
+    ``$SDMXLIB_BENCH_PUBLICATION`` names a prebuilt publication to read in
+    place of the cached copy, such as one with an index dropped to measure what
+    it costs (GH-165). Its manifest still lists the original files, so the
+    ``files`` check reports any file the variant changed.
     """
+    prebuilt = os.environ.get("SDMXLIB_BENCH_PUBLICATION")
+    if prebuilt:
+        _NOTES.append(f"bundle tier: read the prebuilt publication {prebuilt}")
+        return Path(prebuilt)
     missing = _bundle.data_plane_missing(bundle)
     if missing is not None:
         pytest.skip(_bundle.data_plane_skip_reason(bundle, missing))

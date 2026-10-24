@@ -540,6 +540,16 @@ every check.
      expired. Without it, earlier snapshots stay readable and the manifest
      lists the files they reach.
 
+   Then it rewrites `meta.duckdb` into a fresh file, at the storage version
+   it was written at, without the keys and indexes a reader does not use:
+   the primary keys of `hierarchy_node` and `artefact_ref`,
+   `hierarchy_node`'s `UNIQUE (hierarchy_urn, path)`, and `artefact_ref`'s
+   two indexes. A published store is never written, so they enforce nothing.
+   Measured on the census bundle, they were 520 MB of a 1,022 MB store, and
+   no read benchmark changed without them. `LocalRegistry.build(bundle,
+   previous=token)` puts them back on the copy it extends. A reader MUST NOT
+   rely on any key or index in a published store.
+
    It never deletes a file from `data/`. `tiers` maps
    a path prefix to a placement tier, the longest matching prefix winning:
    `{"search/": 2}`. A publication file no prefix matches is tier 1 if it is

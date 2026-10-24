@@ -369,7 +369,7 @@ The manifest's `tier` is the producer's default; a pool's configuration MAY prom
 | data only, no keys or indexes, without labels | 294 MB |
 | names, descriptions and annotations alone | 31 MB |
 
-Labels are about 3% of the tier-1 pull, so a split would save 31 MB at the cost of a store schema bump and a catalog-aware rewrite of every name read. Index structure is about 700 MB of the file. GH-165 measures each index against the read benchmarks and trims what the reads do not need at publish; that is where the tier-1 size is decided. Every format, labelled or not, reads names from `meta.duckdb`.
+Labels are about 3% of the tier-1 pull, so a split would save 31 MB at the cost of a store schema bump and a catalog-aware rewrite of every name read. Index structure is about 700 MB of the file. GH-165 measured each index against the read benchmarks: `write_manifest` drops `hierarchy_node`'s and `artefact_ref`'s keys and `artefact_ref`'s indexes, which cost no read, and keeps `code`'s key and `annotation`'s indexes, each of which halves the speed of a small hierarchy's eager read. The census `meta.duckdb` goes from 1,022 MB to 501 MB. Every format, labelled or not, reads names from `meta.duckdb`.
 
 Derived tables a rebuild reproduces from the bundle's own content (label lookups, availability, pre-pivoted slices) are materialised at publish into `data_path` as tier 3. Runtime caches (external file cache, `cache_httpfs`, parsed DSD objects) are node-local and unlisted.
 

@@ -39,6 +39,7 @@ from sdmxlib.storage._manifest import (
     read_manifest,
     storage_version_of,
 )
+from sdmxlib.storage._trim import compact_for_publication
 from sdmxlib.storage.schema import get_schema_version, meta_value
 
 #: Every data file and delete file the lake catalog references from any snapshot
@@ -433,6 +434,9 @@ def write_manifest(
             f"databases open for writing. Close every builder before publishing."
         )
         raise ManifestError(msg)
+    # Published, the store is never written: its keys enforce nothing, and
+    # the ones the reads do not use leave it, in a fresh file (GH-165).
+    compact_for_publication(root / "meta.duckdb")
     manifest = Manifest(
         format_version=FORMAT_VERSION,
         bundle_id=bundle_id,
