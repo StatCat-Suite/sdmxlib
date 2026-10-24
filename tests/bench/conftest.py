@@ -179,12 +179,18 @@ def _republish(bundle, root):
 
 @pytest.fixture(scope="session")
 def data_plane_registry(data_plane_bundle):
-    """A registry over the copied bundle, artefacts and observations together."""
-    registry = sl.LocalRegistry.bundle(data_plane_bundle)
+    """A registry over the copied bundle, artefacts and observations together.
+
+    In an engine of `_bundle.threads()` threads, so the tier leaves the
+    machine usable.
+    """
+    engine = sl.BundleEngine(threads=_bundle.threads())
+    registry = sl.LocalRegistry.bundle(data_plane_bundle, engine=engine)
     try:
         yield registry
     finally:
         registry.close()
+        engine.close()
 
 
 @pytest.fixture(scope="session")

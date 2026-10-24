@@ -282,8 +282,8 @@ Both pin sdmxlib by range in their `pyproject.toml`. Before a breaking release,
 just check           # lint + typecheck (inner dev loop)
 just test            # unit tests
 just test-integration  # cassette-replayed end-to-end tests (no network)
-just ci              # lint + typecheck + unit + docs + integration
-                     #   + the bundle tier's assertions (full gate)
+just ci-fast         # lint + typecheck + unit + docs + integration + docs build
+just ci              # ci-fast + the bundle tier's assertions (full gate)
 just test-properties # property-based tests at 20x examples (Hypothesis `deep`)
 just mutate          # mutation over the configured scope (hours — see justfile)
 just mutate-module X # mutation over one module/function (minutes)
@@ -291,9 +291,13 @@ just mutate-scope    # what only_mutate covers, and how big
 ```
 
 `just ci` includes `bench-bundle-assertions` — the real-bundle tests that
-*assert a property*, without the eight that only report a number. It costs
-~2 min on a machine holding the 2.6 GB bundle and skips in ~0 s on one that is
-not, **saying so on its own line**. It is in the gate because #386 renamed
+*assert a property*, without the eight that only report a number and without
+the `recompute` ones, which redo publishing's work (the census `publish`
+check recomputes every fingerprint, ~6.5 min; `just bench-bundle` runs it). It
+costs ~2 min on a machine holding the 2.6 GB bundle, plus ~6.5 min when a
+change to the publishing code makes it republish its cached copy, and skips in
+~0 s on one that is not, **saying so on its own line**. DuckDB in this tier
+runs on `SDMXLIB_BENCH_THREADS` threads (default 4). It is in the gate because #386 renamed
 `LocalRegistry`'s `resolve_cache_size` to `resolve_cache_items` past a green
 `just check` and 6,284 green unit tests, and only this tier failed, with 19
 errors. The measurements stay opt-in as
