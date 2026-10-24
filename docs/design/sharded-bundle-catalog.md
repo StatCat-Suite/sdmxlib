@@ -115,7 +115,7 @@ bundles/<bundle_id>/
 
 - `data/` is shared across publications. A data file is written once under a fresh UUID and referenced by every publication whose lake catalog lists it. A republish writes only new files. Producers MUST NOT delete, rewrite or run cleanup against `data/`; deletion is the GC job's alone (§11.4).
 - A publication's `lake.ducklake` is made by **copying the previous publication's catalog and extending it** (new snapshot, new files registered). A producer MAY expire old snapshots to shrink the catalog and MUST NOT run `ducklake_cleanup_old_files` or `ducklake_delete_orphaned_files`; files those would delete are still referenced by earlier publications. The first publication of a `bundle_id` starts an empty catalog.
-- `meta.duckdb` and `labels.duckdb` split the store schema by role. The store `schema_version` bumps with this split; an old reader refuses the bundle by the existing exact-match rule rather than serving unlabelled artefacts. The schema stays one schema; the cold tables (`InternationalString` text, annotations, descriptions) live in the second file, attached under an alias, and the query layer resolves each table to the catalog that holds it.
+- Shelved (GH-139; §7.1 has the measurement): names stay in `meta.duckdb`, and this split was not built. As planned: `meta.duckdb` and `labels.duckdb` split the store schema by role. The store `schema_version` bumps with this split; an old reader refuses the bundle by the existing exact-match rule rather than serving unlabelled artefacts. The schema stays one schema; the cold tables (`InternationalString` text, annotations, descriptions) live in the second file, attached under an alias, and the query layer resolves each table to the catalog that holds it.
 - `search/` table names carry the bundle token rather than an integer generation; `publish_bundle` drops orphaned tables.
 
 ### 4.2 New manifest fields
@@ -354,11 +354,22 @@ A pod holds many bundles; a bundle is held by as many pods as its pool has repli
 
 | tier | rule | files |
 |---|---|---|
-| 1 | pulled before ready; readiness gates on it | manifest, `meta.duckdb`, `lake.ducklake`; `labels.duckdb` in pools that serve labelled formats |
-| 2 | pulled lazily to node-local disk, in the background after ready or on first use | `labels.duckdb` in key-only pools; `search/` in the search pool |
+| 1 | pulled before ready; readiness gates on it | manifest, `meta.duckdb`, `lake.ducklake` |
+| 2 | pulled lazily to node-local disk, in the background after ready or on first use | `search/` in the search pool |
 | 3 | read from blob storage by byte range through a block cache | everything under `data_path`, including derived tables |
 
-The manifest's `tier` is the producer's default; a pool's configuration MAY promote a file to tier 1. Formats that carry names (SDMX-JSON data, CSV with labels, every structure response) read `labels.duckdb` on the first request, so the `hot` and `base` pools, which serve .Stat's SDMX-JSON, promote it. The census bundle's tier-1 set is then dominated by labels; open question 10 covers measuring a per-language split (`labels_<lang>.duckdb`) against the pull time.
+The manifest's `tier` is the producer's default; a pool's configuration MAY promote a file to tier 1.
+
+**Names stay in `meta.duckdb`.** The plan to split names, descriptions and annotations into a `labels.duckdb` was shelved after measuring the census bundle (GH-139):
+
+| census `meta.duckdb` | size |
+|---|---|
+| as published | 1,099 MB |
+| full copy, with every key and index | 1,022 MB |
+| data only, no keys or indexes, without labels | 294 MB |
+| names, descriptions and annotations alone | 31 MB |
+
+Labels are about 3% of the tier-1 pull, so a split would save 31 MB at the cost of a store schema bump and a catalog-aware rewrite of every name read. Index structure is about 700 MB of the file. GH-165 measures each index against the read benchmarks and trims what the reads do not need at publish; that is where the tier-1 size is decided. Every format, labelled or not, reads names from `meta.duckdb`.
 
 Derived tables a rebuild reproduces from the bundle's own content (label lookups, availability, pre-pivoted slices) are materialised at publish into `data_path` as tier 3. Runtime caches (external file cache, `cache_httpfs`, parsed DSD objects) are node-local and unlisted.
 
@@ -631,7 +642,7 @@ Order follows risk removed per unit of work. Synthetic bundles and `profile_bund
 
 **M2. sdmxlib: manifest 2.0 and layout.** Token directories; shared `data/`; `root`, `tier`, `md5`, `carried_from`; version fields; `data_path`; `artefacts` with `stability` and `partial`; `BindingCount` fields; `StoreFormatError` (newer-only for storage); copy-on-write rewrite after flush; `sdmxlib bundle copy --tiers`. Test: a reader on token A keeps answering while B is written sharing A's files; a republish of a CODR-shaped 50 MB bundle with a 1 MB delta uploads under 5 MB plus the catalog files; the census bundle's per-publication catalog upload (`meta.duckdb`, `labels.duckdb`, `lake.ducklake`) is measured and recorded; a bundle written by a newer DuckDB is refused with no file opened; no delete file survives a revising republish.
 
-**M3. sdmxlib: labels split with schema bump.** `labels.duckdb`; store `schema_version` bump; cross-catalog table resolution; per-format label needs documented. Test: a key-only CSV request touches `meta.duckdb` only; an SDMX-JSON request attaches labels; old sdmxlib refuses the bundle by schema.
+**M3. sdmxlib: labels split with schema bump.** Shelved after measuring (GH-139, §7.1); GH-165 measures and trims the indexes in its place. As planned: `labels.duckdb`; store `schema_version` bump; cross-catalog table resolution; per-format label needs documented. Test: a key-only CSV request touches `meta.duckdb` only; an SDMX-JSON request attaches labels; old sdmxlib refuses the bundle by schema.
 
 **M4. sdmxlib: fingerprints and canonical form.** The canonical model encoder (`Ref` as URN, defined forms for `InternationalString`, `ItemList`, `Annotations`, `Link`, enums, datetimes; golden tests per artefact class) is the largest piece. Then the row-text golden row per column type; table, artefact, structural (incoming edges included) and bundle fingerprints; `canonical_form`; `RENDER_VERSION` per format with the golden-file bump rule. Test: swapping two values between rows changes the table fingerprint; `{a,a}` vs `{b,b}` differ; the same bundle fingerprints identically on two DuckDB releases at one `canonical_form`; a change confined to a declared SDMX-JSON gap changes the artefact fingerprint; a constraint change on a dataflow changes its structural fingerprint.
 
@@ -663,7 +674,7 @@ Order follows risk removed per unit of work. Synthetic bundles and `profile_bund
 4. Code search scope for the agent (§12).
 5. Republishing structures with semantic three-part versions; an FMR governance change decoupled from this work.
 6. CODR bundle granularity: one per table by default, subject-level merging where tables always release together (§4.0).
-7. `labels.duckdb` pull time on the census bundle: measure a per-language split and direct HTTP attach against the tier-1 pull.
+7. `labels.duckdb` pull time on the census bundle: settled by GH-139. Labels are 31 MB of the census `meta.duckdb` and stay in it (§7.1).
 8. How to split the structures bundles for StatCan (§8): by artefact family, by change rate, or both.
 
 Settled in the v3 review: partials are not listed in `catalog/structures/` (routing needs full artefacts and `versions` only); `schema_version` stays exact-match (store bumps change queried columns, and §9.2 absorbs them); `BundleRegistry` has no `sql()`; the row text stays `to_json(t)` with a golden row per column type under `canonical_form`.
