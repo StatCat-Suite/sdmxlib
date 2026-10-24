@@ -1,0 +1,4673 @@
+{
+  "meta": {
+    "schema": "https://json.sdmx.org/2.0.0/sdmx-json-structure-schema.json",
+    "id": "SDMX_MSG",
+    "prepared": "2000-01-01T00:00:00Z",
+    "sender": {
+      "id": "sdmxlib"
+    }
+  },
+  "data": {
+    "agencySchemes": [
+      {
+        "id": "AGENCIES",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "AGENCIES-NAME-en",
+        "names": {
+          "en": "AGENCIES-NAME-en",
+          "fr": "AGENCIES-NAME-fr"
+        },
+        "description": "AGENCIES-DESC-en",
+        "descriptions": {
+          "en": "AGENCIES-DESC-en",
+          "fr": "AGENCIES-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "AGENCIES-ANN",
+            "title": "AGENCIES-TITLE",
+            "type": "AGENCIES-TYPE",
+            "text": "AGENCIES-TEXT-en",
+            "texts": {
+              "en": "AGENCIES-TEXT-en",
+              "fr": "AGENCIES-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/AGENCIES",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/AGENCIES/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "AGENCIES-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.base.AgencyScheme=AG:AGENCIES(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/AGENCIES",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/AGENCIES",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/AGENCIES",
+            "rel": "alternate"
+          }
+        ],
+        "isPartial": true,
+        "agencies": [
+          {
+            "id": "A1",
+            "name": "AGENCY-NAME-en",
+            "names": {
+              "en": "AGENCY-NAME-en",
+              "fr": "AGENCY-NAME-fr"
+            },
+            "description": "AGENCY-DESC-en",
+            "descriptions": {
+              "en": "AGENCY-DESC-en",
+              "fr": "AGENCY-DESC-fr"
+            },
+            "contacts": [
+              {
+                "name": "CONTACT-en",
+                "names": {
+                  "en": "CONTACT-en",
+                  "fr": "CONTACT-fr"
+                },
+                "department": "DEPT-en",
+                "departments": {
+                  "en": "DEPT-en",
+                  "fr": "DEPT-fr"
+                },
+                "role": "ROLE-en",
+                "roles": {
+                  "en": "ROLE-en",
+                  "fr": "ROLE-fr"
+                },
+                "telephones": [
+                  "+1-555-0100"
+                ],
+                "faxes": [
+                  "+1-555-0101"
+                ],
+                "x400s": [
+                  "x400-address"
+                ],
+                "uris": [
+                  "https://example.org/contact"
+                ],
+                "emails": [
+                  "contact@example.org"
+                ],
+                "id": "CONTACT-ID"
+              }
+            ],
+            "annotations": [
+              {
+                "id": "AGENCY-ANN",
+                "title": "AGENCY-TITLE",
+                "type": "AGENCY-TYPE",
+                "text": "AGENCY-TEXT-en",
+                "texts": {
+                  "en": "AGENCY-TEXT-en",
+                  "fr": "AGENCY-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/AGENCY",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/AGENCY/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "AGENCY-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/agency",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/agency",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/agency",
+                "rel": "alternate"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "dataProviderSchemes": [
+      {
+        "id": "DATA_PROVIDERS",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "DATA_PROVIDERS-NAME-en",
+        "names": {
+          "en": "DATA_PROVIDERS-NAME-en",
+          "fr": "DATA_PROVIDERS-NAME-fr"
+        },
+        "description": "DATA_PROVIDERS-DESC-en",
+        "descriptions": {
+          "en": "DATA_PROVIDERS-DESC-en",
+          "fr": "DATA_PROVIDERS-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "DATA_PROVIDERS-ANN",
+            "title": "DATA_PROVIDERS-TITLE",
+            "type": "DATA_PROVIDERS-TYPE",
+            "text": "DATA_PROVIDERS-TEXT-en",
+            "texts": {
+              "en": "DATA_PROVIDERS-TEXT-en",
+              "fr": "DATA_PROVIDERS-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/DATA_PROVIDERS",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/DATA_PROVIDERS/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "DATA_PROVIDERS-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.base.DataProviderScheme=AG:DATA_PROVIDERS(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/DATA_PROVIDERS",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/DATA_PROVIDERS",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/DATA_PROVIDERS",
+            "rel": "alternate"
+          }
+        ],
+        "isPartial": true,
+        "dataProviders": [
+          {
+            "id": "P1",
+            "name": "PROVIDER-NAME-en",
+            "names": {
+              "en": "PROVIDER-NAME-en",
+              "fr": "PROVIDER-NAME-fr"
+            },
+            "description": "PROVIDER-DESC-en",
+            "descriptions": {
+              "en": "PROVIDER-DESC-en",
+              "fr": "PROVIDER-DESC-fr"
+            },
+            "contacts": [
+              {
+                "name": "CONTACT-en",
+                "names": {
+                  "en": "CONTACT-en",
+                  "fr": "CONTACT-fr"
+                },
+                "department": "DEPT-en",
+                "departments": {
+                  "en": "DEPT-en",
+                  "fr": "DEPT-fr"
+                },
+                "role": "ROLE-en",
+                "roles": {
+                  "en": "ROLE-en",
+                  "fr": "ROLE-fr"
+                },
+                "telephones": [
+                  "+1-555-0100"
+                ],
+                "faxes": [
+                  "+1-555-0101"
+                ],
+                "x400s": [
+                  "x400-address"
+                ],
+                "uris": [
+                  "https://example.org/contact"
+                ],
+                "emails": [
+                  "contact@example.org"
+                ],
+                "id": "CONTACT-ID"
+              }
+            ],
+            "annotations": [
+              {
+                "id": "PROVIDER-ANN",
+                "title": "PROVIDER-TITLE",
+                "type": "PROVIDER-TYPE",
+                "text": "PROVIDER-TEXT-en",
+                "texts": {
+                  "en": "PROVIDER-TEXT-en",
+                  "fr": "PROVIDER-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/PROVIDER",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/PROVIDER/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "PROVIDER-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/provider",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/provider",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/provider",
+                "rel": "alternate"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "metadataProviderSchemes": [
+      {
+        "id": "METADATA_PROVIDERS",
+        "agencyID": "AG_MD",
+        "version": "1.0",
+        "name": "METADATA_PROVIDERS-NAME-en",
+        "names": {
+          "en": "METADATA_PROVIDERS-NAME-en",
+          "fr": "METADATA_PROVIDERS-NAME-fr"
+        },
+        "description": "METADATA_PROVIDERS-DESC-en",
+        "descriptions": {
+          "en": "METADATA_PROVIDERS-DESC-en",
+          "fr": "METADATA_PROVIDERS-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "METADATA_PROVIDERS-ANN",
+            "title": "METADATA_PROVIDERS-TITLE",
+            "type": "METADATA_PROVIDERS-TYPE",
+            "text": "METADATA_PROVIDERS-TEXT-en",
+            "texts": {
+              "en": "METADATA_PROVIDERS-TEXT-en",
+              "fr": "METADATA_PROVIDERS-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/METADATA_PROVIDERS",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/METADATA_PROVIDERS/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "METADATA_PROVIDERS-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.base.MetadataProviderScheme=AG_MD:METADATA_PROVIDERS(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/METADATA_PROVIDERS",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/METADATA_PROVIDERS",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/METADATA_PROVIDERS",
+            "rel": "alternate"
+          }
+        ],
+        "isPartial": true,
+        "metadataProviders": [
+          {
+            "id": "MP1",
+            "name": "MDPROVIDER-NAME-en",
+            "names": {
+              "en": "MDPROVIDER-NAME-en",
+              "fr": "MDPROVIDER-NAME-fr"
+            },
+            "description": "MDPROVIDER-DESC-en",
+            "descriptions": {
+              "en": "MDPROVIDER-DESC-en",
+              "fr": "MDPROVIDER-DESC-fr"
+            },
+            "contacts": [
+              {
+                "name": "CONTACT-en",
+                "names": {
+                  "en": "CONTACT-en",
+                  "fr": "CONTACT-fr"
+                },
+                "department": "DEPT-en",
+                "departments": {
+                  "en": "DEPT-en",
+                  "fr": "DEPT-fr"
+                },
+                "role": "ROLE-en",
+                "roles": {
+                  "en": "ROLE-en",
+                  "fr": "ROLE-fr"
+                },
+                "telephones": [
+                  "+1-555-0100"
+                ],
+                "faxes": [
+                  "+1-555-0101"
+                ],
+                "x400s": [
+                  "x400-address"
+                ],
+                "uris": [
+                  "https://example.org/contact"
+                ],
+                "emails": [
+                  "contact@example.org"
+                ],
+                "id": "CONTACT-ID"
+              }
+            ],
+            "annotations": [
+              {
+                "id": "MDPROVIDER-ANN",
+                "title": "MDPROVIDER-TITLE",
+                "type": "MDPROVIDER-TYPE",
+                "text": "MDPROVIDER-TEXT-en",
+                "texts": {
+                  "en": "MDPROVIDER-TEXT-en",
+                  "fr": "MDPROVIDER-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/MDPROVIDER",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/MDPROVIDER/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "MDPROVIDER-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/mdprovider",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/mdprovider",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/mdprovider",
+                "rel": "alternate"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "dataConsumerSchemes": [
+      {
+        "id": "DATA_CONSUMERS",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "DATA_CONSUMERS-NAME-en",
+        "names": {
+          "en": "DATA_CONSUMERS-NAME-en",
+          "fr": "DATA_CONSUMERS-NAME-fr"
+        },
+        "description": "DATA_CONSUMERS-DESC-en",
+        "descriptions": {
+          "en": "DATA_CONSUMERS-DESC-en",
+          "fr": "DATA_CONSUMERS-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "DATA_CONSUMERS-ANN",
+            "title": "DATA_CONSUMERS-TITLE",
+            "type": "DATA_CONSUMERS-TYPE",
+            "text": "DATA_CONSUMERS-TEXT-en",
+            "texts": {
+              "en": "DATA_CONSUMERS-TEXT-en",
+              "fr": "DATA_CONSUMERS-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/DATA_CONSUMERS",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/DATA_CONSUMERS/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "DATA_CONSUMERS-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.base.DataConsumerScheme=AG:DATA_CONSUMERS(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/DATA_CONSUMERS",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/DATA_CONSUMERS",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/DATA_CONSUMERS",
+            "rel": "alternate"
+          }
+        ],
+        "isPartial": true,
+        "dataConsumers": [
+          {
+            "id": "C1",
+            "name": "CONSUMER-NAME-en",
+            "names": {
+              "en": "CONSUMER-NAME-en",
+              "fr": "CONSUMER-NAME-fr"
+            },
+            "description": "CONSUMER-DESC-en",
+            "descriptions": {
+              "en": "CONSUMER-DESC-en",
+              "fr": "CONSUMER-DESC-fr"
+            },
+            "contacts": [
+              {
+                "name": "CONTACT-en",
+                "names": {
+                  "en": "CONTACT-en",
+                  "fr": "CONTACT-fr"
+                },
+                "department": "DEPT-en",
+                "departments": {
+                  "en": "DEPT-en",
+                  "fr": "DEPT-fr"
+                },
+                "role": "ROLE-en",
+                "roles": {
+                  "en": "ROLE-en",
+                  "fr": "ROLE-fr"
+                },
+                "telephones": [
+                  "+1-555-0100"
+                ],
+                "faxes": [
+                  "+1-555-0101"
+                ],
+                "x400s": [
+                  "x400-address"
+                ],
+                "uris": [
+                  "https://example.org/contact"
+                ],
+                "emails": [
+                  "contact@example.org"
+                ],
+                "id": "CONTACT-ID"
+              }
+            ],
+            "annotations": [
+              {
+                "id": "CONSUMER-ANN",
+                "title": "CONSUMER-TITLE",
+                "type": "CONSUMER-TYPE",
+                "text": "CONSUMER-TEXT-en",
+                "texts": {
+                  "en": "CONSUMER-TEXT-en",
+                  "fr": "CONSUMER-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/CONSUMER",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/CONSUMER/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "CONSUMER-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/consumer",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/consumer",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/consumer",
+                "rel": "alternate"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "organisationUnitSchemes": [
+      {
+        "id": "UNITS",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "UNITS-NAME-en",
+        "names": {
+          "en": "UNITS-NAME-en",
+          "fr": "UNITS-NAME-fr"
+        },
+        "description": "UNITS-DESC-en",
+        "descriptions": {
+          "en": "UNITS-DESC-en",
+          "fr": "UNITS-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "UNITS-ANN",
+            "title": "UNITS-TITLE",
+            "type": "UNITS-TYPE",
+            "text": "UNITS-TEXT-en",
+            "texts": {
+              "en": "UNITS-TEXT-en",
+              "fr": "UNITS-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/UNITS",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/UNITS/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "UNITS-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.base.OrganisationUnitScheme=AG:UNITS(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/UNITS",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/UNITS",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/UNITS",
+            "rel": "alternate"
+          }
+        ],
+        "isPartial": true,
+        "organisationUnits": [
+          {
+            "id": "U1",
+            "name": "UNIT-NAME-en",
+            "names": {
+              "en": "UNIT-NAME-en",
+              "fr": "UNIT-NAME-fr"
+            },
+            "description": "UNIT-DESC-en",
+            "descriptions": {
+              "en": "UNIT-DESC-en",
+              "fr": "UNIT-DESC-fr"
+            },
+            "contacts": [
+              {
+                "name": "CONTACT-en",
+                "names": {
+                  "en": "CONTACT-en",
+                  "fr": "CONTACT-fr"
+                },
+                "department": "DEPT-en",
+                "departments": {
+                  "en": "DEPT-en",
+                  "fr": "DEPT-fr"
+                },
+                "role": "ROLE-en",
+                "roles": {
+                  "en": "ROLE-en",
+                  "fr": "ROLE-fr"
+                },
+                "telephones": [
+                  "+1-555-0100"
+                ],
+                "faxes": [
+                  "+1-555-0101"
+                ],
+                "x400s": [
+                  "x400-address"
+                ],
+                "uris": [
+                  "https://example.org/contact"
+                ],
+                "emails": [
+                  "contact@example.org"
+                ],
+                "id": "CONTACT-ID"
+              }
+            ],
+            "annotations": [
+              {
+                "id": "UNIT-ANN",
+                "title": "UNIT-TITLE",
+                "type": "UNIT-TYPE",
+                "text": "UNIT-TEXT-en",
+                "texts": {
+                  "en": "UNIT-TEXT-en",
+                  "fr": "UNIT-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/UNIT",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/UNIT/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "UNIT-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/unit",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/unit",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/unit",
+                "rel": "alternate"
+              }
+            ]
+          },
+          {
+            "id": "U2",
+            "name": "SUBUNIT-NAME-en",
+            "names": {
+              "en": "SUBUNIT-NAME-en",
+              "fr": "SUBUNIT-NAME-fr"
+            },
+            "parent": "U1"
+          }
+        ]
+      }
+    ],
+    "codelists": [
+      {
+        "id": "CL",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "CL-NAME-en",
+        "names": {
+          "en": "CL-NAME-en",
+          "fr": "CL-NAME-fr"
+        },
+        "description": "CL-DESC-en",
+        "descriptions": {
+          "en": "CL-DESC-en",
+          "fr": "CL-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "CL-ANN",
+            "title": "CL-TITLE",
+            "type": "CL-TYPE",
+            "text": "CL-TEXT-en",
+            "texts": {
+              "en": "CL-TEXT-en",
+              "fr": "CL-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/CL",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/CL/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "CL-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/CL",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/CL",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/CL",
+            "rel": "alternate"
+          }
+        ],
+        "isPartial": true,
+        "codes": [
+          {
+            "id": "PARENT",
+            "name": "CODE-PARENT-NAME-en",
+            "names": {
+              "en": "CODE-PARENT-NAME-en",
+              "fr": "CODE-PARENT-NAME-fr"
+            },
+            "description": "CODE-PARENT-DESC-en",
+            "descriptions": {
+              "en": "CODE-PARENT-DESC-en",
+              "fr": "CODE-PARENT-DESC-fr"
+            },
+            "annotations": [
+              {
+                "id": "CODE-PARENT-ANN",
+                "title": "CODE-PARENT-TITLE",
+                "type": "CODE-PARENT-TYPE",
+                "text": "CODE-PARENT-TEXT-en",
+                "texts": {
+                  "en": "CODE-PARENT-TEXT-en",
+                  "fr": "CODE-PARENT-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/CODE-PARENT",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/CODE-PARENT/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "CODE-PARENT-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/code-parent",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/code-parent",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/code-parent",
+                "rel": "alternate"
+              }
+            ]
+          },
+          {
+            "id": "CHILD",
+            "name": "CODE-CHILD-NAME-en",
+            "names": {
+              "en": "CODE-CHILD-NAME-en",
+              "fr": "CODE-CHILD-NAME-fr"
+            },
+            "description": "CODE-CHILD-DESC-en",
+            "descriptions": {
+              "en": "CODE-CHILD-DESC-en",
+              "fr": "CODE-CHILD-DESC-fr"
+            },
+            "parent": "PARENT",
+            "annotations": [
+              {
+                "id": "CODE-CHILD-ANN",
+                "title": "CODE-CHILD-TITLE",
+                "type": "CODE-CHILD-TYPE",
+                "text": "CODE-CHILD-TEXT-en",
+                "texts": {
+                  "en": "CODE-CHILD-TEXT-en",
+                  "fr": "CODE-CHILD-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/CODE-CHILD",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/CODE-CHILD/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "CODE-CHILD-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/code-child",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/code-child",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/code-child",
+                "rel": "alternate"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "geographicCodelists": [
+      {
+        "id": "CL_GEO",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "CL_GEO-NAME-en",
+        "names": {
+          "en": "CL_GEO-NAME-en",
+          "fr": "CL_GEO-NAME-fr"
+        },
+        "description": "CL_GEO-DESC-en",
+        "descriptions": {
+          "en": "CL_GEO-DESC-en",
+          "fr": "CL_GEO-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "CL_GEO-ANN",
+            "title": "CL_GEO-TITLE",
+            "type": "CL_GEO-TYPE",
+            "text": "CL_GEO-TEXT-en",
+            "texts": {
+              "en": "CL_GEO-TEXT-en",
+              "fr": "CL_GEO-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/CL_GEO",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/CL_GEO/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "CL_GEO-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_GEO(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/CL_GEO",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/CL_GEO",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/CL_GEO",
+            "rel": "alternate"
+          }
+        ],
+        "isPartial": true,
+        "geoType": "GeographicCodelist",
+        "geoFeatureSetCodes": [
+          {
+            "id": "EU",
+            "name": "GEO-EU-NAME-en",
+            "names": {
+              "en": "GEO-EU-NAME-en",
+              "fr": "GEO-EU-NAME-fr"
+            },
+            "description": "GEO-EU-DESC-en",
+            "descriptions": {
+              "en": "GEO-EU-DESC-en",
+              "fr": "GEO-EU-DESC-fr"
+            },
+            "annotations": [
+              {
+                "id": "GEO-EU-ANN",
+                "title": "GEO-EU-TITLE",
+                "type": "GEO-EU-TYPE",
+                "text": "GEO-EU-TEXT-en",
+                "texts": {
+                  "en": "GEO-EU-TEXT-en",
+                  "fr": "GEO-EU-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/GEO-EU",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/GEO-EU/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "GEO-EU-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/geo-eu",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/geo-eu",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/geo-eu",
+                "rel": "alternate"
+              }
+            ],
+            "value": "POLYGON((0 0, 10 0, 10 10, 0 0))"
+          },
+          {
+            "id": "BE",
+            "name": "GEO-BE-NAME-en",
+            "names": {
+              "en": "GEO-BE-NAME-en",
+              "fr": "GEO-BE-NAME-fr"
+            },
+            "description": "GEO-BE-DESC-en",
+            "descriptions": {
+              "en": "GEO-BE-DESC-en",
+              "fr": "GEO-BE-DESC-fr"
+            },
+            "parent": "EU",
+            "annotations": [
+              {
+                "id": "GEO-BE-ANN",
+                "title": "GEO-BE-TITLE",
+                "type": "GEO-BE-TYPE",
+                "text": "GEO-BE-TEXT-en",
+                "texts": {
+                  "en": "GEO-BE-TEXT-en",
+                  "fr": "GEO-BE-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/GEO-BE",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/GEO-BE/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "GEO-BE-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/geo-be",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/geo-be",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/geo-be",
+                "rel": "alternate"
+              }
+            ],
+            "value": "POLYGON((0 0, 1 0, 1 1, 0 0))"
+          }
+        ],
+        "codelistExtensions": [
+          {
+            "codelist": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+            "prefix": "GEO_",
+            "exclusiveCodeSelection": {
+              "memberValues": [
+                {
+                  "value": "PARENT",
+                  "cascadeValues": true
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "geoGridCodelists": [
+      {
+        "id": "CL_GRID",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "CL_GRID-NAME-en",
+        "names": {
+          "en": "CL_GRID-NAME-en",
+          "fr": "CL_GRID-NAME-fr"
+        },
+        "description": "CL_GRID-DESC-en",
+        "descriptions": {
+          "en": "CL_GRID-DESC-en",
+          "fr": "CL_GRID-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "CL_GRID-ANN",
+            "title": "CL_GRID-TITLE",
+            "type": "CL_GRID-TYPE",
+            "text": "CL_GRID-TEXT-en",
+            "texts": {
+              "en": "CL_GRID-TEXT-en",
+              "fr": "CL_GRID-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/CL_GRID",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/CL_GRID/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "CL_GRID-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_GRID(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/CL_GRID",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/CL_GRID",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/CL_GRID",
+            "rel": "alternate"
+          }
+        ],
+        "isPartial": true,
+        "geoType": "GeoGridCodelist",
+        "gridDefinition": "1kmN[0-9]{4}E[0-9]{4}",
+        "geoGridCodes": [
+          {
+            "id": "CELL",
+            "name": "GRID-CELL-NAME-en",
+            "names": {
+              "en": "GRID-CELL-NAME-en",
+              "fr": "GRID-CELL-NAME-fr"
+            },
+            "description": "GRID-CELL-DESC-en",
+            "descriptions": {
+              "en": "GRID-CELL-DESC-en",
+              "fr": "GRID-CELL-DESC-fr"
+            },
+            "annotations": [
+              {
+                "id": "GRID-CELL-ANN",
+                "title": "GRID-CELL-TITLE",
+                "type": "GRID-CELL-TYPE",
+                "text": "GRID-CELL-TEXT-en",
+                "texts": {
+                  "en": "GRID-CELL-TEXT-en",
+                  "fr": "GRID-CELL-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/GRID-CELL",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/GRID-CELL/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "GRID-CELL-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/grid-cell",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/grid-cell",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/grid-cell",
+                "rel": "alternate"
+              }
+            ],
+            "geoCell": "1kmN2599E4498"
+          },
+          {
+            "id": "SUB",
+            "name": "GRID-SUB-NAME-en",
+            "names": {
+              "en": "GRID-SUB-NAME-en",
+              "fr": "GRID-SUB-NAME-fr"
+            },
+            "parent": "CELL",
+            "geoCell": "100mN25990E44980"
+          }
+        ],
+        "codelistExtensions": [
+          {
+            "codelist": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+            "exclusiveCodeSelection": {
+              "memberValues": [
+                {
+                  "value": "PARENT",
+                  "cascadeValues": true
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "valueLists": [
+      {
+        "id": "VL",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "VL-NAME-en",
+        "names": {
+          "en": "VL-NAME-en",
+          "fr": "VL-NAME-fr"
+        },
+        "description": "VL-DESC-en",
+        "descriptions": {
+          "en": "VL-DESC-en",
+          "fr": "VL-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "VL-ANN",
+            "title": "VL-TITLE",
+            "type": "VL-TYPE",
+            "text": "VL-TEXT-en",
+            "texts": {
+              "en": "VL-TEXT-en",
+              "fr": "VL-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/VL",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/VL/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "VL-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "href": "https://example.org/uri/VL",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/VL",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/VL",
+            "rel": "alternate"
+          }
+        ],
+        "valueItems": [
+          {
+            "id": "kg",
+            "name": "VL-KG-NAME-en",
+            "names": {
+              "en": "VL-KG-NAME-en",
+              "fr": "VL-KG-NAME-fr"
+            },
+            "description": "VL-KG-DESC-en",
+            "descriptions": {
+              "en": "VL-KG-DESC-en",
+              "fr": "VL-KG-DESC-fr"
+            },
+            "annotations": [
+              {
+                "id": "VL-KG-ANN",
+                "title": "VL-KG-TITLE",
+                "type": "VL-KG-TYPE",
+                "text": "VL-KG-TEXT-en",
+                "texts": {
+                  "en": "VL-KG-TEXT-en",
+                  "fr": "VL-KG-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/VL-KG",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/VL-KG/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "VL-KG-VALUE"
+              }
+            ]
+          },
+          {
+            "id": "m 2"
+          }
+        ]
+      }
+    ],
+    "conceptSchemes": [
+      {
+        "id": "CS",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "CS-NAME-en",
+        "names": {
+          "en": "CS-NAME-en",
+          "fr": "CS-NAME-fr"
+        },
+        "description": "CS-DESC-en",
+        "descriptions": {
+          "en": "CS-DESC-en",
+          "fr": "CS-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "CS-ANN",
+            "title": "CS-TITLE",
+            "type": "CS-TYPE",
+            "text": "CS-TEXT-en",
+            "texts": {
+              "en": "CS-TEXT-en",
+              "fr": "CS-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/CS",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/CS/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "CS-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=AG:CS(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/CS",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/CS",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/CS",
+            "rel": "alternate"
+          }
+        ],
+        "isPartial": true,
+        "concepts": [
+          {
+            "id": "PARENT",
+            "name": "CONCEPT-PARENT-NAME-en",
+            "names": {
+              "en": "CONCEPT-PARENT-NAME-en",
+              "fr": "CONCEPT-PARENT-NAME-fr"
+            },
+            "description": "CONCEPT-PARENT-DESC-en",
+            "descriptions": {
+              "en": "CONCEPT-PARENT-DESC-en",
+              "fr": "CONCEPT-PARENT-DESC-fr"
+            },
+            "annotations": [
+              {
+                "id": "CONCEPT-PARENT-ANN",
+                "title": "CONCEPT-PARENT-TITLE",
+                "type": "CONCEPT-PARENT-TYPE",
+                "text": "CONCEPT-PARENT-TEXT-en",
+                "texts": {
+                  "en": "CONCEPT-PARENT-TEXT-en",
+                  "fr": "CONCEPT-PARENT-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/CONCEPT-PARENT",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/CONCEPT-PARENT/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "CONCEPT-PARENT-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/concept-parent",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/concept-parent",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/concept-parent",
+                "rel": "alternate"
+              }
+            ]
+          },
+          {
+            "id": "CHILD",
+            "name": "CONCEPT-CHILD-NAME-en",
+            "names": {
+              "en": "CONCEPT-CHILD-NAME-en",
+              "fr": "CONCEPT-CHILD-NAME-fr"
+            },
+            "description": "CONCEPT-CHILD-DESC-en",
+            "descriptions": {
+              "en": "CONCEPT-CHILD-DESC-en",
+              "fr": "CONCEPT-CHILD-DESC-fr"
+            },
+            "parent": "PARENT",
+            "coreRepresentation": {
+              "format": {
+                "dataType": "Integer",
+                "maxLength": 10,
+                "minLength": 1,
+                "maxValue": 99.0,
+                "minValue": 1.0,
+                "decimals": 2,
+                "pattern": "[0-9]+",
+                "startValue": 1.0,
+                "endValue": 99.0,
+                "isSequence": true,
+                "isMultiLingual": true,
+                "interval": 2.0,
+                "timeInterval": "P1D",
+                "startTime": "2020-01-01",
+                "endTime": "2030-12-31",
+                "sentinelValues": [
+                  {
+                    "value": "-1",
+                    "name": "CONCEPT-SENTINEL-NAME-en",
+                    "names": {
+                      "en": "CONCEPT-SENTINEL-NAME-en",
+                      "fr": "CONCEPT-SENTINEL-NAME-fr"
+                    },
+                    "description": "CONCEPT-SENTINEL-DESC-en",
+                    "descriptions": {
+                      "en": "CONCEPT-SENTINEL-DESC-en",
+                      "fr": "CONCEPT-SENTINEL-DESC-fr"
+                    }
+                  },
+                  {
+                    "value": "NA",
+                    "name": "CONCEPT-NA-NAME-en",
+                    "names": {
+                      "en": "CONCEPT-NA-NAME-en",
+                      "fr": "CONCEPT-NA-NAME-fr"
+                    }
+                  }
+                ]
+              }
+            },
+            "annotations": [
+              {
+                "id": "CONCEPT-CHILD-ANN",
+                "title": "CONCEPT-CHILD-TITLE",
+                "type": "CONCEPT-CHILD-TYPE",
+                "text": "CONCEPT-CHILD-TEXT-en",
+                "texts": {
+                  "en": "CONCEPT-CHILD-TEXT-en",
+                  "fr": "CONCEPT-CHILD-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/CONCEPT-CHILD",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/CONCEPT-CHILD/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "CONCEPT-CHILD-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/concept-child",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/concept-child",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/concept-child",
+                "rel": "alternate"
+              }
+            ]
+          },
+          {
+            "id": "PLAIN",
+            "name": "CONCEPT-PLAIN-NAME-en",
+            "names": {
+              "en": "CONCEPT-PLAIN-NAME-en",
+              "fr": "CONCEPT-PLAIN-NAME-fr"
+            },
+            "coreRepresentation": {
+              "format": {
+                "dataType": "String"
+              }
+            }
+          },
+          {
+            "id": "CODED",
+            "name": "CONCEPT-CODED-NAME-en",
+            "names": {
+              "en": "CONCEPT-CODED-NAME-en",
+              "fr": "CONCEPT-CODED-NAME-fr"
+            },
+            "coreRepresentation": {
+              "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+              "enumerationFormat": {
+                "dataType": "Integer",
+                "maxLength": 10,
+                "minLength": 1,
+                "maxValue": 99.0,
+                "minValue": 1.0,
+                "pattern": "[0-9]+",
+                "startValue": 1.0,
+                "endValue": 99.0,
+                "isSequence": true,
+                "interval": 2.0,
+                "timeInterval": "P1D",
+                "startTime": "2020-01-01",
+                "endTime": "2030-12-31"
+              },
+              "minOccurs": 0,
+              "maxOccurs": "unbounded"
+            },
+            "isoConceptReference": {
+              "conceptAgency": "ISO",
+              "conceptSchemeID": "ISO_SCHEME",
+              "conceptID": "ISO_CONCEPT"
+            }
+          }
+        ]
+      }
+    ],
+    "categorySchemes": [
+      {
+        "id": "CATS",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "CATS-NAME-en",
+        "names": {
+          "en": "CATS-NAME-en",
+          "fr": "CATS-NAME-fr"
+        },
+        "description": "CATS-DESC-en",
+        "descriptions": {
+          "en": "CATS-DESC-en",
+          "fr": "CATS-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "CATS-ANN",
+            "title": "CATS-TITLE",
+            "type": "CATS-TYPE",
+            "text": "CATS-TEXT-en",
+            "texts": {
+              "en": "CATS-TEXT-en",
+              "fr": "CATS-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/CATS",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/CATS/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "CATS-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=AG:CATS(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/CATS",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/CATS",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/CATS",
+            "rel": "alternate"
+          }
+        ],
+        "isPartial": true,
+        "categories": [
+          {
+            "id": "TOP",
+            "name": "CAT-TOP-NAME-en",
+            "names": {
+              "en": "CAT-TOP-NAME-en",
+              "fr": "CAT-TOP-NAME-fr"
+            },
+            "description": "CAT-TOP-DESC-en",
+            "descriptions": {
+              "en": "CAT-TOP-DESC-en",
+              "fr": "CAT-TOP-DESC-fr"
+            },
+            "categories": [
+              {
+                "id": "SUB",
+                "name": "CAT-SUB-NAME-en",
+                "names": {
+                  "en": "CAT-SUB-NAME-en",
+                  "fr": "CAT-SUB-NAME-fr"
+                },
+                "description": "CAT-SUB-DESC-en",
+                "descriptions": {
+                  "en": "CAT-SUB-DESC-en",
+                  "fr": "CAT-SUB-DESC-fr"
+                },
+                "annotations": [
+                  {
+                    "id": "CAT-SUB-ANN",
+                    "title": "CAT-SUB-TITLE",
+                    "type": "CAT-SUB-TYPE",
+                    "text": "CAT-SUB-TEXT-en",
+                    "texts": {
+                      "en": "CAT-SUB-TEXT-en",
+                      "fr": "CAT-SUB-TEXT-fr"
+                    },
+                    "links": [
+                      {
+                        "href": "https://example.org/CAT-SUB",
+                        "rel": "self"
+                      },
+                      {
+                        "href": "https://example.org/CAT-SUB/fr",
+                        "rel": "self",
+                        "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                        "hreflang": "fr",
+                        "type": "PDF"
+                      }
+                    ],
+                    "value": "CAT-SUB-VALUE"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://example.org/uri/cat-sub",
+                    "rel": "describedby"
+                  },
+                  {
+                    "href": "https://example.org/link/cat-sub",
+                    "rel": "metadata",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                    "hreflang": "en",
+                    "type": "PDF"
+                  },
+                  {
+                    "href": "https://example.org/alternate/cat-sub",
+                    "rel": "alternate"
+                  }
+                ]
+              }
+            ],
+            "annotations": [
+              {
+                "id": "CAT-TOP-ANN",
+                "title": "CAT-TOP-TITLE",
+                "type": "CAT-TOP-TYPE",
+                "text": "CAT-TOP-TEXT-en",
+                "texts": {
+                  "en": "CAT-TOP-TEXT-en",
+                  "fr": "CAT-TOP-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/CAT-TOP",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/CAT-TOP/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "CAT-TOP-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/cat-top",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/cat-top",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/cat-top",
+                "rel": "alternate"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "dataStructures": [
+      {
+        "id": "DSD",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "DSD-NAME-en",
+        "names": {
+          "en": "DSD-NAME-en",
+          "fr": "DSD-NAME-fr"
+        },
+        "description": "DSD-DESC-en",
+        "descriptions": {
+          "en": "DSD-DESC-en",
+          "fr": "DSD-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "DSD-ANN",
+            "title": "DSD-TITLE",
+            "type": "DSD-TYPE",
+            "text": "DSD-TEXT-en",
+            "texts": {
+              "en": "DSD-TEXT-en",
+              "fr": "DSD-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/DSD",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/DSD/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "DSD-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/DSD",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/DSD",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/DSD",
+            "rel": "alternate"
+          }
+        ],
+        "dataStructureComponents": {
+          "dimensionList": {
+            "dimensions": [
+              {
+                "id": "DIM",
+                "position": 0,
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+                "localRepresentation": {
+                  "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+                  "enumerationFormat": {
+                    "dataType": "Integer",
+                    "maxLength": 10,
+                    "minLength": 1,
+                    "maxValue": 99.0,
+                    "minValue": 1.0,
+                    "pattern": "[0-9]+",
+                    "startValue": 1.0,
+                    "endValue": 99.0,
+                    "isSequence": true,
+                    "interval": 2.0,
+                    "timeInterval": "P1D",
+                    "startTime": "2020-01-01",
+                    "endTime": "2030-12-31"
+                  }
+                },
+                "conceptRoles": [
+                  "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).role-dim"
+                ],
+                "annotations": [
+                  {
+                    "id": "DIM-ANN",
+                    "title": "DIM-TITLE",
+                    "type": "DIM-TYPE",
+                    "text": "DIM-TEXT-en",
+                    "texts": {
+                      "en": "DIM-TEXT-en",
+                      "fr": "DIM-TEXT-fr"
+                    },
+                    "links": [
+                      {
+                        "href": "https://example.org/DIM",
+                        "rel": "self"
+                      },
+                      {
+                        "href": "https://example.org/DIM/fr",
+                        "rel": "self",
+                        "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                        "hreflang": "fr",
+                        "type": "PDF"
+                      }
+                    ],
+                    "value": "DIM-VALUE"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://example.org/uri/dim",
+                    "rel": "describedby"
+                  },
+                  {
+                    "href": "https://example.org/link/dim",
+                    "rel": "metadata",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                    "hreflang": "en",
+                    "type": "PDF"
+                  },
+                  {
+                    "href": "https://example.org/alternate/dim",
+                    "rel": "alternate"
+                  }
+                ]
+              }
+            ],
+            "timeDimension": {
+              "id": "TIME_PERIOD",
+              "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+              "localRepresentation": {
+                "format": {
+                  "dataType": "ObservationalTimePeriod",
+                  "startTime": "2020-01",
+                  "endTime": "2030-12",
+                  "sentinelValues": [
+                    {
+                      "value": "-1",
+                      "name": "TIME-SENTINEL-NAME-en",
+                      "names": {
+                        "en": "TIME-SENTINEL-NAME-en",
+                        "fr": "TIME-SENTINEL-NAME-fr"
+                      },
+                      "description": "TIME-SENTINEL-DESC-en",
+                      "descriptions": {
+                        "en": "TIME-SENTINEL-DESC-en",
+                        "fr": "TIME-SENTINEL-DESC-fr"
+                      }
+                    },
+                    {
+                      "value": "NA",
+                      "name": "TIME-NA-NAME-en",
+                      "names": {
+                        "en": "TIME-NA-NAME-en",
+                        "fr": "TIME-NA-NAME-fr"
+                      }
+                    }
+                  ]
+                }
+              },
+              "annotations": [
+                {
+                  "id": "TD-ANN",
+                  "title": "TD-TITLE",
+                  "type": "TD-TYPE",
+                  "text": "TD-TEXT-en",
+                  "texts": {
+                    "en": "TD-TEXT-en",
+                    "fr": "TD-TEXT-fr"
+                  },
+                  "links": [
+                    {
+                      "href": "https://example.org/TD",
+                      "rel": "self"
+                    },
+                    {
+                      "href": "https://example.org/TD/fr",
+                      "rel": "self",
+                      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                      "hreflang": "fr",
+                      "type": "PDF"
+                    }
+                  ],
+                  "value": "TD-VALUE"
+                }
+              ],
+              "links": [
+                {
+                  "href": "https://example.org/uri/td",
+                  "rel": "describedby"
+                },
+                {
+                  "href": "https://example.org/link/td",
+                  "rel": "metadata",
+                  "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                  "hreflang": "en",
+                  "type": "PDF"
+                },
+                {
+                  "href": "https://example.org/alternate/td",
+                  "rel": "alternate"
+                }
+              ]
+            },
+            "annotations": [
+              {
+                "id": "DIMLIST-ANN",
+                "title": "DIMLIST-TITLE",
+                "type": "DIMLIST-TYPE",
+                "text": "DIMLIST-TEXT-en",
+                "texts": {
+                  "en": "DIMLIST-TEXT-en",
+                  "fr": "DIMLIST-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/DIMLIST",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/DIMLIST/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "DIMLIST-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/dimlist",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/dimlist",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/dimlist",
+                "rel": "alternate"
+              }
+            ]
+          },
+          "attributeList": {
+            "attributes": [
+              {
+                "id": "ATTR",
+                "usage": "mandatory",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+                "localRepresentation": {
+                  "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+                  "enumerationFormat": {
+                    "dataType": "Integer",
+                    "maxLength": 10,
+                    "minLength": 1,
+                    "maxValue": 99.0,
+                    "minValue": 1.0,
+                    "pattern": "[0-9]+",
+                    "startValue": 1.0,
+                    "endValue": 99.0,
+                    "isSequence": true,
+                    "interval": 2.0,
+                    "timeInterval": "P1D",
+                    "startTime": "2020-01-01",
+                    "endTime": "2030-12-31"
+                  },
+                  "minOccurs": 0,
+                  "maxOccurs": "unbounded"
+                },
+                "attributeRelationship": {
+                  "dimensions": [
+                    "DIM"
+                  ],
+                  "areDimensionsOptional": [
+                    true
+                  ]
+                },
+                "measureRelationship": [
+                  "OBS_VALUE"
+                ],
+                "conceptRoles": [
+                  "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).role-attr"
+                ],
+                "annotations": [
+                  {
+                    "id": "ATTR-ANN",
+                    "title": "ATTR-TITLE",
+                    "type": "ATTR-TYPE",
+                    "text": "ATTR-TEXT-en",
+                    "texts": {
+                      "en": "ATTR-TEXT-en",
+                      "fr": "ATTR-TEXT-fr"
+                    },
+                    "links": [
+                      {
+                        "href": "https://example.org/ATTR",
+                        "rel": "self"
+                      },
+                      {
+                        "href": "https://example.org/ATTR/fr",
+                        "rel": "self",
+                        "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                        "hreflang": "fr",
+                        "type": "PDF"
+                      }
+                    ],
+                    "value": "ATTR-VALUE"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://example.org/uri/attr",
+                    "rel": "describedby"
+                  },
+                  {
+                    "href": "https://example.org/link/attr",
+                    "rel": "metadata",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                    "hreflang": "en",
+                    "type": "PDF"
+                  },
+                  {
+                    "href": "https://example.org/alternate/attr",
+                    "rel": "alternate"
+                  }
+                ]
+              },
+              {
+                "id": "ATTR_MEAS",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+                "attributeRelationship": {
+                  "observation": {}
+                },
+                "annotations": [
+                  {
+                    "id": "ATTR-MEAS-ANN",
+                    "title": "ATTR-MEAS-TITLE",
+                    "type": "ATTR-MEAS-TYPE",
+                    "text": "ATTR-MEAS-TEXT-en",
+                    "texts": {
+                      "en": "ATTR-MEAS-TEXT-en",
+                      "fr": "ATTR-MEAS-TEXT-fr"
+                    },
+                    "links": [
+                      {
+                        "href": "https://example.org/ATTR-MEAS",
+                        "rel": "self"
+                      },
+                      {
+                        "href": "https://example.org/ATTR-MEAS/fr",
+                        "rel": "self",
+                        "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                        "hreflang": "fr",
+                        "type": "PDF"
+                      }
+                    ],
+                    "value": "ATTR-MEAS-VALUE"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://example.org/uri/attr-meas",
+                    "rel": "describedby"
+                  },
+                  {
+                    "href": "https://example.org/link/attr-meas",
+                    "rel": "metadata",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                    "hreflang": "en",
+                    "type": "PDF"
+                  },
+                  {
+                    "href": "https://example.org/alternate/attr-meas",
+                    "rel": "alternate"
+                  }
+                ]
+              },
+              {
+                "id": "ATTR_GRP",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+                "attributeRelationship": {
+                  "group": "GRP"
+                },
+                "annotations": [
+                  {
+                    "id": "ATTR-GRP-ANN",
+                    "title": "ATTR-GRP-TITLE",
+                    "type": "ATTR-GRP-TYPE",
+                    "text": "ATTR-GRP-TEXT-en",
+                    "texts": {
+                      "en": "ATTR-GRP-TEXT-en",
+                      "fr": "ATTR-GRP-TEXT-fr"
+                    },
+                    "links": [
+                      {
+                        "href": "https://example.org/ATTR-GRP",
+                        "rel": "self"
+                      },
+                      {
+                        "href": "https://example.org/ATTR-GRP/fr",
+                        "rel": "self",
+                        "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                        "hreflang": "fr",
+                        "type": "PDF"
+                      }
+                    ],
+                    "value": "ATTR-GRP-VALUE"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://example.org/uri/attr-grp",
+                    "rel": "describedby"
+                  },
+                  {
+                    "href": "https://example.org/link/attr-grp",
+                    "rel": "metadata",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                    "hreflang": "en",
+                    "type": "PDF"
+                  },
+                  {
+                    "href": "https://example.org/alternate/attr-grp",
+                    "rel": "alternate"
+                  }
+                ]
+              }
+            ],
+            "metadataAttributeUsages": [
+              {
+                "metadataAttributeReference": "MA",
+                "attributeRelationship": {
+                  "dimensions": [
+                    "DIM"
+                  ],
+                  "areDimensionsOptional": [
+                    true
+                  ]
+                },
+                "annotations": [
+                  {
+                    "id": "MAU-ANN",
+                    "title": "MAU-TITLE",
+                    "type": "MAU-TYPE",
+                    "text": "MAU-TEXT-en",
+                    "texts": {
+                      "en": "MAU-TEXT-en",
+                      "fr": "MAU-TEXT-fr"
+                    },
+                    "links": [
+                      {
+                        "href": "https://example.org/MAU",
+                        "rel": "self"
+                      },
+                      {
+                        "href": "https://example.org/MAU/fr",
+                        "rel": "self",
+                        "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                        "hreflang": "fr",
+                        "type": "PDF"
+                      }
+                    ],
+                    "value": "MAU-VALUE"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://example.org/uri/mau",
+                    "rel": "describedby"
+                  },
+                  {
+                    "href": "https://example.org/link/mau",
+                    "rel": "metadata",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                    "hreflang": "en",
+                    "type": "PDF"
+                  }
+                ]
+              },
+              {
+                "metadataAttributeReference": "MA_CHILD",
+                "attributeRelationship": {
+                  "group": "GRP"
+                },
+                "annotations": [
+                  {
+                    "id": "MAU-GRP-ANN",
+                    "title": "MAU-GRP-TITLE",
+                    "type": "MAU-GRP-TYPE",
+                    "text": "MAU-GRP-TEXT-en",
+                    "texts": {
+                      "en": "MAU-GRP-TEXT-en",
+                      "fr": "MAU-GRP-TEXT-fr"
+                    },
+                    "links": [
+                      {
+                        "href": "https://example.org/MAU-GRP",
+                        "rel": "self"
+                      },
+                      {
+                        "href": "https://example.org/MAU-GRP/fr",
+                        "rel": "self",
+                        "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                        "hreflang": "fr",
+                        "type": "PDF"
+                      }
+                    ],
+                    "value": "MAU-GRP-VALUE"
+                  }
+                ]
+              }
+            ],
+            "annotations": [
+              {
+                "id": "ATTRLIST-ANN",
+                "title": "ATTRLIST-TITLE",
+                "type": "ATTRLIST-TYPE",
+                "text": "ATTRLIST-TEXT-en",
+                "texts": {
+                  "en": "ATTRLIST-TEXT-en",
+                  "fr": "ATTRLIST-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/ATTRLIST",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/ATTRLIST/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "ATTRLIST-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/attrlist",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/attrlist",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/attrlist",
+                "rel": "alternate"
+              }
+            ]
+          },
+          "measureList": {
+            "measures": [
+              {
+                "id": "OBS_VALUE",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+                "localRepresentation": {
+                  "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+                  "enumerationFormat": {
+                    "dataType": "Integer",
+                    "maxLength": 10,
+                    "minLength": 1,
+                    "maxValue": 99.0,
+                    "minValue": 1.0,
+                    "pattern": "[0-9]+",
+                    "startValue": 1.0,
+                    "endValue": 99.0,
+                    "isSequence": true,
+                    "interval": 2.0,
+                    "timeInterval": "P1D",
+                    "startTime": "2020-01-01",
+                    "endTime": "2030-12-31"
+                  },
+                  "maxOccurs": 3
+                },
+                "usage": "mandatory",
+                "conceptRoles": [
+                  "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=SDMX:CROSS_DOMAIN_CONCEPTS(1.0).role-meas"
+                ],
+                "annotations": [
+                  {
+                    "id": "MEAS-ANN",
+                    "title": "MEAS-TITLE",
+                    "type": "MEAS-TYPE",
+                    "text": "MEAS-TEXT-en",
+                    "texts": {
+                      "en": "MEAS-TEXT-en",
+                      "fr": "MEAS-TEXT-fr"
+                    },
+                    "links": [
+                      {
+                        "href": "https://example.org/MEAS",
+                        "rel": "self"
+                      },
+                      {
+                        "href": "https://example.org/MEAS/fr",
+                        "rel": "self",
+                        "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                        "hreflang": "fr",
+                        "type": "PDF"
+                      }
+                    ],
+                    "value": "MEAS-VALUE"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://example.org/uri/meas",
+                    "rel": "describedby"
+                  },
+                  {
+                    "href": "https://example.org/link/meas",
+                    "rel": "metadata",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                    "hreflang": "en",
+                    "type": "PDF"
+                  },
+                  {
+                    "href": "https://example.org/alternate/meas",
+                    "rel": "alternate"
+                  }
+                ]
+              }
+            ],
+            "annotations": [
+              {
+                "id": "MEASLIST-ANN",
+                "title": "MEASLIST-TITLE",
+                "type": "MEASLIST-TYPE",
+                "text": "MEASLIST-TEXT-en",
+                "texts": {
+                  "en": "MEASLIST-TEXT-en",
+                  "fr": "MEASLIST-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/MEASLIST",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/MEASLIST/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "MEASLIST-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/measlist",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/measlist",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/measlist",
+                "rel": "alternate"
+              }
+            ]
+          },
+          "groups": [
+            {
+              "id": "GRP",
+              "groupDimensions": [
+                "DIM"
+              ],
+              "annotations": [
+                {
+                  "id": "GRP-ANN",
+                  "title": "GRP-TITLE",
+                  "type": "GRP-TYPE",
+                  "text": "GRP-TEXT-en",
+                  "texts": {
+                    "en": "GRP-TEXT-en",
+                    "fr": "GRP-TEXT-fr"
+                  },
+                  "links": [
+                    {
+                      "href": "https://example.org/GRP",
+                      "rel": "self"
+                    },
+                    {
+                      "href": "https://example.org/GRP/fr",
+                      "rel": "self",
+                      "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                      "hreflang": "fr",
+                      "type": "PDF"
+                    }
+                  ],
+                  "value": "GRP-VALUE"
+                }
+              ],
+              "links": [
+                {
+                  "href": "https://example.org/uri/grp",
+                  "rel": "describedby"
+                }
+              ]
+            }
+          ]
+        },
+        "metadata": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD(1.0)",
+        "evolvingStructure": true
+      }
+    ],
+    "dataflows": [
+      {
+        "id": "DF",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "DF-NAME-en",
+        "names": {
+          "en": "DF-NAME-en",
+          "fr": "DF-NAME-fr"
+        },
+        "description": "DF-DESC-en",
+        "descriptions": {
+          "en": "DF-DESC-en",
+          "fr": "DF-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "DF-ANN",
+            "title": "DF-TITLE",
+            "type": "DF-TYPE",
+            "text": "DF-TEXT-en",
+            "texts": {
+              "en": "DF-TEXT-en",
+              "fr": "DF-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/DF",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/DF/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "DF-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/DF",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/DF",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/DF",
+            "rel": "alternate"
+          }
+        ],
+        "structure": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)"
+      }
+    ],
+    "categorisations": [
+      {
+        "id": "CATN",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "CATN-NAME-en",
+        "names": {
+          "en": "CATN-NAME-en",
+          "fr": "CATN-NAME-fr"
+        },
+        "description": "CATN-DESC-en",
+        "descriptions": {
+          "en": "CATN-DESC-en",
+          "fr": "CATN-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "CATN-ANN",
+            "title": "CATN-TITLE",
+            "type": "CATN-TYPE",
+            "text": "CATN-TEXT-en",
+            "texts": {
+              "en": "CATN-TEXT-en",
+              "fr": "CATN-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/CATN",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/CATN/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "CATN-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.categoryscheme.Categorisation=AG:CATN(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/CATN",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/CATN",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/CATN",
+            "rel": "alternate"
+          }
+        ],
+        "source": "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)",
+        "target": "urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=AG:CATS(1.0).TOP"
+      }
+    ],
+    "provisionAgreements": [
+      {
+        "id": "PA",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "PA-NAME-en",
+        "names": {
+          "en": "PA-NAME-en",
+          "fr": "PA-NAME-fr"
+        },
+        "description": "PA-DESC-en",
+        "descriptions": {
+          "en": "PA-DESC-en",
+          "fr": "PA-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "PA-ANN",
+            "title": "PA-TITLE",
+            "type": "PA-TYPE",
+            "text": "PA-TEXT-en",
+            "texts": {
+              "en": "PA-TEXT-en",
+              "fr": "PA-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/PA",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/PA/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "PA-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.registry.ProvisionAgreement=AG:PA(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/PA",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/PA",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/PA",
+            "rel": "alternate"
+          }
+        ],
+        "dataflow": "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)",
+        "dataProvider": "urn:sdmx:org.sdmx.infomodel.base.DataProvider=AG:DATA_PROVIDERS(1.0).P1"
+      }
+    ],
+    "dataConstraints": [
+      {
+        "id": "CC",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "CC-NAME-en",
+        "names": {
+          "en": "CC-NAME-en",
+          "fr": "CC-NAME-fr"
+        },
+        "description": "CC-DESC-en",
+        "descriptions": {
+          "en": "CC-DESC-en",
+          "fr": "CC-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "CC-ANN",
+            "title": "CC-TITLE",
+            "type": "CC-TYPE",
+            "text": "CC-TEXT-en",
+            "texts": {
+              "en": "CC-TEXT-en",
+              "fr": "CC-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/CC",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/CC/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "CC-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=AG:CC(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/CC",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/CC",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/CC",
+            "rel": "alternate"
+          }
+        ],
+        "constraintAttachment": {
+          "dataflows": [
+            "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)"
+          ]
+        },
+        "cubeRegions": [
+          {
+            "keyValues": [
+              {
+                "id": "DIM",
+                "values": [
+                  {
+                    "value": "PARENT",
+                    "cascadeValues": true,
+                    "validFrom": "2020-01-01",
+                    "validTo": "2030-12-31"
+                  }
+                ],
+                "removePrefix": true,
+                "validFrom": "2020-01-01",
+                "validTo": "2030-12-31"
+              },
+              {
+                "id": "TIME_PERIOD",
+                "timeRange": {
+                  "startPeriod": {
+                    "period": "2020-01-01T00:00:00Z",
+                    "isInclusive": false
+                  },
+                  "endPeriod": {
+                    "period": "2030-12-31T00:00:00Z",
+                    "isInclusive": false
+                  },
+                  "validFrom": "2021-01-01",
+                  "validTo": "2029-12-31"
+                },
+                "include": false
+              }
+            ],
+            "components": [
+              {
+                "id": "ATTR",
+                "values": [
+                  {
+                    "value": "CHILD",
+                    "cascadeValues": true,
+                    "lang": "en"
+                  }
+                ],
+                "include": false,
+                "removePrefix": true
+              },
+              {
+                "id": "ATTR_MEAS",
+                "timeRange": {
+                  "beforePeriod": {
+                    "period": "2025-06-30T00:00:00Z",
+                    "isInclusive": false
+                  }
+                }
+              }
+            ],
+            "annotations": [
+              {
+                "id": "REGION-ANN",
+                "title": "REGION-TITLE",
+                "type": "REGION-TYPE",
+                "text": "REGION-TEXT-en",
+                "texts": {
+                  "en": "REGION-TEXT-en",
+                  "fr": "REGION-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/REGION",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/REGION/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "REGION-VALUE"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ATC",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "ATC-NAME-en",
+        "names": {
+          "en": "ATC-NAME-en",
+          "fr": "ATC-NAME-fr"
+        },
+        "description": "ATC-DESC-en",
+        "descriptions": {
+          "en": "ATC-DESC-en",
+          "fr": "ATC-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "ATC-ANN",
+            "title": "ATC-TITLE",
+            "type": "ATC-TYPE",
+            "text": "ATC-TEXT-en",
+            "texts": {
+              "en": "ATC-TEXT-en",
+              "fr": "ATC-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/ATC",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/ATC/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "ATC-VALUE"
+          }
+        ],
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=AG:ATC(1.0)"
+          }
+        ],
+        "constraintAttachment": {
+          "dataStructures": [
+            "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)"
+          ]
+        },
+        "dataKeySets": [
+          {
+            "isIncluded": true,
+            "keys": [
+              {
+                "keyValues": [
+                  {
+                    "id": "DIM",
+                    "value": "A"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "isIncluded": false,
+            "keys": [
+              {
+                "keyValues": [
+                  {
+                    "id": "DIM",
+                    "value": "B"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "hierarchies": [
+      {
+        "id": "H@HCL",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "H-NAME-en",
+        "names": {
+          "en": "H-NAME-en",
+          "fr": "H-NAME-fr"
+        },
+        "description": "H-DESC-en",
+        "descriptions": {
+          "en": "H-DESC-en",
+          "fr": "H-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "H-ANN",
+            "title": "H-TITLE",
+            "type": "H-TYPE",
+            "text": "H-TEXT-en",
+            "texts": {
+              "en": "H-TEXT-en",
+              "fr": "H-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/H",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/H/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "H-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=AG:H@HCL(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/H",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/H",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/H",
+            "rel": "alternate"
+          }
+        ],
+        "hasFormalLevels": true,
+        "level": {
+          "id": "L1",
+          "name": "LEVEL-NAME-en",
+          "names": {
+            "en": "LEVEL-NAME-en",
+            "fr": "LEVEL-NAME-fr"
+          },
+          "description": "LEVEL-DESC-en",
+          "descriptions": {
+            "en": "LEVEL-DESC-en",
+            "fr": "LEVEL-DESC-fr"
+          },
+          "codingFormat": {
+            "dataType": "Numeric",
+            "maxLength": 10,
+            "minLength": 1,
+            "maxValue": 99.0,
+            "minValue": 1.0,
+            "pattern": "[0-9]+",
+            "startValue": 1.0,
+            "endValue": 99.0,
+            "isSequence": true,
+            "interval": 2.0
+          },
+          "level": {
+            "id": "L2",
+            "name": "LEVEL-2-NAME-en",
+            "names": {
+              "en": "LEVEL-2-NAME-en",
+              "fr": "LEVEL-2-NAME-fr"
+            },
+            "description": "LEVEL-2-DESC-en",
+            "descriptions": {
+              "en": "LEVEL-2-DESC-en",
+              "fr": "LEVEL-2-DESC-fr"
+            },
+            "codingFormat": {
+              "dataType": "Numeric",
+              "maxLength": 10,
+              "minLength": 1,
+              "maxValue": 99.0,
+              "minValue": 1.0,
+              "pattern": "[0-9]+",
+              "startValue": 1.0,
+              "endValue": 99.0,
+              "isSequence": true,
+              "interval": 2.0
+            },
+            "annotations": [
+              {
+                "id": "LEVEL-2-ANN",
+                "title": "LEVEL-2-TITLE",
+                "type": "LEVEL-2-TYPE",
+                "text": "LEVEL-2-TEXT-en",
+                "texts": {
+                  "en": "LEVEL-2-TEXT-en",
+                  "fr": "LEVEL-2-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/LEVEL-2",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/LEVEL-2/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "LEVEL-2-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/level-2",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/level-2",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/level-2",
+                "rel": "alternate"
+              }
+            ]
+          },
+          "annotations": [
+            {
+              "id": "LEVEL-ANN",
+              "title": "LEVEL-TITLE",
+              "type": "LEVEL-TYPE",
+              "text": "LEVEL-TEXT-en",
+              "texts": {
+                "en": "LEVEL-TEXT-en",
+                "fr": "LEVEL-TEXT-fr"
+              },
+              "links": [
+                {
+                  "href": "https://example.org/LEVEL",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://example.org/LEVEL/fr",
+                  "rel": "self",
+                  "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                  "hreflang": "fr",
+                  "type": "PDF"
+                }
+              ],
+              "value": "LEVEL-VALUE"
+            }
+          ],
+          "links": [
+            {
+              "href": "https://example.org/uri/level",
+              "rel": "describedby"
+            },
+            {
+              "href": "https://example.org/link/level",
+              "rel": "metadata",
+              "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+              "hreflang": "en",
+              "type": "PDF"
+            },
+            {
+              "href": "https://example.org/alternate/level",
+              "rel": "alternate"
+            }
+          ]
+        },
+        "hierarchicalCodes": [
+          {
+            "id": "NODE",
+            "code": "urn:sdmx:org.sdmx.infomodel.codelist.Code=AG:CL(1.0).PARENT",
+            "level": "L1",
+            "validFrom": "2020-01-01T00:00:00+00:00",
+            "validTo": "2030-12-31T00:00:00+00:00",
+            "hierarchicalCodes": [
+              {
+                "id": "LEAF",
+                "code": "urn:sdmx:org.sdmx.infomodel.codelist.Code=AG:CL(1.0).CHILD",
+                "level": "L2",
+                "annotations": [
+                  {
+                    "id": "HCODE-LEAF-ANN",
+                    "title": "HCODE-LEAF-TITLE",
+                    "type": "HCODE-LEAF-TYPE",
+                    "text": "HCODE-LEAF-TEXT-en",
+                    "texts": {
+                      "en": "HCODE-LEAF-TEXT-en",
+                      "fr": "HCODE-LEAF-TEXT-fr"
+                    },
+                    "links": [
+                      {
+                        "href": "https://example.org/HCODE-LEAF",
+                        "rel": "self"
+                      },
+                      {
+                        "href": "https://example.org/HCODE-LEAF/fr",
+                        "rel": "self",
+                        "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                        "hreflang": "fr",
+                        "type": "PDF"
+                      }
+                    ],
+                    "value": "HCODE-LEAF-VALUE"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://example.org/uri/hcode-leaf",
+                    "rel": "describedby"
+                  },
+                  {
+                    "href": "https://example.org/link/hcode-leaf",
+                    "rel": "metadata",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                    "hreflang": "en",
+                    "type": "PDF"
+                  },
+                  {
+                    "href": "https://example.org/alternate/hcode-leaf",
+                    "rel": "alternate"
+                  }
+                ]
+              }
+            ],
+            "annotations": [
+              {
+                "id": "HCODE-ANN",
+                "title": "HCODE-TITLE",
+                "type": "HCODE-TYPE",
+                "text": "HCODE-TEXT-en",
+                "texts": {
+                  "en": "HCODE-TEXT-en",
+                  "fr": "HCODE-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/HCODE",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/HCODE/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "HCODE-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/hcode",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/hcode",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/hcode",
+                "rel": "alternate"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "hierarchyAssociations": [
+      {
+        "id": "HA",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "HA-NAME-en",
+        "names": {
+          "en": "HA-NAME-en",
+          "fr": "HA-NAME-fr"
+        },
+        "description": "HA-DESC-en",
+        "descriptions": {
+          "en": "HA-DESC-en",
+          "fr": "HA-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "HA-ANN",
+            "title": "HA-TITLE",
+            "type": "HA-TYPE",
+            "text": "HA-TEXT-en",
+            "texts": {
+              "en": "HA-TEXT-en",
+              "fr": "HA-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/HA",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/HA/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "HA-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.HierarchyAssociation=AG:HA(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/HA",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/HA",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/HA",
+            "rel": "alternate"
+          }
+        ],
+        "linkedHierarchy": "urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=AG:H@HCL(1.0)",
+        "linkedObject": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)",
+        "contextObject": "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)"
+      }
+    ],
+    "metadataStructures": [
+      {
+        "id": "MSD",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "MSD-NAME-en",
+        "names": {
+          "en": "MSD-NAME-en",
+          "fr": "MSD-NAME-fr"
+        },
+        "description": "MSD-DESC-en",
+        "descriptions": {
+          "en": "MSD-DESC-en",
+          "fr": "MSD-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "MSD-ANN",
+            "title": "MSD-TITLE",
+            "type": "MSD-TYPE",
+            "text": "MSD-TEXT-en",
+            "texts": {
+              "en": "MSD-TEXT-en",
+              "fr": "MSD-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/MSD",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/MSD/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "MSD-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/MSD",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/MSD",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/MSD",
+            "rel": "alternate"
+          }
+        ],
+        "metadataStructureComponents": {
+          "metadataAttributeList": {
+            "id": "MetadataAttributeDescriptor",
+            "metadataAttributes": [
+              {
+                "id": "MA",
+                "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT",
+                "localRepresentation": {
+                  "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)",
+                  "enumerationFormat": {
+                    "dataType": "Integer",
+                    "maxLength": 10,
+                    "minLength": 1,
+                    "maxValue": 99.0,
+                    "minValue": 1.0,
+                    "pattern": "[0-9]+",
+                    "startValue": 1.0,
+                    "endValue": 99.0,
+                    "isSequence": true,
+                    "interval": 2.0,
+                    "timeInterval": "P1D",
+                    "startTime": "2020-01-01",
+                    "endTime": "2030-12-31"
+                  }
+                },
+                "maxOccurs": 9,
+                "isPresentational": true,
+                "metadataAttributes": [
+                  {
+                    "id": "MA_CHILD",
+                    "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).CHILD",
+                    "minOccurs": 0,
+                    "annotations": [
+                      {
+                        "id": "MA-CHILD-ANN",
+                        "title": "MA-CHILD-TITLE",
+                        "type": "MA-CHILD-TYPE",
+                        "text": "MA-CHILD-TEXT-en",
+                        "texts": {
+                          "en": "MA-CHILD-TEXT-en",
+                          "fr": "MA-CHILD-TEXT-fr"
+                        },
+                        "links": [
+                          {
+                            "href": "https://example.org/MA-CHILD",
+                            "rel": "self"
+                          },
+                          {
+                            "href": "https://example.org/MA-CHILD/fr",
+                            "rel": "self",
+                            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                            "hreflang": "fr",
+                            "type": "PDF"
+                          }
+                        ],
+                        "value": "MA-CHILD-VALUE"
+                      }
+                    ],
+                    "links": [
+                      {
+                        "href": "https://example.org/uri/ma-child",
+                        "rel": "describedby"
+                      },
+                      {
+                        "href": "https://example.org/link/ma-child",
+                        "rel": "metadata",
+                        "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                        "hreflang": "en",
+                        "type": "PDF"
+                      },
+                      {
+                        "href": "https://example.org/alternate/ma-child",
+                        "rel": "alternate"
+                      }
+                    ]
+                  }
+                ],
+                "annotations": [
+                  {
+                    "id": "MA-ANN",
+                    "title": "MA-TITLE",
+                    "type": "MA-TYPE",
+                    "text": "MA-TEXT-en",
+                    "texts": {
+                      "en": "MA-TEXT-en",
+                      "fr": "MA-TEXT-fr"
+                    },
+                    "links": [
+                      {
+                        "href": "https://example.org/MA",
+                        "rel": "self"
+                      },
+                      {
+                        "href": "https://example.org/MA/fr",
+                        "rel": "self",
+                        "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                        "hreflang": "fr",
+                        "type": "PDF"
+                      }
+                    ],
+                    "value": "MA-VALUE"
+                  }
+                ],
+                "links": [
+                  {
+                    "href": "https://example.org/uri/ma",
+                    "rel": "describedby"
+                  },
+                  {
+                    "href": "https://example.org/link/ma",
+                    "rel": "metadata",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                    "hreflang": "en",
+                    "type": "PDF"
+                  },
+                  {
+                    "href": "https://example.org/alternate/ma",
+                    "rel": "alternate"
+                  }
+                ]
+              }
+            ],
+            "annotations": [
+              {
+                "id": "MALIST-ANN",
+                "title": "MALIST-TITLE",
+                "type": "MALIST-TYPE",
+                "text": "MALIST-TEXT-en",
+                "texts": {
+                  "en": "MALIST-TEXT-en",
+                  "fr": "MALIST-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/MALIST",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/MALIST/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "MALIST-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/malist",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/malist",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/malist",
+                "rel": "alternate"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "metadataflows": [
+      {
+        "id": "MDF",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "MDF-NAME-en",
+        "names": {
+          "en": "MDF-NAME-en",
+          "fr": "MDF-NAME-fr"
+        },
+        "description": "MDF-DESC-en",
+        "descriptions": {
+          "en": "MDF-DESC-en",
+          "fr": "MDF-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "MDF-ANN",
+            "title": "MDF-TITLE",
+            "type": "MDF-TYPE",
+            "text": "MDF-TEXT-en",
+            "texts": {
+              "en": "MDF-TEXT-en",
+              "fr": "MDF-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/MDF",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/MDF/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "MDF-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.metadatastructure.Metadataflow=AG:MDF(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/MDF",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/MDF",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/MDF",
+            "rel": "alternate"
+          }
+        ],
+        "structure": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD(1.0)",
+        "targets": [
+          "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)"
+        ]
+      }
+    ],
+    "metadataProvisionAgreements": [
+      {
+        "id": "MPA",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "MPA-NAME-en",
+        "names": {
+          "en": "MPA-NAME-en",
+          "fr": "MPA-NAME-fr"
+        },
+        "description": "MPA-DESC-en",
+        "descriptions": {
+          "en": "MPA-DESC-en",
+          "fr": "MPA-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "MPA-ANN",
+            "title": "MPA-TITLE",
+            "type": "MPA-TYPE",
+            "text": "MPA-TEXT-en",
+            "texts": {
+              "en": "MPA-TEXT-en",
+              "fr": "MPA-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/MPA",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/MPA/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "MPA-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.registry.MetadataProvisionAgreement=AG:MPA(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/MPA",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/MPA",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/MPA",
+            "rel": "alternate"
+          }
+        ],
+        "metadataflow": "urn:sdmx:org.sdmx.infomodel.metadatastructure.Metadataflow=AG:MDF(1.0)",
+        "metadataProvider": "urn:sdmx:org.sdmx.infomodel.base.MetadataProvider=AG_MD:METADATA_PROVIDERS(1.0).MP1",
+        "targets": [
+          "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(*)"
+        ]
+      }
+    ],
+    "representationMaps": [
+      {
+        "id": "RM@SS",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "RM-NAME-en",
+        "names": {
+          "en": "RM-NAME-en",
+          "fr": "RM-NAME-fr"
+        },
+        "description": "RM-DESC-en",
+        "descriptions": {
+          "en": "RM-DESC-en",
+          "fr": "RM-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "RM-ANN",
+            "title": "RM-TITLE",
+            "type": "RM-TYPE",
+            "text": "RM-TEXT-en",
+            "texts": {
+              "en": "RM-TEXT-en",
+              "fr": "RM-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/RM",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/RM/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "RM-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.structuremapping.RepresentationMap=AG:RM@SS(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/RM",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/RM",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/RM",
+            "rel": "alternate"
+          }
+        ],
+        "source": [
+          {
+            "codelist": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)"
+          }
+        ],
+        "target": [
+          {
+            "codelist": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)"
+          }
+        ],
+        "representationMappings": [
+          {
+            "sourceValues": [
+              {
+                "value": "PARENT"
+              }
+            ],
+            "targetValues": [
+              "CHILD"
+            ],
+            "validFrom": "2020-01-01T00:00:00Z",
+            "validTo": "2030-12-31T00:00:00Z",
+            "annotations": [
+              {
+                "id": "VALUEMAP-ANN",
+                "title": "VALUEMAP-TITLE",
+                "type": "VALUEMAP-TYPE",
+                "text": "VALUEMAP-TEXT-en",
+                "texts": {
+                  "en": "VALUEMAP-TEXT-en",
+                  "fr": "VALUEMAP-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/VALUEMAP",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/VALUEMAP/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "VALUEMAP-VALUE"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "conceptSchemeMaps": [
+      {
+        "id": "CSM@SS",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "CSM-NAME-en",
+        "names": {
+          "en": "CSM-NAME-en",
+          "fr": "CSM-NAME-fr"
+        },
+        "description": "CSM-DESC-en",
+        "descriptions": {
+          "en": "CSM-DESC-en",
+          "fr": "CSM-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "CSM-ANN",
+            "title": "CSM-TITLE",
+            "type": "CSM-TYPE",
+            "text": "CSM-TEXT-en",
+            "texts": {
+              "en": "CSM-TEXT-en",
+              "fr": "CSM-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/CSM",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/CSM/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "CSM-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.structuremapping.ConceptSchemeMap=AG:CSM@SS(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/CSM",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/CSM",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/CSM",
+            "rel": "alternate"
+          }
+        ],
+        "source": "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=AG:CS(1.0)",
+        "target": "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=AG:CS(1.0)",
+        "itemMaps": [
+          {
+            "sourceValue": {
+              "value": "PARENT"
+            },
+            "targetValue": "CHILD",
+            "annotations": [
+              {
+                "id": "ITEMMAP-ANN",
+                "title": "ITEMMAP-TITLE",
+                "type": "ITEMMAP-TYPE",
+                "text": "ITEMMAP-TEXT-en",
+                "texts": {
+                  "en": "ITEMMAP-TEXT-en",
+                  "fr": "ITEMMAP-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/ITEMMAP",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/ITEMMAP/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "ITEMMAP-VALUE"
+              }
+            ],
+            "validFrom": "2020-01-01T00:00:00Z",
+            "validTo": "2030-12-31T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "categorySchemeMaps": [
+      {
+        "id": "CSM",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "CSM-NAME-en",
+        "names": {
+          "en": "CSM-NAME-en",
+          "fr": "CSM-NAME-fr"
+        },
+        "description": "CSM-DESC-en",
+        "descriptions": {
+          "en": "CSM-DESC-en",
+          "fr": "CSM-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "CSM-ANN",
+            "title": "CSM-TITLE",
+            "type": "CSM-TYPE",
+            "text": "CSM-TEXT-en",
+            "texts": {
+              "en": "CSM-TEXT-en",
+              "fr": "CSM-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/CSM",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/CSM/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "CSM-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.structuremapping.CategorySchemeMap=AG:CSM(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/CSM",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/CSM",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/CSM",
+            "rel": "alternate"
+          }
+        ],
+        "source": "urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=AG:CATS(1.0)",
+        "target": "urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=AG:CATS(1.0)",
+        "itemMaps": [
+          {
+            "sourceValue": {
+              "value": "A"
+            },
+            "targetValue": "B",
+            "annotations": [
+              {
+                "id": "CSM-MAP-ANN",
+                "title": "CSM-MAP-TITLE",
+                "type": "CSM-MAP-TYPE",
+                "text": "CSM-MAP-TEXT-en",
+                "texts": {
+                  "en": "CSM-MAP-TEXT-en",
+                  "fr": "CSM-MAP-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/CSM-MAP",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/CSM-MAP/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "CSM-MAP-VALUE"
+              }
+            ],
+            "validFrom": "2020-01-01T00:00:00Z",
+            "validTo": "2030-12-31T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "organisationSchemeMaps": [
+      {
+        "id": "OSM@SS",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "OSM-NAME-en",
+        "names": {
+          "en": "OSM-NAME-en",
+          "fr": "OSM-NAME-fr"
+        },
+        "description": "OSM-DESC-en",
+        "descriptions": {
+          "en": "OSM-DESC-en",
+          "fr": "OSM-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "OSM-ANN",
+            "title": "OSM-TITLE",
+            "type": "OSM-TYPE",
+            "text": "OSM-TEXT-en",
+            "texts": {
+              "en": "OSM-TEXT-en",
+              "fr": "OSM-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/OSM",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/OSM/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "OSM-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.structuremapping.OrganisationSchemeMap=AG:OSM@SS(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/OSM",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/OSM",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/OSM",
+            "rel": "alternate"
+          }
+        ],
+        "source": "urn:sdmx:org.sdmx.infomodel.base.AgencyScheme=AG:AGENCIES(1.0)",
+        "target": "urn:sdmx:org.sdmx.infomodel.base.DataProviderScheme=AG:DATA_PROVIDERS(1.0)",
+        "itemMaps": [
+          {
+            "sourceValue": {
+              "value": "A1"
+            },
+            "targetValue": "P1",
+            "annotations": [
+              {
+                "id": "ORGMAP-ANN",
+                "title": "ORGMAP-TITLE",
+                "type": "ORGMAP-TYPE",
+                "text": "ORGMAP-TEXT-en",
+                "texts": {
+                  "en": "ORGMAP-TEXT-en",
+                  "fr": "ORGMAP-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/ORGMAP",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/ORGMAP/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "ORGMAP-VALUE"
+              }
+            ],
+            "validFrom": "2020-01-01T00:00:00Z",
+            "validTo": "2030-12-31T00:00:00Z"
+          }
+        ]
+      }
+    ],
+    "structureMaps": [
+      {
+        "id": "SM@SS",
+        "agencyID": "AG",
+        "version": "1.0",
+        "name": "SM-NAME-en",
+        "names": {
+          "en": "SM-NAME-en",
+          "fr": "SM-NAME-fr"
+        },
+        "description": "SM-DESC-en",
+        "descriptions": {
+          "en": "SM-DESC-en",
+          "fr": "SM-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "annotations": [
+          {
+            "id": "SM-ANN",
+            "title": "SM-TITLE",
+            "type": "SM-TYPE",
+            "text": "SM-TEXT-en",
+            "texts": {
+              "en": "SM-TEXT-en",
+              "fr": "SM-TEXT-fr"
+            },
+            "links": [
+              {
+                "href": "https://example.org/SM",
+                "rel": "self"
+              },
+              {
+                "href": "https://example.org/SM/fr",
+                "rel": "self",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                "hreflang": "fr",
+                "type": "PDF"
+              }
+            ],
+            "value": "SM-VALUE"
+          }
+        ],
+        "isExternalReference": true,
+        "isPartialLanguage": true,
+        "links": [
+          {
+            "rel": "self",
+            "urn": "urn:sdmx:org.sdmx.infomodel.structuremapping.StructureMap=AG:SM@SS(1.0)"
+          },
+          {
+            "href": "https://example.org/uri/SM",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/SM",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/SM",
+            "rel": "alternate"
+          }
+        ],
+        "source": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)",
+        "target": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)",
+        "componentMaps": [
+          {
+            "source": [
+              "DIM"
+            ],
+            "target": [
+              "DIM"
+            ],
+            "annotations": [
+              {
+                "id": "COMPMAP-ANN",
+                "title": "COMPMAP-TITLE",
+                "type": "COMPMAP-TYPE",
+                "text": "COMPMAP-TEXT-en",
+                "texts": {
+                  "en": "COMPMAP-TEXT-en",
+                  "fr": "COMPMAP-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/COMPMAP",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/COMPMAP/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "COMPMAP-VALUE"
+              }
+            ],
+            "representationMap": "urn:sdmx:org.sdmx.infomodel.structuremapping.RepresentationMap=AG:RM@SS(1.0)"
+          },
+          {
+            "source": [
+              "DIM"
+            ],
+            "target": [
+              "DIM"
+            ],
+            "representationMap": "urn:sdmx:org.sdmx.infomodel.structuremapping.RepresentationMap=AG:SM_VALUE_MAP_2@SS(1.0)"
+          },
+          {
+            "source": [
+              "DIM"
+            ],
+            "target": [
+              "DIM"
+            ]
+          }
+        ],
+        "epochMaps": [
+          {
+            "id": "EPOCH",
+            "mappedComponents": [
+              {
+                "source": "TIME_PERIOD",
+                "target": "TIME_PERIOD"
+              }
+            ],
+            "resolvePeriod": "startOfPeriod",
+            "frequencyDimension": "DIM",
+            "mappedFrequencies": [
+              "FFM"
+            ],
+            "annotations": [
+              {
+                "id": "EPOCH-ANN",
+                "title": "EPOCH-TITLE",
+                "type": "EPOCH-TYPE",
+                "text": "EPOCH-TEXT-en",
+                "texts": {
+                  "en": "EPOCH-TEXT-en",
+                  "fr": "EPOCH-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/EPOCH",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/EPOCH/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "EPOCH-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/epoch",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/epoch",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/epoch",
+                "rel": "alternate"
+              }
+            ],
+            "basePeriod": "1970-01-01",
+            "epochPeriod": "day"
+          },
+          {
+            "id": "EPOCH_M",
+            "mappedComponents": [
+              {
+                "source": "TIME_PERIOD",
+                "target": "TIME_PERIOD"
+              }
+            ],
+            "targetFrequencyID": "M",
+            "basePeriod": "2000-01-01",
+            "epochPeriod": "second"
+          }
+        ],
+        "datePatternMaps": [
+          {
+            "id": "PATTERN",
+            "mappedComponents": [
+              {
+                "source": "TIME_PERIOD",
+                "target": "TIME_PERIOD"
+              }
+            ],
+            "resolvePeriod": "endOfPeriod",
+            "targetFrequencyID": "M",
+            "annotations": [
+              {
+                "id": "PATTERN-ANN",
+                "title": "PATTERN-TITLE",
+                "type": "PATTERN-TYPE",
+                "text": "PATTERN-TEXT-en",
+                "texts": {
+                  "en": "PATTERN-TEXT-en",
+                  "fr": "PATTERN-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/PATTERN",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/PATTERN/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "PATTERN-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/pattern",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/pattern",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/pattern",
+                "rel": "alternate"
+              }
+            ],
+            "sourcePattern": "yyyyMM",
+            "locale": "en"
+          },
+          {
+            "id": "PATTERN_BY_FREQ",
+            "mappedComponents": [
+              {
+                "source": "TIME_PERIOD",
+                "target": "TIME_PERIOD"
+              }
+            ],
+            "frequencyDimension": "DIM",
+            "mappedFrequencies": [
+              "FFM"
+            ],
+            "sourcePattern": "dd/MM/yyyy",
+            "locale": "fr"
+          }
+        ],
+        "frequencyFormatMappings": [
+          {
+            "id": "FFM",
+            "frequencyId": "M",
+            "datePattern": "yyyy-MM",
+            "annotations": [
+              {
+                "id": "FFM-ANN",
+                "title": "FFM-TITLE",
+                "type": "FFM-TYPE",
+                "text": "FFM-TEXT-en",
+                "texts": {
+                  "en": "FFM-TEXT-en",
+                  "fr": "FFM-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/FFM",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/FFM/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "FFM-VALUE"
+              }
+            ],
+            "links": [
+              {
+                "href": "https://example.org/uri/ffm",
+                "rel": "describedby"
+              },
+              {
+                "href": "https://example.org/link/ffm",
+                "rel": "metadata",
+                "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+                "hreflang": "en",
+                "type": "PDF"
+              },
+              {
+                "href": "https://example.org/alternate/ffm",
+                "rel": "alternate"
+              }
+            ]
+          }
+        ],
+        "fixedValueMaps": [
+          {
+            "source": "ATTR",
+            "values": [
+              "X"
+            ],
+            "annotations": [
+              {
+                "id": "FIXED-ANN",
+                "title": "FIXED-TITLE",
+                "type": "FIXED-TYPE",
+                "text": "FIXED-TEXT-en",
+                "texts": {
+                  "en": "FIXED-TEXT-en",
+                  "fr": "FIXED-TEXT-fr"
+                },
+                "links": [
+                  {
+                    "href": "https://example.org/FIXED",
+                    "rel": "self"
+                  },
+                  {
+                    "href": "https://example.org/FIXED/fr",
+                    "rel": "self",
+                    "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_ANNOTATED(1.0)",
+                    "hreflang": "fr",
+                    "type": "PDF"
+                  }
+                ],
+                "value": "FIXED-VALUE"
+              }
+            ]
+          },
+          {
+            "target": "ATTR",
+            "values": [
+              "Y",
+              "Z"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json.sdmx.org/2.1/sdmx-json-metadata-schema.json",
+  "meta": {
+    "id": "SDMX_MSG",
+    "prepared": "2000-01-01T00:00:00Z",
+    "sender": {
+      "id": "sdmxlib"
+    }
+  },
+  "data": {
+    "metadataSets": [
+      {
+        "id": "MDS",
+        "agencyID": "AG",
+        "version": "1.0.0",
+        "name": "MDS-NAME-en",
+        "names": {
+          "en": "MDS-NAME-en",
+          "fr": "MDS-NAME-fr"
+        },
+        "description": "MDS-DESC-en",
+        "descriptions": {
+          "en": "MDS-DESC-en",
+          "fr": "MDS-DESC-fr"
+        },
+        "validFrom": "2020-01-01T00:00:00+00:00",
+        "validTo": "2030-12-31T00:00:00+00:00",
+        "isExternalReference": true,
+        "serviceUrl": "https://example.org/registry/MDS",
+        "structureUrl": "https://example.org/structure/MDS.xml",
+        "metadataflow": "urn:sdmx:org.sdmx.infomodel.metadatastructure.Metadataflow=AG:MDF(1.0)",
+        "targets": [
+          "urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=AG:CATS(1.0)"
+        ],
+        "attributes": [
+          {
+            "id": "PARENT",
+            "value": {
+              "en": "parent-en",
+              "fr": "parent-fr"
+            },
+            "attributes": [
+              {
+                "id": "CHILD",
+                "value": "child"
+              }
+            ]
+          }
+        ],
+        "links": [
+          {
+            "href": "https://example.org/uri/MDS",
+            "rel": "describedby"
+          },
+          {
+            "href": "https://example.org/link/MDS",
+            "rel": "metadata",
+            "urn": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)",
+            "hreflang": "en",
+            "type": "PDF"
+          },
+          {
+            "href": "https://example.org/alternate/MDS",
+            "rel": "alternate"
+          }
+        ]
+      }
+    ]
+  }
+}

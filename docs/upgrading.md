@@ -77,6 +77,8 @@ follows.
 - `check_bundle` no longer reports a data file it does not list: `data/` is
   shared, and a file there may belong to another publication. It reports a
   file the lake references and the manifest omits.
+- New: `sdmxlib.formats.render.render_version(media_type)`, the version of
+  each format's writer, for a server's cache keys (`docs/bundle.md` §5.5).
 - Overlays are format 1.1, which defines `scope`: an entry applies to the
   audience it names, and a `null` scope to every audience.
   `apply_overlays`, `effective_token` and `fold_overlays` take `audience=`;

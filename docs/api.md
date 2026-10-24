@@ -128,6 +128,14 @@ Display annotations changed without a rebuild, the token a cache keys on when th
 
 ---
 
+::: sdmxlib.formats.render.render_version
+
+---
+
+::: sdmxlib.formats.render.RENDER_VERSION
+
+---
+
 ::: sdmxlib.bundle.applied
 
 ---

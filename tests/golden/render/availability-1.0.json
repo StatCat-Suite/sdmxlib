@@ -1,0 +1,60 @@
+{
+  "meta": {
+    "id": "SDMXLIB",
+    "sender": {
+      "id": "SDMXLIB"
+    }
+  },
+  "data": {
+    "contentConstraints": [
+      {
+        "id": "AVAIL",
+        "agencyID": "AG",
+        "version": "1.0",
+        "type": "Allowed",
+        "name": "Availability",
+        "names": {
+          "en": "Availability"
+        },
+        "constraintAttachment": {
+          "dataflows": [
+            "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF_RENDER(1.0)"
+          ]
+        },
+        "cubeRegions": [
+          {
+            "isIncluded": true,
+            "keyValues": [
+              {
+                "id": "FREQ",
+                "values": [
+                  "A",
+                  "M"
+                ]
+              },
+              {
+                "id": "GEO",
+                "values": [
+                  "CA",
+                  "Québec"
+                ]
+              },
+              {
+                "id": "TIME_PERIOD",
+                "timeRange": {
+                  "startPeriod": {
+                    "period": "2020-01-01T00:00:00Z"
+                  },
+                  "endPeriod": {
+                    "period": "2021-03-31T00:00:00Z"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "errors": []
+}

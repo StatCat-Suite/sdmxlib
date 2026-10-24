@@ -371,7 +371,27 @@ token. So do serving another audience that applies different entries,
 changing a hook or its version, and republishing the bundle. Two audiences
 that apply the same entries share a token.
 
-### 5.5 Folding overlays into a bundle
+### 5.5 The render version
+
+A served response's bytes depend on the code that writes them as well as on
+the bundle. The effective token covers the bundle and its overlays.
+`sdmxlib.formats.render.render_version(media_type)` covers the writer, with
+one version per wire format sdmxlib writes:
+
+- structures in SDMX-ML 2.1, 3.0 and 3.1 and SDMX-JSON 2.0;
+- availability in SDMX-JSON 1.0;
+- metadata in SDMX-ML 3.0 and SDMX-JSON 2.0;
+- data in SDMX-CSV 2.0.0 and SDMX-JSON 1.0 and 2.0.
+
+A server that caches what it writes MUST key on the render version of the
+format beside the effective token. A writer change then gives new keys and
+the old entries age out. A release whose writers write the same bytes leaves
+every version, and every key, as it was. Each version is the first 16 hex
+characters of the sha256 of that format's golden file, one pinned input
+written; a test refuses a writer change whose golden file and version have
+not moved with it.
+
+### 5.6 Folding overlays into a bundle
 
 `fold_overlays` applies overlays to the store for good. It starts a new
 publication extending the one it reads, replaces every artefact an entry
