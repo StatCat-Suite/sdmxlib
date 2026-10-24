@@ -77,6 +77,12 @@ follows.
 - `check_bundle` no longer reports a data file it does not list: `data/` is
   shared, and a file there may belong to another publication. It reports a
   file the lake references and the manifest omits.
+- `write_manifest` rewrites `meta.duckdb` without `hierarchy_node`'s and
+  `artefact_ref`'s primary keys, `hierarchy_node`'s `UNIQUE` and
+  `artefact_ref`'s two indexes, which reads do not use; the census store
+  halves. `LocalRegistry.build(path, previous=token)` restores them. A tool
+  that opens a published `meta.duckdb` for writing by any other route gets a
+  store without those keys.
 - `LocalRegistry.bundle(path, engine=sl.BundleEngine(...))` holds many
   bundles in one DuckDB engine. Every bundle now attaches under a prefix of
   its own, `<bundle_id>__<token>`, even without `engine=`, so its lake is

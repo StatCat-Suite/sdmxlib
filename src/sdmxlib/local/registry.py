@@ -102,6 +102,7 @@ from sdmxlib.storage._manifest import (
     read_manifest,
     refuse_engine_mismatch,
 )
+from sdmxlib.storage._trim import restore
 from sdmxlib.storage.lazy import LazyCodelist, LazyHierarchy
 from sdmxlib.storage.readers import make_lazy_codelist
 from sdmxlib.storage.schema import (
@@ -2443,6 +2444,10 @@ class LocalRegistry(BundleRegistry):
             source_registry=source_registry,
             resolve_cache_items=resolve_cache_items,
         ).open()
+        if previous is not None:
+            # Published stores leave out keys a reader does not need; a store
+            # being written gets them back (GH-165).
+            restore(registry.connection)
         registry.connection.execute("DELETE FROM sdmx._meta WHERE key IN ('publication_token', 'previous_token')")
         registry.connection.execute("INSERT INTO sdmx._meta (key, value) VALUES ('publication_token', ?)", [token])
         if previous is not None:
