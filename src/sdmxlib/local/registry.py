@@ -2110,14 +2110,20 @@ class BundleRegistry(SessionFactory):
         item_urns: list[SdmxUrn[object]],
         memo: _CallScopedMemo,
     ) -> bool:
-        """Serve the items from a scheme already resolved, if there is one.
+        """Serve the items from a scheme already built, if there is one.
 
         Free when it hits, and it is why the targeted read below does not have
         to worry about a caller who *does* want the whole scheme: if something
         else in this call (or a recent one) already loaded it, that is used.
+
+        A cached `LazyCodelist` or `LazyHierarchy` does not count: its
+        subscript queries the store once per item, where the targeted read
+        queries once per scheme. A data structure's read caches its codelists
+        as facades, and a 499,138-node hierarchy read after it took 337 s
+        instead of 0.8 s (GH-150).
         """
         parent = memo.get(parent_urn_str)
-        if parent is None:
+        if parent is None or isinstance(parent, (LazyCodelist, LazyHierarchy)):
             return False
         _memo_items(parent, owner, item_urns, memo)
         return True

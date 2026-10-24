@@ -304,11 +304,7 @@ def _files(root: Path, manifest: Manifest, at: Profile, *, remote: bool) -> Iter
 
 
 def _fingerprints(root: Path, manifest: Manifest) -> list[Finding]:
-    """The fingerprints recomputed, against the manifest's.
-
-    On a registry of its own: one that has read the bindings resolves the
-    artefact reads after it many times slower (GH-150).
-    """
+    """The fingerprints recomputed, against the manifest's."""
     with LocalRegistry.bundle(root) as reg:
         artefacts = artefact_entries(reg)
         try:

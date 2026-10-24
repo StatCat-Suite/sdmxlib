@@ -406,9 +406,6 @@ def write_manifest(
             raise ManifestError(msg)
         previous = meta_value(reg.connection, "previous_token")
         schema_version = get_schema_version(reg.connection) or ""
-        # Fingerprinted before anything reads the bindings: a binding read
-        # fills the registry's resolve cache, and eager reads resolving
-        # against it ran over 7x slower on the census bundle.
         artefacts = artefact_entries(reg)
         referenced: list[str] = []
         lake = (root / "lake.ducklake").exists()
