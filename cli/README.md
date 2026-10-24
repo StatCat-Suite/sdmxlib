@@ -5,6 +5,7 @@ separate install, so the library itself carries no CLI dependency:
 
 ```sh
 uv tool install sdmxlib-cli
+# or: pip install sdmxlib-cli
 sdmxlib bundle check path/to/publication --at publish
 ```
 

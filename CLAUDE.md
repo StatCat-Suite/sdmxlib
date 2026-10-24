@@ -178,6 +178,11 @@ cannot parse from the release notes.
   the last tag (`just release-check-upgrading`).
 - `ci`, `chore(release)` and merge commits are skipped.
 
+Nothing is signed with Claude: commit messages carry no `Co-Authored-By`
+trailer, and PR descriptions, issues and comments carry no "Generated with
+Claude Code" footer. The README's note discloses AI use once for the project
+(a StatCat-Suite convention, GH-156).
+
 ## Related repos
 
 The two other StatCat-Suite libraries build on this one, so a breaking change
@@ -498,6 +503,11 @@ when SDMX-TWG publishes a new schema tag.
 - Core: attrs (model), httpx (api), polars + pyarrow (data plane)
 - Formats: lxml (XML), msgspec (SDMX-JSON)
 - Storage: duckdb (local registry, DuckLake catalogs)
+
+Install instructions (README, docs, CLI and error messages) say `uv add <pkg>`
+first and `pip install <pkg>` second, as the fallback, and quote extras:
+`uv add 'pkg[extra]'`. The CLI is a tool: `uv tool install sdmxlib-cli`
+first, `pip install sdmxlib-cli` second.
 
 ## SQL style
 
