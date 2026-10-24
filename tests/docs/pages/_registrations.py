@@ -15,6 +15,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 import attrs
@@ -27,6 +28,7 @@ from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.ref import Ref
 from tests.docs.pages import EXECUTED, SETUPS, base
 from tests.docs.pages._offline import in_a_directory_containing, serving
+from tests.support.bundles import make_bundle, publish
 from tests.support.factories import code_urn, concept_ref
 from tests.support.narrow import present
 
@@ -1594,3 +1596,18 @@ def _readme() -> Generator[dict[str, Any]]:
 
 SETUPS["README.md"] = _readme
 EXECUTED.add("README.md")
+
+
+@contextmanager
+def _bundle_page() -> Generator[dict[str, Any]]:
+    """`docs/bundle.md`: two published bundles, for the shared-engine example."""
+    with TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        yield base() | {
+            "census_path": publish(make_bundle(root / "census", 10)),
+            "trade_path": publish(make_bundle(root / "trade", 3)),
+        }
+
+
+SETUPS["bundle.md"] = _bundle_page
+EXECUTED.add("bundle.md")

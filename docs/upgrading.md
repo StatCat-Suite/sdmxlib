@@ -77,6 +77,14 @@ follows.
 - `check_bundle` no longer reports a data file it does not list: `data/` is
   shared, and a file there may belong to another publication. It reports a
   file the lake references and the manifest omits.
+- `LocalRegistry.bundle(path, engine=sl.BundleEngine(...))` holds many
+  bundles in one DuckDB engine. Every bundle now attaches under a prefix of
+  its own, `<bundle_id>__<token>`, even without `engine=`, so its lake is
+  `<prefix>__lake` and no longer `lake`. `BundleRegistry.binding_for` and
+  `browse()` return the binding naming that catalog (`database_role`), and
+  `BundleRegistry.locate(binding)` maps a binding read with `get_all`;
+  `BundleRegistry.lake_alias` names it. SQL built from a stored binding's
+  `database_role` on a bundle registry must go through `locate`.
 - New: `sdmxlib.formats.render.render_version(media_type)`, the version of
   each format's writer, for a server's cache keys (`docs/bundle.md` §5.5).
 - Overlays are format 1.1, which defines `scope`: an entry applies to the

@@ -50,6 +50,10 @@ Persistent DuckDB-backed structural store, the in-memory registry, and the data 
 
 ---
 
+::: sdmxlib.local.engine.BundleEngine
+
+---
+
 ::: sdmxlib.local.registry.LocalRegistry
 
 ---

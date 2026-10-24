@@ -368,6 +368,8 @@ A pod runs one DuckDB engine and attaches every bundle it serves into it, so one
 
 The first step is a spike verifying DuckDB 2.0's resolution of two-part names under a catalog-qualified `search_path`; the refactor is milestone M7 and precedes the router.
 
+Built in GH-133 as `sl.BundleEngine` and `LocalRegistry.bundle(path, engine=)`. Each handle runs `USE "<prefix>__meta".sdmx`, which sets its current database as well as its search path, so the checks that filter on `current_database()` read the bundle too; a cursor derived from a handle does not inherit it, so the registry points every handle it makes. A bundle opened without an engine gets one of its own, so there is one opening path. The token-keyed caches are left to a follow-up that measures the duplicate first (caching rules).
+
 ### 7.3 Shard router
 
 ```python

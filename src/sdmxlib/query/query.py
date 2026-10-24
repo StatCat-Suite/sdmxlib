@@ -73,7 +73,7 @@ from sdmxlib.query._expr import (
 )
 from sdmxlib.query._plan import Plan, scanned
 from sdmxlib.query._pushdown import DUCKDB, Program, Push, plan_program
-from sdmxlib.session import completed, cursor_for, frame_of
+from sdmxlib.session import completed, cursor_for, frame_of, own_handle
 
 
 def _partition_prefix(root: AnyCols, order: Sequence[OrderKey]) -> tuple[str, ...]:
@@ -126,7 +126,7 @@ def _stream_by_partition[R: RowKind, A](
             # A cursor each: the reader holds it until drained, and `from_batches`
             # does not pull the next partition until this one is finished — which
             # is exactly what keeps peak at one partition rather than their sum.
-            cursor = query._cursor().cursor()
+            cursor = own_handle(query._cursor())
             yield completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
 
     stream = readers()
@@ -1726,7 +1726,7 @@ class Query[R: RowKind, A = object]:
         # A cursor of its own, not the shared handle: two concurrent streams
         # on one connection would overwrite each other's row buffer (#75), and
         # the reader holds this one until it is exhausted or closed.
-        cursor = self._cursor().cursor()
+        cursor = own_handle(self._cursor())
         return completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
 
     def _partition_values(self, partitions: tuple[str, ...]) -> list[tuple[object, ...]]:
@@ -2476,7 +2476,7 @@ class Select[R: RowKind, A = object]:
         # A cursor of its own, not the shared handle: two concurrent streams
         # on one connection would overwrite each other's row buffer (#75), and
         # the reader holds this one until it is exhausted or closed.
-        cursor = self._query._cursor(self._query._projection_columns(self.items)).cursor()
+        cursor = own_handle(self._query._cursor(self._query._projection_columns(self.items)))
         return completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
 
     @override

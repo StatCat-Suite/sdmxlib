@@ -32,10 +32,8 @@ stashes the URI; the DuckDB connection is opened by ``open()`` /
 
 import functools
 import logging
-import os
 import re
 import shutil
-import tempfile
 import threading
 import time
 import uuid
@@ -45,6 +43,7 @@ from importlib import metadata
 from pathlib import Path
 from typing import ClassVar, Final, Literal, Self, cast, overload, override
 
+import attrs
 import duckdb
 
 from sdmxlib._duckdb import count
@@ -53,6 +52,7 @@ from sdmxlib.formats.sdmx_csv.reader import _resolve_structure
 from sdmxlib.formats.sdmx_json.data import read_observations
 from sdmxlib.local._scan import resolve_flow, scan_csv_into, scan_frame_into
 from sdmxlib.local.data_store import DuckDBDataStore, store_path
+from sdmxlib.local.engine import BundleEngine, spill_directory
 from sdmxlib.model._binding import binding
 from sdmxlib.model._items import find_item, owner_classes
 from sdmxlib.model._refshape import can_reach_ref, walk_plan
@@ -90,7 +90,7 @@ from sdmxlib.query.accessors import ArtefactRow, ReportedAttributeRow
 from sdmxlib.query.observations import ObsQuery
 from sdmxlib.query.query import Query, Resolver, build
 from sdmxlib.query.raw import RawSql, prepare
-from sdmxlib.session import SessionFactory
+from sdmxlib.session import SessionFactory, adopt
 from sdmxlib.storage import readers, resolve, writers
 from sdmxlib.storage._kinds import CLASS_TO_NAME
 from sdmxlib.storage._kinds import NAME_TO_CLASS as _TYPE_REGISTRY
@@ -115,6 +115,8 @@ from sdmxlib.storage.schema import (
     meta_value,
     migrate,
     schema_exists,
+    sdmx_catalog,
+    use_sdmx,
 )
 
 _SIBLING_INDEX = re.compile(r"\[\d+\]")
@@ -557,11 +559,6 @@ def _no_resolver(_registry: BundleRegistry) -> None:
 _RESOLVERS: dict[str, _Resolver] = {}
 
 
-def _spill_directory() -> Path:
-    """Where a read-only database spills: under the system temp, one directory per process."""
-    return Path(tempfile.gettempdir()) / f"sdmxlib-spill-{os.getpid()}"
-
-
 class BundleRegistry(SessionFactory):
     """A DuckDB-backed SDMX store, read-only: what a published bundle opens as.
 
@@ -648,10 +645,24 @@ class BundleRegistry(SessionFactory):
         #: artefacts in — one connection, so a relation-valued filter can see
         #: both sides (§5.9).
         self._data_store: DuckDBDataStore | None = None
+        #: Held while the data store is built, so threads asking for
+        #: observations at once build it, and attach the lake, once.
+        self._data_plane_lock = threading.Lock()
         #: ATTACH spec a `bundle()` supplied, replayed when the store is built.
         self._attach: dict[str, str | tuple[str, str]] | None = None
         #: The manifest `bundle()` read, if the bundle had one (GH-66).
         self._manifest: Manifest | None = None
+        #: The catalog whose ``sdmx`` schema every handle reads: the file's own
+        #: once open, or the bundle's ``<prefix>__meta`` in a `BundleEngine`.
+        self._catalog: str | None = None
+        #: The engine `bundle()` attached this publication into, its prefix
+        #: there, and whether this registry made the engine and closes it.
+        self._engine: BundleEngine | None = None
+        self._prefix: str | None = None
+        self._owns_engine = False
+        #: Each binding role to the catalog it names here: ``lake`` to the
+        #: bundle's ``<prefix>__lake``. Empty where the role is the catalog.
+        self._roles: dict[str, str] = {}
         # Per-thread read cursor (#80). Each thread that reads from this
         # LocalRegistry lazily gets its own cursor on first call; subsequent
         # calls on the same thread reuse it. Cleared on close().
@@ -700,6 +711,13 @@ class BundleRegistry(SessionFactory):
     def _session_base(self) -> duckdb.DuckDBPyConnection:
         return self.connection
 
+    def _sdmx_catalog(self) -> str:
+        """The catalog this registry's handles read, once known."""
+        if self._catalog is None:
+            msg = f"LocalRegistry({self._uri!r}) is not open"
+            raise RuntimeError(msg)
+        return self._catalog
+
     def _install_default_session_hooks(self) -> None:
         """Make every handle agree with the base connection (#300).
 
@@ -710,7 +728,7 @@ class BundleRegistry(SessionFactory):
         that existed. Applying it through the hook is what makes "the session"
         a single thing rather than a description of one of them.
         """
-        self.on_connect(lambda handle: handle.execute("SET search_path = 'sdmx'"))
+        self.on_connect(lambda handle: use_sdmx(handle, self._sdmx_catalog()))
 
     def open(self) -> Self:
         """Open the DuckDB connection and run any pending schema migrations.
@@ -725,13 +743,21 @@ class BundleRegistry(SessionFactory):
         """
         if self._conn is not None:
             return self
+        if self._engine is not None and self._prefix is not None:
+            # A handle of its own on the shared engine, reading this bundle's
+            # catalog; the engine set the spill directory for every bundle.
+            self._conn = self._engine.cursor(self._prefix)
+            self._owns_connection = True
+            self._initialise_schema()
+            self._install_default_session_hooks()
+            return self
         self._conn = duckdb.connect(str(self._uri), read_only=self._READ_ONLY)
         self._owns_connection = True
         if self._READ_ONLY:
             # A read-only database spills to `<file>.tmp` beside itself by
             # default: inside a published bundle, and shared by every process
             # holding it. Each process spills under the system temp instead.
-            spill = str(_spill_directory()).replace("'", "''")
+            spill = str(spill_directory()).replace("'", "''")
             self._conn.execute(f"SET temp_directory = '{spill}'")
         self._initialise_schema()
         self._install_default_session_hooks()
@@ -786,11 +812,17 @@ class BundleRegistry(SessionFactory):
         instance._in_transaction = False
         instance._txn_stats = {}
         instance._data_store = None
+        instance._data_plane_lock = threading.Lock()
         # No ATTACH spec: a caller sharing a connection has already attached
         # whatever it wants visible. `_data_plane` then builds a store over
         # that connection and finds the lake already there.
         instance._attach = None
         instance._manifest = None
+        instance._catalog = None
+        instance._engine = None
+        instance._prefix = None
+        instance._owns_engine = False
+        instance._roles = {}
         instance._thread_local = threading.local()
         instance._initialise_schema()
         return instance
@@ -806,6 +838,8 @@ class BundleRegistry(SessionFactory):
         """
         if self._conn is None:
             return
+        if self._catalog is None:
+            self._catalog = sdmx_catalog(self._conn)
         version = get_schema_version(self._conn)
         exists = schema_exists(self._conn)
         if not exists or version != SCHEMA_VERSION:
@@ -827,18 +861,16 @@ class BundleRegistry(SessionFactory):
                 raise ReadOnlySchemaError(msg)
             self._cursor = migrate(self._conn)
         else:
-            self._cursor = self._conn.cursor()
-            self._cursor.execute("SET search_path = 'sdmx'")
+            self._cursor = use_sdmx(self._conn.cursor(), self._sdmx_catalog())
             # Only on the already-populated branch: a schema we just created
             # or rebuilt cannot have stale scan statistics, and skipping it
             # there keeps the check off every `:memory:` registry in the
             # suite. ~1 ms against the spine — see `check_scan_integrity`.
             check_scan_integrity(self._cursor)
-        # Also set search_path on the connection's default cursor — used
-        # by code paths that call ``conn.execute()`` directly without
-        # going through ``_read_cursor`` (lazy facades' ``code_map``
-        # forwarder, etc.). Cheap one-shot.
-        self._conn.execute("SET search_path = 'sdmx'")
+        # Also point the connection itself — used by code paths that call
+        # ``conn.execute()`` directly without going through ``_read_cursor``
+        # (lazy facades' ``code_map`` forwarder, etc.). Cheap one-shot.
+        use_sdmx(self._conn, self._sdmx_catalog())
 
     def __enter__(self) -> Self:
         if self._conn is None:
@@ -858,6 +890,12 @@ class BundleRegistry(SessionFactory):
             self._conn.close()
         self._conn = None
         self._cursor = None
+        self._data_store = None
+        if self._engine is not None and self._prefix is not None:
+            self._engine.release(self._prefix)
+            if self._owns_engine:
+                self._engine.close()
+            self._engine, self._prefix = None, None
         # Drop per-thread cursors. The cursor objects become orphaned —
         # DuckDB's close() invalidates them; Python GC reclaims the
         # handles. We can't iterate other threads' attributes on the
@@ -910,7 +948,7 @@ class BundleRegistry(SessionFactory):
         connection's default-cursor row buffer is overwritten by every
         ``execute()`` — see #75), but it does *not* require recreating
         the cursor per call. Thread-local reuse amortises the
-        ``cursor()`` + ``SET search_path`` cost across the thread's
+        ``cursor()`` + ``USE`` cost across the thread's
         lifetime — typically the entire process for a long-lived
         FastAPI/uvicorn threadpool.
 
@@ -935,8 +973,7 @@ class BundleRegistry(SessionFactory):
                 "(``with LocalRegistry(uri) as reg: ...``) or call ``.open()`` first."
             )
             raise RuntimeError(msg)
-        cur = self._conn.cursor()
-        cur.execute("SET search_path = 'sdmx'")
+        cur = adopt(self._conn, use_sdmx(self._conn.cursor(), self._sdmx_catalog()))
         self._thread_local.cur = cur
         return cur
 
@@ -1371,6 +1408,7 @@ class BundleRegistry(SessionFactory):
         cls,
         path: str | Path,
         *,
+        engine: BundleEngine | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
     ) -> BundleRegistry:
         """Open a published bundle, read-only: artefacts and observations together.
@@ -1403,8 +1441,17 @@ class BundleRegistry(SessionFactory):
         The lake is ATTACHed lazily, when something first asks for
         observations, so opening a bundle to read a codelist costs nothing.
 
+        **One engine for many bundles.** Pass a `BundleEngine` to
+        attach the publication into it, beside every other bundle it holds,
+        so they share one buffer pool, one thread pool and one
+        ``memory_limit``. Without one, the bundle gets an engine of its own,
+        closed with the registry. Either way its catalogs attach under a
+        prefix of their own, ``<bundle id>__<token>__meta`` and ``__lake``,
+        and a binding's ``lake`` role reads ``<prefix>__lake`` (`locate`).
+
         Args:
             path: The publication directory.
+            engine: The engine to attach into; one of its own when None.
             resolve_cache_items: As the `LocalRegistry` constructor.
 
         Returns:
@@ -1427,9 +1474,21 @@ class BundleRegistry(SessionFactory):
             )
             raise StoreSchemaError(msg)
         refuse_engine_mismatch(manifest, root)
-        registry = BundleRegistry._over_bundle(root, root / manifest.data_path, resolve_cache_items=resolve_cache_items)
+        owned = engine is None
+        shared = BundleEngine() if engine is None else engine
+        prefix = shared.attach(root, bundle_id=manifest.bundle_id, token=manifest.token)
+        registry = BundleRegistry._over_bundle(
+            root, root / manifest.data_path, resolve_cache_items=resolve_cache_items, lake=f"{prefix}__lake"
+        )
         registry._manifest = manifest
-        return registry.open()
+        registry._engine, registry._prefix, registry._owns_engine = shared, prefix, owned
+        registry._catalog = f"{prefix}__meta"
+        registry._roles = {"lake": f"{prefix}__lake"}
+        try:
+            return registry.open()
+        except Exception:
+            registry.close()
+            raise
 
     @classmethod
     def _over_bundle(
@@ -1439,8 +1498,12 @@ class BundleRegistry(SessionFactory):
         *,
         source_registry: str | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
+        lake: str = "lake",
     ) -> Self:
         """An unopened registry of this class over publication `root`, its lake's data files in `data`.
+
+        The lake attaches as `lake`: ``lake`` for a builder or the manifest
+        writer, ``<prefix>__lake`` for a bundle in an engine.
 
         `bundle` opens a read-only one after checking the manifest;
         `LocalRegistry.build` and the manifest writer open a writable one.
@@ -1462,7 +1525,7 @@ class BundleRegistry(SessionFactory):
         # provenance, not truth.
         read_only = ", READ_ONLY" if cls._READ_ONLY else ""
         registry._attach = {
-            "lake": (
+            lake: (
                 f"'ducklake:{root / 'lake.ducklake'}'",
                 f"(DATA_PATH '{data.resolve()}/', OVERRIDE_DATA_PATH true{read_only})",
             )
@@ -1485,13 +1548,18 @@ class BundleRegistry(SessionFactory):
         from sdmxlib.local.data_store import DuckDBDataStore  # noqa: PLC0415  (cycle)
 
         self._require_open()
-        if self._data_store is None:
-            self._data_store = DuckDBDataStore.from_registry(
-                self,
-                attach=self._attach,
-                extensions=["ducklake"] if self._attach else None,
-            )
-        return self._data_store
+        store = self._data_store
+        if store is not None:
+            return store
+        with self._data_plane_lock:
+            # Checked again: another thread may have built it while this one waited.
+            if self._data_store is None:
+                self._data_store = DuckDBDataStore.from_registry(
+                    self,
+                    attach=self._attach,
+                    extensions=["ducklake"] if self._attach else None,
+                )
+            return self._data_store
 
     def binding_for(self, flow: Dataflow | Ref[Dataflow] | SdmxUrn[Dataflow]) -> DataflowBinding | None:
         """Where this dataflow's observations live, and what they mean.
@@ -1508,7 +1576,23 @@ class BundleRegistry(SessionFactory):
         """
         urn = urn_of(flow)
         binding = self.get(DataflowBinding.urn_for(agency=urn.agency, id=urn.id, version=urn.version))
-        return binding if isinstance(binding, DataflowBinding) else None
+        return self.locate(binding) if isinstance(binding, DataflowBinding) else None
+
+    def locate(self, binding: DataflowBinding) -> DataflowBinding:
+        """`binding` with its ``database_role`` naming the catalog its table is in here.
+
+        The stored binding names a role, ``lake``; a bundle in a `BundleEngine`
+        attaches its lake as ``<prefix>__lake``, and SQL built from a binding
+        (``<database_role>.<table_location>``) has to name that. A role this
+        registry does not map is left as it is.
+        """
+        catalog = self._roles.get(binding.database_role)
+        return binding if catalog is None else attrs.evolve(binding, database_role=catalog)
+
+    @property
+    def lake_alias(self) -> str:
+        """The catalog this registry's DuckLake attaches as: ``lake``, or ``<prefix>__lake`` in an engine."""
+        return self._roles.get("lake", "lake")
 
     def dsd(self, flow: Dataflow | Ref[Dataflow] | SdmxUrn[Dataflow]) -> DataStructure | None:
         """The data structure this dataflow is built on, fully resolved.
@@ -1580,13 +1664,17 @@ class BundleRegistry(SessionFactory):
         `query(sl.q.dataflow)`, and a remote provider has no cheap way to
         answer the first at all, which is why this is a local method.
 
+        Each entry's binding names the catalog its table is in here, as
+        `binding_for` returns it (`locate`), so SQL built from it reads this
+        bundle's lake.
+
         Returns:
             One `DataflowEntry` per binding, ordered by dataflow URN.
         """
         entries = [
             DataflowEntry(
                 dataflow_urn=binding.dataflow.urn,
-                binding=binding,
+                binding=self.locate(binding),
                 name=flow.name if isinstance(flow := self.get(binding.dataflow.urn), Dataflow) else None,
                 source_registry=binding.source_registry,
             )

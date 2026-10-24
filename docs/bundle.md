@@ -202,6 +202,25 @@ returns a `BundleRegistry`, which has the read methods and no writes and no
 `sql()`. `LocalRegistry.build(bundle)` starts a publication, writable, for a
 builder (§7).
 
+A server holding many bundles open SHOULD hold them in one DuckDB engine, so
+they share one buffer pool, one thread pool and one memory limit:
+
+```python
+engine = sl.BundleEngine(memory_limit="70%", threads=8)
+census = sl.LocalRegistry.bundle(census_path, engine=engine)
+trade = sl.LocalRegistry.bundle(trade_path, engine=engine)
+```
+
+Each publication attaches under its own prefix, `<bundle_id>__<token>`: its
+`meta.duckdb` as `<prefix>__meta`, and its lake, when observations are first
+read, as `<prefix>__lake`. A registry's handles read only its own catalog, so
+a query on one bundle never reads another. A binding keeps the role it was
+stored with, `lake`; `BundleRegistry.binding_for` and `BundleRegistry.locate`
+return it naming `<prefix>__lake`, which is what SQL built from a binding
+needs. The same publication opened twice in one engine shares one
+attachment, released when the last registry over it closes. Without
+`engine=`, a bundle gets an engine of its own, closed with the registry.
+
 ### The schema and engine checks
 
 A reader MUST check three versions from the manifest **before opening any

@@ -249,6 +249,7 @@ Both pin sdmxlib by range in their `pyproject.toml`. Before a breaking release,
 | `api/federated.py`                | FederatedRegistry — agency-routed dispatch across Registry sources                                                                                                     |
 | `api/policy.py`                   | `RegistryUnavailable` — a source that could not be reached (federation and REST) |
 | `data_store.py`                   | DataStore Protocol — the data plane's *write* side; reading is `obs()` (#329) |
+| `local/engine.py`                 | `BundleEngine` — one DuckDB engine many published bundles attach into, each under `<bundle_id>__<token>__meta` / `__lake`; a bundle opened without one gets its own (GH-133). Every handle runs `USE "<catalog>".sdmx` (`storage/schema.py:use_sdmx`), since a derived cursor does not inherit it |
 | `local/data_store.py`             | DuckDBDataStore — DuckDB/DuckLake-backed DataStore, shares a `LocalRegistry`'s connection; `obs(binding)`, `write_observations`, `inspect()` |
 | `local/sql.py`                    | SchemaInspector + QueryPlan — custom-SQL seam (schema reflection + binding→query planning, cached DESCRIBE)                                                            |
 | `api/query.py`                    | `DataQuery` — the `reg.data(...)` builder that resolves to a `Dataset` |

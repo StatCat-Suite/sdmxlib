@@ -46,6 +46,7 @@ from sdmxlib.model.codelist import Code, Codelist
 from sdmxlib.query.accessors import q
 from sdmxlib.session import cursor_for
 from sdmxlib.storage import lazy as lazy_mod
+from sdmxlib.storage.schema import sdmx_catalog
 
 pytestmark = pytest.mark.unit
 
@@ -130,7 +131,7 @@ def test_the_handles_agree_about_search_path(reg) -> None:
         _search_path(cursor_for(base)),
         _search_path(_lazy_cur()(base)),
     }
-    assert paths == {"sdmx"}
+    assert paths == {f"{sdmx_catalog(base)}.sdmx"}
     # The consequence a caller sees: unqualified names resolve everywhere.
     assert reg.execute("SELECT count(*) FROM code")[0][0] == 3
 

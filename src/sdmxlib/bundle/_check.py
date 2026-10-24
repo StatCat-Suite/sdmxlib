@@ -40,9 +40,6 @@ from sdmxlib.storage._manifest import (
 from sdmxlib.storage._references import unresolved_references
 from sdmxlib.storage.schema import StoreSchemaError
 
-#: The ATTACH alias `LocalRegistry.bundle` gives the bundle's DuckLake catalog.
-_LAKE = "lake"
-
 #: Where a check runs: where the bundle is built, where it lands, or where a
 #: server opens it.
 type Profile = Literal["publish", "receive", "open"]
@@ -362,13 +359,13 @@ def _lake(root: Path, manifest: Manifest, reg: BundleRegistry) -> list[Finding]:
     data = root / manifest.data_path
     findings: list[Finding] = []
     tables = conn.execute(
-        "SELECT schema_name, table_name FROM duckdb_tables() WHERE database_name = ? ORDER BY ALL", [_LAKE]
+        "SELECT schema_name, table_name FROM duckdb_tables() WHERE database_name = ? ORDER BY ALL", [reg.lake_alias]
     ).fetchall()
     for schema, table in tables:
         listed = conn.execute(
             "SELECT data_file, data_file_size_bytes, delete_file, delete_file_size_bytes "
             "FROM ducklake_list_files(?, ?, schema => ?)",
-            [_LAKE, table, schema],
+            [reg.lake_alias, table, schema],
         ).fetchall()
         for data_file, data_size, delete_file, delete_size in listed:
             for file, size in ((data_file, data_size), (delete_file, delete_size)):
@@ -386,7 +383,7 @@ def _lake(root: Path, manifest: Manifest, reg: BundleRegistry) -> list[Finding]:
                 )
     listed = {f.path for f in manifest.files if f.root == "data"}
     try:
-        referenced = lake_files(conn, data)
+        referenced = lake_files(conn, data, lake=reg.lake_alias)
     except ManifestError as exc:
         return [*findings, Finding("lake", "lake.ducklake", str(exc))]
     findings += [

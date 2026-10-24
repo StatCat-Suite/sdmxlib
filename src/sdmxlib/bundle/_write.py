@@ -44,20 +44,20 @@ from sdmxlib.storage.schema import get_schema_version, meta_value
 #: Every data file and delete file the lake catalog references from any snapshot
 #: it keeps, with the schema and table paths each one's path is relative to.
 #: The table and schema rows are the ones live when the file was written.
-#: ``__ducklake_metadata_lake`` is the database DuckLake attaches behind the
-#: ``lake`` alias `LocalRegistry.build` gives the catalog.
+#: ``__ducklake_metadata_{lake}`` is the database DuckLake attaches behind the
+#: catalog's alias: ``lake`` in a builder, ``<prefix>__lake`` in a `BundleEngine`.
 _LAKE_FILES = """
     SELECT s.path, s.path_is_relative, t.path, t.path_is_relative, f.path, f.path_is_relative
     FROM (
-        SELECT table_id, begin_snapshot, path, path_is_relative FROM __ducklake_metadata_lake.ducklake_data_file
+        SELECT table_id, begin_snapshot, path, path_is_relative FROM __ducklake_metadata_{lake}.ducklake_data_file
         UNION ALL
-        SELECT table_id, begin_snapshot, path, path_is_relative FROM __ducklake_metadata_lake.ducklake_delete_file
+        SELECT table_id, begin_snapshot, path, path_is_relative FROM __ducklake_metadata_{lake}.ducklake_delete_file
     ) AS f
-    JOIN __ducklake_metadata_lake.ducklake_table AS t
+    JOIN __ducklake_metadata_{lake}.ducklake_table AS t
       ON t.table_id = f.table_id
      AND t.begin_snapshot <= f.begin_snapshot
      AND (t.end_snapshot IS NULL OR f.begin_snapshot < t.end_snapshot)
-    JOIN __ducklake_metadata_lake.ducklake_schema AS s
+    JOIN __ducklake_metadata_{lake}.ducklake_schema AS s
       ON s.schema_id = t.schema_id
      AND s.begin_snapshot <= f.begin_snapshot
      AND (s.end_snapshot IS NULL OR f.begin_snapshot < s.end_snapshot)
@@ -134,7 +134,7 @@ def inventory(root: Path, tiers: Mapping[str, Tier] | None = None) -> tuple[Bund
     return tuple(entries)
 
 
-def lake_files(conn: duckdb.DuckDBPyConnection, data: Path) -> list[str]:
+def lake_files(conn: duckdb.DuckDBPyConnection, data: Path, *, lake: str = "lake") -> list[str]:
     """Every data file the attached lake catalog references, as ``/``-separated paths under `data`, sorted.
 
     Read from DuckLake's metadata tables, so it covers every snapshot the
@@ -142,8 +142,9 @@ def lake_files(conn: duckdb.DuckDBPyConnection, data: Path) -> list[str]:
     what garbage collection must keep while this publication lives.
 
     Args:
-        conn: A connection with the publication's lake attached as ``lake``.
+        conn: A connection with the publication's lake attached as `lake`.
         data: The lake's data path.
+        lake: The alias the lake is attached as.
 
     Returns:
         The paths, each once.
@@ -152,7 +153,7 @@ def lake_files(conn: duckdb.DuckDBPyConnection, data: Path) -> list[str]:
         ManifestError: If the catalog references a file outside `data`.
     """
     found: set[str] = set()
-    for row in conn.execute(_LAKE_FILES).fetchall():
+    for row in conn.execute(_LAKE_FILES.format(lake=lake)).fetchall():
         path = ""
         for part, relative in zip(row[::2], row[1::2], strict=True):
             path = f"{path}{part}" if relative else str(part)
@@ -312,7 +313,7 @@ def binding_counts(reg: BundleRegistry, artefacts: tuple[ArtefactEntry, ...]) ->
                 dataflow=dataflow,
                 observations=reg.obs(binding.dataflow).count(),
                 structural_version=structure,
-                fingerprint=table_fingerprint(reg.connection, binding),
+                fingerprint=table_fingerprint(reg.connection, reg.locate(binding)),
                 structure_fingerprint=structure_fingerprint(references.closure(dataflow, [structure]), fingerprints),
             )
         )
