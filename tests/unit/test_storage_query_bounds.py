@@ -44,6 +44,7 @@ from sdmxlib.model.metadatastructure import MetadataAttribute, MetadataStructure
 from sdmxlib.model.ref import Ref
 from sdmxlib.model.representation import Facet
 from sdmxlib.model.urn import SdmxUrn
+from sdmxlib.storage.lazy import LazyCodelist
 from tests.support.factories import code_urn, concept_ref
 from tests.support.narrow import present
 
@@ -363,6 +364,52 @@ def test_resolve_refs_reads_the_codes_asked_for_not_the_whole_codelist():
         leaves = list(eager_h.tree[0].children)
         assert all(node.code.resolved for node in leaves)
         assert {node.code().id for node in leaves} == {f"C{i:04d}" for i in range(n_nodes)}
+
+
+def test_a_cached_lazy_codelist_does_not_answer_item_refs_one_by_one(make_dsd):
+    """A warm cache reads a hierarchy's codes in one batch, as a fresh registry does (GH-150).
+
+    Reading a data structure caches its codelist as a `LazyCodelist`. Served
+    from that facade, each node's code ref was one subscript query: on the
+    census bundle a 499,138-node hierarchy took 337 s instead of 0.8 s.
+    """
+    n_nodes = 300
+    cl = Codelist(
+        id="CL_TARGET",
+        maintainer="SDMX",
+        version="1.0",
+        name=_NAME,
+        codes=[Code(id=f"C{i:04d}", name=_NAME) for i in range(n_nodes)],
+    )
+    nodes = [
+        HierarchicalCode(id=f"N{i:04d}", code=Ref[Code].unresolved(code_urn("CL_TARGET", f"C{i:04d}")))
+        for i in range(n_nodes)
+    ]
+    h = Hierarchy(id="H_REFS", maintainer="SDMX", version="1.0", name=_NAME, tree=nodes)
+    structure = make_dsd(
+        dimensions=[Dimension(id="DIM", concept=concept_ref("DIM"), representation=Ref[Codelist].unresolved(cl.urn))],
+    )
+
+    def eager_reads(warm: bool) -> list[str]:
+        with LocalRegistry(":memory:") as local:
+            local.add_all([cl, h, structure])
+            # Before the warming read: the facade queries on the connection it was built with.
+            counter = _instrument(local)
+            if warm:
+                local.get(structure.urn)
+                cached = local._resolve_cache.get(str(cl.urn))
+                assert isinstance(cached, LazyCodelist), "discrimination: the cache must hold the facade"
+            start = counter.count
+            read = local.get(h.urn, eager=True)
+            assert read is not None
+            assert len(read.tree) == n_nodes
+            assert all(present(node.code).resolved for node in read.tree)
+            # A first read opens the thread's cursor, which runs `USE` once.
+            return [sql for sql in counter.executes[start:] if not sql.startswith("USE ")]
+
+    cold, warm = eager_reads(warm=False), eager_reads(warm=True)
+    assert len(warm) == len(cold), f"{len(warm)} statements warm, {len(cold)} cold: item refs fanned out"
+    assert sum("FROM sdmx.code WHERE code_urn" in sql for sql in warm) == 1
 
 
 def test_resolve_refs_loads_distinct_parent_schemes_once_each(dsd):
