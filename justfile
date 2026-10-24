@@ -192,19 +192,33 @@ record-cassette selector:
 # renaming `resolve_cache_size` to `resolve_cache_items` passed `just check`,
 # passed 6,284 unit tests, and left this tier with 19 errors that nobody would
 # have seen. Skips in ~0 s on a machine without the bundle, and says so.
+#
+# Without the `recompute` assertions, which redo publishing's own work: the
+# census `publish` check recomputes every fingerprint, about 6.5 minutes and
+# every core. `just bench-bundle` runs them. `SDMXLIB_BENCH_THREADS` (default
+# 4) caps DuckDB's threads in this tier, so a run leaves the machine usable.
+#
+# Run the bundle tier's assertions, without the `recompute` ones
 [group('test')]
 bench-bundle-assertions *ARGS:
-    uv run pytest tests/bench -m "bench and bundle" --benchmark-skip {{ BENCH_COLS }} -rs {{ ARGS }}
+    uv run pytest tests/bench -m "bench and bundle and not recompute" --benchmark-skip {{ BENCH_COLS }} -rs {{ ARGS }}
 
-# Full CI gate: lint + typecheck + unit + docs + cassette-replayed integration
-# + the bundle tier's assertions.
+# Everything in the gate but the bundle tier: lint, typecheck, unit, docs,
+# cassette-replayed integration and the docs build. The loop to run while
+# working, before the full `ci`.
+#
+# The gate without the bundle tier (about 3 minutes)
+[group('test')]
+ci-fast: check test test-docs test-integration docs-build
+
+# Full CI gate: `ci-fast` + the bundle tier's assertions.
 # Integration is in the gate because it replays offline in ~3 s and covers the
 # HTTP-facing modules that unit tests structurally cannot. The bundle
 # assertions are in it because they are the only thing standing between a
 # rename in `LocalRegistry`'s public API and a silently broken tier — ~96 s on
 # the machine that holds the bundle, nothing anywhere else.
 [group('test')]
-ci: check test test-docs test-integration bench-bundle-assertions docs-build
+ci: ci-fast bench-bundle-assertions
 
 # Run the property-based tests with 20x the examples (local hunting; #215)
 [group('test')]

@@ -87,6 +87,10 @@ markers = [
   # cannot be, in the repo. Split from `bench` so `just bench` means the same
   # thing on every machine and `bench/baselines/` stays comparable across them.
   "bundle: benchmarks against a real SDMX bundle; need $SDMXLIB_BENCH_BUNDLE",
+  # An assertion that redoes what publishing computed — the census `publish`
+  # check recomputes every fingerprint, about 6.5 minutes. `just ci` leaves it
+  # out; `just bench-bundle` runs it.
+  "recompute: bundle-tier assertions that recompute what publishing computed; in `just bench-bundle`, not `just ci`",
 ]
 
 [tool.coverage.run]

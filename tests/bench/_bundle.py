@@ -196,6 +196,16 @@ def skip_reason() -> str:
     )
 
 
+def threads() -> int:
+    """DuckDB's thread pool for this tier: ``$SDMXLIB_BENCH_THREADS``, 4 by default.
+
+    DuckDB takes every core by default, which made a ``just ci`` run take the
+    whole machine for its bundle tier. A measurement compares runs at one
+    setting, so a baseline records the setting it was taken at.
+    """
+    return int(os.environ.get("SDMXLIB_BENCH_THREADS", "4"))
+
+
 def connect(path: Path) -> duckdb.DuckDBPyConnection:
     """A read-only connection to the bundle's structural store.
 
@@ -208,6 +218,7 @@ def connect(path: Path) -> duckdb.DuckDBPyConnection:
     # Bounded so a runaway scan fails as a DuckDB error rather than as an
     # OOM kill, which reports nothing and takes the session with it.
     conn.execute("SET memory_limit='8GB'")
+    conn.execute(f"SET threads = {threads()}")
     return conn
 
 
