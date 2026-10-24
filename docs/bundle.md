@@ -363,11 +363,19 @@ in order and reports every finding, not only the first:
 | `manifest` | the manifest's `schema_version`, `duckdb_storage_version` and `ducklake_spec_version` pass the reader's checks, so the files can be opened (§4) | the run stops |
 | `lake` | every file the current snapshot references exists at the size DuckLake recorded and none is a delete file, and every file the catalog references from any snapshot it keeps is in the manifest; runs only when `lake.ducklake` exists | continues |
 | `bindings` | the store's bindings are the manifest's, and each table holds the count the manifest gives | continues |
-| `references` | every reference in the store resolves to an artefact in the store; `references=False` or `--no-references` skips it | continues |
+| `references` | every reference in the store names an artefact or an item in the store; `references=False` or `--no-references` skips it | continues |
 
-The `references` check loads every artefact. On a 2.6 GB census bundle it
-takes about 30 s and 5 GB of memory, so it runs when a bundle is built or
-received, not when one is opened to serve.
+The `references` check reads the stored references in SQL and loads no
+artefact. They are the rows of `sdmx.artefact_ref` and every reference column
+of the item and side tables, each held by the artefact that owns its row. A
+target resolves when it is an artefact's URN or an item's, built from the
+owning scheme's URN and the item's id, or its path for a nested item. A URN
+without a version names the latest version the store holds, and SDMX 2.1's
+`Attribute` and `PrimaryMeasure` match SDMX 3.0's `DataAttribute` and
+`Measure`. A finding's subject is the URN of the artefact holding the
+reference, and its detail names the reference's role and target. On a
+2.6 GB census bundle with 2.16 million stored references the check takes
+0.15 s.
 
 A package that owns part of a bundle MAY pass its own checks as
 `extensions={name: check}`. Each runs after `references`, and its findings

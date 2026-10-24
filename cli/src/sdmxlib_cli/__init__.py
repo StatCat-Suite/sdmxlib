@@ -29,7 +29,7 @@ def check(
         bool,
         typer.Option(
             "--references/--no-references",
-            help="Check that every reference resolves within the bundle (loads every artefact; the slow part).",
+            help="Check that every reference resolves within the bundle.",
         ),
     ] = True,
 ) -> None:

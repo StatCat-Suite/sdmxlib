@@ -10,7 +10,7 @@ sdmxlib bundle check path/to/bundle
 
 `sdmxlib bundle check` runs `sdmxlib.bundle.check_bundle`: the manifest, every
 file's checksum, the DuckLake catalog, the bindings' observation counts, and
-the structural closure (`--no-references` skips that, the slow part). It prints
+the structural closure (`--no-references` skips it). It prints
 each finding and exits 1 if there are any.
 
 Released with sdmxlib, at the same version.

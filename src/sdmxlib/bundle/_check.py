@@ -13,10 +13,7 @@ from attrs import frozen
 
 from sdmxlib.bundle._write import digests_of, lake_files
 from sdmxlib.local.registry import BundleRegistry, LocalRegistry
-from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.binding import DataflowBinding
-from sdmxlib.model.metadataset import MetadataSet
-from sdmxlib.model.validation import reference_issues
 from sdmxlib.storage._manifest import (
     MANIFEST_NAME,
     UNLISTED,
@@ -25,6 +22,7 @@ from sdmxlib.storage._manifest import (
     StoreFormatError,
     read_manifest,
 )
+from sdmxlib.storage._references import unresolved_references
 from sdmxlib.storage.schema import StoreSchemaError
 
 #: The ATTACH alias `LocalRegistry.bundle` gives the bundle's DuckLake catalog.
@@ -92,10 +90,9 @@ def check_bundle(path: str | Path, *, references: bool = True, extensions: Mappi
       garbage collection keeps.
     - **bindings** — the store's dataflow bindings are the manifest's, and each
       holds the observations the manifest counts.
-    - **references** — every reference in the store resolves within it: the
-      structural closure is complete. Loads every artefact, so it is the costly
-      one (about 30 s and 5 GB on a 2.6 GB census bundle); ``references=False``
-      skips it.
+    - **references** — every reference in the store names an artefact or an
+      item in the store: the structural closure is complete. Answered in SQL
+      over the stored references, without loading an artefact.
 
     A manifest that cannot be read, or a store on another schema version or in
     a DuckDB or DuckLake format this engine cannot read, ends the run there:
@@ -248,10 +245,7 @@ def _bindings(manifest: Manifest, reg: BundleRegistry) -> list[Finding]:
 
 
 def _references(reg: BundleRegistry) -> list[Finding]:
-    loaded = [a for a in reg.to_registry()._store.values() if isinstance(a, MaintainableArtefact)]
-    structural = [a for a in loaded if not isinstance(a, MetadataSet)]
-    metadata = [a for a in loaded if isinstance(a, MetadataSet)]
     return [
-        Finding("references", issue.source, f"refers to {issue.target_urn}, which is not in the bundle")
-        for issue in reference_issues(structural, also=metadata)
+        Finding("references", u.source, f"its {u.role} reference {u.target} is not in the bundle")
+        for u in unresolved_references(reg.connection)
     ]

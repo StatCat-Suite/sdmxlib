@@ -228,17 +228,11 @@ After a successful receive-time check a reader MAY write `<pod-local>/verified/<
 
 ### 4.8 `references` as SQL
 
-The reference table is `artefact_ref`; item-level references are the 110 declared edges across 43 tables in `query/_edges.py`. The check generates one anti-join per edge from that table, so the edge table and the check cannot drift:
+`storage/_references.py` builds the check (GH-129). The references are the rows of `artefact_ref` together with every reference column the declared edges in `query/_edges.py` name, plus five columns outside the edge table (`UNDECLARED_REFERENCES`). The edge columns are needed: a concept's core representation has no `artefact_ref` row. A pair that `artefact_ref` already holds counts once.
 
-```sql
-SELECT r.source_urn, r.target_urn
-FROM sdmx.artefact_ref AS r
-LEFT JOIN sdmx.artefact AS a ON a.urn = r.target_urn
-WHERE a.urn IS NULL;
-```
+The anti-join runs against every URN in the store: `artefact.urn` and one URN per stored item, built from the owning scheme's URN, the item class and the item's id or path, for the 20 item kinds the store keeps (`STORED_ITEMS`). A target with no exact match is tried under the spellings the loading check accepts: a version-less URN matches any version held, and `CLASS_ALIAS_GROUPS` folds the renamed component classes.
 
-Keep the loading version as a differential oracle in tests. Expected cost: milliseconds.
-
+The loading check is the differential oracle in `tests/unit/test_references_sql.py`, over every fixture and the canonical corpus, each with every artefact dropped and with one leaf item of each kind deleted. Measured on the census bundle: 0.15 s over 2.16 million references; 0.5 s more when a target needs the spelling pass.
 ---
 
 ## 5. Overlay changes (overlay 1.1 / effective token)
