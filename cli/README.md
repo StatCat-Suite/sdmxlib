@@ -5,12 +5,14 @@ separate install, so the library itself carries no CLI dependency:
 
 ```sh
 uv tool install sdmxlib-cli
-sdmxlib bundle check path/to/bundle
+sdmxlib bundle check path/to/publication --at publish
 ```
 
-`sdmxlib bundle check` runs `sdmxlib.bundle.check_bundle`: the manifest, every
-file's checksum, the DuckLake catalog, the bindings' observation counts, and
-the structural closure (`--no-references` skips it). It prints
-each finding and exits 1 if there are any.
+`sdmxlib bundle check` runs `sdmxlib.bundle.check_bundle` at the profile
+`--at` names. `publish` checks the manifest, every file's checksum, the
+DuckLake catalog, the bindings' observation counts, the structural closure
+and the fingerprints. `receive` checks data files by size and leaves the
+fingerprints out; `open` checks file sizes only. It prints each finding and
+exits 1 if there are any.
 
 Released with sdmxlib, at the same version.

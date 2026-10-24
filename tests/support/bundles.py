@@ -28,13 +28,23 @@ DSD = DataStructure(
 FLOW = Dataflow(id="F", maintainer=Agency(id="SDMX"), version="1.0", name={"en": "F"}, structure=Ref.to(DSD))
 
 
-def make_bundle(root: Path, rows: int, *, extra: tuple[SupportsUrn, ...] = ()) -> Path:
+#: The concept scheme `DSD`'s components name.
+CONCEPTS = sl.ConceptScheme(
+    id="CS",
+    maintainer="T",
+    version="1.0",
+    name={"en": "concepts"},
+    concepts=[sl.Concept(id=c, name={"en": c}) for c in ("GEO", "OBS_VALUE")],
+)
+
+
+def make_bundle(root: Path, rows: int, *, extra: tuple[SupportsUrn, ...] = (), closed: bool = True) -> Path:
     """The first publication of a bundle at `root`, unpublished: `rows` observations bound to `FLOW`, and `extra`.
 
     Returns the publication directory, ``<root>/<token>/``; its data files are
-    in ``<root>/data/``. `concept_ref` points at a concept scheme the store
-    does not hold, so the bundle's structural closure is not complete; a test
-    checking references adds the scheme through `extra`.
+    in ``<root>/data/``. `closed` adds `CONCEPTS`, the concept scheme the DSD
+    names, so every reference resolves; without it the `references` check
+    finds the two concepts.
     """
     root.mkdir(parents=True)
     with sl.LocalRegistry.build(root) as reg:
@@ -44,7 +54,7 @@ def make_bundle(root: Path, rows: int, *, extra: tuple[SupportsUrn, ...] = ()) -
             "CREATE TABLE lake.d.obs AS SELECT 'G' || (range % 7) AS GEO, range::DOUBLE AS OBS_VALUE FROM range(?)",
             [rows],
         )
-        reg.add_all([*extra, DSD, FLOW])
+        reg.add_all([*((CONCEPTS,) if closed else ()), *extra, DSD, FLOW])
         reg.add(DataflowBinding.from_dsd(DSD, dataflow=Ref.to(FLOW), schema="d", table="obs", database_role="lake"))
         return reg.publication
 

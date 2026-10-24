@@ -114,7 +114,7 @@ def test_a_signature_beside_the_manifest_is_never_listed_or_reported(tmp_path: P
     assert SIGNATURE_NAME not in {f.path for f in manifest.files}
     assert SIGNATURE_NAME not in {f.path for f in inventory(publication)}
     (publication / SIGNATURE_NAME).write_text("signed after")
-    assert check_bundle(publication, references=False).ok
+    assert check_bundle(publication, at="publish").ok
 
 
 def test_copy_carries_the_signature_with_the_manifest(tmp_path: Path) -> None:
@@ -123,14 +123,14 @@ def test_copy_carries_the_signature_with_the_manifest(tmp_path: Path) -> None:
     destination = tmp_path / "dst" / "b" / publication.name
     copy_bundle(publication, destination)
     assert (destination / SIGNATURE_NAME).read_text() == "sig"
-    assert check_bundle(destination, references=False).ok
+    assert check_bundle(destination, at="publish").ok
     assert read_manifest(destination) == read_manifest(publication)
 
 
 def test_any_other_unlisted_file_is_still_reported(tmp_path: Path) -> None:
     publication = publish(make_bundle(tmp_path / "b", 10))
     (publication / f"{SIGNATURE_NAME}.bak").write_text("x")
-    assert check_bundle(publication, references=False).findings == (
+    assert check_bundle(publication, at="publish").findings == (
         Finding("files", f"{SIGNATURE_NAME}.bak", "in the bundle but not in the manifest"),
     )
 

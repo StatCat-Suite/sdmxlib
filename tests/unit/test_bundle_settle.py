@@ -87,7 +87,7 @@ def test_a_revising_republish_ships_no_delete_file(tmp_path: Path) -> None:
     with sl.LocalRegistry.bundle(first) as reg:
         assert reg.obs(FLOW.urn).count() == 200_000, "the first publication still reads its rows"
     for publication in (first, second):
-        report = check_bundle(publication, references=False)
+        report = check_bundle(publication, at="publish")
         assert report.ok, "\n".join(map(str, report.findings))
 
 
@@ -168,7 +168,7 @@ def test_a_delete_file_in_a_published_lake_is_a_finding(tmp_path: Path) -> None:
     conn.execute("DELETE FROM lake.d.obs WHERE OBS_VALUE < 3")
     conn.execute("CALL ducklake_flush_inlined_data('lake')")
     conn.close()
-    findings = [f for f in check_bundle(publication, references=False).findings if f.check == "lake"]
+    findings = [f for f in check_bundle(publication, at="publish").findings if f.check == "lake"]
     assert any("a delete file in the current snapshot" in f.detail for f in findings), findings
 
 

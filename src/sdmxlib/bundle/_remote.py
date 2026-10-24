@@ -17,7 +17,7 @@ from collections.abc import Callable, Collection
 
 from attrs import frozen
 
-from sdmxlib.bundle._check import Finding
+from sdmxlib.bundle._finding import Finding
 from sdmxlib.storage._manifest import BundleFile, Manifest, Tier
 
 

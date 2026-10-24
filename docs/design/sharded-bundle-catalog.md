@@ -226,6 +226,8 @@ The orphan dry run is gone from the `lake` check; orphans are defined over the u
 
 After a successful receive-time check a reader MAY write `<pod-local>/verified/<bundle_id>/<token>` recording the manifest SHA-256. A later open at the same token with the same manifest SHA-256 runs the `open` profile; with no stamp, or a stamp for another manifest digest, the reader runs the `receive` profile first.
 
+Built in GH-130 as `check_on_open(path, stamps=dir)`: the stamp is `<stamps>/<bundle_id>/<token>`, JSON holding the manifest sha256, the checks that ran and the time, written by a rename once `receive` finds nothing. At `receive`, `data/` is checked by local size, or with `lookup=` by size and `Content-MD5` through `verify_remote`; the lake and the bindings still read the data where the registry reads it. `fingerprints=True` opts `receive` into the recompute. Extensions take the profile as a fourth argument.
+
 ### 4.8 `references` as SQL
 
 `storage/_references.py` builds the check (GH-129). The references are the rows of `artefact_ref` together with every reference column the declared edges in `query/_edges.py` name, plus five columns outside the edge table (`UNDECLARED_REFERENCES`). The edge columns are needed: a concept's core representation has no `artefact_ref` row. A pair that `artefact_ref` already holds counts once.

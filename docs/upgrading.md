@@ -77,6 +77,14 @@ follows.
 - `check_bundle` no longer reports a data file it does not list: `data/` is
   shared, and a file there may belong to another publication. It reports a
   file the lake references and the manifest omits.
+- `check_bundle(path, at=...)` takes a profile, `"publish"`, `"receive"` or
+  `"open"`, and `references=` is gone: `publish` and `receive` run the
+  references check and `open` does not. Pass `at="publish"` where you called
+  `check_bundle(path)`. `publish` also recomputes the fingerprints.
+  `Report` gains `at`. An extension `Check` takes the profile as a fourth
+  argument, `check(root, manifest, registry, at)`. `sdmxlib bundle check`
+  takes `--at` in place of `--no-references`. `check_on_open` runs `receive`
+  once per token and manifest and `open` after, keeping a stamp.
 - `check_bundle`'s `references` check runs in SQL and loads no artefact.
   A finding's subject is the URN of the artefact holding the reference,
   where it was a model path such as `Hierarchy:H.tree[CA].code`, and its

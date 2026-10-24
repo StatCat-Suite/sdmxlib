@@ -18,7 +18,7 @@ from sdmxlib.bundle._fingerprint import (
     structure_fingerprint,
     table_fingerprint,
 )
-from sdmxlib.local.registry import LocalRegistry
+from sdmxlib.local.registry import BundleRegistry, LocalRegistry
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.model.urn import SdmxUrn
@@ -202,7 +202,7 @@ def _ducklake_versions(conn: duckdb.DuckDBPyConnection) -> tuple[str | None, str
     return extension, spec
 
 
-def _artefacts(reg: LocalRegistry) -> tuple[ArtefactEntry, ...]:
+def artefact_entries(reg: BundleRegistry) -> tuple[ArtefactEntry, ...]:
     """Every maintainable artefact in the store but the bindings, by URN, each fingerprinted.
 
     Read one at a time and dropped, so memory holds one artefact: on the
@@ -300,7 +300,7 @@ def _quoted(identifier: str) -> str:
     return '"' + identifier.replace('"', '""') + '"'
 
 
-def _bindings(reg: LocalRegistry, artefacts: tuple[ArtefactEntry, ...]) -> tuple[BindingCount, ...]:
+def binding_counts(reg: BundleRegistry, artefacts: tuple[ArtefactEntry, ...]) -> tuple[BindingCount, ...]:
     """Each binding's count, data structure and fingerprints, by dataflow URN."""
     fingerprints = {a.urn: a.fingerprint for a in artefacts}
     references = References(reg.connection, fingerprints)
@@ -407,7 +407,7 @@ def write_manifest(
         # Fingerprinted before anything reads the bindings: a binding read
         # fills the registry's resolve cache, and eager reads resolving
         # against it ran over 7x slower on the census bundle.
-        artefacts = _artefacts(reg)
+        artefacts = artefact_entries(reg)
         referenced: list[str] = []
         lake = (root / "lake.ducklake").exists()
         if lake:
@@ -420,7 +420,7 @@ def write_manifest(
             )
             referenced = lake_files(reg.connection, data)
         ducklake, spec = _ducklake_versions(reg.connection) if lake else (None, None)
-        counts = _bindings(reg, artefacts)
+        counts = binding_counts(reg, artefacts)
     # Closing the last connection checkpoints a database, so a log left by a
     # builder that exited is gone by now. One that remains means another
     # connection still holds the database for writing, and its log holds

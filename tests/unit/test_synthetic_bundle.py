@@ -54,7 +54,7 @@ def built(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 
 def test_it_publishes_a_bundle_that_checks_clean(built: Path) -> None:
-    report = check_bundle(built)
+    report = check_bundle(built, at="publish")
     assert report.ok, "\n".join(map(str, report.findings))
 
 

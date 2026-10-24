@@ -68,7 +68,7 @@ def test_check_bundle_runs_beside_a_process_that_holds_the_bundle(tmp_path: Path
     root = publish(make_bundle(tmp_path / "b", 10))
     holder = _hold_open_and_wait(root)
     try:
-        report = check_bundle(root, references=False)
+        report = check_bundle(root, at="publish")
     finally:
         holder.communicate("")
     assert report.ok, "\n".join(map(str, report.findings))
@@ -103,13 +103,13 @@ def test_publishing_while_a_builder_holds_the_store_is_refused(tmp_path: Path) -
             publish(root)
     publish(root)
     assert sorted(p.name for p in root.rglob("*.wal")) == []
-    assert check_bundle(root, references=False).ok
+    assert check_bundle(root, at="publish").ok
 
 
 def test_the_files_check_names_a_write_ahead_log(tmp_path: Path) -> None:
     root = publish(make_bundle(tmp_path / "b", 10))
     (root / "meta.duckdb.wal").write_bytes(b"\x00")
-    findings = [(f.check, f.subject, f.detail) for f in check_bundle(root, references=False).findings]
+    findings = [(f.check, f.subject, f.detail) for f in check_bundle(root, at="publish").findings]
     assert (
         "files",
         "meta.duckdb.wal",

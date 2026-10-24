@@ -80,6 +80,10 @@ The format itself, field by field, is [the bundle format](bundle.md).
 
 ---
 
+::: sdmxlib.bundle.check_on_open
+
+---
+
 ::: sdmxlib.bundle.Report
 
 ---

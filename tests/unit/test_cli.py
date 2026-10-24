@@ -24,26 +24,31 @@ _ROOT = ROOT
 _RUNNER = CliRunner()
 
 
-def _published(root: Path) -> Path:
-    publication = make_bundle(root, 10)
+def _published(root: Path, *, closed: bool = True) -> Path:
+    publication = make_bundle(root, 10, closed=closed)
     write_manifest(publication, bundle_id="b", producer=Producer(name="t", version="1"))
     return publication
 
 
 def test_a_clean_bundle_exits_0_and_says_what_it_checked(tmp_path: Path) -> None:
-    result = _RUNNER.invoke(app, ["bundle", "check", str(_published(tmp_path / "b")), "--no-references"])
+    result = _RUNNER.invoke(app, ["bundle", "check", str(_published(tmp_path / "b")), "--at", "receive"])
     assert result.exit_code == 0, result.output
-    assert result.output.strip().endswith("0 findings; checked manifest, files, lake, bindings")
+    assert result.output.strip().endswith("0 findings; checked manifest, files, lake, bindings, references")
 
 
 def test_findings_are_printed_and_exit_1(tmp_path: Path) -> None:
-    """The default bundle's DSD names a concept scheme it does not hold, so the
-    closure, on by default, finds both concepts."""
-    result = _RUNNER.invoke(app, ["bundle", "check", str(_published(tmp_path / "b"))])
+    """Without its concept scheme the bundle's DSD names two concepts it does not hold."""
+    result = _RUNNER.invoke(app, ["bundle", "check", str(_published(tmp_path / "b", closed=False)), "--at", "publish"])
     assert result.exit_code == 1
     lines = result.output.strip().splitlines()
     assert sum(line.startswith("[references] ") for line in lines) == 2
-    assert lines[-1].endswith("2 findings; checked manifest, files, lake, bindings, references")
+    assert lines[-1].endswith("2 findings; checked manifest, files, lake, bindings, references, fingerprints")
+
+
+def test_the_profile_is_required(tmp_path: Path) -> None:
+    result = _RUNNER.invoke(app, ["bundle", "check", str(_published(tmp_path / "b"))])
+    assert result.exit_code == 2
+    assert "--at" in result.output
 
 
 def test_copy_writes_a_publication_that_checks_clean(tmp_path: Path) -> None:
@@ -52,7 +57,7 @@ def test_copy_writes_a_publication_that_checks_clean(tmp_path: Path) -> None:
     result = _RUNNER.invoke(app, ["bundle", "copy", str(source), str(destination)])
     assert result.exit_code == 0, result.output
     assert result.output.strip() == f"{destination}: b, token {source.name}; 3 files"
-    assert check_bundle(destination, references=False).ok
+    assert check_bundle(destination, at="publish").ok
 
 
 def test_copy_takes_the_tiers_to_copy(tmp_path: Path) -> None:
@@ -76,7 +81,7 @@ def test_copy_refuses_a_tier_that_is_not_one(tmp_path: Path) -> None:
 
 
 def test_an_unpublished_bundle_is_one_manifest_finding(tmp_path: Path) -> None:
-    result = _RUNNER.invoke(app, ["bundle", "check", str(make_bundle(tmp_path / "b", 10))])
+    result = _RUNNER.invoke(app, ["bundle", "check", str(make_bundle(tmp_path / "b", 10)), "--at", "open"])
     assert result.exit_code == 1
     assert result.output.startswith("[manifest] bundle.manifest.json: ")
 

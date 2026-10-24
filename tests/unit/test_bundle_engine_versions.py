@@ -27,7 +27,7 @@ from sdmxlib.bundle import (
     write_manifest,
 )
 from sdmxlib.storage._manifest import engine_storage_version, storage_version_of
-from tests.support.bundles import DSD, FLOW, make_bundle, publish
+from tests.support.bundles import CONCEPTS, DSD, FLOW, make_bundle, publish
 
 pytestmark = pytest.mark.unit
 
@@ -163,7 +163,7 @@ def test_an_older_ducklake_format_opens(tmp_path: Path, spec: str) -> None:
 def test_check_bundle_reports_an_unreadable_engine_and_stops(tmp_path: Path) -> None:
     publication = publish(make_bundle(tmp_path / "b", 10))
     _edit(publication, ducklake_spec_version="9.9")
-    report = check_bundle(publication)
+    report = check_bundle(publication, at="publish")
     assert report.checked == ("manifest", "files")
     assert [(f.check, f.subject) for f in report.findings] == [("manifest", "meta.duckdb")]
 
@@ -199,6 +199,7 @@ def test_artefacts_lists_every_artefact_but_the_bindings_with_its_stability(tmp_
             (str(extra[1].urn), "semantic", False),
             (str(extra[2].urn), "semantic", True),
             (str(extra[3].urn), "legacy", False),
+            (str(CONCEPTS.urn), "legacy", False),
             (str(DSD.urn), "legacy", False),
             (str(FLOW.urn), "legacy", False),
         ]
@@ -274,7 +275,7 @@ def test_a_changed_md5_alone_is_a_files_finding(tmp_path: Path) -> None:
     meta = next(f for f in document["files"] if f["path"] == "meta.duckdb")
     meta["md5"] = "0" * 32
     (publication / MANIFEST_NAME).write_text(json.dumps(document))
-    assert [(f.check, f.subject) for f in check_bundle(publication, references=False).findings] == [
+    assert [(f.check, f.subject) for f in check_bundle(publication, at="publish").findings] == [
         ("files", "meta.duckdb")
     ]
 
@@ -292,7 +293,7 @@ def test_copy_by_tier_leaves_out_the_other_tiers(tmp_path: Path) -> None:
         "meta.duckdb",
     ]
     assert not (destination.parent / "data").exists()
-    missing = {f.subject for f in check_bundle(destination, references=False).findings if f.check == "files"}
+    missing = {f.subject for f in check_bundle(destination, at="publish").findings if f.check == "files"}
     assert missing == {
         f.path if f.root == "publication" else f"{manifest.data_path}{f.path}" for f in manifest.files if f.tier != 1
     }

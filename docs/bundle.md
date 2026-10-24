@@ -351,19 +351,56 @@ those overlays.
 
 ## 6. Conformance
 
-`check_bundle(path)` checks a published publication, and the `sdmxlib bundle check
-PATH` command runs it from a shell (`uv tool install sdmxlib-cli`). The
-command prints each finding and exits 1 if there is any. It runs these checks
-in order and reports every finding, not only the first:
+`check_bundle(path, at=...)` checks a published publication, and the
+`sdmxlib bundle check PATH --at PROFILE` command runs it from a shell
+(`uv tool install sdmxlib-cli`). The command prints each finding and exits 1
+if there is any. `at` names the profile, which is where the check runs:
 
-| check | passes when | on failure |
-| --- | --- | --- |
-| `manifest` | the manifest parses, in a format this reader reads (§2) | the run stops |
-| `files` | every listed file is present with its `size`, `sha256` and `md5`, and no unlisted file is in the publication directory; `data/` is shared, so only its listed files are checked | continues |
-| `manifest` | the manifest's `schema_version`, `duckdb_storage_version` and `ducklake_spec_version` pass the reader's checks, so the files can be opened (§4) | the run stops |
-| `lake` | every file the current snapshot references exists at the size DuckLake recorded and none is a delete file, and every file the catalog references from any snapshot it keeps is in the manifest; runs only when `lake.ducklake` exists | continues |
-| `bindings` | the store's bindings are the manifest's, and each table holds the count the manifest gives | continues |
-| `references` | every reference in the store names an artefact or an item in the store; `references=False` or `--no-references` skips it | continues |
+- `publish`, where the bundle is built: everything, hashed in full;
+- `receive`, where a copy lands: the publication's files hashed, `data/` by
+  size, or in a blob store by `Content-MD5`;
+- `open`, each time a server opens it: sizes only, and no check that reads
+  the store.
+
+Each profile runs these checks in order and reports every finding, not only
+the first:
+
+| check | passes when | publish | receive | open | on failure |
+| --- | --- | --- | --- | --- | --- |
+| `manifest` | the manifest parses, in a format this reader reads (§2) | yes | yes | yes | the run stops |
+| `files`, the publication's | every listed file is present at its `size` with its `sha256` and `md5`, and no unlisted file is in the publication directory | yes | yes | size only | continues |
+| `files`, `data/`'s | every listed entry is present at its `size` with its `sha256` and `md5`; `data/` is shared, so only listed entries are checked | yes | size, unless `lookup=` | no | continues |
+| `remote` | every `data/` entry is in the blob store at its `size` with a `Content-MD5` equal to its `md5` (see Remote files) | no | with `lookup=` | no | continues |
+| `manifest` | the manifest's `schema_version`, `duckdb_storage_version` and `ducklake_spec_version` pass the reader's checks, so the files can be opened (§4) | yes | yes | yes | the run stops |
+| `lake` | every file the current snapshot references exists at the size DuckLake recorded and none is a delete file, and every file the catalog references from any snapshot it keeps is in the manifest; runs only when `lake.ducklake` exists | yes | yes | no | continues |
+| `bindings` | the store's bindings are the manifest's, and each table holds the count the manifest gives | yes | yes | no | continues |
+| `references` | every reference in the store names an artefact or an item in the store | yes | yes | no | continues |
+| `fingerprints` | every artefact, binding and content fingerprint, recomputed, is the manifest's (§9) | yes | with `fingerprints=True` | no | continues |
+
+A store file that cannot be read, a damaged `meta.duckdb` or `lake.ducklake`,
+is a finding under the check that tried to read it, and ends the run.
+
+At `receive` the lake and the bindings read the data where the registry
+reads it, local or mounted, even when `lookup=` checks `data/` in the blob
+store.
+
+### The receive stamp
+
+`check_on_open(path, stamps=dir, lookup=None, extensions=None)` is what a
+server runs when it opens a publication. It runs `receive` once per token and
+manifest, and `open` after that:
+
+- With no stamp at `<stamps>/<bundle_id>/<token>`, or a stamp for another
+  manifest under the same token, it runs `receive`. When that finds nothing,
+  it writes the stamp: a JSON file holding the manifest's `sha256`, the checks
+  that ran and the time.
+- With a stamp holding this manifest's `sha256`, it runs `open`, which hashes
+  nothing.
+
+`stamps` belongs to the server, outside every bundle: a stamp records what
+that machine checked. A `bundle_id` that cannot name one directory below
+`stamps` is a `manifest` finding, and the check is not stamped. The returned
+report's `at` says which profile ran.
 
 The `references` check reads the stored references in SQL and loads no
 artefact. They are the rows of `sdmx.artefact_ref` and every reference column
@@ -378,8 +415,9 @@ reference, and its detail names the reference's role and target. On a
 0.15 s.
 
 A package that owns part of a bundle MAY pass its own checks as
-`extensions={name: check}`. Each runs after `references`, and its findings
-carry its name.
+`extensions={name: check}`. Each runs last at every profile, is called as
+`check(root, manifest, registry, at)` so it can do less at `open`, and its
+findings carry its name.
 
 ### Remote files
 

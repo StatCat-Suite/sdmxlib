@@ -60,8 +60,8 @@ def test_a_reader_on_one_publication_keeps_answering_while_the_next_is_written(t
     with sl.LocalRegistry.bundle(second) as reader:
         assert reader.obs(FLOW.urn).count() == 201_000
     assert _digests(first) == before, "the earlier publication is byte-identical"
-    assert check_bundle(first, references=False).ok
-    assert check_bundle(second, references=False).ok
+    assert check_bundle(first, at="publish").ok
+    assert check_bundle(second, at="publish").ok
 
 
 def test_the_next_publication_names_the_one_it_extends_and_carries_its_data_files(tmp_path: Path) -> None:
@@ -115,7 +115,7 @@ def test_a_data_file_only_an_earlier_snapshot_references_is_still_listed(tmp_pat
     assert Path(original).name not in current, "the current snapshot no longer reads the first file"
     second = write_manifest(publication, bundle_id="b", producer=_PRODUCER)
     assert original in {f.path for f in second.files if f.root == "data"}
-    assert check_bundle(publication, references=False).ok
+    assert check_bundle(publication, at="publish").ok
 
 
 def test_build_without_previous_starts_an_empty_publication(tmp_path: Path) -> None:
@@ -169,7 +169,7 @@ def test_copy_places_the_data_files_beside_the_destination_and_checks_clean(tmp_
     assert manifest == read_manifest(first)
     assert (destination / MANIFEST_NAME).read_bytes() == (first / MANIFEST_NAME).read_bytes()
     assert _digests(tmp_path / "dst" / "b" / "data") == _digests(tmp_path / "src" / "b" / "data")
-    report = check_bundle(destination, references=False)
+    report = check_bundle(destination, at="publish")
     assert report.ok, "\n".join(map(str, report.findings))
     with sl.LocalRegistry.bundle(destination) as reg:
         assert reg.obs(FLOW.urn).count() == 200_000
@@ -194,7 +194,7 @@ def test_copying_the_next_publication_copies_only_its_new_data_files(
     publication = sum(f.root == "publication" for f in manifest.files)
     delta = sum(f.root == "data" and f.carried_from is None for f in manifest.files)
     assert len(copied) == publication + delta + 1, "its own files, the new data file, and the manifest"
-    assert check_bundle(tmp_path / "dst" / "b" / second.name, references=False).ok
+    assert check_bundle(tmp_path / "dst" / "b" / second.name, at="publish").ok
 
 
 def test_an_interrupted_copy_leaves_an_unpublished_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -215,7 +215,7 @@ def test_an_interrupted_copy_leaves_an_unpublished_directory(tmp_path: Path, mon
     with pytest.raises(OSError, match="disk full"):
         copy_bundle(first, destination)
     assert not (destination / MANIFEST_NAME).exists()
-    report = check_bundle(destination)
+    report = check_bundle(destination, at="publish")
     assert report.checked == ("manifest",)
     assert [f.detail for f in report.findings] == [
         f"{destination} has no {MANIFEST_NAME}, so it is not a published bundle"
@@ -224,7 +224,7 @@ def test_an_interrupted_copy_leaves_an_unpublished_directory(tmp_path: Path, mon
         sl.LocalRegistry.bundle(destination)
     monkeypatch.setattr(shutil, "copyfile", original)
     copy_bundle(first, destination)
-    assert check_bundle(destination, references=False).ok, "and a retry completes it"
+    assert check_bundle(destination, at="publish").ok, "and a retry completes it"
 
 
 def test_copy_refuses_a_published_destination(tmp_path: Path) -> None:
