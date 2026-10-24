@@ -255,7 +255,11 @@ A server that serves search MUST refuse at load any overlay with entries acting 
 
 ### 5.4 Names
 
-Recommendation: extend `OverlayAnnotation` with sibling `name`/`description` operations on items and artefacts. Open question 1 records the alternative.
+Decided (GH-134): an overlay MAY change a `name` or `description`, and only `fold_overlays` applies such an entry. GH-163 builds it.
+
+- **The format.** An overlay entry gains `name` and `description` operations on artefacts and items, set per language, beside the annotation operations. The common case is a mistyped French name on a code.
+- **Folded, never served.** `fold_overlays` writes the change into a new publication. `previous=` copies `meta.duckdb` and reuses every data file, so a one-word fix is a new token over the same lake. `apply_overlays` refuses an overlay carrying a name or description operation and names `fold_overlays`; a server therefore never applies one at load.
+- **Why.** A name is structure in SDMX. It feeds search and every label map, and §7.2 caches structure per `(bundle token, urn)`. Served at load, a name overlay would make served structure differ from the bundle's, be search-affecting (§5.3), and require every label map and structure cache to key on the effective token. Folded, the new publication's token covers the change, and every cache, the search index and the manifest's fingerprints stay consistent with what is served.
 
 ---
 
@@ -653,7 +657,7 @@ Order follows risk removed per unit of work. Synthetic bundles and `profile_bund
 
 ## 17. Open questions
 
-1. Name overlays (§5.4): extend `OverlayAnnotation` or document the rebuild.
+1. Name overlays (§5.4): settled in GH-134. Name and description operations, applied only by `fold_overlays`; GH-163 builds them.
 2. Whether `token` becomes `publication` in a later major.
 3. Detached signature format (minisign vs sigstore) when cross-agency sharing becomes concrete.
 4. Code search scope for the agent (§12).
