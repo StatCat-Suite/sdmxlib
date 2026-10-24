@@ -245,7 +245,9 @@ A server that applies only entries whose `scope` matches an audience MUST comput
 
 ### 5.2 Merge hook identities enter the token
 
-Hooks are per annotation type. The effective token string becomes `<manifest token>\n<hooks>\n<overlay digest 1>\n...`, where `<hooks>` is `type=<package>:<name>@<version>` for each type with a non-default hook, sorted by type, joined with `,`, or `default` when none.
+Hooks are per annotation type. The effective token string becomes `v2\n<manifest token>\n<hooks>\n<overlay digest 1>\n...`, where `<hooks>` is `type=<package>:<name>@<version>` for each type with a non-default hook, sorted by type, joined with `,`, or `default` when none. The leading `v2` names the string's format (GH-131).
+
+Built in GH-131: a hook is a `MergeHook(package, name, version, fn)`, and `apply_overlays`, `effective_token` and `fold_overlays` take `audience=`, applying the entries scoped to it and the unscoped ones. Overlay format 1.1 defines `scope`.
 
 ### 5.3 Search-affecting overlays
 

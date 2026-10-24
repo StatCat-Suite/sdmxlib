@@ -5,7 +5,7 @@ one unit, once per release: each publication is a directory of its own.
 statcatlib writes bundles, sdmxlib-rest serves them, and sdmxlib reads,
 checks, copies and fetches them. This page is the contract between them.
 
-It describes **manifest format 2.0** and **overlay format 1.0**. sdmxlib's
+It describes **manifest format 2.0** and **overlay format 1.1**. sdmxlib's
 code is the reference implementation (`sdmxlib.bundle`,
 `LocalRegistry.bundle`), and the two JSON Schemas ship with it:
 `sdmxlib.bundle.manifest_schema()` and `sdmxlib.bundle.overlay_schema()`.
@@ -247,7 +247,7 @@ published bundle is a `files` finding (§6).
 
 | field | presence | meaning |
 | --- | --- | --- |
-| `format_version` | required | The overlay format, `major.minor`: `"1.0"` for this page. |
+| `format_version` | required | The overlay format, `major.minor`: `"1.1"` for this page. A `1.0` overlay reads the same; 1.1 defines `scope`. |
 | `id` | required | The overlay's name. |
 | `entries` | required | `OverlayEntry`s, in document order. |
 
@@ -259,7 +259,7 @@ published bundle is a `files` finding (§6).
 | `op` | required | `"set"`, `"add"` or `"remove"` (§5.3). |
 | `type` | required | The annotation type it acts on. |
 | `annotation` | optional | The annotation `set` and `add` write. It MUST be present for `set` and `add`, and absent or `null` for `remove`. |
-| `scope` | optional | A label carried through and not interpreted. A server MAY use it to choose which entries apply to which audience. |
+| `scope` | optional | The audience the entry applies to. A server that serves an audience applies the entries whose `scope` is that audience or `null`; a `null` scope applies to every audience. A server that serves no audience applies every entry. |
 
 #### `OverlayAnnotation`
 
@@ -304,8 +304,14 @@ Entries apply in ascending specificity, so the most specific applies last and
 wins. Entries of equal specificity apply in the order the overlays are given,
 and within one overlay in document order.
 
-sdmxlib's merge hook is a function per annotation type, passed as `merge=`.
-An implementation without a hook MUST replace.
+sdmxlib's merge hooks are passed as `merge=`, a `MergeHook` per annotation
+type. A `MergeHook` names its `package`, `name` and `version`, and carries
+the function. A hook that changes what it returns MUST change its version,
+since the effective token covers it (§5.4). An implementation without a hook
+MUST replace.
+
+`apply_overlays`, `effective_token` and `fold_overlays` take `audience=`:
+given one, each applies only the entries scoped to it and the unscoped ones.
 
 ### 5.4 The effective token
 
@@ -314,8 +320,17 @@ effective token:
 
 - with no overlays, it is the manifest's `token`;
 - otherwise it is the lowercase hex SHA-256 of the UTF-8 text formed by
-  joining, with `\n`, the manifest's `token` and then each overlay's digest,
-  in the order the overlays are applied.
+  joining these lines with `\n`:
+  1. `v2`, the format of this text;
+  2. the manifest's `token`;
+  3. the hooks: `type=<package>:<name>@<version>` for each annotation type
+     with a merge hook, sorted by type and joined with `,`, or `default` when
+     there is none;
+  4. each overlay's digest **as applied**, with the entries that do not apply
+     to the audience removed, in the order the overlays are applied.
+
+A hook's package, name and version, and an annotation type with a hook,
+never hold `,`, `=`, `@`, `:` or a newline.
 
 An overlay's digest is the lowercase hex SHA-256 of its canonical JSON. That
 JSON has no whitespace and sorts the keys of every object. Every field
@@ -335,9 +350,26 @@ has the canonical form
 ```
 
 and the digest `1903c3b4ad0c0ec6dd9ae8111675d2eec167b4c94921b62fba9e9ac09230777a`.
+Applied alone to a bundle whose token is
+`0192f6a0-5c1e-7c3a-9f00-0a1b2c3d4e5f`, with no hooks, the hashed text is
+
+```text
+v2
+0192f6a0-5c1e-7c3a-9f00-0a1b2c3d4e5f
+default
+1903c3b4ad0c0ec6dd9ae8111675d2eec167b4c94921b62fba9e9ac09230777a
+```
+
+and the effective token is
+`8fca15078e912b6d9f91d251020291c66abcd34f61726ec0aa77a791cf6a2412`. With a
+hook for `NOTE` from package `acme-labels`, named `notes`, at version `1.2`,
+the third line is `NOTE=acme-labels:notes@1.2` and the token is
+`ed56fe44047ea4fbca399ea38e102f1aecfa9d96a53a5174ba05e70204d55344`.
 
 Changing, adding, removing or reordering an overlay changes the effective
-token, and so does republishing the bundle.
+token. So do serving another audience that applies different entries,
+changing a hook or its version, and republishing the bundle. Two audiences
+that apply the same entries share a token.
 
 ### 5.5 Folding overlays into a bundle
 

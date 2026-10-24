@@ -8,6 +8,7 @@ format, and that the effective token moves with the overlays and never with
 the bundle's own token.
 """
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -16,11 +17,14 @@ import pytest
 
 import sdmxlib as sl
 from sdmxlib.bundle import (
+    Manifest,
+    MergeHook,
     Overlay,
     OverlayAnnotation,
     OverlayEntry,
     OverlayError,
     Producer,
+    applied,
     apply_overlays,
     check_bundle,
     effective_token,
@@ -58,10 +62,18 @@ _CATS = sl.CategoryScheme(
 )
 
 
-def _entry(selector: str, op: str = "set", kind: str = "LABEL", title: str | None = "x") -> OverlayEntry:
+def _entry(
+    selector: str, op: str = "set", kind: str = "LABEL", title: str | None = "x", scope: str | None = None
+) -> OverlayEntry:
     annotation = None if op == "remove" else OverlayAnnotation(title=title)
     return msgspec.convert(
-        {"selector": selector, "op": op, "type": kind, "annotation": annotation and msgspec.to_builtins(annotation)},
+        {
+            "selector": selector,
+            "op": op,
+            "type": kind,
+            "annotation": annotation and msgspec.to_builtins(annotation),
+            "scope": scope,
+        },
         OverlayEntry,
     )
 
@@ -101,9 +113,8 @@ def test_a_merge_hook_decides_how_set_combines() -> None:
     def keep_both(existing: list[Annotation], new: Annotation) -> list[Annotation]:
         return [*existing, new]
 
-    (merged,) = apply_overlays(
-        [_FREQ], [_overlay(_entry("AG:CL_FREQ", "set", "ORDER", "new"))], merge={"ORDER": keep_both}
-    )
+    hook = MergeHook(package="tests", name="keep_both", version="1", fn=keep_both)
+    (merged,) = apply_overlays([_FREQ], [_overlay(_entry("AG:CL_FREQ", "set", "ORDER", "new"))], merge={"ORDER": hook})
     assert _titles(merged, "ORDER") == ["kept", "new"]
 
 
@@ -253,3 +264,96 @@ def test_an_artefact_level_overlay_does_not_walk_the_items(monkeypatch: pytest.M
     assert visits == []
     apply_overlays([_FREQ], [_overlay(_entry("Code"))])
     assert len(visits) == 2, "a class name can reach items, so they are walked"
+
+
+# ── audiences and hooks in the effective token (GH-131) ─────────────────
+
+
+def _manifest(tmp_path: Path) -> Manifest:
+    return write_manifest(make_bundle(tmp_path / "b", 10), bundle_id="b", producer=Producer(name="t", version="1"))
+
+
+def _replace(existing: list[Annotation], new: Annotation) -> list[Annotation]:
+    return [new]
+
+
+def _hook(version: str = "1", name: str = "replace") -> MergeHook:
+    return MergeHook(package="tests", name=name, version=version, fn=_replace)
+
+
+_SCOPED = _overlay(
+    _entry("AG:CL_FREQ", kind="ALL", title="everyone"),
+    _entry("AG:CL_FREQ", kind="PUB", title="public", scope="public"),
+    _entry("AG:CL_FREQ", kind="INT", title="internal", scope="internal"),
+)
+
+
+def test_an_entry_applies_to_its_audience_and_an_unscoped_one_to_every_audience() -> None:
+    def kinds(audience: str | None) -> set[str]:
+        (result,) = apply_overlays([_FREQ], [_SCOPED], audience=audience)
+        return {a.type for a in result.annotations if a.type in {"ALL", "PUB", "INT"}}
+
+    assert kinds("public") == {"ALL", "PUB"}
+    assert kinds("internal") == {"ALL", "INT"}
+    assert kinds("anyone else") == {"ALL"}
+    assert kinds(None) == {"ALL", "PUB", "INT"}, "no audience applies every entry"
+
+
+def test_the_token_covers_the_overlay_as_applied(tmp_path: Path) -> None:
+    manifest = _manifest(tmp_path)
+    public = effective_token(manifest, [_SCOPED], audience="public")
+    assert public != effective_token(manifest, [_SCOPED], audience="internal"), "different entries applied"
+    assert effective_token(manifest, [_SCOPED], audience="a") == effective_token(manifest, [_SCOPED], audience="b"), (
+        "two audiences that apply the same entries share a token"
+    )
+    assert public == effective_token(manifest, [applied(_SCOPED, "public")]), "what is applied is what is digested"
+
+
+def test_the_token_covers_each_hook(tmp_path: Path) -> None:
+    manifest = _manifest(tmp_path)
+    overlays = [_overlay(_entry("*"))]
+    base = effective_token(manifest, overlays, merge={"LABEL": _hook(), "NOTE": _hook()})
+    assert base != effective_token(manifest, overlays), "a hook versus the default"
+    assert base != effective_token(manifest, overlays, merge={"LABEL": _hook("2"), "NOTE": _hook()}), "a version"
+    assert base != effective_token(manifest, overlays, merge={"LABEL": _hook(), "NOTE": _hook(name="other")})
+    assert base != effective_token(manifest, overlays, merge={"LABEL": _hook(), "ORDER": _hook()}), "another type"
+    assert base == effective_token(manifest, overlays, merge={"NOTE": _hook(), "LABEL": _hook()}), "order of the map"
+    assert effective_token(manifest, [], merge={"LABEL": _hook()}) == manifest.token, "no overlays, no hooks line"
+
+
+def test_the_token_is_the_documented_hash(tmp_path: Path) -> None:
+    """`docs/bundle.md` §5.4, recomputed from its words."""
+    manifest = _manifest(tmp_path)
+    overlay = _overlay(_entry("*"))
+    digest = hashlib.sha256(msgspec.json.encode(overlay, order="sorted")).hexdigest()
+    hooks = "LABEL=tests:replace@1,NOTE=tests:replace@2"
+    text = f"v2\n{manifest.token}\n{hooks}\n{digest}"
+    merge = {"NOTE": _hook("2"), "LABEL": _hook()}
+    assert effective_token(manifest, [overlay], merge=merge) == hashlib.sha256(text.encode()).hexdigest()
+    plain = f"v2\n{manifest.token}\ndefault\n{digest}"
+    assert effective_token(manifest, [overlay]) == hashlib.sha256(plain.encode()).hexdigest()
+
+
+@pytest.mark.parametrize("bad", ["", "a,b", "a=b", "a@b", "a:b", "a\nb"])
+def test_a_hook_identity_holding_a_separator_is_refused(bad: str) -> None:
+    with pytest.raises(ValueError, match="the effective token separates on"):
+        MergeHook(package=bad, name="n", version="1", fn=_replace)
+    with pytest.raises(ValueError, match="the effective token separates on"):
+        MergeHook(package="p", name="n", version=bad, fn=_replace)
+
+
+def test_an_annotation_type_with_a_separator_cannot_carry_a_hook(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="the effective token separates on"):
+        effective_token(_manifest(tmp_path), [_overlay(_entry("*"))], merge={"A,B": _hook()})
+
+
+def test_fold_applies_only_the_audiences_entries(tmp_path: Path) -> None:
+    root = make_bundle(tmp_path / "b", 10, extra=(_FREQ,))
+    write_manifest(root, bundle_id="b", producer=Producer(name="t", version="1"))
+    after = fold_overlays(root, [_SCOPED], audience="public")
+    with sl.LocalRegistry.bundle(root.parent / after.token) as reg:
+        folded = reg.get(_FREQ.urn, eager=True)
+        assert folded is not None
+        kinds = {a.type for a in folded.annotations}
+    assert {"ALL", "PUB"} <= kinds
+    assert "INT" not in kinds

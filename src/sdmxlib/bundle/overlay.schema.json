@@ -28,7 +28,7 @@
     },
     "OverlayEntry": {
       "title": "OverlayEntry",
-      "description": "One change: which targets, what to do, to annotations of which type.\n\nAttributes:\n    selector: ``*``, a class name, ``AGENCY:ID``, or a URN.\n    op: ``set`` replaces the type's annotations (through a merge hook),\n        ``add`` appends one, ``remove`` drops them all.\n    type: The annotation type it acts on.\n    annotation: What ``set`` and ``add`` write; absent for ``remove``.\n    scope: A label carried through and not interpreted: a server may\n        choose which entries apply to which audience.",
+      "description": "One change: which targets, what to do, to annotations of which type.\n\nAttributes:\n    selector: ``*``, a class name, ``AGENCY:ID``, or a URN.\n    op: ``set`` replaces the type's annotations (through a merge hook),\n        ``add`` appends one, ``remove`` drops them all.\n    type: The annotation type it acts on.\n    annotation: What ``set`` and ``add`` write; absent for ``remove``.\n    scope: The audience the entry applies to, or None for every\n        audience. Given an ``audience``, `apply_overlays`,\n        `effective_token` and `fold_overlays` apply an entry whose scope\n        is None or equal to it.",
       "type": "object",
       "properties": {
         "selector": {
