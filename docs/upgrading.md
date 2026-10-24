@@ -77,6 +77,10 @@ follows.
 - `check_bundle` no longer reports a data file it does not list: `data/` is
   shared, and a file there may belong to another publication. It reports a
   file the lake references and the manifest omits.
+- `check_bundle`'s `references` check runs in SQL and loads no artefact.
+  A finding's subject is the URN of the artefact holding the reference,
+  where it was a model path such as `Hierarchy:H.tree[CA].code`, and its
+  detail reads `its <role> reference <target URN> is not in the bundle`.
 - `copy_bundle(source, destination, tiers=...)` and
   `sdmxlib bundle copy --tiers 1,2` copy a publication, or the files of some
   placement tiers, with its manifest last.
