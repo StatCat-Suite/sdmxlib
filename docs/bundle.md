@@ -32,9 +32,10 @@ bundle; a *reader* opens one.
   manifest's `schema_version`.
 - `lake.ducklake` holds the catalog for observations, and `data/` their data
   files, in DuckLake's own layout. A publication with no bound dataflow MAY
-  leave the catalog out. DuckLake stores a small table inside
-  `lake.ducklake` itself, so a publication MAY reference no data file even
-  when the lake holds rows.
+  leave the catalog out. A published catalog holds no rows itself and no
+  delete file in its current snapshot: `write_manifest` flushes the rows
+  DuckLake inlines into the catalog, and rewrites each table that holds delete
+  files (§7).
 - `data/` is shared. A data file is written once, under a fresh UUID, and
   every publication whose catalog references it lists it. A producer MUST
   NOT delete, rewrite or clean up a file in `data/`
@@ -173,8 +174,8 @@ the files identifies the content:
 
 - two builds from the same inputs differ in every file's bytes, both DuckDB's
   files and DuckLake's UUID-named data files;
-- DuckLake inlines small tables into `lake.ducklake`, so the same rows sit in
-  different files depending on their count;
+- the same rows sit in different data files depending on how many inserts
+  wrote them and how the table was compacted;
 - DuckLake snapshot ids restart at 0 in every catalog, so they say nothing
   across bundles.
 
@@ -360,7 +361,7 @@ in order and reports every finding, not only the first:
 | `manifest` | the manifest parses, in a format this reader reads (§2) | the run stops |
 | `files` | every listed file is present with its `size`, `sha256` and `md5`, and no unlisted file is in the publication directory; `data/` is shared, so only its listed files are checked | continues |
 | `manifest` | the manifest's `schema_version`, `duckdb_storage_version` and `ducklake_spec_version` pass the reader's checks, so the files can be opened (§4) | the run stops |
-| `lake` | every file the current snapshot references exists at the size DuckLake recorded, and every file the catalog references from any snapshot it keeps is in the manifest; runs only when `lake.ducklake` exists | continues |
+| `lake` | every file the current snapshot references exists at the size DuckLake recorded and none is a delete file, and every file the catalog references from any snapshot it keeps is in the manifest; runs only when `lake.ducklake` exists | continues |
 | `bindings` | the store's bindings are the manifest's, and each table holds the count the manifest gives | continues |
 | `references` | every reference in the store resolves to an artefact in the store; `references=False` or `--no-references` skips it | continues |
 
@@ -409,7 +410,20 @@ every check.
    found in a published bundle.
 3. Add any files of your own to the publication directory.
 4. Call `write_manifest(publication, bundle_id=..., producer=...)` last, with
-   `product`, `extensions`, `provenance` and `tiers` as needed. `tiers` maps
+   `product`, `extensions`, `provenance`, `tiers`, `lifecycle` and
+   `expire_snapshots` as needed. It first settles the lake:
+   - rows DuckLake inlined into the catalog are flushed into data files;
+   - every table holding delete files is rewritten into data files without
+     them (`ducklake_rewrite_data_files` with `delete_threshold => 0`: the
+     default threshold keeps a small delete, which is exactly a daily delta);
+   - with `lifecycle="final"`, each table is compacted to one data file, a
+     bound table sorted by its binding's `sort_order`, else its dimension
+     columns in key order, unless the producer set a sort;
+   - with `expire_snapshots=True`, every snapshot but the current one is
+     expired. Without it, earlier snapshots stay readable and the manifest
+     lists the files they reach.
+
+   It never deletes a file from `data/`. `tiers` maps
    a path prefix to a placement tier, the longest matching prefix winning:
    `{"search/": 2}`. A publication file no prefix matches is tier 1 if it is
    `meta.duckdb` or `lake.ducklake` and tier 2 otherwise; a data file is

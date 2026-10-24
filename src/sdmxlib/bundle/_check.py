@@ -87,8 +87,9 @@ def check_bundle(path: str | Path, *, references: bool = True, extensions: Mappi
       ``data/`` holds other publications' files too, so only its listed
       files are checked.
     - **lake** — every file the current snapshot references exists at the
-      size DuckLake recorded, and every file the catalog references from any
-      snapshot is in the manifest, which is what garbage collection keeps.
+      size DuckLake recorded and none is a delete file, and every file the
+      catalog references from any snapshot is in the manifest, which is what
+      garbage collection keeps.
     - **bindings** — the store's dataflow bindings are the manifest's, and each
       holds the observations the manifest counts.
     - **references** — every reference in the store resolves within it: the
@@ -184,6 +185,16 @@ def _lake(root: Path, manifest: Manifest, reg: BundleRegistry) -> list[Finding]:
             for file, size in ((data_file, data_size), (delete_file, delete_size)):
                 if file is not None:
                     findings += _lake_file(manifest.data_path, data, Path(file), size)
+            if delete_file is not None:
+                # Publishing rewrites every table holding one (GH-128), so the
+                # current snapshot reads its rows from data files alone.
+                findings.append(
+                    Finding(
+                        "lake",
+                        _relative(manifest.data_path, data, Path(delete_file)),
+                        "a delete file in the current snapshot; write_manifest rewrites the table without one",
+                    )
+                )
     listed = {f.path for f in manifest.files if f.root == "data"}
     try:
         referenced = lake_files(conn, data)

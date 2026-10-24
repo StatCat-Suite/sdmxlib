@@ -54,7 +54,7 @@ from sdmxlib.bundle._overlay import (
     overlay_digest,
     read_overlay,
 )
-from sdmxlib.bundle._write import inventory, write_manifest
+from sdmxlib.bundle._write import Lifecycle, inventory, write_manifest
 from sdmxlib.storage._manifest import (
     DATA_PATH,
     DUCKLAKE_SPEC_VERSION,
@@ -86,6 +86,7 @@ __all__ = [
     "BundleFile",
     "Check",
     "Finding",
+    "Lifecycle",
     "Manifest",
     "ManifestError",
     "Merge",
