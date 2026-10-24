@@ -29,7 +29,7 @@ from typing import Literal, TypeIs, overload
 
 import attrs
 import msgspec
-from attrs import AttrsInstance
+from attrs import AttrsInstance, field, frozen
 
 from sdmxlib.bundle._write import write_manifest
 from sdmxlib.local.registry import LocalRegistry
@@ -42,12 +42,49 @@ from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.storage._manifest import Manifest, read_manifest
 
 #: The overlay format this build writes and reads (``1.x``).
-OVERLAY_FORMAT = "1.0"
+OVERLAY_FORMAT = "1.1"
 
 #: How an existing annotation and a `set` combine: given every annotation of
 #: the entry's type the target already has, and the new one, the annotations
 #: of that type it should have. The default replaces them all with the new one.
 type Merge = Callable[[list[Annotation], Annotation], list[Annotation]]
+
+#: What a hook's package and name, or an annotation type with a hook, may not
+#: hold: the separators of the token's hooks line.
+_HOOK_SEPARATORS = frozenset(",=@:\n")
+
+
+def _plain(value: str) -> str:
+    if not value or _HOOK_SEPARATORS & set(value):
+        msg = f"{value!r} is empty or holds one of , = @ : or a newline, which the effective token separates on"
+        raise ValueError(msg)
+    return value
+
+
+@frozen
+class MergeHook:
+    """A merge hook and its identity, which the effective token covers.
+
+    A hook that changes what it returns MUST change its `version`: two
+    servers applying the same overlays with different hooks serve different
+    annotations, and the token is how their caches tell them apart.
+
+    Attributes:
+        package: The distribution that provides it.
+        name: Its name within the package.
+        version: Its version.
+        fn: The hook itself.
+    """
+
+    package: str = field(converter=_plain)
+    name: str = field(converter=_plain)
+    version: str = field(converter=_plain)
+    fn: Merge
+
+    @property
+    def id(self) -> str:
+        """``<package>:<name>@<version>``."""
+        return f"{self.package}:{self.name}@{self.version}"
 
 
 class OverlayError(ValueError):
@@ -72,8 +109,10 @@ class OverlayEntry(msgspec.Struct, frozen=True, kw_only=True, forbid_unknown_fie
             ``add`` appends one, ``remove`` drops them all.
         type: The annotation type it acts on.
         annotation: What ``set`` and ``add`` write; absent for ``remove``.
-        scope: A label carried through and not interpreted: a server may
-            choose which entries apply to which audience.
+        scope: The audience the entry applies to, or None for every
+            audience. Given an ``audience``, `apply_overlays`,
+            `effective_token` and `fold_overlays` apply an entry whose scope
+            is None or equal to it.
     """
 
     selector: str
@@ -134,36 +173,72 @@ def overlay_digest(overlay: Overlay) -> str:
     return hashlib.sha256(msgspec.json.encode(overlay, order="sorted")).hexdigest()
 
 
-def effective_token(manifest: Manifest, overlays: Sequence[Overlay]) -> str:
-    """What a cache keys on when `overlays` are applied to a bundle: its token, and theirs.
+def applied(overlay: Overlay, audience: str | None) -> Overlay:
+    """`overlay` with only the entries that apply to `audience`: its own and the unscoped ones.
+
+    With no audience every entry applies, `overlay` as it is.
+    """
+    if audience is None:
+        return overlay
+    return msgspec.structs.replace(
+        overlay, entries=tuple(e for e in overlay.entries if e.scope is None or e.scope == audience)
+    )
+
+
+def effective_token(
+    manifest: Manifest,
+    overlays: Sequence[Overlay],
+    *,
+    merge: Mapping[str, MergeHook] | None = None,
+    audience: str | None = None,
+) -> str:
+    """What a cache keys on when `overlays` are applied to a bundle: its token, the hooks, and theirs.
 
     The manifest's ``token`` itself when there are no overlays, so a server
-    that applies none keys exactly as before. Otherwise a sha256 over the token
-    and each overlay's digest in apply order, so changing, adding, removing or
-    reordering an overlay changes it, and republishing the bundle does too.
+    that applies none keys exactly as before. Otherwise the sha256 of the
+    lines ``v2``, the token, the hooks, and each overlay's digest as
+    applied to `audience`, in apply order. The hooks line is
+    ``type=<package>:<name>@<version>`` for each hook, sorted by type and
+    joined with ``,``, or ``default`` when there is none. So changing,
+    adding, removing or reordering an overlay changes the token; so does a
+    different audience that applies different entries, changing a hook, and
+    republishing the bundle.
 
     Args:
         manifest: The bundle's manifest.
         overlays: The overlays applied, in order.
+        merge: The hooks applied, by annotation type, as `apply_overlays` takes them.
+        audience: As `apply_overlays`.
 
     Returns:
         The token to key on.
     """
     if not overlays:
         return manifest.token
-    folded = "\n".join([manifest.token, *(overlay_digest(o) for o in overlays)])
-    return hashlib.sha256(folded.encode()).hexdigest()
+    hooks = ",".join(f"{_plain(kind)}={hook.id}" for kind, hook in sorted((merge or {}).items())) or "default"
+    digests = [overlay_digest(applied(o, audience)) for o in overlays]
+    # ``v2`` names the format of the hashed text, so a server reading
+    # another format never takes a token for its own.
+    return hashlib.sha256("\n".join(["v2", manifest.token, hooks, *digests]).encode()).hexdigest()
 
 
 @overload
 def apply_overlays(
-    target: StructureMessage, overlays: Sequence[Overlay], *, merge: Mapping[str, Merge] | None = None
+    target: StructureMessage,
+    overlays: Sequence[Overlay],
+    *,
+    merge: Mapping[str, MergeHook] | None = None,
+    audience: str | None = None,
 ) -> StructureMessage: ...
 
 
 @overload
 def apply_overlays[A: MaintainableArtefact](
-    target: Sequence[A], overlays: Sequence[Overlay], *, merge: Mapping[str, Merge] | None = None
+    target: Sequence[A],
+    overlays: Sequence[Overlay],
+    *,
+    merge: Mapping[str, MergeHook] | None = None,
+    audience: str | None = None,
 ) -> list[A]: ...
 
 
@@ -171,7 +246,8 @@ def apply_overlays(
     target: StructureMessage | Sequence[MaintainableArtefact],
     overlays: Sequence[Overlay],
     *,
-    merge: Mapping[str, Merge] | None = None,
+    merge: Mapping[str, MergeHook] | None = None,
+    audience: str | None = None,
 ) -> StructureMessage | list[MaintainableArtefact]:
     """`target` with `overlays` applied to its annotations: changed copies, never in place.
 
@@ -183,11 +259,13 @@ def apply_overlays(
             ([GH-19](https://github.com/StatCat-Suite/sdmxlib/issues/19)'s
             typed annotation vocabularies will supply these); replace
             by default.
+        audience: Apply only the entries scoped to it and the unscoped
+            ones; None applies every entry.
 
     Returns:
         A `StructureMessage` for a message, a list for a sequence.
     """
-    plan = _Plan(overlays, merge or {})
+    plan = _Plan([applied(o, audience) for o in overlays], merge or {})
     if isinstance(target, StructureMessage):
         changes = {
             f.name: [plan.artefact(a) for a in value]
@@ -203,7 +281,11 @@ def apply_overlays(
 
 
 def fold_overlays(
-    path: str | Path, overlays: Sequence[Overlay], *, merge: Mapping[str, Merge] | None = None
+    path: str | Path,
+    overlays: Sequence[Overlay],
+    *,
+    merge: Mapping[str, MergeHook] | None = None,
+    audience: str | None = None,
 ) -> Manifest:
     """Publish a new publication of a bundle with `overlays` written into its store.
 
@@ -218,13 +300,14 @@ def fold_overlays(
         path: The published publication directory.
         overlays: Applied in order.
         merge: As `apply_overlays`.
+        audience: As `apply_overlays`.
 
     Returns:
         The new manifest; its publication is ``<path>/../<token>/``.
     """
     root = Path(path)
     previous = read_manifest(root)
-    plan = _Plan(overlays, merge or {})
+    plan = _Plan([applied(o, audience) for o in overlays], merge or {})
     with LocalRegistry.build(root.parent, previous=previous.token) as reg:
         loaded = [a for a in reg.to_registry()._store.values() if isinstance(a, MaintainableArtefact)]
         for artefact in loaded:
@@ -262,7 +345,7 @@ def _specificity(selector: str) -> int:
 class _Plan:
     """The entries of a list of overlays, ordered for application, and how to apply them."""
 
-    def __init__(self, overlays: Sequence[Overlay], merge: Mapping[str, Merge]) -> None:
+    def __init__(self, overlays: Sequence[Overlay], merge: Mapping[str, MergeHook]) -> None:
         ranked = [
             (_specificity(entry.selector), n, m, entry)
             for n, overlay in enumerate(overlays)
@@ -314,7 +397,8 @@ class _Plan:
         if entry.op == "add":
             return [*current, new]
         existing = [a for a in current if a.type == entry.type]
-        return kept + self._merge.get(entry.type, _replace)(existing, new)
+        hook = self._merge.get(entry.type)
+        return kept + (hook.fn(existing, new) if hook is not None else [new])
 
     def _items(self, owner: object, scheme: SdmxUrn[object], *, path: str, top: bool) -> dict[str, object]:
         """Changed item fields of `owner`, by field name.
@@ -375,7 +459,3 @@ def _item_prefix(scheme: SdmxUrn[object], item_cls: type[SdmxItem]) -> str:
 def _is_attrs(value: object) -> TypeIs[AttrsInstance]:
     """Narrow `value` itself, which `attrs.has(type(value))` does not (it narrows the type)."""
     return attrs.has(type(value))
-
-
-def _replace(_existing: list[Annotation], new: Annotation) -> list[Annotation]:
-    return [new]

@@ -7,6 +7,7 @@ field tables, its format versions and its worked digest in step with them.
 
 import json
 import re
+from pathlib import Path
 
 import msgspec
 import pytest
@@ -14,11 +15,16 @@ import pytest
 from sdmxlib.bundle import (
     FORMAT_VERSION,
     OVERLAY_FORMAT,
+    MergeHook,
     Overlay,
+    Producer,
+    effective_token,
     manifest_schema,
     overlay_digest,
     overlay_schema,
+    write_manifest,
 )
+from tests.support.bundles import make_bundle
 from tests.support.narrow import present
 from tests.support.repo import ROOT
 
@@ -92,3 +98,22 @@ def test_the_worked_digest_is_what_sdmxlib_computes() -> None:
     overlay = msgspec.json.decode(example.encode(), type=Overlay)
     assert msgspec.json.encode(overlay, order="sorted").decode() == canonical
     assert overlay_digest(overlay) == digest
+
+
+def test_the_worked_tokens_are_what_sdmxlib_computes(tmp_path: Path) -> None:
+    """§5.4's two effective tokens, with and without a hook, from its own overlay and bundle token."""
+    text = _SPEC.read_text(encoding="utf-8")
+    example = present(re.search(r"This overlay:\n\n```json\n(.*?)```", text, re.DOTALL)).group(1)
+    token, plain, hooked = present(
+        re.search(
+            r"bundle whose token is\n`([^`]+)`.*?the effective token is\n`(\w+)`.*?the token is\n`(\w+)`",
+            text,
+            re.DOTALL,
+        )
+    ).groups()
+    published = write_manifest(make_bundle(tmp_path / "b", 10), bundle_id="b", producer=Producer(name="t", version="0"))
+    manifest = msgspec.structs.replace(published, token=token)
+    overlay = msgspec.json.decode(example.encode(), type=Overlay)
+    assert effective_token(manifest, [overlay]) == plain
+    hook = MergeHook(package="acme-labels", name="notes", version="1.2", fn=lambda existing, new: [new])
+    assert effective_token(manifest, [overlay], merge={"NOTE": hook}) == hooked

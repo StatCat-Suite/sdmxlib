@@ -77,6 +77,15 @@ follows.
 - `check_bundle` no longer reports a data file it does not list: `data/` is
   shared, and a file there may belong to another publication. It reports a
   file the lake references and the manifest omits.
+- Overlays are format 1.1, which defines `scope`: an entry applies to the
+  audience it names, and a `null` scope to every audience.
+  `apply_overlays`, `effective_token` and `fold_overlays` take `audience=`;
+  without one, every entry applies as before. `merge=` takes a `MergeHook`
+  per annotation type in place of a bare function:
+  `MergeHook(package=..., name=..., version=..., fn=...)`. The effective
+  token of a bundle with overlays changes for every bundle, since its hashed
+  text now starts with `v2` and carries a hooks line (`docs/bundle.md` §5.4);
+  with no overlays it is still the manifest's token.
 - `check_bundle(path, at=...)` takes a profile, `"publish"`, `"receive"` or
   `"open"`, and `references=` is gone: `publish` and `receive` run the
   references check and `open` does not. Pass `at="publish"` where you called

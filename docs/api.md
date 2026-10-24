@@ -128,6 +128,14 @@ Display annotations changed without a rebuild, the token a cache keys on when th
 
 ---
 
+::: sdmxlib.bundle.applied
+
+---
+
+::: sdmxlib.bundle.MergeHook
+
+---
+
 ::: sdmxlib.bundle.fold_overlays
 
 ---
