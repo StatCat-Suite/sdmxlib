@@ -212,3 +212,29 @@ def test_the_fingerprints_read_back_from_the_manifest(tmp_path: Path) -> None:
     manifest = _published(tmp_path / "b")
     assert read_manifest(tmp_path / "b" / manifest.token) == manifest
     assert manifest.content_fingerprint is not None
+
+
+def test_a_codelist_only_a_concept_names_is_in_the_structure_fingerprint(tmp_path: Path) -> None:
+    """GH-152: a concept's core representation was missing from ``artefact_ref``,
+    so the closure, which reads it, left such a codelist out, and changing it
+    left the binding's structure fingerprint as it was."""
+
+    def published(name: str, codes: tuple[str, ...]) -> Manifest:
+        geo = sl.Codelist(
+            id="CL_GEO",
+            maintainer="T",
+            version="1.0",
+            name={"en": "geo"},
+            codes=[sl.Code(id=c, name={"en": c}) for c in codes],
+        )
+        scheme = attrs.evolve(
+            CONCEPTS,
+            concepts=[
+                attrs.evolve(c, core_representation=Ref.to(geo)) if c.id == "GEO" else c for c in CONCEPTS.concepts
+            ],
+        )
+        root = make_bundle(tmp_path / name, 10, extra=(geo, scheme), closed=False)
+        return write_manifest(root, bundle_id="b", producer=_PRODUCER)
+
+    one, two = published("one", ("G0", "G1")), published("two", ("G0", "G2"))
+    assert one.bindings[0].structure_fingerprint != two.bindings[0].structure_fingerprint

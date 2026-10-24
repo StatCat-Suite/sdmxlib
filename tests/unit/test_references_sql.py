@@ -336,8 +336,9 @@ def test_each_spelling_the_loading_check_accepts_resolves_in_sql(
 
 
 def test_a_concepts_core_representation_is_checked(tmp_path: Path) -> None:
-    """A concept's core representation has no ``artefact_ref`` row, so it is
-    read from ``concept.codelist_urn``."""
+    """Stored as an ``artefact_ref`` row, role ``core_representation`` (GH-152),
+    and in ``concept.codelist_urn``, which a store written before GH-152 holds
+    alone; the pair is one reference."""
     missing = Codelist.urn_for(agency="AG", id="CL_GONE", version="1.0")
     scheme = ConceptScheme(
         id="CS",
@@ -347,9 +348,10 @@ def test_a_concepts_core_representation_is_checked(tmp_path: Path) -> None:
         concepts=[Concept(id="C", name={"en": "c"}, core_representation=Ref[Codelist].unresolved(missing))],
     )
     with sl.LocalRegistry(_stored(tmp_path, [scheme])) as reg:
-        assert reg.connection.execute("SELECT count(*) FROM sdmx.artefact_ref").fetchone() == (0,)
+        stored = reg.connection.execute("SELECT source_urn, target_urn, role FROM sdmx.artefact_ref").fetchall()
+        assert stored == [(str(artefact_urn(scheme)), str(missing), "core_representation")]
         (found,) = unresolved_references(reg.connection)
-    assert (found.source, found.role, found.target) == (str(artefact_urn(scheme)), "codelist", str(missing))
+    assert (found.source, found.role, found.target) == (str(artefact_urn(scheme)), "core_representation", str(missing))
 
 
 def test_the_check_builds_no_artefact(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -437,3 +439,28 @@ def test_every_urn_column_is_a_reference_an_owner_or_has_a_reason() -> None:
     assert set(UNDECLARED_REFERENCES) <= references
     assert set(NOT_REFERENCES).isdisjoint(references)
     assert set(NO_OWNER).isdisjoint({t for t, _, _ in reference_columns()})
+
+
+def _unmirrored(conn: duckdb.DuckDBPyConnection, table: str, owner: str, column: str) -> int:
+    """Rows of `table` whose `column` reference has no ``artefact_ref`` row from the row's owner."""
+    (count,) = conn.execute(
+        f"""
+        SELECT count(*) FROM sdmx.{table} AS x
+        WHERE x.{column} IS NOT NULL AND NOT EXISTS (
+            SELECT 1 FROM sdmx.artefact_ref AS r
+            WHERE r.source_urn = x.{owner} AND r.target_urn = x.{column}
+        )
+        """
+    ).fetchone() or (0,)
+    return int(count)
+
+
+@pytest.mark.parametrize("name", list(_corpus()))
+def test_every_reference_column_has_its_artefact_ref_row(stored: Callable[[str], Path], name: str) -> None:
+    """Per row: a reference held in a column is also an ``artefact_ref`` row from
+    the artefact that owns the row (GH-152). The fingerprint closure and the
+    version-rewrite check read ``artefact_ref`` alone, so a column the writer
+    does not mirror is a reference both miss."""
+    with sl.LocalRegistry(stored(name)) as reg:
+        counts = {f"{t}.{c}": _unmirrored(reg.connection, t, o, c) for t, o, c in reference_columns()}
+    assert {column: n for column, n in counts.items() if n} == {}
