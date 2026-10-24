@@ -1360,6 +1360,11 @@ def put_concept_scheme(
                 ]
             )
             ann_batch.add(concept_urn_str, concept.annotations, concept.links)
+            # The scheme references the codelist its concept is represented by,
+            # as a DSD references its components' (GH-152): the fingerprint
+            # closure and the version-rewrite check read `artefact_ref`.
+            if isinstance(concept.core_representation, Ref):
+                refs.append((urn, str(concept.core_representation.urn), "core_representation", position))
 
         _execute_bulk_insert(
             conn,
@@ -2305,6 +2310,13 @@ def _put_map_body(
                 m.to_value_type.value if m.to_value_type is not None else None,
             ]
             for i, m in enumerate(artefact.maps)
+        ]
+        # What maps a component's values is a reference too (GH-152): a
+        # representation map, or an epoch or date-pattern map of this one.
+        refs += [
+            (urn, mapped, "representation_map", i)
+            for i, m in enumerate(artefact.maps)
+            if (mapped := _ref_urn_or_none(m.representation_map)) is not None
         ]
     else:
         # An item map's validity (#422).
