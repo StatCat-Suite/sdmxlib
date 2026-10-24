@@ -222,7 +222,7 @@ def test_fold_writes_overlays_into_a_new_publication(tmp_path: Path) -> None:
             "the earlier publication is untouched"
         )
     for publication in (root, folded):
-        report = check_bundle(publication, references=False)
+        report = check_bundle(publication, at="publish")
         assert report.ok, "\n".join(map(str, report.findings))
 
 

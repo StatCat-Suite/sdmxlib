@@ -5,6 +5,7 @@ typer. Each command is a thin wrapper: the work is the library's, and is
 tested there.
 """
 
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
 
@@ -12,9 +13,20 @@ import typer
 
 import sdmxlib as sl
 from sdmxlib.api.providers import ProviderInfo
-from sdmxlib.bundle import Tier, check_bundle, copy_bundle, fetch_bundle
+from sdmxlib.bundle import Profile, Tier, check_bundle, copy_bundle, fetch_bundle
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.urn import SdmxUrn
+
+
+class At(StrEnum):
+    """`check --at`'s choices: the `Profile` each names."""
+
+    PUBLISH = "publish"
+    RECEIVE = "receive"
+    OPEN = "open"
+
+
+_PROFILES: dict[At, Profile] = {At.PUBLISH: "publish", At.RECEIVE: "receive", At.OPEN: "open"}
 
 app = typer.Typer(help="sdmxlib from the command line.", no_args_is_help=True)
 bundle = typer.Typer(help="Published SDMX bundles.", no_args_is_help=True)
@@ -25,13 +37,13 @@ app.add_typer(bundle, name="bundle")
 def check(
     path: Annotated[Path, typer.Argument(help="The bundle directory.")],
     *,
-    references: Annotated[
-        bool,
+    at: Annotated[
+        At,
         typer.Option(
-            "--references/--no-references",
-            help="Check that every reference resolves within the bundle.",
+            "--at",
+            help="The profile: publish (hashes everything), receive (data files by size) or open (sizes only).",
         ),
-    ] = True,
+    ],
 ) -> None:
     """Check a published bundle against its manifest and against itself.
 
@@ -40,7 +52,7 @@ def check(
     Raises:
         Exit: With status 1 when the bundle has findings, 0 otherwise.
     """
-    report = check_bundle(path, references=references)
+    report = check_bundle(path, at=_PROFILES[at])
     for finding in report.findings:
         typer.echo(str(finding))
     found = len(report.findings)

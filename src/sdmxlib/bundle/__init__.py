@@ -37,7 +37,8 @@ Example:
 from importlib import resources
 
 from sdmxlib.bundle._canonical import CANONICAL_FORM, canonical_json
-from sdmxlib.bundle._check import Check, Finding, Report, check_bundle
+from sdmxlib.bundle._check import Check, Profile, Report, check_bundle, check_on_open
+from sdmxlib.bundle._finding import Finding
 from sdmxlib.bundle._copy import copy_bundle
 from sdmxlib.bundle._remote import RemoteFile, content_md5, verify_remote
 from sdmxlib.bundle._fetch import fetch_bundle
@@ -95,6 +96,7 @@ __all__ = [
     "OverlayEntry",
     "OverlayError",
     "Producer",
+    "Profile",
     "Provenance",
     "RemoteFile",
     "Report",
@@ -103,6 +105,7 @@ __all__ = [
     "apply_overlays",
     "canonical_json",
     "check_bundle",
+    "check_on_open",
     "content_md5",
     "copy_bundle",
     "effective_token",

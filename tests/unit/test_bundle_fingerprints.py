@@ -20,19 +20,12 @@ from sdmxlib.bundle._fingerprint import References, table_fingerprint
 from sdmxlib.model.constraint import ConstraintAttachment, CubeRegion, KeyValue
 from sdmxlib.model.ref import Ref
 from sdmxlib.testing import Dim, Shape, synthetic_bundle
-from tests.support.bundles import DSD, FLOW, make_bundle
+from tests.support.bundles import CONCEPTS, DSD, FLOW, make_bundle
 
 pytestmark = pytest.mark.unit
 
 _PRODUCER = Producer(name="tests", version="0")
 _FIXTURE = Path(__file__).parents[1] / "fixtures" / "fingerprints.json"
-_CONCEPTS = sl.ConceptScheme(
-    id="CS",
-    maintainer="T",
-    version="1.0",
-    name={"en": "concepts"},
-    concepts=[sl.Concept(id=c, name={"en": c}) for c in ("GEO", "OBS_VALUE")],
-)
 _CONSTRAINT = sl.DataConstraint(
     id="DC",
     maintainer="SDMX",
@@ -45,7 +38,7 @@ _UNRELATED = sl.Codelist(id="CL_OTHER", maintainer="SDMX", version="1.0", name={
 
 
 def _published(root: Path, *, rows: int = 10, extra: tuple[sl.SupportsUrn, ...] = ()) -> Manifest:
-    return write_manifest(make_bundle(root, rows, extra=(_CONCEPTS, *extra)), bundle_id="b", producer=_PRODUCER)
+    return write_manifest(make_bundle(root, rows, extra=extra), bundle_id="b", producer=_PRODUCER)
 
 
 def _table(rows: str) -> str:
@@ -151,7 +144,7 @@ def test_two_builds_from_the_same_inputs_have_two_tokens_and_one_content(tmp_pat
 
 
 def test_a_republish_without_changes_keeps_the_content_fingerprint(tmp_path: Path) -> None:
-    first = make_bundle(tmp_path / "b", 200_000, extra=(_CONCEPTS,))
+    first = make_bundle(tmp_path / "b", 200_000)
     one = write_manifest(first, bundle_id="b", producer=_PRODUCER)
     with sl.LocalRegistry.build(first.parent, previous=first.name) as builder:
         second = builder.publication
@@ -200,7 +193,7 @@ def test_an_artefact_outside_the_closure_does_not_move_the_structure_fingerprint
 
 
 def test_the_closure_follows_items_to_their_schemes_and_references_into_the_flow(tmp_path: Path) -> None:
-    publication = make_bundle(tmp_path / "b", 10, extra=(_CONCEPTS, _CONSTRAINT, _UNRELATED))
+    publication = make_bundle(tmp_path / "b", 10, extra=(_CONSTRAINT, _UNRELATED))
     with sl.LocalRegistry.build(publication.parent, resume=publication.name) as reg:
         present = [
             u
@@ -209,7 +202,7 @@ def test_the_closure_follows_items_to_their_schemes_and_references_into_the_flow
             ).fetchall()
         ]
         closure = References(reg.connection, present).closure(str(FLOW.urn), [str(DSD.urn)])
-    assert closure == {str(FLOW.urn), str(DSD.urn), str(_CONCEPTS.urn), str(_CONSTRAINT.urn)}, (
+    assert closure == {str(FLOW.urn), str(DSD.urn), str(CONCEPTS.urn), str(_CONSTRAINT.urn)}, (
         "the DSD's concepts are items of the scheme; the constraint refers to the flow; "
         "the unrelated codelist and the binding are out"
     )

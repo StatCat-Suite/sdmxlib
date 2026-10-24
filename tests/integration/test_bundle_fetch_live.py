@@ -42,7 +42,7 @@ def test_a_slice_of_ecb_exr_lands_as_a_bundle_that_checks_clean(tmp_path: Path) 
     assert binding.dataflow in provenance.artefacts
 
     publication = root / manifest.token
-    report = check_bundle(publication)
+    report = check_bundle(publication, at="publish")
     assert report.ok, "\n".join(map(str, report.findings))
 
     with sl.LocalRegistry.bundle(publication) as reg:
@@ -58,7 +58,7 @@ def test_structures_only_fetches_no_observations(tmp_path: Path) -> None:
     assert manifest.bindings == ()
     assert manifest.provenance is not None
     assert manifest.provenance.structures_only
-    assert check_bundle(root / manifest.token).ok
+    assert check_bundle(root / manifest.token, at="publish").ok
 
 
 @pytest.mark.vcr
