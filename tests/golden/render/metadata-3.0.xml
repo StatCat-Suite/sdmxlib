@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mes:GenericMetadata xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message" xmlns:md="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/metadata/generic" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common">
+  <mes:Header>
+    <mes:ID>SDMX_MSG</mes:ID>
+    <mes:Test>false</mes:Test>
+    <mes:Prepared>2000-01-01T00:00:00</mes:Prepared>
+    <mes:Sender id="sdmxlib"/>
+    <mes:Structure structureID="MDS1">
+      <com:Structure>urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD(1.0)</com:Structure>
+    </mes:Structure>
+  </mes:Header>
+  <mes:MetadataSet agencyID="AG" id="MDS" version="1.0.0" uri="https://example.org/uri/MDS" validFrom="2020-01-01T00:00:00+00:00" validTo="2030-12-31T00:00:00+00:00" isExternalReference="true" serviceURL="https://example.org/registry/MDS" structureURL="https://example.org/structure/MDS.xml">
+    <com:Link rel="metadata" url="https://example.org/link/MDS" urn="urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LINKED(1.0)" type="PDF"/>
+    <com:Link rel="alternate" url="https://example.org/alternate/MDS"/>
+    <com:Name xml:lang="en">MDS-NAME-en</com:Name>
+    <com:Name xml:lang="fr">MDS-NAME-fr</com:Name>
+    <com:Description xml:lang="en">MDS-DESC-en</com:Description>
+    <com:Description xml:lang="fr">MDS-DESC-fr</com:Description>
+    <md:Metadataflow>urn:sdmx:org.sdmx.infomodel.metadatastructure.Metadataflow=AG:MDF(1.0)</md:Metadataflow>
+    <md:Target>urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=AG:CATS(1.0)</md:Target>
+    <md:Attribute id="PARENT">
+      <com:Text xml:lang="en">parent-en</com:Text>
+      <com:Text xml:lang="fr">parent-fr</com:Text>
+      <md:Attribute id="CHILD">
+        <md:Value>child</md:Value>
+      </md:Attribute>
+    </md:Attribute>
+  </mes:MetadataSet>
+</mes:GenericMetadata>
