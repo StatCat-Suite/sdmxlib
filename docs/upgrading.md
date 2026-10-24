@@ -63,6 +63,12 @@ follows.
     not `AGENCY:ID(VERSION)` makes `write_manifest` raise `ManifestError`.
 - `write_manifest(..., tiers={"search/": 2})` sets the placement tier of a
   producer's own files by path prefix.
+- `write_manifest` settles the lake before its inventory. It flushes rows
+  DuckLake inlined into the catalog into data files and rewrites each table
+  that holds delete files, so a small table now has a data file in `data/`.
+  `lifecycle="final"` compacts each table to one sorted data file, and
+  `expire_snapshots=True` keeps only the current snapshot. `check_bundle`
+  reports a delete file in a published lake.
 - `LocalRegistry.bundle` refuses, before opening any file, a publication
   whose DuckDB storage version is newer than the running DuckDB writes, or
   whose DuckLake format is newer than `sdmxlib.bundle.DUCKLAKE_SPEC_VERSION`.

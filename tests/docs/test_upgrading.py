@@ -229,6 +229,8 @@ def test_the_manifest_records_engines_artefacts_tiers_and_md5() -> None:
     assert {"stability", "partial"} <= set(bundle.ArtefactEntry.__struct_fields__)
     for function in (bundle.write_manifest, bundle.copy_bundle):
         assert "tiers" in inspect.signature(function, annotation_format=annotationlib.Format.FORWARDREF).parameters
+    written = inspect.signature(bundle.write_manifest, annotation_format=annotationlib.Format.FORWARDREF)
+    assert {"lifecycle", "expire_snapshots"} <= written.parameters.keys()
     assert issubclass(sl.StoreFormatError, Exception)
     assert bundle.StoreFormatError is sl.StoreFormatError
     assert callable(bundle.copy_bundle)

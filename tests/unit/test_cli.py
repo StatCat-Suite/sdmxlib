@@ -51,7 +51,7 @@ def test_copy_writes_a_publication_that_checks_clean(tmp_path: Path) -> None:
     destination = tmp_path / "dst" / "b" / source.name
     result = _RUNNER.invoke(app, ["bundle", "copy", str(source), str(destination)])
     assert result.exit_code == 0, result.output
-    assert result.output.strip() == f"{destination}: b, token {source.name}; 2 files"
+    assert result.output.strip() == f"{destination}: b, token {source.name}; 3 files"
     assert check_bundle(destination, references=False).ok
 
 

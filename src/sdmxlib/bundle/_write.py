@@ -2,10 +2,11 @@
 
 import hashlib
 import re
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime
 from importlib import metadata
 from pathlib import Path
+from typing import Literal
 
 import duckdb
 
@@ -61,6 +62,9 @@ _LAKE_FILES = """
      AND s.begin_snapshot <= f.begin_snapshot
      AND (s.end_snapshot IS NULL OR f.begin_snapshot < s.end_snapshot)
 """
+
+#: Whether a publication's observations may still be revised: ``final`` ones are compacted.
+type Lifecycle = Literal["live", "final"]
 
 #: Read size for checksums: large enough that a multi-gigabyte parquet file is
 #: a sequential read, small enough not to matter in memory.
@@ -224,6 +228,78 @@ def _artefacts(reg: LocalRegistry) -> tuple[ArtefactEntry, ...]:
     return tuple(entries)
 
 
+#: Larger than any data file, so a merge leaves one file per table.
+_ONE_FILE = 1 << 62
+
+
+def settle_lake(
+    conn: duckdb.DuckDBPyConnection,
+    bindings: Iterable[DataflowBinding],
+    *,
+    expire_snapshots: bool,
+    lifecycle: Lifecycle,
+) -> None:
+    """Bring the attached ``lake`` into the shape a publication ships (design §4.5).
+
+    - Inlined rows are flushed into data files, so the catalog holds no rows.
+    - Every table holding delete files is rewritten into new data files
+      (``delete_threshold => 0``: DuckLake's default skips a table whose
+      deleted rows are few, which is exactly a daily delta), so no delete file
+      ships and every publication reads its rows from data files alone.
+    - A ``final`` publication is compacted to one data file per table, each
+      bound table sorted by its binding's ``sort_order``, else its dimension
+      columns in key order, unless the producer set a sort already.
+    - With `expire_snapshots`, every snapshot but the current one is expired,
+      so the catalog and the manifest hold only current files.
+
+    Nothing is deleted from ``data/``: a file this publication stops
+    referencing may be another's, and only garbage collection, reading every
+    manifest, deletes.
+
+    Args:
+        conn: A connection with the publication's lake attached as ``lake``.
+        bindings: The publication's bindings.
+        expire_snapshots: Whether to expire every snapshot but the current one.
+        lifecycle: ``final`` to compact; ``live`` otherwise.
+    """
+    conn.execute("CALL ducklake_flush_inlined_data('lake')")
+    conn.execute("CALL ducklake_rewrite_data_files('lake', delete_threshold => 0)")
+    if lifecycle == "final":
+        for binding in bindings:
+            if binding.database_role == "lake":
+                _sort(conn, binding)
+        conn.execute("CALL ducklake_merge_adjacent_files('lake', max_file_size => ?)", [_ONE_FILE])
+    if expire_snapshots:
+        conn.execute("CALL ducklake_expire_snapshots('lake', older_than => now())")
+
+
+def _sort(conn: duckdb.DuckDBPyConnection, binding: DataflowBinding) -> None:
+    """Sort a bound table by its binding's key, unless the producer sorted it already."""
+    schema, table = binding.table_location.split(".")
+    (sorted_already,) = conn.execute(
+        """
+        SELECT count(*) > 0
+        FROM __ducklake_metadata_lake.ducklake_sort_info AS i
+        JOIN __ducklake_metadata_lake.ducklake_table AS t ON t.table_id = i.table_id AND t.end_snapshot IS NULL
+        JOIN __ducklake_metadata_lake.ducklake_schema AS s ON s.schema_id = t.schema_id AND s.end_snapshot IS NULL
+        WHERE i.end_snapshot IS NULL AND s.schema_name = ? AND t.table_name = ?
+        """,
+        [schema, table],
+    ).fetchone() or (False,)
+    if sorted_already:
+        return
+    columns = [binding.dimension_column_map.get(c, c) for c in binding.sort_order] or list(
+        binding.dimension_column_map.values()
+    )
+    if columns:
+        relation = f"lake.{_quoted(schema)}.{_quoted(table)}"
+        conn.execute(f"ALTER TABLE {relation} SET SORTED BY ({', '.join(map(_quoted, columns))})")
+
+
+def _quoted(identifier: str) -> str:
+    return '"' + identifier.replace('"', '""') + '"'
+
+
 def _bindings(reg: LocalRegistry, artefacts: tuple[ArtefactEntry, ...]) -> tuple[BindingCount, ...]:
     """Each binding's count, data structure and fingerprints, by dataflow URN."""
     fingerprints = {a.urn: a.fingerprint for a in artefacts}
@@ -268,6 +344,8 @@ def write_manifest(
     extensions: dict[str, dict[str, object]] | None = None,
     provenance: Provenance | None = None,
     tiers: Mapping[str, Tier] | None = None,
+    lifecycle: Lifecycle = "live",
+    expire_snapshots: bool = False,
 ) -> Manifest:
     """Publish the publication at `path`, which `LocalRegistry.build` started: write its manifest.
 
@@ -297,6 +375,12 @@ def write_manifest(
             longest matching prefix winning: ``{"search/": 2}``. A file no
             prefix matches is tier 1 for ``meta.duckdb`` and ``lake.ducklake``
             and 2 otherwise; a data file is always 3.
+        lifecycle: ``final`` for a publication whose observations will not be
+            revised, which compacts each table to one sorted data file;
+            ``live`` otherwise.
+        expire_snapshots: Whether to expire every snapshot but the current
+            one, so the manifest lists only the files it reads. Time travel
+            to an earlier state is lost.
 
     Returns:
         The manifest written.
@@ -320,13 +404,22 @@ def write_manifest(
             raise ManifestError(msg)
         previous = meta_value(reg.connection, "previous_token")
         schema_version = get_schema_version(reg.connection) or ""
+        # Fingerprinted before anything reads the bindings: a binding read
+        # fills the registry's resolve cache, and eager reads resolving
+        # against it ran over 7x slower on the census bundle.
+        artefacts = _artefacts(reg)
         referenced: list[str] = []
         lake = (root / "lake.ducklake").exists()
         if lake:
             reg._data_plane()  # ATTACHes the lake
+            settle_lake(
+                reg.connection,
+                reg.get_all(DataflowBinding),
+                expire_snapshots=expire_snapshots,
+                lifecycle=lifecycle,
+            )
             referenced = lake_files(reg.connection, data)
         ducklake, spec = _ducklake_versions(reg.connection) if lake else (None, None)
-        artefacts = _artefacts(reg)
         counts = _bindings(reg, artefacts)
     # Closing the last connection checkpoints a database, so a log left by a
     # builder that exited is gone by now. One that remains means another
