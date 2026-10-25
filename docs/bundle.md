@@ -234,7 +234,8 @@ file**, and refuse the publication, leaving its files unopened, if one fails:
 
 DuckDB numbers its storage versions in each file's header (bytes 12 to 19, a
 little-endian integer after the `DUCK` magic): 64 for files compatible with
-DuckDB 1.0, 65 with 1.2, 67 with 1.4, 68 with 1.5.
+DuckDB 1.0, 65 with 1.2, 67 with 1.4, 68 with 1.5, and 999 for a file in
+DuckDB 2.0's own format.
 
 A bundle is never migrated in place: it is rebuilt from its source with a
 matching sdmxlib.
@@ -246,9 +247,11 @@ Each dataflow with observations has a `DataflowBinding` artefact in
 (`schema.table`) inside the database `database_role`, and maps each SDMX
 component to its column.
 
-`LocalRegistry.bundle` attaches `lake.ducklake` under the alias `lake`, which
-is `database_role`'s default, when observations are first read. Opening a
-bundle to read artefacts alone never attaches the lake.
+A stored binding's `database_role` is `lake`. `LocalRegistry.bundle`
+attaches `lake.ducklake` under `<prefix>__lake` (Opening read-only) when
+observations are first read, and `BundleRegistry.locate` gives a binding
+naming that catalog. Opening a bundle to read artefacts alone never attaches
+the lake.
 
 The manifest's `bindings` MUST list exactly the dataflows bound in the store,
 each with the row count of its table.

@@ -1,6 +1,6 @@
 # Sharded bundle catalog: design
 
-Status: draft for prototyping, fourth revision. Audience: implementers working on sdmxlib, statcatlib and sdmxlib-rest. Reviewed against sdmxlib 0.72.1 and DuckDB 2.0.0; spike results and the decisions they settled are in §16 (M1) and §17. The work is the [Sharded bundle catalog](https://github.com/StatCat-Suite/sdmxlib/milestone/9) milestone, and GH-136 is the cross-repo plan.
+Status: fourth revision. sdmxlib's part is built and released in 0.73.0: M0, M2, M4, M5 and M7, the name overlays and the format specification, with M3 shelved (§16). statcatlib's and sdmxlib-rest's parts, M6 and M8 to M13, are in progress. Audience: implementers working on sdmxlib, statcatlib and sdmxlib-rest. Written against sdmxlib 0.72.1 and DuckDB 2.0.0; spike results and the decisions they settled are in §16 (M1) and §17. The work is the [Sharded bundle catalog](https://github.com/StatCat-Suite/sdmxlib/milestone/9) milestone, and GH-136 is the cross-repo plan.
 
 This document specifies how a dissemination catalog of many SDMX products is published as a set of bundles, indexed, routed to serving pods, verified, cached and migrated. It builds on two published formats and changes both:
 
@@ -83,7 +83,7 @@ Blob storage is the hand-off. The publish job and the GC job write `bundles/` an
 
 ## 4. Bundle format changes (manifest 2.0)
 
-The layout change (`data_path`, `root`, `tier`, `labels.duckdb`) is a major version. A 1.x reader refuses a 2.0 manifest by the existing rule; the store schema bumps in the same release (§4.1). Readers and producers roll out together as one pinned image set (§9).
+The layout change (`data_path`, `root`, `tier`) is a major version. A 1.x reader refuses a 2.0 manifest by the existing rule. The store schema was to bump in the same release with the labels split; the split was shelved (§4.1), and 0.73.0 keeps store schema 2.48. Readers and producers roll out together as one pinned image set (§9).
 
 ### 4.0 Bundle granularity
 
@@ -108,7 +108,6 @@ bundles/<bundle_id>/
     bundle.manifest.json          written last
     meta.duckdb                   sdmx.* and statcat.*: ids, versions, parents, hierarchies, DSDs,
                                   bindings, constraints, catalog records            (tier 1)
-    labels.duckdb                 names, descriptions, annotations, all languages    (tier 1 or 2, §7.1)
     lake.ducklake                 DuckLake catalog; data_path = ../data/             (tier 1)
     search/                       per-language LanceDB tables, index.json, embeddings.json (tier 2, search pool)
 ```
@@ -162,10 +161,10 @@ bundles/<bundle_id>/
 
 ### 4.3 Constructors and reader rules
 
-- Two constructors, two types. `LocalRegistry.build(path)` wires the layout writable (`meta.duckdb`, `labels.duckdb`, the lake with its `DATA_PATH`) and returns `LocalRegistry` with the write surface; `fetch_bundle`, `synthetic_bundle` and `fold_overlays` build through it. `LocalRegistry.bundle(path)` requires `bundle.manifest.json`, opens read-only, and returns `BundleRegistry`, a type carrying `get`, `query`, `obs`, `dsd`, `binding_for` and `browse` and **no `sql()`**: in a shared engine a fully qualified name reaches any attached catalog, `search_path` scopes unqualified names only, so a request-reachable raw SQL surface would read other bundles. The `require_manifest=` argument goes.
+- Two constructors, two types. `LocalRegistry.build(path)` wires the layout writable (`meta.duckdb`, the lake with its `DATA_PATH`) and returns `LocalRegistry` with the write surface; `fetch_bundle`, `synthetic_bundle` and `fold_overlays` build through it. `LocalRegistry.bundle(path)` requires `bundle.manifest.json`, opens read-only, and returns `BundleRegistry`, a type carrying `get`, `query`, `obs`, `dsd`, `binding_for` and `browse` and **no `sql()`**: in a shared engine a fully qualified name reaches any attached catalog, `search_path` scopes unqualified names only, so a request-reachable raw SQL surface would read other bundles. The `require_manifest=` argument goes.
 - Read-only open: the DuckDB files with `access_mode=READ_ONLY`, the lake with `ATTACH ... (READ_ONLY, OVERRIDE_DATA_PATH ...)`. Any number of processes may hold a published bundle open. Each process MUST set `temp_directory` outside the publication directory (the default is `<file>.tmp` beside the database, inside the publication).
 - A reader MUST compare `duckdb_storage_version` and `ducklake_spec_version` with its engine before opening any file. It refuses a storage version **newer** than its engine reads (`StoreFormatError`, naming both); older storage versions open, as DuckDB allows. `ducklake_spec_version` follows the same rule: DuckLake 1.1 reads the census bundle's 1.0 catalog read-only without migrating it (the file's sha256 is unchanged), so only a newer spec is refused. The sdmxlib `schema_version` stays exact-match.
-- A reader MUST resolve data files through `data_path` and attach `labels.duckdb` according to the pool's tier policy (§7.1).
+- A reader MUST resolve data files through `data_path`.
 - A reader MUST ignore `bundle.manifest.json.sig` in the `files` check (reserved for a detached signature).
 
 ### 4.4 Fingerprints
@@ -377,13 +376,13 @@ Derived tables a rebuild reproduces from the bundle's own content (label lookups
 
 A pod runs one DuckDB engine and attaches every bundle it serves into it, so one buffer pool and one thread pool are shared and `memory_limit` means one thing. sdmxlib today assumes one bundle per connection (`search_path = 'sdmx'`, `sdmx.*` qualification, a fixed `lake` alias). The change that supports many bundles per engine without qualifying every table:
 
-- **Per-cursor `search_path`.** Each bundle attaches its DuckDB files under per-bundle aliases (`<bundle_id>__<token short>__meta`, `__labels`, `__lake`). A request's cursor sets `search_path` to the bundle's `meta` and `labels` catalogs, so the existing `sdmx.<table>` spellings resolve as `<schema>.<table>` inside those catalogs. sdmxlib already runs each request on a per-thread cursor; the router sets the path before handing it over.
+- **Per-cursor `search_path`.** Each bundle attaches its DuckDB files under per-bundle aliases (`<bundle_id>__<token short>__meta`, `__lake`; a `__labels` alias went with the shelved split, §7.1). A request's cursor sets `search_path` to the bundle's `meta` catalog, so the existing `sdmx.<table>` spellings resolve as `<schema>.<table>` inside those catalogs. sdmxlib already runs each request on a per-thread cursor; the router sets the path before handing it over.
 - **Role-to-alias map.** `DataflowBinding.database_role` names a role, which it keeps; the registry maps the role to the physical alias at attach time, so the stored binding stays `"lake"` and the SQL uses the per-bundle alias.
 - **Caches keyed by bundle token** (resolve cache, label maps, parsed DSDs).
 
 The first step is a spike verifying DuckDB 2.0's resolution of two-part names under a catalog-qualified `search_path`; the refactor is milestone M7 and precedes the router.
 
-Built in GH-133 as `sl.BundleEngine` and `LocalRegistry.bundle(path, engine=)`. Each handle runs `USE "<prefix>__meta".sdmx`, which sets its current database as well as its search path, so the checks that filter on `current_database()` read the bundle too; a cursor derived from a handle does not inherit it, so the registry points every handle it makes. A bundle opened without an engine gets one of its own, so there is one opening path. The token-keyed caches are left to a follow-up that measures the duplicate first (caching rules).
+Built in GH-133 as `sl.BundleEngine` and `LocalRegistry.bundle(path, engine=)`. Each handle runs `USE "<prefix>__meta".sdmx`, which sets its current database as well as its search path, so the checks that filter on `current_database()` read the bundle too; a cursor derived from a handle does not inherit it, so the registry points every handle it makes. A bundle opened without an engine gets one of its own, so there is one opening path. Each registry is over one publication, so its caches are already per token. GH-160 measured sharing them across bundles: a registry's resolve cache retains about 2.2 MB, so 16 bundles holding the same structures duplicate about 35 MB, and the shared cache is not built. GH-160 stays open to re-measure once a deployment holds many distinct bundles.
 
 ### 7.3 Shard router
 
@@ -512,7 +511,7 @@ An index is restorable only while every data file its publications reference exi
 
 ### 11.1 Publish sequence (per bundle)
 
-1. Copy the previous publication's `lake.ducklake` into staging; write new data files into `data/` under fresh UUIDs; for a `live` republish rewrite revised files copy-on-write; ingest structures (partials for products, full for the structures bundle) and catalog records into `meta.duckdb` and `labels.duckdb`.
+1. Copy the previous publication's `lake.ducklake` into staging; write new data files into `data/` under fresh UUIDs; for a `live` republish rewrite revised files copy-on-write; ingest structures (partials for products, full for the structures bundle) and catalog records into `meta.duckdb`.
 2. Checkpoint every DuckDB file; flush inlined data; optionally expire snapshots; compact if `final`. No cleanup against `data/`.
 3. `build_index()`; drop orphaned search tables.
 4. `publish_bundle(...)` with `previous_token`, fingerprints, `canonical_form`, carry-forward with `carried_from`.
@@ -573,9 +572,9 @@ Each product bundle carries per-language LanceDB tables over its own datasets, c
 16. `references` costs 30 s and 5 GB → anti-joins generated from the edge table. §4.8.
 17. Every pod re-hashes gigabytes → receive stamp; tier-3 by size and `Content-MD5`. §4.6, §4.7.
 18. Blob storage does not compute SHA-256 → publish job sets `Content-MD5`; `md5` in the manifest. §4.2, §4.5.
-19. A multi-gigabyte pull set makes a scaled pod unavailable for minutes → tiers; labels split; search pool. §4.1, §7.1.
-20. Labelled formats need labels on the first request → pools promote `labels.duckdb` to tier 1. §7.1.
-21. A 1.x reader opens a new-layout bundle and finds no data → manifest 2.0 with the store schema bump; pinned image sets. §4, §9.
+19. A multi-gigabyte pull set makes a scaled pod unavailable for minutes → tiers; search pool; the published store trimmed of unused keys (the labels split is shelved). §4.1, §7.1.
+20. Labelled formats need labels on the first request → names stay in `meta.duckdb`, a tier-1 file. §7.1.
+21. A 1.x reader opens a new-layout bundle and finds no data → manifest 2.0, which a 1.x reader refuses; pinned image sets. §4, §9.
 22. Copy order undefined → `bundle copy`; HNS rename. §11.5, §10.2.
 23. Inlined data, old snapshots, `.wal` files ship → checkpoint, flush, expire. §4.5.
 24. Delete files on the serving path → copy-on-write at publish. §4.5.
@@ -636,21 +635,21 @@ A central Postgres DuckLake catalog is an option for governance and analytics ac
 
 Order follows risk removed per unit of work. Synthetic bundles and `profile_bundle` shapes supply the corpus; a synthetic CODR-shaped catalog (7,000 small bundles, Zipf traffic) arrives at M8.
 
-**M0. sdmxlib: read-only open.** `LocalRegistry.build(path)` for writers; `LocalRegistry.bundle(path)` requires a manifest and returns `BundleRegistry` with no `sql()`; `access_mode=READ_ONLY`; `ATTACH (READ_ONLY)`; `temp_directory` outside the publication; `CHECKPOINT` in `write_manifest`; `.wal` refused by the files check. Test: two processes open one published bundle and both answer `obs()`; `check_bundle` runs beside a server; `add` and `sql` are absent on the returned type.
+**M0. sdmxlib: read-only open.** `LocalRegistry.build(path)` for writers; `LocalRegistry.bundle(path)` requires a manifest and returns `BundleRegistry` with no `sql()`; `access_mode=READ_ONLY`; `ATTACH (READ_ONLY)`; `temp_directory` outside the publication; `CHECKPOINT` in `write_manifest`; `.wal` refused by the files check. Test: two processes open one published bundle and both answer `obs()`; `check_bundle` runs beside a server; `add` and `sql` are absent on the returned type. Built in GH-122.
 
 **M1. Spikes.** (a) Per-cursor `search_path` across two attached bundles: **passed**. (b) Copy-and-extend over shared `data/` with snapshots expired and no cleanup: **passed**; the DuckLake layout is `<schema>/<table>/ducklake-<uuid>.parquet` and a small delta stays inlined until flushed. (c) Postgres DuckLake export of one bundle's slice to a file catalog: open; decides §14. (d) Delete-file rewrite: **passed**; `ducklake_rewrite_data_files` with `delete_threshold => 0` leaves no delete file, while the default threshold keeps small deletes as delete files.
 
-**M2. sdmxlib: manifest 2.0 and layout.** Token directories; shared `data/`; `root`, `tier`, `md5`, `carried_from`; version fields; `data_path`; `artefacts` with `stability` and `partial`; `BindingCount` fields; `StoreFormatError` (newer-only for storage); copy-on-write rewrite after flush; `sdmxlib bundle copy --tiers`. Test: a reader on token A keeps answering while B is written sharing A's files; a republish of a CODR-shaped 50 MB bundle with a 1 MB delta uploads under 5 MB plus the catalog files; the census bundle's per-publication catalog upload (`meta.duckdb`, `labels.duckdb`, `lake.ducklake`) is measured and recorded; a bundle written by a newer DuckDB is refused with no file opened; no delete file survives a revising republish.
+**M2. sdmxlib: manifest 2.0 and layout.** Token directories; shared `data/`; `root`, `tier`, `md5`, `carried_from`; version fields; `data_path`; `artefacts` with `stability` and `partial`; `BindingCount` fields; `StoreFormatError` (newer-only for storage); copy-on-write rewrite after flush; `sdmxlib bundle copy --tiers`. Test: a reader on token A keeps answering while B is written sharing A's files; a republish of a CODR-shaped 50 MB bundle with a 1 MB delta uploads under 5 MB plus the catalog files; the census bundle's per-publication catalog upload (`meta.duckdb`, `lake.ducklake`) is measured and recorded; a bundle written by a newer DuckDB is refused with no file opened; no delete file survives a revising republish. Built in GH-123, GH-124, GH-125 and GH-128; GH-165 trims the published `meta.duckdb` to 548 MB on the census bundle.
 
 **M3. sdmxlib: labels split with schema bump.** Shelved after measuring (GH-139, §7.1); GH-165 measures and trims the indexes in its place. As planned: `labels.duckdb`; store `schema_version` bump; cross-catalog table resolution; per-format label needs documented. Test: a key-only CSV request touches `meta.duckdb` only; an SDMX-JSON request attaches labels; old sdmxlib refuses the bundle by schema.
 
-**M4. sdmxlib: fingerprints and canonical form.** The canonical model encoder (`Ref` as URN, defined forms for `InternationalString`, `ItemList`, `Annotations`, `Link`, enums, datetimes; golden tests per artefact class) is the largest piece. Then the row-text golden row per column type; table, artefact, structural (incoming edges included) and bundle fingerprints; `canonical_form`; `RENDER_VERSION` per format with the golden-file bump rule. Test: swapping two values between rows changes the table fingerprint; `{a,a}` vs `{b,b}` differ; the same bundle fingerprints identically on two DuckDB releases at one `canonical_form`; a change confined to a declared SDMX-JSON gap changes the artefact fingerprint; a constraint change on a dataflow changes its structural fingerprint.
+**M4. sdmxlib: fingerprints and canonical form.** The canonical model encoder (`Ref` as URN, defined forms for `InternationalString`, `ItemList`, `Annotations`, `Link`, enums, datetimes; golden tests per artefact class) is the largest piece. Then the row-text golden row per column type; table, artefact, structural (incoming edges included) and bundle fingerprints; `canonical_form`; `RENDER_VERSION` per format with the golden-file bump rule. Test: swapping two values between rows changes the table fingerprint; `{a,a}` vs `{b,b}` differ; the same bundle fingerprints identically on two DuckDB releases at one `canonical_form`; a change confined to a declared SDMX-JSON gap changes the artefact fingerprint; a constraint change on a dataflow changes its structural fingerprint. Built in GH-126, GH-127 and GH-132.
 
-**M5. sdmxlib: effective token and check profiles.** Applied-overlay digest; per-type hook ids; `null` scope; `check_bundle(at=...)`; anti-joins generated from `_edges.py`; receive stamp; tier-3 verification by size and `Content-MD5`. Test: findings identical to the loading check across the corpus; `references` under 1 s on the census bundle.
+**M5. sdmxlib: effective token and check profiles.** Applied-overlay digest; per-type hook ids; `null` scope; `check_bundle(at=...)`; anti-joins generated from `_edges.py`; receive stamp; tier-3 verification by size and `Content-MD5`. Test: findings identical to the loading check across the corpus; `references` under 1 s on the census bundle. Built in GH-129, GH-130 and GH-131; `references` takes 0.15 s on the census bundle.
 
 **M6. statcatlib: partials, structures bundle, local fixes.** Partial vendoring closed under parents; the structures bundle kind; `statcat._meta` check (statcatlib#39); refuse unknown `index_version`; token-named search tables. Test: a CODR-shaped product closure under 10 MB; a partial lacking an ancestor is refused at build.
 
-**M7. sdmxlib: shared engine.** Per-cursor `search_path`; role-to-alias map; token-keyed caches. Test: 200 synthetic bundles attached in one engine; queries against each return that bundle's rows; the `lake` alias collision test passes with two bundles.
+**M7. sdmxlib: shared engine.** Per-cursor `search_path`; role-to-alias map; token-keyed caches. Test: 200 synthetic bundles attached in one engine; queries against each return that bundle's rows; the `lake` alias collision test passes with two bundles. Built in GH-133, with the 200-bundle test in `tests/unit/test_bundle_engine.py`; the token-keyed caches stay per registry (§7.2, GH-160).
 
 **M8. statcatlib: catalog index 1.0 and structures document.** Builder, invariants §6.4, states, `pool`, `pinned`, `lifecycle`, `kind`, `products`, manifest-digest skip, `catalog/structures/`. Test: each invariant refused by name; a 7,000-entry build with 200 changes fetches 200 manifests; `latest` resolves through the structures document.
 

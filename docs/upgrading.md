@@ -98,7 +98,7 @@ follows.
   applies them; `apply_overlays` and `effective_token` refuse an overlay
   with one, naming `fold_overlays`. An overlay without `texts` reads and
   digests as before.
-- Overlays are format 1.1, which defines `scope`: an entry applies to the
+- Overlay format 1.1 defines `scope`: an entry applies to the
   audience it names, and a `null` scope to every audience.
   `apply_overlays`, `effective_token` and `fold_overlays` take `audience=`;
   without one, every entry applies as before. `merge=` takes a `MergeHook`
