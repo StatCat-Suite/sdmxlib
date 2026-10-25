@@ -10,7 +10,6 @@ import hashlib
 import shutil
 from pathlib import Path
 
-import msgspec
 import pytest
 
 import sdmxlib as sl
@@ -74,8 +73,8 @@ def test_the_next_publication_names_the_one_it_extends_and_carries_its_data_file
     earlier = {f.path: f for f in one.files if f.root == "data"}
     carried = [f for f in two.files if f.root == "data" and f.path in earlier]
     written = [f for f in two.files if f.root == "data" and f.path not in earlier]
-    assert [(f.path, f.size, f.sha256, f.carried_from) for f in carried] == [
-        (f.path, f.size, f.sha256, one.token) for f in earlier.values()
+    assert [(f.path, f.size, f.digests, f.carried_from) for f in carried] == [
+        (f.path, f.size, f.digests, one.token) for f in earlier.values()
     ]
     assert len(written) == 1, "the delta is one new data file"
     assert written[0].carried_from is None
@@ -246,18 +245,3 @@ def test_copy_refuses_a_source_that_differs_from_its_manifest(tmp_path: Path) ->
     with pytest.raises(ManifestError, match="does not match the manifest"):
         copy_bundle(first, destination)
     assert not (destination / MANIFEST_NAME).exists()
-
-
-def test_a_data_file_carried_from_a_format_2_0_manifest_is_hashed_to_gain_its_crc32c(tmp_path: Path) -> None:
-    """A 2.0 manifest records no CRC32C, so carrying its digests forward would leave the file without one."""
-    first = publish(make_bundle(tmp_path / "b", 200_000))
-    manifest = read_manifest(first)
-    older = msgspec.structs.replace(
-        manifest, format_version="2.0", files=tuple(msgspec.structs.replace(f, crc32c=None) for f in manifest.files)
-    )
-    (first / MANIFEST_NAME).write_bytes(msgspec.json.encode(older))
-    second = _extend(first, 1_000)
-    data = [f for f in read_manifest(second).files if f.root == "data"]
-    assert all(f.crc32c is not None for f in data)
-    assert all(f.carried_from is None for f in data), "no 2.0 entry is carried"
-    assert check_bundle(second, at="publish").ok

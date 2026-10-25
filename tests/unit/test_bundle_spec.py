@@ -69,7 +69,7 @@ def test_the_table_reader_sees_a_missing_or_mislabelled_field() -> None:
     """Discrimination: a page that drops a field, or calls a required one optional, must not read as equal."""
     text = _SPEC.read_text(encoding="utf-8")
     dropped = text.replace("| `token` | required |", "| `tokn` | required |", 1)
-    relabelled = text.replace("| `sha256` | required |", "| `sha256` | optional |", 1)
+    relabelled = text.replace("| `digests` | required |", "| `digests` | optional |", 1)
     assert dropped != text
     assert relabelled != text
     assert _tables(dropped) != _schema_fields()

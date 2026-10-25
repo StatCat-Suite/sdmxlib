@@ -222,7 +222,7 @@ def test_the_manifest_records_engines_artefacts_tiers_and_md5() -> None:
         "ducklake_spec_version",
         "artefacts",
     } <= set(bundle.Manifest.__struct_fields__)
-    assert {"md5", "tier"} <= set(bundle.BundleFile.__struct_fields__)
+    assert {"digests", "tier"} <= set(bundle.BundleFile.__struct_fields__)
     assert {"structural_version", "fingerprint", "structure_fingerprint"} <= set(bundle.BindingCount.__struct_fields__)
     assert {"canonical_form", "content_fingerprint"} <= set(bundle.Manifest.__struct_fields__)
     assert "fingerprint" in bundle.ArtefactEntry.__struct_fields__

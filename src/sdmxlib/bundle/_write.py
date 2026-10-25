@@ -7,7 +7,7 @@ from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime
 from importlib import metadata
 from pathlib import Path
-from typing import Literal, NamedTuple
+from typing import Literal
 
 import duckdb
 import google_crc32c
@@ -74,33 +74,30 @@ type Lifecycle = Literal["live", "final"]
 _CHUNK = 1 << 20
 
 
-class Digests(NamedTuple):
-    """A file's digests as the manifest records them, each lowercase hex."""
-
-    sha256: str
-    md5: str
-    crc32c: str
-
-
 def sha256_of(path: Path) -> str:
     """The sha256 of a file, read in chunks so a large one stays out of memory."""
-    return digests_of(path).sha256
+    return digests_of(path)["sha256"]
 
 
-def digests_of(path: Path) -> Digests:
-    """The sha256, md5 and CRC32C of a file, from one read in chunks."""
+def digests_of(path: Path) -> dict[str, str]:
+    """A file's `REQUIRED_DIGESTS`, each lowercase hex, from one read in chunks."""
     sha256, md5, crc32c = hashlib.sha256(), hashlib.md5(usedforsecurity=False), google_crc32c.Checksum()
     with path.open("rb") as handle:
         while chunk := handle.read(_CHUNK):
             sha256.update(chunk)
             md5.update(chunk)
             crc32c.update(chunk)
-    return Digests(sha256.hexdigest(), md5.hexdigest(), crc32c.hexdigest().decode("ascii"))
+    return {"sha256": sha256.hexdigest(), "md5": md5.hexdigest(), "crc32c": crc32c.hexdigest().decode("ascii")}
 
 
-def recorded(entry: BundleFile, found: Digests) -> bool:
-    """Whether `found` are the digests `entry` records; a format-2.0 entry has no CRC32C to compare."""
-    return (found.sha256, found.md5) == (entry.sha256, entry.md5) and entry.crc32c in {None, found.crc32c}
+def differing(entry: BundleFile, found: Mapping[str, str]) -> list[str]:
+    """The algorithms whose digest in `found`, a file's, is not the one `entry` records, sorted."""
+    return sorted(name for name, value in entry.digests.items() if found.get(name, value) != value)
+
+
+def recorded(entry: BundleFile, found: Mapping[str, str]) -> bool:
+    """Whether the digests `found` for a file agree with every one `entry` records that `found` holds."""
+    return not differing(entry, found)
 
 
 #: The publication files a server needs before it is ready (design §7.1).
@@ -143,18 +140,9 @@ def inventory(root: Path, tiers: Mapping[str, Tier] | None = None) -> tuple[Bund
     entries: list[BundleFile] = []
     for p in files:
         path = p.relative_to(root).as_posix()
-        found = digests_of(p)
         tier = tier_of(path, "publication", tiers or {})
         entries.append(
-            BundleFile(
-                path=path,
-                size=p.stat().st_size,
-                sha256=found.sha256,
-                md5=found.md5,
-                crc32c=found.crc32c,
-                root="publication",
-                tier=tier,
-            )
+            BundleFile(path=path, size=p.stat().st_size, digests=digests_of(p), root="publication", tier=tier)
         )
     return tuple(entries)
 
@@ -220,41 +208,16 @@ def _under(data: Path | str, path: str, *, anchored: bool) -> str:
 def _data_inventory(
     data: Path, paths: list[str], carried: Mapping[str, BundleFile], token: str | None
 ) -> list[BundleFile]:
-    """The data files at `paths`, their digests carried from `carried` where the size still matches.
-
-    An entry from a format-2.0 manifest records no CRC32C, so its file is
-    hashed once more to gain one.
-    """
+    """The data files at `paths`, their digests carried from `carried` where the size still matches."""
     files: list[BundleFile] = []
     for path in paths:
         size = (data / path).stat().st_size
         earlier = carried.get(path)
-        if earlier is not None and earlier.size == size and earlier.crc32c is not None:
-            files.append(
-                BundleFile(
-                    path=path,
-                    size=size,
-                    sha256=earlier.sha256,
-                    md5=earlier.md5,
-                    crc32c=earlier.crc32c,
-                    root="data",
-                    tier=3,
-                    carried_from=token,
-                )
-            )
+        if earlier is not None and earlier.size == size:
+            entry = BundleFile(path=path, size=size, digests=earlier.digests, root="data", tier=3, carried_from=token)
         else:
-            found = digests_of(data / path)
-            files.append(
-                BundleFile(
-                    path=path,
-                    size=size,
-                    sha256=found.sha256,
-                    md5=found.md5,
-                    crc32c=found.crc32c,
-                    root="data",
-                    tier=3,
-                )
-            )
+            entry = BundleFile(path=path, size=size, digests=digests_of(data / path), root="data", tier=3)
+        files.append(entry)
     return files
 
 

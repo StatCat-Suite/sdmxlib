@@ -30,7 +30,6 @@ from sdmxlib.bundle import (
     read_manifest,
     write_manifest,
 )
-from sdmxlib.bundle._write import Digests
 from sdmxlib.local.registry import BundleRegistry
 from tests.support.bundles import FLOW, make_bundle
 
@@ -68,7 +67,7 @@ def hashed(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     seen: list[str] = []
     original = _check.digests_of
 
-    def counting(path: Path) -> Digests:
+    def counting(path: Path) -> dict[str, str]:
         seen.append(path.name)
         return original(path)
 
@@ -102,7 +101,7 @@ def test_receive_finds_a_changed_publication_file(tmp_path: Path) -> None:
     root = _published(tmp_path / "b")
     _flip_a_byte(root / "lake.ducklake")
     findings = [f for f in check_bundle(root, at="receive").findings if f.check == "files"]
-    assert findings == [Finding("files", "lake.ducklake", "contents differ from the manifest's sha256, md5 or crc32c")]
+    assert findings == [Finding("files", "lake.ducklake", "contents differ from the manifest's crc32c, md5, sha256")]
 
 
 def _store(root: Path, manifest: Manifest) -> dict[str, RemoteFile]:

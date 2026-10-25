@@ -5,7 +5,7 @@ one unit, once per release: each publication is a directory of its own.
 statcatlib writes bundles, sdmxlib-rest serves them, and sdmxlib reads,
 checks, copies and fetches them. This page is the contract between them.
 
-It describes **manifest format 2.1** and **overlay format 1.2**. sdmxlib's
+It describes **manifest format 2.0** and **overlay format 1.2**. sdmxlib's
 code is the reference implementation (`sdmxlib.bundle`,
 `LocalRegistry.bundle`), and the two JSON Schemas ship with it:
 `sdmxlib.bundle.manifest_schema()` and `sdmxlib.bundle.overlay_schema()`.
@@ -69,7 +69,7 @@ two spaces, but a reader MUST NOT depend on the layout.
 
 | field | presence | meaning |
 | --- | --- | --- |
-| `format_version` | required | The manifest format, `major.minor`: `"2.1"` for this page. |
+| `format_version` | required | The manifest format, `major.minor`: `"2.0"` for this page. |
 | `bundle_id` | required | The producer's stable name for the bundle, kept across rebuilds. It names *which* bundle, never which publication. |
 | `token` | required | A UUIDv7 minted when the publication's build started, and the name of its directory (§3). |
 | `previous_token` | required | The `token` of the publication this one extends, or `null` for a bundle's first. |
@@ -104,12 +104,19 @@ two spaces, but a reader MUST NOT depend on the layout.
 | --- | --- | --- |
 | `path` | required | The file's path, `/`-separated, relative to the directory `root` names. |
 | `size` | required | Its size in bytes. |
-| `sha256` | required | The SHA-256 of its contents, as lowercase hex. |
-| `md5` | required | The MD5 of its contents, as lowercase hex. An upload's `Content-MD5` header is the base64 of the same 16 bytes. |
-| `crc32c` | optional | The CRC32C of its contents, as eight lowercase hex digits. S3 keeps it whole for a file uploaded in any number of parts (`x-amz-checksum-crc32c`, the base64 of the same 4 bytes, big-endian), and GCS keeps it for every file. Added in format 2.1; a 2.0 manifest has none. |
+| `digests` | required | Its contents' digests, an object of algorithm name to lowercase hex. It MUST hold `sha256`, `md5` and `crc32c` (below), and MAY hold others; a reader compares those it knows and ignores the rest. |
 | `root` | required | `"publication"` for a file in the publication directory, `"data"` for a data file under `data_path`. |
 | `tier` | required | The producer's default placement: `1` pulled before a server is ready, `2` pulled lazily to local disk, `3` read remotely by byte range (§7). |
-| `carried_from` | optional | For a data file, the `token` of the manifest whose `size` and digests this entry copies; `null` for one hashed by this publication. A producer hashes a file afresh, rather than carry it, when the earlier entry records no `crc32c`. |
+| `carried_from` | optional | For a data file, the `token` of the manifest whose `size` and `digests` this entry copies; `null` for one hashed by this publication. |
+
+Each required digest is there for a reader that holds a different copy of the
+file:
+
+| algorithm | value | read by |
+| --- | --- | --- |
+| `sha256` | 64 hex digits | every check run on the files themselves, and the integrity anchor: the only collision-resistant one of the three |
+| `md5` | 32 hex digits | Azure Blob Storage, which keeps it as `Content-MD5`: the base64 of the same 16 bytes |
+| `crc32c` | 8 hex digits | S3, which keeps it whole for a file uploaded in any number of parts (`x-amz-checksum-crc32c`, the base64 of the same 4 bytes, big-endian), and GCS, which keeps it for every file |
 
 ### `BindingCount`
 
@@ -578,16 +585,14 @@ A server reads tier-3 files from object storage and never holds them, so it
 cannot hash them. A store reports a file's size and the digests it keeps,
 each base64, and which it keeps depends on the store and the upload:
 
-| store | keeps | `BundleFile` field | upload sets |
+| store | keeps | digest | upload sets |
 | --- | --- | --- | --- |
 | Azure Blob Storage | `Content-MD5`, when the uploader sets it | `md5` | `content_md5(entry)` as `Content-MD5`, or `x-ms-blob-content-md5` on a block upload |
 | Amazon S3 | the checksum the uploader picks; for a multipart upload only a CRC is of the whole file | `crc32c` | `content_crc32c(entry)` as `x-amz-checksum-crc32c`, with checksum type `FULL_OBJECT` |
 | Google Cloud Storage | CRC32C always; MD5 except for a composite object | `crc32c` | nothing: GCS computes it |
 
 A publish job MUST upload every file so its store keeps a digest the
-manifest records. A manifest before format 2.1 records no `crc32c`, so a file
-it lists can be verified on S3 or GCS only when the store also kept its MD5 or
-SHA-256 whole.
+manifest records; each store keeps one of the three for any upload.
 
 `verify_remote(manifest, lookup, tiers=(3,))` checks the files of the given
 tiers against what `lookup(entry)` returns for each: a `RemoteFile(size,

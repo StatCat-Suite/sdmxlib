@@ -72,7 +72,7 @@ def test_a_changed_file_of_the_same_size_fails_its_checksum(tmp_path: Path) -> N
     file.write_bytes(bytes(data))
     findings = [f for f in check_bundle(root, at="publish").findings if f.check == "files"]
     assert findings == [
-        Finding("files", _listed(root, file), "contents differ from the manifest's sha256, md5 or crc32c")
+        Finding("files", _listed(root, file), "contents differ from the manifest's crc32c, md5, sha256")
     ]
 
 

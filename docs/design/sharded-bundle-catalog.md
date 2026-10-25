@@ -137,8 +137,7 @@ bundles/<bundle_id>/
 |---|---|---|
 | `root` | required | `"publication"`: `path` is relative to the publication directory. `"data"`: `path` is relative to `data_path`. |
 | `tier` | required | `1` pulled before a pod is ready; `2` pulled lazily to local disk; `3` read remotely by byte range. |
-| `md5` | required for `root: "data"` | MD5 of the file, matching the `Content-MD5` the publish job sets on an Azure blob. |
-| `crc32c` | optional (format 2.1) | CRC32C of the file: what S3 keeps whole for a multipart upload and GCS keeps for every file (GH-181). |
+| `digests` | required | The file's digests by algorithm, lowercase hex: `sha256`, `md5` (the `Content-MD5` an Azure blob keeps) and `crc32c` (what S3 keeps whole for a multipart upload and GCS keeps for every file), and any other a store adds (GH-181). |
 | `carried_from` | optional | The `token` whose manifest this entry's digests were carried forward from. |
 
 `BindingCount`:
@@ -200,7 +199,7 @@ MD5 is a fixed standard. Each term is below 2^62, so a HUGEINT sum does not over
 - **Copy-on-write revisions.** A `live` publication that revises or deletes rows MUST, after `ducklake_flush_inlined_data` (which turns an inlined delete into a delete file), rewrite every table that holds delete files into new data files with `ducklake_rewrite_data_files(catalog, delete_threshold => 0)` (or the catalog option `rewrite_delete_threshold` set to 0), then compact. The default threshold skips a table whose deleted rows are a small fraction, which is exactly a daily delta; spike M1(d) measured that it leaves the delete file at the default and removes it at 0. No delete file ships; the check refuses one.
 - **Compaction for final publications.** A producer SHOULD merge to one sorted file per table when the publish job declares `lifecycle: final` (§6.3). Artefact finality plays no part.
 - **Publication directories.** Written once, never rewritten. Data files written once, never modified.
-- **Carry-forward.** A republish MAY carry forward a data file's `size` and digests from the previous manifest, marking `carried_from`, and MUST verify size and a digest the store keeps against them. An entry with no `crc32c` (format 2.0) is hashed afresh.
+- **Carry-forward.** A republish MAY carry forward a data file's `size` and digests from the previous manifest, marking `carried_from`, and MUST verify size and a digest the store keeps against them.
 - **Blob digests.** The publish job MUST upload every file so its store keeps a digest the manifest records: `Content-MD5` on Azure, a full-object CRC32C on S3; GCS computes CRC32C itself (`docs/bundle.md`, Remote files).
 
 ### 4.6 `check_bundle` profiles
@@ -576,7 +575,7 @@ Each product bundle carries per-language LanceDB tables over its own datasets, c
 15. Full codelists vendored per table at CODR scale → partials; structures bundle. §8.
 16. `references` costs 30 s and 5 GB → anti-joins generated from the edge table. §4.8.
 17. Every pod re-hashes gigabytes → receive stamp; tier-3 by size and a digest the store keeps. §4.6, §4.7.
-18. Object storage keeps no SHA-256 of a multipart upload → `md5` and `crc32c` in the manifest; the publish job sets one the store keeps. §4.2, §4.5.
+18. Object storage keeps no SHA-256 of a multipart upload → `md5` and `crc32c` in each file's `digests`; the publish job sets one the store keeps. §4.2, §4.5.
 19. A multi-gigabyte pull set makes a scaled pod unavailable for minutes → tiers; search pool; the published store trimmed of unused keys (the labels split is shelved). §4.1, §7.1.
 20. Labelled formats need labels on the first request → names stay in `meta.duckdb`, a tier-1 file. §7.1.
 21. A 1.x reader opens a new-layout bundle and finds no data → manifest 2.0, which a 1.x reader refuses; pinned image sets. §4, §9.

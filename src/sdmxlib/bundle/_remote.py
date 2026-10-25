@@ -13,8 +13,8 @@ digests it keeps, each base64 (GH-125, GH-181):
 - **Google Cloud Storage** always keeps CRC32C, and MD5 except for a composite
   object or an XML multipart upload.
 
-The manifest records sha256, md5 and, from format 2.1, crc32c, so every store
-keeps one of them for any upload. The publish job sets one on every upload
+The manifest records sha256, md5 and crc32c for every file (`BundleFile.digests`),
+so every store keeps one of them for any upload. The publish job sets one on every upload
 (design §4.5), and a file whose store keeps none the manifest has is a
 publishing fault.
 
@@ -59,20 +59,12 @@ class RemoteFile:
 
 def content_md5(entry: BundleFile) -> str:
     """The ``Content-MD5`` an upload of `entry` sets: the base64 of its md5's 16 bytes."""
-    return base64.b64encode(bytes.fromhex(entry.md5)).decode("ascii")
+    return base64.b64encode(bytes.fromhex(entry.digests["md5"])).decode("ascii")
 
 
 def content_crc32c(entry: BundleFile) -> str:
-    """The CRC32C an upload of `entry` sets (S3's ``x-amz-checksum-crc32c``): the base64 of its 4 bytes.
-
-    Raises:
-        ValueError: If `entry` records no CRC32C, as a manifest before format
-            2.1 does not.
-    """
-    if entry.crc32c is None:
-        msg = f"{entry.path} records no crc32c: its manifest predates format 2.1; republish to record one"
-        raise ValueError(msg)
-    return base64.b64encode(bytes.fromhex(entry.crc32c)).decode("ascii")
+    """The CRC32C an upload of `entry` sets (S3's ``x-amz-checksum-crc32c``): the base64 of its 4 bytes."""
+    return base64.b64encode(bytes.fromhex(entry.digests["crc32c"])).decode("ascii")
 
 
 def verify_remote(
@@ -104,21 +96,13 @@ def verify_remote(
     return findings
 
 
-def _recorded(entry: BundleFile) -> dict[str, str]:
-    """The digests `entry` records, by algorithm, lowercase hex."""
-    digests = {"sha256": entry.sha256, "md5": entry.md5}
-    if entry.crc32c is not None:
-        digests["crc32c"] = entry.crc32c
-    return digests
-
-
 def _details(entry: BundleFile, remote: RemoteFile | None) -> list[str]:
     """What is wrong with `remote` as a copy of `entry`: nothing when it is one."""
     if remote is None:
         return ["listed in the manifest but missing from the store"]
     if remote.size != entry.size:
         return [f"{remote.size} bytes in the store, the manifest says {entry.size}"]
-    recorded = _recorded(entry)
+    recorded = entry.digests
     reported = {name.lower(): value for name, value in remote.digests.items()}
     # A composite is a digest of the parts' digests, so it says nothing about
     # the file; another digest the store keeps may still.

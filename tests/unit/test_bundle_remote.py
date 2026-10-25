@@ -7,6 +7,8 @@ reports.
 
 import base64
 import hashlib
+import json
+import re
 from collections.abc import Callable
 from pathlib import Path
 
@@ -21,6 +23,7 @@ from sdmxlib.bundle import (
     BundleFile,
     Finding,
     Manifest,
+    ManifestError,
     Producer,
     RemoteFile,
     check_bundle,
@@ -164,22 +167,46 @@ def _b64(digest: bytes) -> str:
     return base64.b64encode(digest).decode()
 
 
-def test_the_manifest_records_each_files_crc32c(tmp_path: Path) -> None:
+def test_the_manifest_records_each_files_three_digests(tmp_path: Path) -> None:
     publication, manifest = _published(tmp_path)
     for entry in manifest.files:
-        assert entry.crc32c == f"{google_crc32c.value(_as_stored(publication, entry)):08x}", entry.path
+        data = _as_stored(publication, entry)
+        assert entry.digests == {
+            "sha256": hashlib.sha256(data).hexdigest(),
+            "md5": hashlib.md5(data, usedforsecurity=False).hexdigest(),
+            "crc32c": f"{google_crc32c.value(data):08x}",
+        }, entry.path
+
+
+_ZEROS = {"sha256": "0" * 64, "md5": "0" * 32}
 
 
 def test_content_crc32c_is_the_base64_gcs_and_s3_report() -> None:
     """``Nks/tw==`` is what the GCS emulator reported for the bytes ``abc``: CRC32C 0x364B3FB7."""
-    entry = BundleFile(path="x", size=3, sha256="", md5="", crc32c="364b3fb7", root="data", tier=3)
+    entry = BundleFile(path="x", size=3, digests={**_ZEROS, "crc32c": "364b3fb7"}, root="data", tier=3)
     assert content_crc32c(entry) == "Nks/tw=="
 
 
-def test_content_crc32c_refuses_an_entry_from_before_format_2_1() -> None:
-    entry = BundleFile(path="x", size=3, sha256="", md5="", root="data", tier=3)
-    with pytest.raises(ValueError, match=r"predates format 2\.1"):
-        content_crc32c(entry)
+@pytest.mark.parametrize(
+    ("digests", "detail"),
+    [
+        (_ZEROS, "records no crc32c; every file records sha256, md5, crc32c"),
+        ({**_ZEROS, "crc32c": "364B3FB7"}, "crc32c '364B3FB7' is not lowercase hex"),
+        ({**_ZEROS, "crc32c": ""}, "crc32c '' is not lowercase hex"),
+    ],
+)
+def test_an_entry_without_every_digest_in_lowercase_hex_is_refused(digests: dict[str, str], detail: str) -> None:
+    with pytest.raises(ValueError, match=re.escape(detail)):
+        BundleFile(path="x", size=3, digests=digests, root="data", tier=3)
+
+
+def test_a_manifest_missing_a_digest_is_refused_on_read(tmp_path: Path) -> None:
+    publication, _ = _published(tmp_path)
+    document = json.loads((publication / MANIFEST_NAME).read_text())
+    del document["files"][0]["digests"]["crc32c"]
+    (publication / MANIFEST_NAME).write_text(json.dumps(document))
+    with pytest.raises(ManifestError, match="records no crc32c"):
+        read_manifest(publication)
 
 
 @pytest.mark.parametrize(
@@ -207,24 +234,25 @@ def test_each_stores_digests_verify_clean(tmp_path: Path, keeps: Callable[[bytes
     assert verify_remote(manifest, lambda e: store[e.path], tiers=(1, 2, 3)) == []
 
 
-def test_an_entry_without_crc32c_cannot_be_verified_by_crc32c_alone(tmp_path: Path) -> None:
-    """A format-2.0 manifest's entries record no CRC32C, so a GCS composite object has nothing to match."""
-    publication, manifest = _published(tmp_path)
-    entry = msgspec.structs.replace(_data(manifest), crc32c=None)
-    older = msgspec.structs.replace(manifest, files=(entry,))
-    crc = _b64(google_crc32c.Checksum(_as_stored(publication, entry)).digest())
-    (finding,) = verify_remote(older, lambda e: RemoteFile(e.size, {"crc32c": crc}))
-    assert "the store keeps crc32c and the manifest records md5, sha256: none to compare" in finding.detail
+def test_an_algorithm_beyond_the_three_is_compared_when_the_store_keeps_it(tmp_path: Path) -> None:
+    """The map takes any algorithm: one a store adds (S3's CRC64NVME, say) needs no format change."""
+    _, manifest = _published(tmp_path)
+    entry = _data(manifest)
+    extended = msgspec.structs.replace(entry, digests={**entry.digests, "crc64nvme": "00112233445566ff"})
+    with_it = msgspec.structs.replace(manifest, files=(extended,))
+    same = RemoteFile(entry.size, {"crc64nvme": _b64(bytes.fromhex("00112233445566ff"))})
+    other = RemoteFile(entry.size, {"crc64nvme": _b64(bytes(8))})
+    assert verify_remote(with_it, lambda e: same) == []
+    (finding,) = verify_remote(with_it, lambda e: other)
+    assert finding.detail.startswith("crc64nvme AAAAAAAAAAA= in the store")
 
 
 def test_a_crc32c_the_file_does_not_have_is_a_publish_finding(tmp_path: Path) -> None:
     """The check compares every recorded digest: a wrong CRC32C alone is caught, sha256 and md5 still matching."""
     publication, manifest = _published(tmp_path)
     entry = _data(manifest)
-    files = tuple(msgspec.structs.replace(f, crc32c="00000000") if f is entry else f for f in manifest.files)
+    wrong = msgspec.structs.replace(entry, digests={**entry.digests, "crc32c": "00000000"})
+    files = tuple(wrong if f is entry else f for f in manifest.files)
     (publication / MANIFEST_NAME).write_bytes(msgspec.json.encode(msgspec.structs.replace(manifest, files=files)))
     findings = check_bundle(publication, at="publish").findings
-    assert (
-        Finding("files", f"{DATA_PATH}{entry.path}", "contents differ from the manifest's sha256, md5 or crc32c")
-        in findings
-    )
+    assert Finding("files", f"{DATA_PATH}{entry.path}", "contents differ from the manifest's crc32c") in findings

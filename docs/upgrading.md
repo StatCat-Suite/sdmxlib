@@ -19,11 +19,32 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
-## `RemoteFile` reports digests by algorithm
+## A file's digests are a map by algorithm
 
-The manifest is format 2.1: each `BundleFile` records a `crc32c` beside
-`sha256` and `md5`, the digest S3 keeps whole for a multipart upload and GCS
-keeps for every file. A 2.0 reader reads a 2.1 manifest and ignores the field.
+`BundleFile.digests` holds each file's digests by algorithm, lowercase hex,
+in place of the `sha256` and `md5` fields: `{"sha256": …, "md5": …,
+"crc32c": …}`. All three are required. CRC32C is new: the digest S3 keeps whole
+for a multipart upload and GCS keeps for every file. The manifest format stays
+2.0, and a bundle published by sdmxlib 0.73 or 0.74 is republished with this
+one: its manifest has the old fields, and `read_manifest` refuses it.
+
+```text
+# before
+entry.sha256, entry.md5
+```
+
+```python
+# now
+entry = sl.bundle.BundleFile(
+    path="meta.duckdb",
+    size=3,
+    digests={"sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+             "md5": "900150983cd24fb0d6963f7d28e17f72", "crc32c": "364b3fb7"},
+    root="publication",
+    tier=1,
+)
+entry.digests["sha256"]
+```
 
 `RemoteFile`, which a `verify_remote` lookup returns, reports every digest the
 store keeps, by algorithm, in place of one `content_md5`:
@@ -127,8 +148,8 @@ follows.
     `canonical_form`, `content_fingerprint` and `artefacts` (one
     `ArtefactEntry` per artefact, with `stability`, `partial` and
     `fingerprint`);
-  - `BundleFile`: `root` (`"publication"` or `"data"`), `md5`, `tier` and
-    `carried_from`;
+  - `BundleFile`: `root` (`"publication"` or `"data"`), `digests`, `tier`
+    and `carried_from`;
   - `BindingCount`: `structural_version`, the URN of the data structure the
     binding was written against, and its table `fingerprint` and
     `structure_fingerprint` (see [the bundle format](bundle.md), §9). A binding whose `structural_version` tag is

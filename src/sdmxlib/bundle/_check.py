@@ -27,7 +27,7 @@ from attrs import frozen
 from sdmxlib.bundle._finding import Finding
 from sdmxlib.bundle._fingerprint import bundle_fingerprint
 from sdmxlib.bundle._remote import RemoteFile, verify_remote
-from sdmxlib.bundle._write import artefact_entries, binding_counts, digests_of, lake_files, recorded
+from sdmxlib.bundle._write import artefact_entries, binding_counts, differing, digests_of, lake_files
 from sdmxlib.local.engine import BundleEngine
 from sdmxlib.local.object_store import sizes
 from sdmxlib.local.registry import BundleRegistry, LocalRegistry
@@ -324,8 +324,8 @@ def _files(root: Path, manifest: Manifest, at: Profile, *, remote: bool) -> Iter
             yield Finding("files", subject, "listed in the manifest but missing")
         elif (size := found.stat().st_size) != entry.size:
             yield Finding("files", subject, f"{size} bytes, the manifest says {entry.size}")
-        elif hashed and not recorded(entry, digests_of(found)):
-            yield Finding("files", subject, "contents differ from the manifest's sha256, md5 or crc32c")
+        elif hashed and (differs := differing(entry, digests_of(found))):
+            yield Finding("files", subject, f"contents differ from the manifest's {', '.join(differs)}")
     if at == "open":
         return
     for extra in on_disk:
