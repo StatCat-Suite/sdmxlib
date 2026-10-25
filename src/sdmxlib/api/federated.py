@@ -38,7 +38,7 @@ import inspect
 from collections.abc import Sequence
 from typing import overload
 
-import httpx
+import httpx2
 
 from sdmxlib.api.policy import RegistryUnavailable
 from sdmxlib.model.binding import DataflowBinding, DriftError, DriftIssue, _validate_binding
@@ -203,7 +203,7 @@ class FederatedRegistry:
             # Already named by the source that raised it; re-wrapping would
             # bury the inner source's id behind this one's.
             raise
-        except (httpx.HTTPError, OSError) as exc:
+        except (httpx2.HTTPError, OSError) as exc:
             raise RegistryUnavailable(getattr(source, "id", None), exc, tried=str(urn)) from exc
         # Applied here rather than forwarded: `_dispatch_kwargs` sends each
         # source only what it understands, and a local source takes neither

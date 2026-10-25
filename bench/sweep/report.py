@@ -20,7 +20,7 @@ from concurrent.futures import FIRST_COMPLETED, Future, ProcessPoolExecutor, wai
 from pathlib import Path
 from resource import RUSAGE_SELF, getrusage
 
-import httpx
+import httpx2
 from attrs import frozen
 
 from bench.sweep.analyse import (
@@ -399,7 +399,7 @@ def render(summary: dict[str, object]) -> str:
         unserved: list[str] = []
         for resource, doc in _items(_get(entry, "resources")):
             status = _get(doc, "status")
-            if status != httpx.codes.OK:
+            if status != httpx2.codes.OK:
                 unserved.append(f"{resource}({status})")
                 continue
             lines.extend(_document(resource, doc))

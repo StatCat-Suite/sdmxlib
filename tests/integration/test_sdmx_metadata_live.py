@@ -16,7 +16,7 @@ To re-record: ``just record-cassettes`` (or ``uv run pytest -m live
 --record-mode=all``).
 """
 
-import httpx
+import httpx2
 import pytest
 
 import sdmxlib as sl
@@ -31,9 +31,9 @@ _ACCEPT_METADATA_JSON = "application/vnd.sdmx.metadata+json;version=2.0.0"
 
 
 def _fetch(url: str, accept: str) -> bytes:
-    # httpx (vs urllib) so the request uses certifi's CA bundle — IMF's chain
+    # httpx2 (vs urllib) so the request uses certifi's CA bundle — IMF's chain
     # isn't in the uv-managed Python's bundled trust store.
-    with httpx.Client(timeout=30, follow_redirects=True) as client:
+    with httpx2.Client(timeout=30, follow_redirects=True) as client:
         response = client.get(url, headers={"Accept": accept})
         response.raise_for_status()
         return response.content

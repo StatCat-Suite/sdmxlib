@@ -22,14 +22,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TypedDict
 
-import httpx
+import httpx2
 
 from bench.sweep.endpoints import Endpoint
 
 #: Long enough for Eurostat's codelists, which took more than 120 s when
 #: probed. A bulk structure query is slow, not hung, and a timeout that cuts it
 #: off records a gap that is the sweep's fault rather than the registry's.
-_TIMEOUT = httpx.Timeout(connect=30.0, read=900.0, write=30.0, pool=30.0)
+_TIMEOUT = httpx2.Timeout(connect=30.0, read=900.0, write=30.0, pool=30.0)
 
 _CHUNK = 1 << 20
 
@@ -86,7 +86,7 @@ def settled(meta: FetchMeta) -> bool:
     return meta["error"] is None and meta["status"] not in _TRANSIENT
 
 
-def fetch(client: httpx.Client, root: Path, endpoint: Endpoint, resource: str, *, refresh: bool) -> FetchMeta:
+def fetch(client: httpx2.Client, root: Path, endpoint: Endpoint, resource: str, *, refresh: bool) -> FetchMeta:
     """Fetch one resource into the cache, unless a settled answer is already there.
 
     A refusal is cached too, as metadata with no body: a 404 for `valuelist` is
@@ -108,7 +108,7 @@ def fetch(client: httpx.Client, root: Path, endpoint: Endpoint, resource: str, *
     return meta
 
 
-def _request(client: httpx.Client, endpoint: Endpoint, resource: str, body: Path) -> tuple[FetchMeta, float | None]:
+def _request(client: httpx2.Client, endpoint: Endpoint, resource: str, body: Path) -> tuple[FetchMeta, float | None]:
     """One GET, streamed to `body`. Returns the metadata and any `Retry-After`."""
     url = endpoint.url(resource)
     start = time.perf_counter()
@@ -123,11 +123,11 @@ def _request(client: httpx.Client, endpoint: Endpoint, resource: str, body: Path
             with partial.open("wb") as out:
                 for chunk in response.iter_bytes(_CHUNK):
                     size += out.write(chunk)
-    except httpx.HTTPError as exc:
+    except httpx2.HTTPError as exc:
         error = f"{type(exc).__name__}: {exc}"
-    if status == httpx.codes.OK and error is None:
+    if status == httpx2.codes.OK and error is None:
         error = _unwrap(partial)
-    if status == httpx.codes.OK and error is None:
+    if status == httpx2.codes.OK and error is None:
         partial.replace(body)
     else:
         partial.unlink(missing_ok=True)
@@ -154,7 +154,7 @@ def _unwrap(partial: Path) -> str | None:
     Two things Eurostat sent with a 200, both of which would otherwise be
     cached as "the registry's answer" and then crash the analysis:
 
-    - a gzip stream with no `Content-Encoding`, so httpx does not decode it;
+    - a gzip stream with no `Content-Encoding`, so httpx2 does not decode it;
     - an HTML "Server temporarily unavailable" page. That is a transient
       failure wearing a success status, so it is reported as an error, which
       `settled` treats as worth asking again.
@@ -190,13 +190,13 @@ def fetch_host(
     root: Path, endpoints: list[Endpoint], *, refresh: bool, resources: tuple[str, ...] | None = None
 ) -> None:
     """Fetch every resource of each of `endpoints` — all on one host — in turn."""
-    with httpx.Client(timeout=_TIMEOUT, follow_redirects=True) as client:
+    with httpx2.Client(timeout=_TIMEOUT, follow_redirects=True) as client:
         for endpoint in endpoints:
             _fetch_endpoint(client, root, endpoint, refresh=refresh, resources=resources)
 
 
 def _fetch_endpoint(
-    client: httpx.Client, root: Path, endpoint: Endpoint, *, refresh: bool, resources: tuple[str, ...] | None
+    client: httpx2.Client, root: Path, endpoint: Endpoint, *, refresh: bool, resources: tuple[str, ...] | None
 ) -> None:
     for resource in resources or endpoint.resources:
         cached = read_meta(raw_path(root, endpoint, resource))

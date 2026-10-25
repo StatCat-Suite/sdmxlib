@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import httpx
+import httpx2
 import pytest
 
 import sdmxlib as sl
@@ -29,11 +29,11 @@ _DEVNULL = Path("/dev/null")
 
 
 def _registry(handler):
-    return sl.RestRegistry("https://x.test/s", id="AG", transport=httpx.MockTransport(handler))
+    return sl.RestRegistry("https://x.test/s", id="AG", transport=httpx2.MockTransport(handler))
 
 
 def _refusing(exc: Exception):
-    def _handler(_request: httpx.Request) -> httpx.Response:
+    def _handler(_request: httpx2.Request) -> httpx2.Response:
         raise exc
 
     return _handler
@@ -45,10 +45,10 @@ def _refusing(exc: Exception):
 @pytest.mark.parametrize(
     "exc",
     [
-        httpx.ConnectError("connection refused"),
-        httpx.ReadTimeout("timed out"),
-        httpx.ConnectTimeout("timed out"),
-        httpx.PoolTimeout("pool exhausted"),
+        httpx2.ConnectError("connection refused"),
+        httpx2.ReadTimeout("timed out"),
+        httpx2.ConnectTimeout("timed out"),
+        httpx2.PoolTimeout("pool exhausted"),
         OSError("network is down"),
     ],
 )
@@ -61,7 +61,7 @@ def test_a_transport_failure_becomes_registry_unavailable(exc: Exception) -> Non
 def test_the_error_names_the_source_and_what_was_tried() -> None:
     """§5.8 asks for both. A bare `ConnectError` gives neither, and in a
     federation "which one?" is the first question a caller has."""
-    with _registry(_refusing(httpx.ConnectError("refused"))) as reg, pytest.raises(sl.RegistryUnavailable) as caught:
+    with _registry(_refusing(httpx2.ConnectError("refused"))) as reg, pytest.raises(sl.RegistryUnavailable) as caught:
         reg.get(_URN)
 
     message = str(caught.value)
@@ -72,7 +72,7 @@ def test_the_error_names_the_source_and_what_was_tried() -> None:
 
 def test_the_underlying_error_is_preserved() -> None:
     """Wrapping must not cost the diagnosis — the transport error says *why*."""
-    cause = httpx.ConnectError("refused")
+    cause = httpx2.ConnectError("refused")
     with _registry(_refusing(cause)) as reg, pytest.raises(sl.RegistryUnavailable) as caught:
         reg.get(_URN)
     assert caught.value.cause is cause
@@ -91,23 +91,23 @@ def test_a_404_is_absent_not_unreachable() -> None:
     exactly that. It used to raise `HTTPStatusError`, which left `None`
     reachable only when a provider answered 200 with an empty message.
     """
-    with _registry(lambda _r: httpx.Response(404, text="not found")) as reg:
+    with _registry(lambda _r: httpx2.Response(404, text="not found")) as reg:
         assert reg.get(_URN) is None
 
 
 def test_a_404_and_a_dead_source_are_distinguishable() -> None:
     """§5.8 in one test: the two facts a caller must act on differently
     must arrive distinguishable."""
-    with _registry(lambda _r: httpx.Response(404)) as absent:
+    with _registry(lambda _r: httpx2.Response(404)) as absent:
         assert absent.get(_URN) is None
-    with _registry(_refusing(httpx.ConnectError("refused"))) as dead, pytest.raises(sl.RegistryUnavailable):
+    with _registry(_refusing(httpx2.ConnectError("refused"))) as dead, pytest.raises(sl.RegistryUnavailable):
         dead.get(_URN)
 
 
 def test_a_500_is_not_an_unreachable_source() -> None:
     """A server that answers at all was reached. Its error is its own, and
     relabelling it would tell the caller to retry a different thing."""
-    with _registry(lambda _r: httpx.Response(500, text="boom")) as reg, pytest.raises(httpx.HTTPStatusError):
+    with _registry(lambda _r: httpx2.Response(500, text="boom")) as reg, pytest.raises(httpx2.HTTPStatusError):
         reg.get(_URN)
 
 
@@ -125,13 +125,13 @@ def test_a_server_error_on_a_streaming_path_is_not_relabelled() -> None:
     source, telling the caller to retry a server that answered.
     """
     with (
-        _registry(lambda _r: httpx.Response(500, text="boom")) as reg,
-        pytest.raises(httpx.HTTPStatusError),
+        _registry(lambda _r: httpx2.Response(500, text="boom")) as reg,
+        pytest.raises(httpx2.HTTPStatusError),
     ):
         reg._client.stream_data_at("data/dataflow/AG/DF/1.0/all", {}, to=_DEVNULL)
 
 
 def test_a_transport_failure_on_a_streaming_path_is_still_wrapped() -> None:
     """The other half, so the fix is not "streaming never wraps"."""
-    with _registry(_refusing(httpx.ConnectError("refused"))) as reg, pytest.raises(sl.RegistryUnavailable):
+    with _registry(_refusing(httpx2.ConnectError("refused"))) as reg, pytest.raises(sl.RegistryUnavailable):
         reg._client.stream_data_at("data/dataflow/AG/DF/1.0/all", {}, to=_DEVNULL)

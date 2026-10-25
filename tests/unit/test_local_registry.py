@@ -134,7 +134,7 @@ def test_read_ml30_with_registry():
 
 
 # ── RestRegistry.load() ───────────────────────────────────────────────────────
-# Use a dummy URL — httpx.Client is lazy and doesn't connect until a request is made.
+# Use a dummy URL — httpx2.Client is lazy and doesn't connect until a request is made.
 
 _DUMMY = "http://localhost:9999/sdmx/v2"
 

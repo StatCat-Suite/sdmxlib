@@ -12,14 +12,14 @@ So the header is the provider's (`ProviderInfo.csv_media_type`), else the
 SDMX-CSV the API version defines. And a 200 that is not CSV, as BIS sends for
 ``text/csv``, is refused rather than handed to DuckDB's CSV reader.
 
-These drive the real `httpx.Client` through a `MockTransport`, as
+These drive the real `httpx2.Client` through a `MockTransport`, as
 `test_rest_download.py` does: the header and the check are the feature.
 """
 
 from collections.abc import Callable
 from pathlib import Path
 
-import httpx
+import httpx2
 import pytest
 
 import sdmxlib as sl
@@ -34,18 +34,18 @@ _XML = b'<?xml version="1.0"?><message:StructureSpecificData/>'
 
 def _answering(
     content_type: str | None, body: bytes = _CSV
-) -> tuple[Callable[[httpx.Request], httpx.Response], list[httpx.Request]]:
-    seen: list[httpx.Request] = []
+) -> tuple[Callable[[httpx2.Request], httpx2.Response], list[httpx2.Request]]:
+    seen: list[httpx2.Request] = []
     headers = {} if content_type is None else {"content-type": content_type}
 
-    def handler(request: httpx.Request) -> httpx.Response:
+    def handler(request: httpx2.Request) -> httpx2.Response:
         seen.append(request)
-        return httpx.Response(200, content=body, headers=headers)
+        return httpx2.Response(200, content=body, headers=headers)
 
     return handler, seen
 
 
-def _accept_sent(client: SdmxClient, seen: list[httpx.Request]) -> str:
+def _accept_sent(client: SdmxClient, seen: list[httpx2.Request]) -> str:
     client.get_data_at("data/AG,F,1.0/all", {})
     return seen[-1].headers["accept"]
 
@@ -59,7 +59,7 @@ def _accept_sent(client: SdmxClient, seen: list[httpx.Request]) -> str:
 )
 def test_a_bare_url_asks_for_the_sdmx_csv_its_api_defines(api: str, accept: str) -> None:
     handler, seen = _answering("application/vnd.sdmx.data+csv")
-    with SdmxClient("https://example.test", api=api, transport=httpx.MockTransport(handler)) as client:
+    with SdmxClient("https://example.test", api=api, transport=httpx2.MockTransport(handler)) as client:
         assert _accept_sent(client, seen) == accept
 
 
@@ -74,14 +74,14 @@ def test_a_bare_url_asks_for_the_sdmx_csv_its_api_defines(api: str, accept: str)
 )
 def test_a_provider_asks_as_it_answers(provider: ProviderInfo, accept: str) -> None:
     handler, seen = _answering("text/csv")
-    with sl.RestRegistry(provider, transport=httpx.MockTransport(handler)) as reg:
+    with sl.RestRegistry(provider, transport=httpx2.MockTransport(handler)) as reg:
         assert _accept_sent(reg._client, seen) == accept
 
 
 def test_an_explicit_media_type_wins_over_the_providers() -> None:
     handler, seen = _answering("text/csv")
     with sl.RestRegistry(
-        sl.Provider.ECB, csv_media_type="application/vnd.sdmx.data+csv", transport=httpx.MockTransport(handler)
+        sl.Provider.ECB, csv_media_type="application/vnd.sdmx.data+csv", transport=httpx2.MockTransport(handler)
     ) as reg:
         assert _accept_sent(reg._client, seen) == "application/vnd.sdmx.data+csv"
 
@@ -92,7 +92,7 @@ def test_an_explicit_media_type_wins_over_the_providers() -> None:
 )
 def test_any_csv_is_read(content_type: str | None, tmp_path: Path) -> None:
     handler, _ = _answering(content_type)
-    with SdmxClient("https://example.test", transport=httpx.MockTransport(handler)) as client:
+    with SdmxClient("https://example.test", transport=httpx2.MockTransport(handler)) as client:
         assert client.get_data_at("data/AG,F,1.0/all", {}) == _CSV
         client.stream_data_at("data/AG,F,1.0/all", {}, to=tmp_path / "data.csv")
     assert (tmp_path / "data.csv").read_bytes() == _CSV
@@ -106,7 +106,7 @@ def test_a_response_that_is_not_csv_is_refused(content_type: str, tmp_path: Path
     an ``Accept`` listing two types the same way. Neither reaches DuckDB."""
     handler, _ = _answering(content_type, body=_XML)
     target = tmp_path / "data.csv"
-    with SdmxClient("https://example.test", transport=httpx.MockTransport(handler)) as client:
+    with SdmxClient("https://example.test", transport=httpx2.MockTransport(handler)) as client:
         with pytest.raises(ValueError, match="not CSV"):
             client.get_data_at("data/AG,F,1.0/all", {})
         with pytest.raises(ValueError, match="not CSV"):

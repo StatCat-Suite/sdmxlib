@@ -40,7 +40,7 @@ from importlib.metadata import version
 from pathlib import Path
 
 import duckdb
-import httpx
+import httpx2
 
 from bench.compete.libs import Message, differences, dropped, fidelity, read, source_fidelity, summary, timed, write
 from sdmxlib.formats import serialize
@@ -78,7 +78,7 @@ class Document:
 # ── the documents ────────────────────────────────────────────────────────────
 
 
-def _fetch(client: httpx.Client, url: str, fmt: str, path: Path, *, refresh: bool) -> Path:
+def _fetch(client: httpx2.Client, url: str, fmt: str, path: Path, *, refresh: bool) -> Path:
     if refresh or not path.exists():
         print(f"fetching {path.name} ...")
         response = client.get(url, headers={"Accept": _ACCEPT[fmt]})
@@ -92,8 +92,8 @@ def _fetch(client: httpx.Client, url: str, fmt: str, path: Path, *, refresh: boo
 def _fetched(*, refresh: bool) -> list[Document]:
     """UNSD's and ECB's large codelists, from the cache or their registries."""
     CACHE.mkdir(parents=True, exist_ok=True)
-    timeout = httpx.Timeout(30.0, read=600.0)
-    with httpx.Client(timeout=timeout, follow_redirects=True) as client:
+    timeout = httpx2.Timeout(30.0, read=600.0)
+    with httpx2.Client(timeout=timeout, follow_redirects=True) as client:
         unsd = {
             fmt: _fetch(
                 client, _SDMX_V1 if fmt == "2.1" else _SDMX_V2, fmt, CACHE / f"unsd-commodity-{suffix}", refresh=refresh

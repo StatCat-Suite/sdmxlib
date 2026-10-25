@@ -20,7 +20,7 @@ what a generous one offered.
 
 from __future__ import annotations
 
-import httpx
+import httpx2
 import pytest
 
 import sdmxlib as sl
@@ -54,13 +54,13 @@ class _Provider:
     def __init__(self, headers: dict[str, str], *, etag: str | None = None) -> None:
         self.headers = headers
         self.etag = etag
-        self.seen: list[httpx.Headers] = []
+        self.seen: list[httpx2.Headers] = []
 
-    def __call__(self, request: httpx.Request) -> httpx.Response:
+    def __call__(self, request: httpx2.Request) -> httpx2.Response:
         self.seen.append(request.headers)
         if self.etag and request.headers.get("if-none-match") == self.etag:
-            return httpx.Response(304, headers=self.headers)
-        return httpx.Response(200, content=_body(), headers={"content-type": "application/xml", **self.headers})
+            return httpx2.Response(304, headers=self.headers)
+        return httpx2.Response(200, content=_body(), headers={"content-type": "application/xml", **self.headers})
 
     @property
     def requests(self) -> int:
@@ -72,7 +72,7 @@ class _Provider:
 
 
 def _registry(provider: _Provider, **kwargs):
-    return sl.RestRegistry("https://x.test/s", id="AG", transport=httpx.MockTransport(provider), **kwargs)
+    return sl.RestRegistry("https://x.test/s", id="AG", transport=httpx2.MockTransport(provider), **kwargs)
 
 
 # ── the provider decides ──────────────────────────────────────────────────
@@ -177,12 +177,12 @@ def test_a_moved_pointer_is_seen_once_the_window_expires() -> None:
     served = ["1.0", "2.0"]
     calls = {"n": 0}
 
-    def _handler(_request: httpx.Request) -> httpx.Response:
+    def _handler(_request: httpx2.Request) -> httpx2.Response:
         version = served[min(calls["n"], 1)]
         calls["n"] += 1
-        return httpx.Response(200, content=_body(version), headers={"content-type": "application/xml"})
+        return httpx2.Response(200, content=_body(version), headers={"content-type": "application/xml"})
 
-    with sl.RestRegistry("https://x.test/s", id="AG", transport=httpx.MockTransport(_handler)) as reg:
+    with sl.RestRegistry("https://x.test/s", id="AG", transport=httpx2.MockTransport(_handler)) as reg:
         # A local first: pyrefly 1.2.0 does not solve `present(reg.get(...))` when
         # the inner call is itself generic (`T | None`) — see #425's repro.
         first = reg.get(_LATEST)

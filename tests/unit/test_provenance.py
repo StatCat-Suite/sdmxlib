@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-import httpx
+import httpx2
 import pytest
 
 import sdmxlib as sl
@@ -106,8 +106,8 @@ def test_an_artefact_fetched_through_the_chain_records_the_remote() -> None:
             "https://x.test/s",
             id="ECB",
             store=store,
-            transport=httpx.MockTransport(
-                lambda _r: httpx.Response(200, content=_BODY, headers={"content-type": "application/xml"})
+            transport=httpx2.MockTransport(
+                lambda _r: httpx2.Response(200, content=_BODY, headers={"content-type": "application/xml"})
             ),
         ) as reg:
             reg.get(sl.Codelist.urn_for(agency="AG", id="CL_X", version="1.0"))

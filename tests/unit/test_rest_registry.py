@@ -2,7 +2,7 @@
 
 from http.cookiejar import CookieJar
 
-import httpx
+import httpx2
 import pytest
 
 import sdmxlib as sl
@@ -261,11 +261,11 @@ def test_client_v30_collection_url_no_agency():
     client.close()
 
 
-# ── Forwarded httpx options ───────────────────────────────────────────────────
+# ── Forwarded httpx2 options ───────────────────────────────────────────────────
 #
-# HttpxOptions must not narrow below httpx's own parameter types: sdmxlib never
-# reads these values, and httpx normalises them at construction, so every
-# spelling httpx accepts has to reach it unchanged. Written as separate literal
+# HttpxOptions must not narrow below httpx2's own parameter types: sdmxlib never
+# reads these values, and httpx2 normalises them at construction, so every
+# spelling httpx2 accepts has to reach it unchanged. Written as separate literal
 # call sites rather than a parametrize list, which would erase the argument
 # types to `object` and need a suppression per call. As literals they also
 # type-check against the declared shape under `basedpyright tests/...` — though
@@ -274,14 +274,14 @@ def test_client_v30_collection_url_no_agency():
 
 
 def test_client_forwards_every_params_spelling():
-    expected = httpx.QueryParams({"detail": "full"})
+    expected = httpx2.QueryParams({"detail": "full"})
     clients = [
         SdmxClient(_ENDPOINT, params={"detail": "full"}),
         SdmxClient(_ENDPOINT, params=[("detail", "full")]),
         SdmxClient(_ENDPOINT, params=(("detail", "full"),)),
         SdmxClient(_ENDPOINT, params="detail=full"),
         SdmxClient(_ENDPOINT, params=b"detail=full"),
-        SdmxClient(_ENDPOINT, params=httpx.QueryParams({"detail": "full"})),
+        SdmxClient(_ENDPOINT, params=httpx2.QueryParams({"detail": "full"})),
     ]
     for client in clients:
         assert client._client.params == expected
@@ -289,9 +289,9 @@ def test_client_forwards_every_params_spelling():
 
 
 def test_client_forwards_non_str_param_values():
-    """httpx accepts int/bool/None and sequences; the shape must not reject them."""
+    """httpx2 accepts int/bool/None and sequences; the shape must not reject them."""
     client = SdmxClient(_ENDPOINT, params={"limit": 100, "refs": ["parents", "children"]})
-    assert client._client.params == httpx.QueryParams({"limit": 100, "refs": ["parents", "children"]})
+    assert client._client.params == httpx2.QueryParams({"limit": 100, "refs": ["parents", "children"]})
     client.close()
 
 
@@ -300,8 +300,8 @@ def test_client_forwards_every_cookies_spelling():
         SdmxClient(_ENDPOINT, cookies={"session": "abc"}),
         SdmxClient(_ENDPOINT, cookies=[("session", "abc")]),
         SdmxClient(_ENDPOINT, cookies=CookieJar()),
-        SdmxClient(_ENDPOINT, cookies=httpx.Cookies({"session": "abc"})),
+        SdmxClient(_ENDPOINT, cookies=httpx2.Cookies({"session": "abc"})),
     ]
     for client in clients:
-        assert isinstance(client._client.cookies, httpx.Cookies)
+        assert isinstance(client._client.cookies, httpx2.Cookies)
         client.close()

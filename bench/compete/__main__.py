@@ -16,7 +16,7 @@ from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
 
-import httpx
+import httpx2
 
 from bench.compete.libs import (
     LIBS,
@@ -82,7 +82,7 @@ def corpus(*, refresh: bool) -> dict[tuple[str, str], bytes]:
     if refresh or not FETCHED.exists() or not all(_path(s, fmt).exists() for s in SETS for fmt in FORMATS):
         CACHE.mkdir(exist_ok=True)
         FETCHED.unlink(missing_ok=True)
-        with httpx.Client(timeout=httpx.Timeout(30.0, read=300.0), follow_redirects=True) as client:
+        with httpx2.Client(timeout=httpx2.Timeout(30.0, read=300.0), follow_redirects=True) as client:
             for s in SETS:
                 for fmt, (url, accept) in SOURCES.items():
                     print(f"fetching {s} {fmt} from BIS ...")

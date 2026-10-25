@@ -175,7 +175,7 @@ the docstring's promise is false for this backend.
 
 ### B. Stream the wire response through the parser
 
-`httpx`'s streaming response into the SDMX-CSV reader, yielding batches as
+`httpx2`'s streaming response into the SDMX-CSV reader, yielding batches as
 bytes arrive — which `client.stream_data_to` already does for the file case.
 
 *For:* actually bounded, which is what a caller reaching for `stream()` wants,

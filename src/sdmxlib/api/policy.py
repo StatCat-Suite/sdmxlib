@@ -31,7 +31,7 @@ so, which cannot mislabel anything:
 class RegistryUnavailable(Exception):  # noqa: N818  # name matches #46 vocabulary
     """A source could not be reached, so no read of it can be believed.
 
-    Wraps the underlying httpx / connection error so callers catch one type
+    Wraps the underlying httpx2 / connection error so callers catch one type
     without depending on the HTTP layer. Carries the *source* and *what was
     tried*, because §5.8 asks the error to name both — a bare
     ``ConnectError: connection refused`` names neither, and in a federation

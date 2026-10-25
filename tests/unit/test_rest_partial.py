@@ -29,7 +29,7 @@ the shape worth watching for. Both URN kinds, always.
 
 from __future__ import annotations
 
-import httpx
+import httpx2
 import pytest
 
 import sdmxlib as sl
@@ -88,17 +88,17 @@ def _serving_by_detail():
     """
     seen: list[str] = []
 
-    def _handler(request: httpx.Request) -> httpx.Response:
+    def _handler(request: httpx2.Request) -> httpx2.Response:
         detail = request.url.params.get("detail", "")
         seen.append(detail)
         codes = _UNTRIMMED if detail == "full" else _TRIMMED
-        return httpx.Response(200, content=_message(codes), headers={"content-type": "application/xml"})
+        return httpx2.Response(200, content=_message(codes), headers={"content-type": "application/xml"})
 
     return _handler, seen
 
 
 def _registry(handler):
-    return sl.RestRegistry("https://x.test/s", id="AG", transport=httpx.MockTransport(handler))
+    return sl.RestRegistry("https://x.test/s", id="AG", transport=httpx2.MockTransport(handler))
 
 
 @pytest.mark.parametrize("urn", URNS.values(), ids=URNS.keys())
