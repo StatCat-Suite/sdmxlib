@@ -186,7 +186,13 @@ import duckdb
 #: ``data_consumer`` and ``organisation_unit``, item tables as the provider
 #: schemes have, the unit's with a ``parent_id``. Contacts go in
 #: ``organisation_contact``, as every organisation's do.
-SCHEMA_VERSION = "2.48"
+#:
+#: 2.49 holds each binding's availability (GH-194): ``availability``, one row
+#: per bound dataflow with its observation count, and ``availability_value``,
+#: the values each dimension holds. It is the SDMX 3.1 ``AvailabilityConstraint``
+#: for the unfiltered query, which the IM does not make maintainable, so it is
+#: keyed by the dataflow rather than stored as an artefact.
+SCHEMA_VERSION = "2.49"
 
 
 #: The `Representation` sum type, as columns — **defined once and interpolated
@@ -936,6 +942,26 @@ CREATE TABLE IF NOT EXISTS dataflow_binding (
 CREATE INDEX IF NOT EXISTS idx_binding_dataflow
     ON dataflow_binding(dataflow_urn);
 
+-- What data a bound dataflow holds: the answer to its unfiltered availability
+-- query, an SDMX 3.1 AvailabilityConstraint, written at publish (GH-194). Not
+-- an artefact: the IM gives it no id, version or name, so it is keyed by the
+-- dataflow it describes.
+CREATE TABLE IF NOT EXISTS availability (
+    dataflow_urn  TEXT PRIMARY KEY,
+    obs_count     BIGINT NOT NULL,
+    -- NULL: the series count is not computed at publish.
+    series_count  BIGINT
+);
+
+-- One row per value a dimension holds in the data: the constraint's one
+-- cube region, a KeyValue per dimension.
+CREATE TABLE IF NOT EXISTS availability_value (
+    dataflow_urn  TEXT NOT NULL,
+    dimension_id  TEXT NOT NULL,
+    value         TEXT NOT NULL,
+    PRIMARY KEY (dataflow_urn, dimension_id, value)
+);
+
 CREATE TABLE IF NOT EXISTS metadata_value (
     -- One row per (set, attribute_path, sibling_index).
     -- attribute_path is the dotted hierarchical attribute id (e.g.
@@ -1447,6 +1473,8 @@ ALL_TABLES: frozenset[str] = frozenset(
         "metadata_declared_target",
         "metadata_value",
         "dataflow_binding",
+        "availability",
+        "availability_value",
     }
 )
 

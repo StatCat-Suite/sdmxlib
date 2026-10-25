@@ -12,15 +12,13 @@ this tier.
 """
 
 import os
-import shutil
 from pathlib import Path
 
-import duckdb
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.bundle import Producer, write_manifest
-from tests.bench import _bundle
+from sdmxlib.storage.schema import get_schema_version
+from tests.bench import _bundle, _census
 
 #: What the bundle fixtures did that the summary should say: a 6.5-minute
 #: republish is worth a line, and so is a run that reused one.
@@ -90,13 +88,22 @@ def bundle():
 
 
 @pytest.fixture(scope="session")
-def bundle_conn(bundle):
+def bundle_conn(bundle, request):
     """A read-only DuckDB connection to the bundle's structural store.
 
     Session-scoped: opening it is cheap, but DuckDB's lock is exclusive, so
     one connection per test would serialise badly against itself.
+
+    A source on a schema the republish brings forward (`_bundle.UPGRADABLE`)
+    is read through its republished copy, which holds the same artefacts on
+    this build's schema; the structural tier would otherwise skip at every
+    additive schema bump. A source on the current schema is read directly, so
+    a bundle with no data plane still runs.
     """
     conn = _bundle.connect(bundle)
+    if get_schema_version(conn) in _bundle.UPGRADABLE:
+        conn.close()
+        conn = _bundle.connect(request.getfixturevalue("data_plane_bundle"))
     try:
         stale = _bundle.schema_skip_reason(conn)
         if stale:
@@ -165,27 +172,9 @@ def data_plane_bundle(bundle, tmp_path_factory):
         _NOTES.append(f"bundle tier: reused the census publication cached under {cached.parent.parent}")
         return cached
     _NOTES.append(f"bundle tier: republished the census bundle with fingerprints (key {key[:12]})")
-    return _bundle.cache_publication(key, lambda root: _republish(bundle, root))
-
-
-def _republish(bundle, root):
-    """`bundle`, in the single-directory layout, as a publication under `root`, published."""
-    with sl.LocalRegistry.build(root) as started:
-        publication = started.publication
-    for name in ("meta.duckdb", "lake.ducklake"):
-        shutil.copyfile(bundle / name, publication / name)
-    shutil.copytree(bundle / "parquet", root / "data", dirs_exist_ok=True)
-    with duckdb.connect(str(publication / "meta.duckdb")) as conn:
-        conn.execute(
-            "INSERT OR REPLACE INTO sdmx._meta (key, value) VALUES ('publication_token', ?)", [publication.name]
-        )
-    # Published on the copy (GH-66): sdmxlib owns `bundle.manifest.json`, and
-    # a bundle built before it may carry its builder's own format, which
-    # `bundle()` refuses. Republishing the copy runs `write_manifest` at full
-    # scale — checksums over every file, counts from the real lake, and every
-    # fingerprint (about 6.5 minutes) — and leaves the source bundle untouched.
-    write_manifest(publication, bundle_id=bundle.name, producer=Producer(name="sdmxlib-bench", version="0"))
-    return publication
+    published = _bundle.cache_publication(key, lambda root: _census.republish(bundle, root))
+    _NOTES.extend(_census.NOTES)
+    return published
 
 
 @pytest.fixture(scope="session")

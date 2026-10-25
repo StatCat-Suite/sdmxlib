@@ -50,6 +50,7 @@ from sdmxlib.model.codelist import (
 from sdmxlib.model.collections import ItemList, SdmxItem, SupportsId
 from sdmxlib.model.concept import Concept, ConceptScheme, ISOConceptReference
 from sdmxlib.model.constraint import (
+    AvailabilityConstraint,
     ComponentValueSet,
     ConstraintAttachment,
     CubeRegion,
@@ -2883,3 +2884,25 @@ def _stored_attachment(level: object, path: str) -> AttachmentLevel:
             ]
         )
     return AttachmentLevel(str(level))
+
+
+def get_availability(conn: duckdb.DuckDBPyConnection, dataflow_urn: str) -> AvailabilityConstraint | None:
+    """The stored answer to `dataflow_urn`'s unfiltered availability query, or None when none is stored."""
+    head = conn.execute(
+        "SELECT obs_count, series_count FROM availability WHERE dataflow_urn = ?", [dataflow_urn]
+    ).fetchone()
+    if head is None:
+        return None
+    values: dict[str, list[str]] = {}
+    for dimension_id, value in conn.execute(
+        "SELECT dimension_id, value FROM availability_value WHERE dataflow_urn = ? ORDER BY dimension_id",
+        [dataflow_urn],
+    ).fetchall():
+        values.setdefault(str(dimension_id), []).append(str(value))
+    flow = Ref[Dataflow].unresolved(Dataflow.parse_urn(dataflow_urn))
+    return AvailabilityConstraint(
+        attachment=ConstraintAttachment(dataflows=(flow,)),
+        region=CubeRegion(keys=tuple(KeyValue(dimension_id=d, values=frozenset(v)) for d, v in values.items())),
+        obs_count=int(head[0]),
+        series_count=None if head[1] is None else int(head[1]),
+    )

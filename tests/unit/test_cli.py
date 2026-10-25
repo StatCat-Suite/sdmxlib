@@ -42,7 +42,8 @@ def test_findings_are_printed_and_exit_1(tmp_path: Path) -> None:
     assert result.exit_code == 1
     lines = result.output.strip().splitlines()
     assert sum(line.startswith("[references] ") for line in lines) == 2
-    assert lines[-1].endswith("2 findings; checked manifest, files, lake, bindings, references, fingerprints")
+    checked = "manifest, files, lake, bindings, references, fingerprints, availability"
+    assert lines[-1].endswith(f"2 findings; checked {checked}")
 
 
 def test_the_profile_is_required(tmp_path: Path) -> None:

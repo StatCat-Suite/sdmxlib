@@ -143,15 +143,25 @@ def schema_skip_reason(conn: duckdb.DuckDBPyConnection) -> str | None:
     )
 
 
-def schema_skip_reason_for(path: Path) -> str | None:
-    """`schema_skip_reason` for a bundle *directory*, opening it read-only.
+#: Store schemas the census republish brings to `SCHEMA_VERSION` in its copy:
+#: those a later version changes only by adding tables, which the schema's own
+#: idempotent DDL creates (`_census.republish`). 2.49 adds the availability
+#: tables (GH-194).
+UPGRADABLE = frozenset({"2.48"})
 
-    For callers that are about to open the store for write — the check has to
-    happen before that, since a mismatched version is dropped and rebuilt
-    rather than refused.
+
+def schema_skip_reason_for(path: Path) -> str | None:
+    """`schema_skip_reason` for a bundle *directory* the tier republishes, opening it read-only.
+
+    For callers that are about to copy the store and open the copy for write:
+    the check has to happen before that, since a mismatched version is
+    dropped and rebuilt rather than refused. A schema in `UPGRADABLE` passes,
+    since the republish brings the copy forward.
     """
     conn = connect(path)
     try:
+        if get_schema_version(conn) in UPGRADABLE:
+            return None
         return schema_skip_reason(conn)
     finally:
         conn.close()
@@ -450,6 +460,9 @@ _PUBLISHING = (
     "src/sdmxlib/bundle/_canonical.py",
     "src/sdmxlib/storage/_manifest.py",
     "src/sdmxlib/storage/schema.py",
+    "src/sdmxlib/storage/writers.py",
+    "src/sdmxlib/bundle/_availability.py",
+    "tests/bench/_census.py",
 )
 
 

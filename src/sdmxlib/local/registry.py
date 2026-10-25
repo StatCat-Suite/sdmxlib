@@ -62,6 +62,7 @@ from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.binding import DataflowBinding, DataflowEntry, DriftError, DriftIssue, _validate_binding
 from sdmxlib.model.codelist import Code, Codelist
 from sdmxlib.model.collections import ArtefactList, ItemList, Maintainable
+from sdmxlib.model.constraint import AvailabilityConstraint
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure, Dimension
 from sdmxlib.model.errors import Refusal
@@ -105,7 +106,7 @@ from sdmxlib.storage._manifest import (
 )
 from sdmxlib.storage._trim import restore
 from sdmxlib.storage.lazy import LazyCodelist, LazyHierarchy
-from sdmxlib.storage.readers import make_lazy_codelist
+from sdmxlib.storage.readers import get_availability, make_lazy_codelist
 from sdmxlib.storage.schema import (
     SCHEMA_VERSION,
     ReadOnlySchemaError,
@@ -1634,6 +1635,25 @@ class BundleRegistry(SessionFactory):
         urn = urn_of(flow)
         binding = self.get(DataflowBinding.urn_for(agency=urn.agency, id=urn.id, version=urn.version))
         return self.locate(binding) if isinstance(binding, DataflowBinding) else None
+
+    def availability(self, flow: Dataflow | Ref[Dataflow] | SdmxUrn[Dataflow]) -> AvailabilityConstraint | None:
+        """What data this dataflow holds: the stored answer to its unfiltered availability query.
+
+        The SDMX 3.1 `AvailabilityConstraint`, which `write_manifest` stores at
+        publish: one cube region of the values each dimension holds, and the
+        observation count. Read from the store, so a server answers
+        ``/availability/<flow>/all/all`` without scanning the observations. A
+        filtered query is still computed (`build_component_availability`).
+
+        Args:
+            flow: The dataflow, as an artefact, a `Ref`, or a URN.
+
+        Returns:
+            The availability, or None when none is stored: the dataflow is not
+            bound here, or its publication was written with
+            ``availability=False``.
+        """
+        return get_availability(self._require_open(), str(urn_of(flow)))
 
     def locate(self, binding: DataflowBinding) -> DataflowBinding:
         """`binding` with its ``database_role`` naming the catalog its table is in here, attached.
