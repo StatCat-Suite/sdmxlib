@@ -1,4 +1,4 @@
-"""`sdmxlib bundle check` and `copy`: the `sdmxlib-cli` workspace member (GH-67, GH-123).
+"""`sdmxlib bundle check`, `copy` and `files`: the `sdmxlib-cli` workspace member (GH-67, GH-123, GH-182).
 
 The command is a thin wrapper over `check_bundle`, so these pin the wrapping:
 what it prints, its exit status, and the flag that skips the closure. The
@@ -14,7 +14,7 @@ from sdmxlib_cli import _flow, _source, app
 from typer.testing import CliRunner
 
 import sdmxlib as sl
-from sdmxlib.bundle import Producer, check_bundle, write_manifest
+from sdmxlib.bundle import MANIFEST_NAME, Producer, bundle_files, check_bundle, read_manifest, write_manifest
 from tests.support.bundles import make_bundle
 from tests.support.repo import ROOT
 
@@ -70,6 +70,41 @@ def test_copy_takes_the_tiers_to_copy(tmp_path: Path) -> None:
     assert result.exit_code == 0, result.output
     assert sorted(p.name for p in destination.iterdir()) == ["bundle.manifest.json", "lake.ducklake", "meta.duckdb"]
     assert not (tmp_path / "dst" / "b" / "data").exists()
+
+
+def test_files_prints_the_listing_one_path_per_line(tmp_path: Path) -> None:
+    source = make_bundle(tmp_path / "b", 200_000)
+    write_manifest(source, bundle_id="b", producer=Producer(name="t", version="1"))
+    result = _RUNNER.invoke(app, ["bundle", "files", str(source), "--tiers", "1,2"])
+    assert result.exit_code == 0, result.output
+    assert result.output.splitlines() == bundle_files(read_manifest(source), tiers=(1, 2))
+    everything = _RUNNER.invoke(app, ["bundle", "files", str(source)]).output.splitlines()
+    assert any(line.startswith("data/") for line in everything)
+    assert not any(line.startswith("data/") for line in result.output.splitlines())
+
+
+def test_files_manifest_prints_the_manifest_path_alone(tmp_path: Path) -> None:
+    source = _published(tmp_path / "b")
+    result = _RUNNER.invoke(app, ["bundle", "files", str(source), "--manifest"])
+    assert result.exit_code == 0, result.output
+    assert result.output.splitlines() == [f"{source.name}/{MANIFEST_NAME}"]
+
+
+def test_files_reads_a_manifest_staged_outside_its_publication(tmp_path: Path) -> None:
+    source = _published(tmp_path / "b")
+    staged = tmp_path / "stage" / MANIFEST_NAME
+    staged.parent.mkdir()
+    staged.write_bytes((source / MANIFEST_NAME).read_bytes())
+    for given in (staged, staged.parent):
+        result = _RUNNER.invoke(app, ["bundle", "files", str(given)])
+        assert result.exit_code == 0, result.output
+        assert result.output.splitlines() == bundle_files(read_manifest(source))
+
+
+def test_files_refuses_a_tier_that_is_not_one(tmp_path: Path) -> None:
+    result = _RUNNER.invoke(app, ["bundle", "files", str(_published(tmp_path / "b")), "--tiers", "0"])
+    assert result.exit_code == 2
+    assert "'0' is not a tier; give 1, 2 or 3" in result.output
 
 
 def test_copy_refuses_a_tier_that_is_not_one(tmp_path: Path) -> None:

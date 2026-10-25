@@ -684,6 +684,34 @@ it.
 tiers, which is what a server holds when it reads tier 3 remotely. Such a copy
 is incomplete by intent: `check_bundle` reports the files it left out.
 
+### Pulling from object storage
+
+sdmxlib holds no blob-store client, so a server pulls a publication from
+object storage with the deployment's own tool: rclone, azcopy, `gcloud
+storage` or `aws s3`. `bundle_files(manifest, tiers=...)` (`sdmxlib bundle
+files`) lists what that copy needs, one path per line under the bundle
+directory: data files as `data/<schema>/<table>/ducklake-….parquet`, then the
+publication's own as `<token>/meta.duckdb`.
+
+The list leaves out the manifest. Those tools copy several files at once, so
+no order in a list makes the manifest land last; the server copies it in a
+second step, after every listed file has arrived, and a pull that stops part
+way leaves a publication readers refuse:
+
+```bash
+# 1. the manifest, staged outside the publication, to list from
+rclone copyto store:bundles/census/$TOKEN/bundle.manifest.json /stage/census/bundle.manifest.json
+# 2. every file tiers 1 and 2 need
+sdmxlib bundle files /stage/census --tiers 1,2 \
+  | rclone copy --files-from - store:bundles/census /var/bundles/census
+# 3. the manifest, last
+sdmxlib bundle files /stage/census --manifest \
+  | rclone copy --files-from - store:bundles/census /var/bundles/census
+```
+
+`check_on_open` then verifies the copy, with `remote=` when tier 3 stays in
+the store ([Data files in object storage](#data-files-in-object-storage)).
+
 ## 9. Fingerprints
 
 A token names a publication; a fingerprint names its content. Two

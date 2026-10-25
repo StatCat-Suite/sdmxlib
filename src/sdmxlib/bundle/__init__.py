@@ -8,7 +8,8 @@ file, observation counts per binding, and the ``token``, the value a cache or
 an ETag keys on. ``LocalRegistry.bundle(publication)`` opens it read-only.
 `read_manifest` reads a manifest back, refusing a format it cannot read;
 `check_bundle` checks a publication against it and against itself;
-`copy_bundle` copies one elsewhere, manifest last; `verify_remote` checks the
+`copy_bundle` copies one elsewhere, manifest last, and `bundle_files` lists
+what such a copy needs for another tool; `verify_remote` checks the
 files a server reads from blob storage by size and Content-MD5; and `fetch_bundle` lands
 one dataflow from an SDMX REST source as a published bundle, its provenance
 recorded. `apply_overlays` changes display annotations without a rebuild,
@@ -17,8 +18,8 @@ writes overlays into a new publication for good. `canonical_json` is the
 defined text of an artefact that a fingerprint hashes. The manifest's JSON Schema
 ships beside it, for producers outside Python: `manifest_schema`.
 
-From a shell, ``sdmxlib bundle check``, ``sdmxlib bundle copy`` and
-``sdmxlib bundle fetch`` run these: they are the ``sdmxlib-cli`` package
+From a shell, ``sdmxlib bundle check``, ``sdmxlib bundle copy``,
+``sdmxlib bundle files`` and ``sdmxlib bundle fetch`` run these: they are the ``sdmxlib-cli`` package
 (``uv tool install sdmxlib-cli``), released with this one, so the library
 itself never depends on typer.
 
@@ -39,7 +40,7 @@ from importlib import resources
 from sdmxlib.bundle._canonical import CANONICAL_FORM, canonical_json
 from sdmxlib.bundle._check import Check, Profile, Report, check_bundle, check_on_open
 from sdmxlib.bundle._finding import Finding
-from sdmxlib.bundle._copy import copy_bundle
+from sdmxlib.bundle._copy import bundle_files, copy_bundle
 from sdmxlib.bundle._remote import RemoteFile, content_md5, verify_remote
 from sdmxlib.bundle._fetch import fetch_bundle
 from sdmxlib.bundle._overlay import (
@@ -109,6 +110,7 @@ __all__ = [
     "Tier",
     "applied",
     "apply_overlays",
+    "bundle_files",
     "canonical_json",
     "check_bundle",
     "check_on_open",

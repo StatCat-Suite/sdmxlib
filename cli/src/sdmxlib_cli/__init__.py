@@ -13,7 +13,16 @@ import typer
 
 import sdmxlib as sl
 from sdmxlib.api.providers import ProviderInfo
-from sdmxlib.bundle import Profile, Tier, check_bundle, copy_bundle, fetch_bundle
+from sdmxlib.bundle import (
+    MANIFEST_NAME,
+    Profile,
+    Tier,
+    bundle_files,
+    check_bundle,
+    copy_bundle,
+    fetch_bundle,
+    read_manifest,
+)
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.urn import SdmxUrn
 
@@ -132,8 +141,53 @@ def copy(
     Raises:
         BadParameter: If a tier is not 1, 2 or 3.
     """
+    manifest = copy_bundle(source, destination, tiers=_tiers(tiers))
+    typer.echo(f"{destination}: {manifest.bundle_id}, token {manifest.token}; {len(manifest.files)} files")
+
+
+@bundle.command("files")
+def files(
+    manifest: Annotated[
+        Path, typer.Argument(help="A publication directory, or its bundle.manifest.json wherever it is staged.")
+    ],
+    *,
+    tiers: Annotated[
+        str, typer.Option(help="Placement tiers to list, comma-separated: 1,2 for what a server holds.")
+    ] = "1,2,3",
+    manifest_only: Annotated[
+        bool, typer.Option("--manifest", help="Print only the manifest's path, for the copy's second step.")
+    ] = False,
+) -> None:
+    r"""Print the files a copy of a publication needs, one path per line, for rclone or azcopy.
+
+    Paths are under the bundle directory: ``<token>/meta.duckdb``,
+    ``data/<schema>/<table>/ducklake-….parquet``. The manifest is left out,
+    and ``--manifest`` prints its path alone: copy tools move several files at
+    once, so the manifest is copied in a second step, after every other file.
+
+        sdmxlib bundle files /stage/census --tiers 1,2 \
+          | rclone copy --files-from - store:bundles/census /var/bundles/census
+        sdmxlib bundle files /stage/census --manifest \
+          | rclone copy --files-from - store:bundles/census /var/bundles/census
+
+    Raises:
+        BadParameter: If a tier is not 1, 2 or 3.
+    """
+    root = manifest.parent if manifest.name == MANIFEST_NAME else manifest
+    read = read_manifest(root)
+    listed = [f"{read.token}/{MANIFEST_NAME}"] if manifest_only else bundle_files(read, tiers=_tiers(tiers))
+    for path in listed:
+        typer.echo(path)
+
+
+def _tiers(text: str) -> list[Tier]:
+    """The placement tiers `text` names, comma-separated.
+
+    Raises:
+        BadParameter: If one is not 1, 2 or 3.
+    """
     chosen: list[Tier] = []
-    for part in tiers.split(","):
+    for part in text.split(","):
         match part.strip():
             case "1":
                 chosen.append(1)
@@ -144,5 +198,4 @@ def copy(
             case other:
                 msg = f"{other!r} is not a tier; give 1, 2 or 3, comma-separated"
                 raise typer.BadParameter(msg)
-    manifest = copy_bundle(source, destination, tiers=chosen)
-    typer.echo(f"{destination}: {manifest.bundle_id}, token {manifest.token}; {len(manifest.files)} files")
+    return chosen
