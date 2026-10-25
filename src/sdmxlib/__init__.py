@@ -73,6 +73,7 @@ from sdmxlib.model.validation import (
     SdmxParseError,
     ValidationError,
     ValidationIssue,
+    check_serialisable,
     validate,
     validate_references,
 )
@@ -438,6 +439,7 @@ __all__ = [
     "WinPred",
     "WriteSource",
     "artefact_urn",
+    "check_serialisable",
     "dropped",
     "from_dict",
     "item",
