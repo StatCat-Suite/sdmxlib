@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.74.0] - 2026-10-25
+
+### Bug Fixes
+
+- **release**: Publish sdmxlib and sdmxlib-cli each with its own PyPI token
+- **bundle**: Read the DuckDB storage version from the active database header (GH-174)
+
+### Documentation
+
+- Record what the sharded bundle catalog built; bring the bundle docs up to 0.73.0 (GH-136)
+
+### Features
+
+- **testing**: Alternative hierarchies over a dimension in synthetic_bundle (GH-99)
+- **testing**: Read a dimension's associated hierarchies in profile_bundle (GH-100)
+
 ## [0.73.0] - 2026-10-25
 
 ### Breaking Changes
