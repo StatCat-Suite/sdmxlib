@@ -623,7 +623,9 @@ sdmxlib also produces bundles itself:
   it from a shell.
 - `sdmxlib.testing.synthetic_bundle(path, shape, seed=...)` builds a bundle
   of a given `Shape` deterministically from its seed, for tests and
-  benchmarks.
+  benchmarks. A `Dim` may carry `HierarchyShape`s: each becomes a `Hierarchy`
+  over the dimension's codelist and a `HierarchyAssociation` linking it to
+  the dimension.
 - `sdmxlib.testing.profile_bundle(path, flow)` reads the `Shape` of one
   dataflow in a real bundle (counts and fan-outs, never values), so a
   synthetic bundle can stand in for it.
