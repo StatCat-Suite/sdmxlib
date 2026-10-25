@@ -1627,22 +1627,31 @@ class BundleRegistry(SessionFactory):
             flow: The dataflow, as an artefact, a `Ref`, or a URN.
 
         Returns:
-            The binding, or `None` when this dataflow has no rows here.
+            The binding, located (`locate`): its ``database_role`` names the
+            catalog its table is in here, attached. `None` when this dataflow
+            has no rows here.
         """
         urn = urn_of(flow)
         binding = self.get(DataflowBinding.urn_for(agency=urn.agency, id=urn.id, version=urn.version))
         return self.locate(binding) if isinstance(binding, DataflowBinding) else None
 
     def locate(self, binding: DataflowBinding) -> DataflowBinding:
-        """`binding` with its ``database_role`` naming the catalog its table is in here.
+        """`binding` with its ``database_role`` naming the catalog its table is in here, attached.
 
         The stored binding names a role, ``lake``; a bundle in a `BundleEngine`
         attaches its lake as ``<prefix>__lake``, and SQL built from a binding
         (``<database_role>.<table_location>``) has to name that. A role this
         registry does not map is left as it is.
+
+        The lake attaches when something first needs it, so opening a bundle
+        to read a codelist costs nothing. A binding is that need: SQL built
+        from it reads the catalog it names, so a catalog this registry
+        attaches is attached before the binding is returned.
         """
-        catalog = self._roles.get(binding.database_role)
-        return binding if catalog is None else attrs.evolve(binding, database_role=catalog)
+        catalog = self._roles.get(binding.database_role, binding.database_role)
+        if self._attach is not None and catalog in self._attach:
+            self._data_plane()
+        return binding if catalog == binding.database_role else attrs.evolve(binding, database_role=catalog)
 
     @property
     def lake_alias(self) -> str:
