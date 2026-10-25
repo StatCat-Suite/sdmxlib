@@ -56,6 +56,7 @@ from sdmxlib.local import (
     SchemaInspector,
 )
 from sdmxlib.local.data_store import DuckDBDataStore, DuckLakeVersionError
+from sdmxlib.local.object_store import StoreSecret
 from sdmxlib.local.sql import SidecarNotUniqueError
 from sdmxlib.rest import ComponentFilter, parse_components, widen_key
 from sdmxlib.query._common import Descending
@@ -414,6 +415,7 @@ __all__ = [
     "SqlRelation",
     "StoreFormatError",
     "StoreSchemaError",
+    "StoreSecret",
     "Str",
     "StructureMap",
     "StructureMessage",

@@ -12,17 +12,23 @@ handles select its own ``<prefix>__meta`` catalog with ``USE``, so the
 ``sdmx.<table>`` names every query spells read that bundle and no other. The
 same publication opened twice shares one attachment, counted, and is detached
 when the last registry over it closes.
+
+A publication whose data files are in object storage reads them through the
+engine (GH-180): `secrets` holds the stores' credentials, and the extension a
+store's scheme needs is loaded when a bundle first names it.
 """
 
 import os
 import re
 import tempfile
 import threading
+from collections.abc import Iterable
 from pathlib import Path
 
 import attrs
 import duckdb
 
+from sdmxlib.local.object_store import SECRET_EXTENSIONS, StoreSecret, extension_for, load_for, sql_literal
 from sdmxlib.storage.schema import use_sdmx
 
 #: What a bundle id keeps in an alias; anything else becomes ``_``.
@@ -34,10 +40,6 @@ _MEMORY = re.compile(r"^\d+(\.\d+)?\s*(B|KB|KiB|MB|MiB|GB|GiB|TB|TiB|%)$", re.IG
 def spill_directory() -> Path:
     """Where a read-only database spills: under the system temp, one directory per process."""
     return Path(tempfile.gettempdir()) / f"sdmxlib-spill-{os.getpid()}"
-
-
-def _literal(value: str) -> str:
-    return "'" + value.replace("'", "''") + "'"
 
 
 def _identifier(value: str) -> str:
@@ -57,13 +59,22 @@ class BundleEngine:
     on handles of its own.
     """
 
-    def __init__(self, *, memory_limit: str | None = None, threads: int | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        memory_limit: str | None = None,
+        threads: int | None = None,
+        secrets: Iterable[StoreSecret] = (),
+    ) -> None:
         """Start an engine with no bundle attached.
 
         Args:
             memory_limit: DuckDB's ``memory_limit`` for every bundle together,
                 such as ``"8GB"`` or ``"70%"``; DuckDB's default when None.
             threads: DuckDB's thread pool size; DuckDB's default when None.
+            secrets: The credentials for the object stores the engine's
+                bundles read their data files from, created as DuckDB secrets
+                with the extension each needs.
 
         Raises:
             ValueError: If `memory_limit` is not a size or `threads` is below 1.
@@ -77,13 +88,18 @@ class BundleEngine:
         self._conn = duckdb.connect()
         # Published bundles are never written, so the engine spills under the
         # system temp, one directory per process, as a read-only store does.
-        self._conn.execute(f"SET temp_directory = {_literal(str(spill_directory()))}")
+        self._conn.execute(f"SET temp_directory = {sql_literal(str(spill_directory()))}")
         if memory_limit is not None:
-            self._conn.execute(f"SET memory_limit = {_literal(memory_limit)}")
+            self._conn.execute(f"SET memory_limit = {sql_literal(memory_limit)}")
         if threads is not None:
             self._conn.execute(f"SET threads = {threads}")
         self._lock = threading.Lock()
         self._attached: dict[str, _Attached] = {}
+        #: The extensions loaded on the engine's database, so each loads once.
+        self._loaded: set[str | None] = {None}
+        for secret in secrets:
+            self._load(SECRET_EXTENSIONS[secret.type])
+            self._conn.execute(secret.statement())
 
     @property
     def connection(self) -> duckdb.DuckDBPyConnection:
@@ -121,9 +137,24 @@ class BundleEngine:
                     raise ValueError(msg)
                 held.holders += 1
                 return prefix
-            self._conn.execute(f"ATTACH {_literal(str(meta))} AS {_identifier(prefix + '__meta')} (READ_ONLY)")
+            self._conn.execute(f"ATTACH {sql_literal(str(meta))} AS {_identifier(prefix + '__meta')} (READ_ONLY)")
             self._attached[prefix] = _Attached(meta=meta, holders=1)
         return prefix
+
+    def load_for_uri(self, uri: str) -> None:
+        """Load the DuckDB extension that reads `uri`'s scheme, once per engine.
+
+        Raises:
+            ValueError: If `uri` has no scheme, or one DuckDB does not read.
+        """
+        extension = extension_for(uri)
+        with self._lock:
+            self._load(extension)
+
+    def _load(self, extension: str | None) -> None:
+        if extension not in self._loaded:
+            load_for(self._conn, extension)
+            self._loaded.add(extension)
 
     def cursor(self, prefix: str) -> duckdb.DuckDBPyConnection:
         """A new handle reading the ``sdmx`` schema of the publication attached as `prefix`."""

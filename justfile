@@ -203,6 +203,15 @@ record-cassette selector:
 bench-bundle-assertions *ARGS:
     uv run pytest tests/bench -m "bench and bundle and not recompute" --benchmark-skip {{ BENCH_COLS }} -rs {{ ARGS }}
 
+# A bundle's data files read from Azurite, an S3 server and a GCS emulator,
+# each in a container pinned by digest (GH-180). Without a container runtime it
+# skips and says so on its own line. About 20 s once the images are pulled.
+#
+# Run the object-store tier
+[group('test')]
+test-stores *ARGS:
+    uv run pytest tests/stores -m stores -p no:benchmark -rs {{ ARGS }}
+
 # Everything in the gate but the bundle tier: lint, typecheck, unit, docs,
 # cassette-replayed integration and the docs build. The loop to run while
 # working, before the full `ci`.
@@ -211,14 +220,15 @@ bench-bundle-assertions *ARGS:
 [group('test')]
 ci-fast: check test test-docs test-integration docs-build
 
-# Full CI gate: `ci-fast` + the bundle tier's assertions.
+# Full CI gate: `ci-fast` + the bundle tier's assertions + the object-store tier.
 # Integration is in the gate because it replays offline in ~3 s and covers the
 # HTTP-facing modules that unit tests structurally cannot. The bundle
 # assertions are in it because they are the only thing standing between a
 # rename in `LocalRegistry`'s public API and a silently broken tier — ~96 s on
-# the machine that holds the bundle, nothing anywhere else.
+# the machine that holds the bundle, nothing anywhere else. The object-store
+# tier is in it because only a real store's HTTP API shows a remote read break.
 [group('test')]
-ci: ci-fast bench-bundle-assertions
+ci: ci-fast bench-bundle-assertions test-stores
 
 # Run the property-based tests with 20x the examples (local hunting; #215)
 [group('test')]

@@ -221,6 +221,42 @@ needs. The same publication opened twice in one engine shares one
 attachment, released when the last registry over it closes. Without
 `engine=`, a bundle gets an engine of its own, closed with the registry.
 
+### Data files in object storage
+
+A server MAY hold only a publication's tier 1 and 2 files on local disk and
+read its data files, tier 3, from the object store they were published to.
+Nothing in the bundle changes: the files are uploaded as they are, and the
+manifest's `data_path` stays relative. The server names where the
+publication is in the store, and the reader resolves `data_path` against
+that root in place of the local directory:
+
+```python
+engine = sl.BundleEngine(
+    secrets=[sl.StoreSecret("azure", provider="credential_chain", options={"account_name": "acct"})],
+)
+census = sl.LocalRegistry.bundle(
+    pod_path,  # the tier 1 and 2 files, from copy_bundle(..., tiers=(1, 2))
+    remote=store_url,  # such as "abfss://bundles@acct.dfs.core.windows.net/census/019a…/"
+    engine=engine,
+)
+census.data_path  # the store's data/ beside the publication: "abfss://bundles@acct.dfs.core.windows.net/census/data/"
+```
+
+`remote` is any URI DuckDB reads: `s3://`, which also reaches S3-compatible
+servers through an `endpoint` option, `r2://`, `gs://`, `az://`, `abfss://`,
+`http(s)://`, and `file://` for a store mounted as a filesystem. The engine
+loads the DuckDB extension the scheme needs (`httpfs` or `azure`). A
+`StoreSecret` is a DuckDB secret, with DuckDB's types, providers and options;
+the engine creates each one, so every bundle it holds reads with them. A
+`credential_chain` provider reads the cloud identity a pod already has, so
+the server holds no keys.
+
+`check_bundle` and `check_on_open` take the same `remote=` and `engine=`. At
+`receive`, the `lake` and `bindings` checks then read the data files in the
+store, and the `remote` check sizes each listed one there; a `lookup`
+(below) checks them by `Content-MD5` as well. `at="publish"` refuses
+`remote`, since publishing hashes every file where it is built.
+
 ### The schema and engine checks
 
 A reader MUST check three versions from the manifest **before opening any

@@ -54,6 +54,10 @@ Persistent DuckDB-backed structural store, the in-memory registry, and the data 
 
 ---
 
+::: sdmxlib.local.object_store.StoreSecret
+
+---
+
 ::: sdmxlib.local.registry.LocalRegistry
 
 ---

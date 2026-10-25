@@ -3,7 +3,9 @@
 Three profiles, by where the check runs (GH-130). ``publish`` runs where the
 bundle is built and hashes everything. ``receive`` runs where it lands: data
 files by size, and with a blob-store lookup by ``Content-MD5``, so no data
-file is hashed. ``open`` runs each time a server opens it, checking sizes
+file is hashed. A server that reads the data files from object storage passes
+``remote=`` and the ``engine`` holding the store's credentials, and the checks
+read them where the registry does (GH-180). ``open`` runs each time a server opens it, checking sizes
 only. `check_on_open` runs ``receive`` once per token and manifest, records
 a stamp, and runs ``open`` after that. Each check names what it found rather
 than stopping at the first, so one run lists everything wrong.
@@ -26,6 +28,8 @@ from sdmxlib.bundle._finding import Finding
 from sdmxlib.bundle._fingerprint import bundle_fingerprint
 from sdmxlib.bundle._remote import RemoteFile, verify_remote
 from sdmxlib.bundle._write import artefact_entries, binding_counts, digests_of, lake_files
+from sdmxlib.local.engine import BundleEngine
+from sdmxlib.local.object_store import sizes
 from sdmxlib.local.registry import BundleRegistry, LocalRegistry
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.storage._manifest import (
@@ -79,6 +83,8 @@ def check_bundle(
     path: str | Path,
     *,
     at: Profile,
+    remote: str | None = None,
+    engine: BundleEngine | None = None,
     lookup: Lookup | None = None,
     fingerprints: bool = False,
     extensions: Mapping[str, Check] | None = None,
@@ -91,6 +97,7 @@ def check_bundle(
     | files, the publication's: size, sha256 and md5, nothing unlisted | yes | yes | size only |
     | files, ``data/``'s listed entries | size, sha256 and md5 | size | no |
     | remote: ``data/``'s entries in the blob store, by size and ``Content-MD5`` | no | with `lookup` | no |
+    | remote: ``data/``'s entries in object storage, by size | no | with `remote` and no `lookup` | no |
     | lake: current files at their recorded size, no delete file, every referenced file listed | yes | yes | no |
     | bindings: the manifest's, each with the count it gives | yes | yes | no |
     | references: every stored reference names something in the store | yes | yes | no |
@@ -99,8 +106,11 @@ def check_bundle(
 
     ``data/`` is shared by publications, so only its listed entries are
     checked. At ``receive`` with a `lookup`, ``data/`` is checked in the blob
-    store in place of on disk; the lake and the bindings still read the data
-    where the registry reads it.
+    store in place of on disk. With `remote`, the data files are in object
+    storage and the publication holds only the files the server pulled: the
+    registry, and with it the lake and the bindings checks, reads them there
+    through `engine`, and without a `lookup` the ``remote`` check sizes each
+    listed one there.
 
     A manifest that cannot be read, or a store on another schema version or in
     a DuckDB or DuckLake format this engine cannot read, ends the run there:
@@ -109,6 +119,11 @@ def check_bundle(
     Args:
         path: The publication directory.
         at: ``publish``, ``receive`` or ``open``.
+        remote: The publication in object storage, as
+            `LocalRegistry.bundle` takes it, when the data files are read
+            from there.
+        engine: The engine to open the bundle in, holding the stores'
+            credentials; one of its own when None.
         lookup: At ``receive``, what the blob store reports for a ``data/``
             entry, or None for a file it does not hold (see `verify_remote`).
         fingerprints: At ``receive``, also recompute the fingerprints, which
@@ -120,30 +135,39 @@ def check_bundle(
         What was checked and what was found.
 
     Raises:
-        ValueError: If `lookup` or `fingerprints` is given at a profile that
-            does not use it.
+        ValueError: If `lookup`, `fingerprints` or `remote` is given at a
+            profile that does not use it.
     """
-    _refuse_unused(at, lookup=lookup, fingerprints=fingerprints)
+    _refuse_unused(at, lookup=lookup, fingerprints=fingerprints, remote=remote)
     root = Path(path)
     checked: list[str] = ["manifest"]
     try:
         manifest = read_manifest(root)
     except ManifestError as exc:
         return Report(root, at, tuple(checked), (Finding("manifest", MANIFEST_NAME, str(exc)),))
-    findings = list(_files(root, manifest, at, remote=lookup is not None))
+    findings = list(_files(root, manifest, at, remote=lookup is not None or remote is not None))
     checked.append("files")
     if lookup is not None:
         data_only = msgspec.structs.replace(manifest, files=tuple(f for f in manifest.files if f.root == "data"))
         findings += verify_remote(data_only, lookup, tiers=(1, 2, 3))
         checked.append("remote")
     try:
-        reg = LocalRegistry.bundle(root)
+        reg = LocalRegistry.bundle(root, remote=remote, engine=engine)
     except (StoreSchemaError, StoreFormatError, ManifestError) as exc:
         return Report(root, at, tuple(checked), (*findings, Finding("manifest", "meta.duckdb", str(exc))))
     except duckdb.Error as exc:
         return Report(root, at, tuple(checked), (*findings, Finding("files", "meta.duckdb", f"cannot be read: {exc}")))
     with reg:
-        for name, step in _steps(root, manifest, reg, at, fingerprints=fingerprints, extensions=extensions or {}):
+        steps = _steps(
+            root,
+            manifest,
+            reg,
+            at,
+            sized_remotely=remote is not None and lookup is None,
+            fingerprints=fingerprints,
+            extensions=extensions or {},
+        )
+        for name, step in steps:
             try:
                 findings += step()
             except duckdb.Error as exc:
@@ -156,8 +180,11 @@ def check_bundle(
     return Report(root, at, tuple(checked), tuple(findings))
 
 
-def _refuse_unused(at: Profile, *, lookup: Lookup | None, fingerprints: bool) -> None:
+def _refuse_unused(at: Profile, *, lookup: Lookup | None, fingerprints: bool, remote: str | None) -> None:
     """Raise for an argument the profile `at` does not use."""
+    if remote is not None and at == "publish":
+        msg = "remote= reads a received bundle's data files where they are stored; at='publish' hashes them locally"
+        raise ValueError(msg)
     if lookup is not None and at != "receive":
         msg = f"lookup= verifies data files at receive; at={at!r} does not use it"
         raise ValueError(msg)
@@ -174,17 +201,20 @@ def _steps(
     reg: BundleRegistry,
     at: Profile,
     *,
+    sized_remotely: bool,
     fingerprints: bool,
     extensions: Mapping[str, Check],
 ) -> list[tuple[str, Callable[[], Iterable[Finding]]]]:
     """The checks that read the store, by name, in the order profile `at` runs them."""
     steps: list[tuple[str, Callable[[], Iterable[Finding]]]] = []
+    if at == "receive" and sized_remotely:
+        steps.append(("remote", partial(_remote_sizes, manifest, reg)))
     if at != "open":
         if (root / "lake.ducklake").exists():
             steps.append(("lake", partial(_lake, root, manifest, reg)))
         steps += [("bindings", partial(_bindings, manifest, reg)), ("references", partial(_references, reg))]
     if at == "publish" or fingerprints:
-        steps.append(("fingerprints", partial(_fingerprints, root, manifest)))
+        steps.append(("fingerprints", partial(_fingerprints, root, manifest, reg)))
     return steps + [(name, partial(check, root, manifest, reg, at)) for name, check in extensions.items()]
 
 
@@ -192,6 +222,8 @@ def check_on_open(
     path: str | Path,
     *,
     stamps: str | Path,
+    remote: str | None = None,
+    engine: BundleEngine | None = None,
     lookup: Lookup | None = None,
     extensions: Mapping[str, Check] | None = None,
 ) -> Report:
@@ -207,6 +239,8 @@ def check_on_open(
         path: The publication directory.
         stamps: The directory holding the stamps, outside every bundle: local
             to the server, since a stamp says what this machine checked.
+        remote: As `check_bundle`'s, for either profile.
+        engine: As `check_bundle`'s, for either profile.
         lookup: As `check_bundle`'s, for the receive check.
         extensions: As `check_bundle`'s, for either profile.
 
@@ -218,15 +252,15 @@ def check_on_open(
         digest = hashlib.sha256((root / MANIFEST_NAME).read_bytes()).hexdigest()
         manifest = read_manifest(root)
     except OSError, ManifestError:
-        return check_bundle(root, at="receive", lookup=lookup, extensions=extensions)
+        return check_bundle(root, at="receive", remote=remote, engine=engine, lookup=lookup, extensions=extensions)
     stamp = Path(stamps) / manifest.bundle_id / manifest.token
     if not _names_a_file_under(stamp, Path(stamps)):
-        report = check_bundle(root, at="receive", lookup=lookup, extensions=extensions)
+        report = check_bundle(root, at="receive", remote=remote, engine=engine, lookup=lookup, extensions=extensions)
         detail = f"bundle_id {manifest.bundle_id!r} cannot name a stamp directory, so the check is not stamped"
         return attrs.evolve(report, findings=(*report.findings, Finding("manifest", MANIFEST_NAME, detail)))
     if _stamped(stamp, digest):
-        return check_bundle(root, at="open", extensions=extensions)
-    report = check_bundle(root, at="receive", lookup=lookup, extensions=extensions)
+        return check_bundle(root, at="open", remote=remote, engine=engine, extensions=extensions)
+    report = check_bundle(root, at="receive", remote=remote, engine=engine, lookup=lookup, extensions=extensions)
     if report.ok:
         _write_stamp(stamp, digest, report)
     return report
@@ -303,9 +337,13 @@ def _files(root: Path, manifest: Manifest, at: Profile, *, remote: bool) -> Iter
             yield Finding("files", extra, "in the bundle but not in the manifest")
 
 
-def _fingerprints(root: Path, manifest: Manifest) -> list[Finding]:
-    """The fingerprints recomputed, against the manifest's."""
-    with LocalRegistry.bundle(root) as reg:
+def _fingerprints(root: Path, manifest: Manifest, opened: BundleRegistry) -> list[Finding]:
+    """The fingerprints recomputed, against the manifest's.
+
+    Read through a registry of their own, over the same publication, engine
+    and data files as `opened`.
+    """
+    with LocalRegistry.bundle(root, remote=_remote_of(opened), engine=opened._engine) as reg:
         artefacts = artefact_entries(reg)
         try:
             counts = binding_counts(reg, artefacts)
@@ -352,7 +390,7 @@ def _lake(root: Path, manifest: Manifest, reg: BundleRegistry) -> list[Finding]:
     """What DuckLake records against what is on disk and in the manifest."""
     reg._data_plane()  # ATTACHes the lake
     conn = reg.connection
-    data = root / manifest.data_path
+    data = _data_root(root, manifest, reg)
     findings: list[Finding] = []
     tables = conn.execute(
         "SELECT schema_name, table_name FROM duckdb_tables() WHERE database_name = ? ORDER BY ALL", [reg.lake_alias]
@@ -363,17 +401,18 @@ def _lake(root: Path, manifest: Manifest, reg: BundleRegistry) -> list[Finding]:
             "FROM ducklake_list_files(?, ?, schema => ?)",
             [reg.lake_alias, table, schema],
         ).fetchall()
-        for data_file, data_size, delete_file, delete_size in listed:
-            for file, size in ((data_file, data_size), (delete_file, delete_size)):
-                if file is not None:
-                    findings += _lake_file(manifest.data_path, data, Path(file), size)
+        recorded = [(f, n) for row in listed for f, n in ((row[0], row[1]), (row[2], row[3])) if f is not None]
+        found = _sizes_of(conn, data, [str(f) for f, _ in recorded])
+        for file, size in recorded:
+            findings += _lake_file(manifest.data_path, data, str(file), size, found[str(file)])
+        for _data_file, _data_size, delete_file, _delete_size in listed:
             if delete_file is not None:
                 # Publishing rewrites every table holding one (GH-128), so the
                 # current snapshot reads its rows from data files alone.
                 findings.append(
                     Finding(
                         "lake",
-                        _relative(manifest.data_path, data, Path(delete_file)),
+                        _relative(manifest.data_path, data, str(delete_file)),
                         "a delete file in the current snapshot; write_manifest rewrites the table without one",
                     )
                 )
@@ -390,21 +429,60 @@ def _lake(root: Path, manifest: Manifest, reg: BundleRegistry) -> list[Finding]:
     return findings
 
 
-def _lake_file(data_path: str, data: Path, file: Path, size: int) -> list[Finding]:
+def _data_root(root: Path, manifest: Manifest, reg: BundleRegistry) -> Path | str:
+    """Where `reg` reads the data files: the local directory, or the remote URI ending in ``/``."""
+    remote = _remote_of(reg)
+    return root / manifest.data_path if remote is None or reg.data_path is None else reg.data_path
+
+
+def _remote_of(reg: BundleRegistry) -> str | None:
+    """The data root `reg` reads remotely, or None when its data files are local."""
+    data = reg.data_path
+    return data if data is not None and "://" in data else None
+
+
+def _sizes_of(conn: duckdb.DuckDBPyConnection, data: Path | str, files: list[str]) -> dict[str, int | None]:
+    """Each file's size where it is stored: on disk under a local `data`, through the engine under a remote one."""
+    if isinstance(data, str):
+        return sizes(conn, files)
+    return {file: Path(file).stat().st_size if Path(file).is_file() else None for file in files}
+
+
+def _lake_file(data_path: str, data: Path | str, file: str, size: int, actual: int | None) -> list[Finding]:
     subject = _relative(data_path, data, file)
-    if not file.is_file():
+    if actual is None:
         return [Finding("lake", subject, "referenced by the DuckLake catalog but missing")]
-    if (actual := file.stat().st_size) != size:
+    if actual != size:
         return [Finding("lake", subject, f"{actual} bytes, DuckLake recorded {size}")]
     return []
 
 
-def _relative(data_path: str, data: Path, file: Path) -> str:
+def _relative(data_path: str, data: Path | str, file: str) -> str:
     """`file` as the manifest's ``files`` name it: under `data_path` when it is in `data`."""
+    if isinstance(data, str):
+        return f"{data_path}{file[len(data) :]}" if file.startswith(data) else file
     try:
-        return f"{data_path}{file.resolve().relative_to(data.resolve()).as_posix()}"
+        return f"{data_path}{Path(file).resolve().relative_to(data.resolve()).as_posix()}"
     except ValueError:
-        return str(file)
+        return file
+
+
+def _remote_sizes(manifest: Manifest, reg: BundleRegistry) -> list[Finding]:
+    """Each listed data file in object storage, by size, read through the registry's engine."""
+    data = reg.data_path
+    if data is None:
+        return []
+    entries = [e for e in manifest.files if e.root == "data"]
+    found = sizes(reg.connection, [f"{data}{e.path}" for e in entries])
+    findings: list[Finding] = []
+    for entry in entries:
+        subject = f"{manifest.data_path}{entry.path}"
+        actual = found[f"{data}{entry.path}"]
+        if actual is None:
+            findings.append(Finding("remote", subject, "listed in the manifest but missing from the store"))
+        elif actual != entry.size:
+            findings.append(Finding("remote", subject, f"{actual} bytes in the store, the manifest says {entry.size}"))
+    return findings
 
 
 def _bindings(manifest: Manifest, reg: BundleRegistry) -> list[Finding]:

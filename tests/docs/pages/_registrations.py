@@ -1600,12 +1600,22 @@ EXECUTED.add("README.md")
 
 @contextmanager
 def _bundle_page() -> Generator[dict[str, Any]]:
-    """`docs/bundle.md`: two published bundles, for the shared-engine example."""
+    """`docs/bundle.md`: two published bundles, and a server's copy of one reading its data files remotely.
+
+    The object-store example's store is a ``file://`` URI over the published
+    census bundle, which DuckDB reads as it reads ``abfss://``; the server's
+    copy holds tiers 1 and 2 only.
+    """
     with TemporaryDirectory() as tmp:
         root = Path(tmp)
+        census = publish(make_bundle(root / "census", 10))
+        pod = root / "pod" / "census" / census.name
+        copy_bundle(census, pod, tiers=(1, 2))
         yield base() | {
-            "census_path": publish(make_bundle(root / "census", 10)),
+            "census_path": census,
             "trade_path": publish(make_bundle(root / "trade", 3)),
+            "pod_path": pod,
+            "store_url": f"file://{census}/",
         }
 
 
