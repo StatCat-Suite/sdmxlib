@@ -36,8 +36,8 @@ from sdmxlib.storage._manifest import (
     Provenance,
     Tier,
     encode_manifest,
+    publication_storage_version,
     read_manifest,
-    storage_version_of,
 )
 from sdmxlib.storage._trim import compact_for_publication
 from sdmxlib.storage.schema import get_schema_version, meta_value
@@ -444,9 +444,7 @@ def write_manifest(
         sdmxlib_version=metadata.version("sdmxlib"),
         schema_version=schema_version,
         duckdb_version=duckdb.__version__,
-        duckdb_storage_version=max(
-            storage_version_of(root / name) for name in ("meta.duckdb", "lake.ducklake") if (root / name).exists()
-        ),
+        duckdb_storage_version=publication_storage_version(root),
         ducklake_version=ducklake,
         ducklake_spec_version=spec,
         data_path=DATA_PATH,
