@@ -4,9 +4,16 @@ How a server receives a bundle, how a mirror is made, and how another agency
 receives one. The manifest goes last, so an interrupted copy leaves a
 directory without one, which every reader and `check_bundle` treat as
 unpublished.
+
+`bundle_files` lists the same files for a copy tool sdmxlib does not run
+(rclone, azcopy, a cloud SDK), as paths under the bundle directory, the
+manifest left out (GH-182). Those tools copy several files at once, so a
+list's order cannot put the manifest last; the caller copies the listed files,
+then the manifest, in two steps.
 """
 
 import os
+import posixpath
 import shutil
 from collections.abc import Collection
 from pathlib import Path
@@ -75,6 +82,46 @@ def copy_bundle(source: str | Path, destination: str | Path, *, tiers: Collectio
     shutil.copyfile(src / MANIFEST_NAME, staged)
     staged.replace(dst / MANIFEST_NAME)
     return manifest
+
+
+def bundle_files(manifest: Manifest, *, tiers: Collection[Tier] = (1, 2, 3)) -> list[str]:
+    """The files a copy of the publication's `tiers` needs, as ``/``-separated paths under the bundle directory.
+
+    The bundle directory holds the publication's directory, named by its
+    token, and the ``data/`` its ``data_path`` names: so
+    ``<token>/meta.duckdb`` and ``data/<schema>/<table>/ducklake-….parquet``.
+    Data files come first, then the publication's own, each group sorted.
+
+    The manifest is left out: it is ``<token>/bundle.manifest.json``, and a
+    copy writes it after every listed file, so a copy that stops part way
+    leaves a publication readers refuse.
+
+    Args:
+        manifest: The publication's manifest.
+        tiers: Which placement tiers to list: ``(1, 2)`` is what a server
+            reading tier 3 remotely holds.
+
+    Returns:
+        The paths, each once.
+
+    Raises:
+        ManifestError: If the manifest's ``data_path`` leads outside the
+            bundle directory.
+    """
+    data: list[str] = []
+    own: list[str] = []
+    for entry in manifest.files:
+        if entry.tier not in tiers:
+            continue
+        if entry.root == "data":
+            path = posixpath.normpath(posixpath.join(manifest.token, manifest.data_path, entry.path))
+            if path.startswith(("../", "/")):
+                msg = f"data_path {manifest.data_path!r} leads outside the bundle directory, at {path}"
+                raise ManifestError(msg)
+            data.append(path)
+        else:
+            own.append(f"{manifest.token}/{entry.path}")
+    return sorted(data) + sorted(own)
 
 
 def _locations(src: Path, dst: Path, manifest: Manifest, entry: BundleFile) -> tuple[Path, Path]:

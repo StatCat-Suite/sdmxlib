@@ -546,7 +546,7 @@ The GC job reads the current index chain back through the retention window and d
 
 `sdmxlib bundle copy SRC DST [--tiers 1,2,3]` reads the manifest, copies the listed files of the requested tiers (data files by `root: data` entries), verifies, then writes the manifest last. It copies between filesystems: a mirror, a mount, another agency's disk.
 
-sdmxlib holds no blob client, so a pod pulls from object storage with the deployment's own tool. `sdmxlib bundle files PUB --tiers 1,2` lists the files those tiers need, the manifest last, for `rclone copy --files-from` or azcopy (GH-182); `check_on_open` verifies the result.
+sdmxlib holds no blob client, so a pod pulls from object storage with the deployment's own tool. `sdmxlib bundle files PUB --tiers 1,2` lists the files those tiers need for `rclone copy --files-from` or azcopy, and `--manifest` the manifest alone, copied in a second step since those tools copy in parallel (GH-182); `check_on_open` verifies the result.
 
 ---
 
