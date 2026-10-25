@@ -1,6 +1,6 @@
 # Sharded bundle catalog: design
 
-Status: fourth revision. sdmxlib's part is built and released in 0.73.0: M0, M2, M4, M5 and M7, the name overlays and the format specification, with M3 shelved (§16). statcatlib's and sdmxlib-rest's parts, M6 and M8 to M13, are in progress. Audience: implementers working on sdmxlib, statcatlib and sdmxlib-rest. Written against sdmxlib 0.72.1 and DuckDB 2.0.0; spike results and the decisions they settled are in §16 (M1) and §17. The work is the [Sharded bundle catalog](https://github.com/StatCat-Suite/sdmxlib/milestone/9) milestone, and GH-136 is the cross-repo plan.
+Status: fourth revision. sdmxlib's part is built and released in 0.73.0: M0, M2, M4, M5 and M7, the name overlays and the format specification, with M3 shelved (§16). The audit of 2026-10-25 found sdmxlib pieces the later milestones depend on and no milestone listed: reading tier 3 from object storage (GH-180), store-neutral remote verification (GH-181), pulling by tier with any copy tool (GH-182), the fingerprint comparison §9.2 runs (GH-183), the derived tables of §7.1 (GH-184) and the block cache (GH-185). statcatlib's and sdmxlib-rest's parts, M6 and M8 to M13, are in progress. Audience: implementers working on sdmxlib, statcatlib and sdmxlib-rest. Written against sdmxlib 0.72.1 and DuckDB 2.0.0; spike results and the decisions they settled are in §16 (M1) and §17. The work is the [Sharded bundle catalog](https://github.com/StatCat-Suite/sdmxlib/milestone/9) milestone, and GH-136 is the cross-repo plan.
 
 This document specifies how a dissemination catalog of many SDMX products is published as a set of bundles, indexed, routed to serving pods, verified, cached and migrated. It builds on two published formats and changes both:
 
@@ -128,7 +128,7 @@ bundles/<bundle_id>/
 | `duckdb_storage_version` | required | Storage version of the DuckDB files. |
 | `ducklake_version` | required | DuckLake extension version that wrote `lake.ducklake`. |
 | `ducklake_spec_version` | required | DuckLake spec version recorded in the catalog. |
-| `data_path` | required | Where the lake's data files live, relative to the publication directory or an absolute URI. |
+| `data_path` | required | Where the lake's data files live, relative to the publication directory: `"../data/"`. A reader resolves it against where the publication is, a local directory or, for tier 3, the remote root the deployment names (GH-180). An absolute location would tie a bundle to one storage account, so the manifest never records one. |
 | `artefacts` | required | Every maintainable artefact in the store: `ArtefactEntry` list sorted by `urn`. |
 
 `BundleFile`:
@@ -137,7 +137,7 @@ bundles/<bundle_id>/
 |---|---|---|
 | `root` | required | `"publication"`: `path` is relative to the publication directory. `"data"`: `path` is relative to `data_path`. |
 | `tier` | required | `1` pulled before a pod is ready; `2` pulled lazily to local disk; `3` read remotely by byte range. |
-| `md5` | required for `root: "data"` | MD5 of the file, matching the `Content-MD5` the publish job sets on the blob. |
+| `md5` | required for `root: "data"` | MD5 of the file, matching the `Content-MD5` the publish job sets on the blob. Azure keeps it; S3 and GCS keep no MD5 for a file uploaded in parts, and GH-181 adds a digest they do keep. |
 | `carried_from` | optional | The `token` whose manifest this entry's digests were carried forward from. |
 
 `BindingCount`:
@@ -200,7 +200,7 @@ MD5 is a fixed standard. Each term is below 2^62, so a HUGEINT sum does not over
 - **Compaction for final publications.** A producer SHOULD merge to one sorted file per table when the publish job declares `lifecycle: final` (§6.3). Artefact finality plays no part.
 - **Publication directories.** Written once, never rewritten. Data files written once, never modified.
 - **Carry-forward.** A republish MAY carry forward a data file's `size`, `sha256` and `md5` from the previous manifest, marking `carried_from`, and MUST verify size and the blob's `Content-MD5` against them.
-- **Blob digests.** The publish job MUST set `Content-MD5` on every uploaded file.
+- **Blob digests.** The publish job MUST set `Content-MD5` on every uploaded file. This is the Azure rule; GH-181 states it for every store the read path supports.
 
 ### 4.6 `check_bundle` profiles
 
@@ -355,9 +355,11 @@ A pod holds many bundles; a bundle is held by as many pods as its pool has repli
 |---|---|---|
 | 1 | pulled before ready; readiness gates on it | manifest, `meta.duckdb`, `lake.ducklake` |
 | 2 | pulled lazily to node-local disk, in the background after ready or on first use | `search/` in the search pool |
-| 3 | read from blob storage by byte range through a block cache | everything under `data_path`, including derived tables |
+| 3 | read from object storage by byte range through a block cache | everything under `data_path` |
 
-The manifest's `tier` is the producer's default; a pool's configuration MAY promote a file to tier 1.
+The manifest's `tier` is the producer's default; a pool's configuration MAY promote a tier. A lake has one data path, so tier 3 is promoted whole: every data file local, or every one remote. A publication file outside `data_path`, such as `search/`, MAY be promoted alone.
+
+Tier 3 needs sdmxlib to open a publication whose data files are remote: `LocalRegistry.bundle(path, remote=...)` resolves `data_path` against the remote root, over any store DuckDB reads (`s3://`, `gs://`, `az://`, `abfss://`), with the credentials as DuckDB secrets on the `BundleEngine` (GH-180). The block cache is measured before it is configured (GH-185).
 
 **Names stay in `meta.duckdb`.** The plan to split names, descriptions and annotations into a `labels.duckdb` was shelved after measuring the census bundle (GH-139):
 
@@ -370,7 +372,7 @@ The manifest's `tier` is the producer's default; a pool's configuration MAY prom
 
 Labels are about 3% of the tier-1 pull, so a split would save 31 MB at the cost of a store schema bump and a catalog-aware rewrite of every name read. Index structure is about 700 MB of the file. GH-165 measured each index against the read benchmarks: `write_manifest` drops `hierarchy_node`'s and `artefact_ref`'s keys and `artefact_ref`'s indexes, which cost no read, and keeps `code`'s key and `annotation`'s indexes, each of which halves the speed of a small hierarchy's eager read. The census `meta.duckdb` goes from 1,022 MB to 501 MB. Every format, labelled or not, reads names from `meta.duckdb`.
 
-Derived tables a rebuild reproduces from the bundle's own content (label lookups, availability, pre-pivoted slices) are materialised at publish into `data_path` as tier 3. Runtime caches (external file cache, `cache_httpfs`, parsed DSD objects) are node-local and unlisted.
+Derived tables a rebuild reproduces from the bundle's own content (label lookups, availability, pre-pivoted slices) were to be materialised at publish into `data_path` as tier 3. Which of them are worth baking, where each lives and who builds it is open in GH-184. Runtime caches (external file cache, `cache_httpfs`, parsed DSD objects) are node-local and unlisted.
 
 ### 7.2 Shared engine
 
@@ -473,7 +475,7 @@ Layered bundles (`requires`) remain the recorded alternative and stay rejected.
 ### 9.2 Rollout procedure for a schema bump
 
 1. Pin sdmxlib, statcatlib, DuckDB and DuckLake in one image tag for the publish job and the pods.
-2. Republish every serving bundle at the new schema into new token directories sharing `data/`, with `previous_token` and fingerprints; `check_bundle(at="publish", expect_fingerprint=<old>)` stops the job if any fingerprint moved.
+2. Republish every serving bundle at the new schema into new token directories sharing `data/`, with `previous_token` and fingerprints; `check_bundle(at="publish", expect=<previous manifest>)` stops the job if any fingerprint moved, naming the binding or artefact (GH-183, not yet built).
 3. Publish an index holding both publications of each `bundle_id` as `serving`, with both schema versions.
 4. Roll pods; old pods see old entries, new pods new ones; the ingress routes by `bundle_id`.
 5. Publish an index with only the new entries; old ones follow §11.3.
@@ -542,7 +544,9 @@ The GC job reads the current index chain back through the retention window and d
 
 ### 11.5 Copy rule
 
-`sdmxlib bundle copy SRC DST [--tiers 1,2,3]` reads the manifest, copies the listed files of the requested tiers (data files by `root: data` entries), verifies, then writes the manifest last. It is how a pod receives a bundle, how a mirror is made, and how another agency receives one.
+`sdmxlib bundle copy SRC DST [--tiers 1,2,3]` reads the manifest, copies the listed files of the requested tiers (data files by `root: data` entries), verifies, then writes the manifest last. It copies between filesystems: a mirror, a mount, another agency's disk.
+
+sdmxlib holds no blob client, so a pod pulls from object storage with the deployment's own tool. `sdmxlib bundle files PUB --tiers 1,2` lists the files those tiers need, the manifest last, for `rclone copy --files-from` or azcopy (GH-182); `check_on_open` verifies the result.
 
 ---
 
@@ -586,7 +590,7 @@ Each product bundle carries per-language LanceDB tables over its own datasets, c
 30. Index built by scanning blob storage resurrects an orphan → serving list from statcatlib. §6.6.
 31. One process per bundle → read-only open; checkpoint; `temp_directory` outside the publication. §4.3, §4.5.
 32. Legacy versions are never final → token immutability; `lifecycle`; required fingerprints. §4.5, §6.3.
-33. Embargoed results readable before release → no public access to `results/`; SAS minted only from serving entries. §10.1.
+33. Embargoed results readable before release → no public access to `results/`; a pod reads a key only after computing it from a serving entry, and streams it to the CDN. §7.4, §10.1.
 34. A Postgres DuckLake catalog on the serving path → file catalogs per bundle; Postgres optional upstream. §14.
 35. The actor model for serving → replicated leaves in pools; no coordinator. §7.6.
 36. Partial readiness within a pod → pools per workload. §7.5.
@@ -655,7 +659,7 @@ Order follows risk removed per unit of work. Synthetic bundles and `profile_bund
 
 **M9. statcatlib: publish, release, GC.** Staging and HNS rename; `Content-MD5`; the pre-materialisation job on the pods' image; the two-index release flip with structures first; GC over the index chain. Test: a 200-table synthetic release becomes visible in one `current` write with zero failed requests; GC deletes exactly the unreferenced files and nothing inside the retention window; a request for a staged key before the flip returns 404 from every pod; a product whose partial gained a code is refused `serving` until its structures publication serves.
 
-**M10. sdmxlib-rest: router and pools.** Index and structures polling; per-pool and per-schema visibility; LRU attach; tiered pull with pool promotion; `pinned` readiness; staged prefetch to disk without attach; binding-level keys with render version; result streaming to the CDN. Test: cold pod with one pinned bundle ready under 60 s; p99 first-attach for an unpinned bundle under 3 s; an index flip under load with no failed requests; a delta to one dataflow leaves other dataflows' results warm.
+**M10. sdmxlib-rest: router and pools.** Builds on sdmxlib's remote open (GH-180), store-neutral verification (GH-181) and tiered file lists (GH-182). Index and structures polling; per-pool and per-schema visibility; LRU attach; tiered pull with pool promotion; `pinned` readiness; staged prefetch to disk without attach; binding-level keys with render version; result streaming to the CDN. Test: cold pod with one pinned bundle ready under 60 s; p99 first-attach for an unpinned bundle under 3 s; an index flip under load with no failed requests; a delta to one dataflow leaves other dataflows' results warm.
 
 **M11. Kubernetes manifests.** Deployments for `hot`, `base`, `search`; KEDA; probes; preStop; PDB; topology spread; `hostPath` block cache; Envoy Gateway route with bounded-load hashing; identities per §10.1. Test: scaling `hot` from 4 to 20 under a synthetic release-day load remaps no more than 1/N of keys per added pod with zero failed requests.
 
