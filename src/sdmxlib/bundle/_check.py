@@ -24,6 +24,7 @@ import duckdb
 import msgspec
 from attrs import frozen
 
+from sdmxlib.bundle._availability import survey
 from sdmxlib.bundle._finding import Finding
 from sdmxlib.bundle._fingerprint import bundle_fingerprint
 from sdmxlib.bundle._remote import RemoteFile, verify_remote
@@ -103,6 +104,7 @@ def check_bundle(
     | bindings: the manifest's, each with the count it gives | yes | yes | no |
     | references: every stored reference names something in the store | yes | yes | no |
     | fingerprints: recomputed, equal to the manifest's | yes | with `fingerprints` | no |
+    | availability: coded columns hold codes; stored availability is the data's | yes | no | no |
     | expect: fingerprints equal to an earlier manifest's | with `expect` | with `expect` | with `expect` |
     | extensions | yes | yes | yes, told the profile |
 
@@ -232,6 +234,8 @@ def _steps(
         steps += [("bindings", partial(_bindings, manifest, reg)), ("references", partial(_references, reg))]
     if at == "publish" or fingerprints:
         steps.append(("fingerprints", partial(_fingerprints, root, manifest, reg)))
+    if at == "publish":
+        steps.append(("availability", partial(_availability, manifest, reg)))
     return steps + [(name, partial(check, root, manifest, reg, at)) for name, check in extensions.items()]
 
 
@@ -386,6 +390,33 @@ def _fingerprints(root: Path, manifest: Manifest, opened: BundleRegistry) -> lis
                 f"content_fingerprint {content}, the manifest says {manifest.content_fingerprint}",
             )
         )
+    return findings
+
+
+def _availability(manifest: Manifest, reg: BundleRegistry) -> list[Finding]:
+    """Each coded value that is not a code, and each way the stored availability is not the data's."""
+    observations = {b.dataflow: b.observations for b in manifest.bindings}
+    findings: list[Finding] = []
+    for binding in reg.get_all(DataflowBinding):
+        urn = str(binding.dataflow.urn)
+        computed, non_codes = survey(reg, binding, obs_count=observations.get(urn, 0))
+        findings += [Finding("availability", urn, str(n)) for n in non_codes]
+        stored = reg.availability(binding.dataflow.urn)
+        if stored is None:
+            continue
+        if stored.obs_count != computed.obs_count:
+            detail = f"stores {stored.obs_count} observations, the data holds {computed.obs_count}"
+            findings.append(Finding("availability", urn, detail))
+        held = {k.dimension_id: {v.value for v in k.values} for k in computed.region.keys}
+        kept = {k.dimension_id: {v.value for v in k.values} for k in stored.region.keys}
+        for dimension in sorted(held.keys() | kept.keys()):
+            ours, theirs = kept.get(dimension, set()), held.get(dimension, set())
+            if ours != theirs:
+                detail = (
+                    f"stores {len(ours)} values of {dimension}, the data holds {len(theirs)}; "
+                    f"{len(ours - theirs)} stored and absent, {len(theirs - ours)} held and not stored"
+                )
+                findings.append(Finding("availability", urn, detail))
     return findings
 
 

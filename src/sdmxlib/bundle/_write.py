@@ -12,6 +12,7 @@ from typing import Literal
 import duckdb
 import google_crc32c
 
+from sdmxlib.bundle._availability import survey
 from sdmxlib.bundle._canonical import CANONICAL_FORM
 from sdmxlib.bundle._fingerprint import (
     References,
@@ -43,6 +44,7 @@ from sdmxlib.storage._manifest import (
 )
 from sdmxlib.storage._trim import compact_for_publication
 from sdmxlib.storage.schema import get_schema_version, meta_value
+from sdmxlib.storage.writers import put_availability
 
 #: Every data file and delete file the lake catalog references from any snapshot
 #: it keeps, with the schema and table paths each one's path is relative to.
@@ -376,6 +378,7 @@ def write_manifest(
     tiers: Mapping[str, Tier] | None = None,
     lifecycle: Lifecycle = "live",
     expire_snapshots: bool = False,
+    availability: bool = True,
 ) -> Manifest:
     """Publish the publication at `path`, which `LocalRegistry.build` started: write its manifest.
 
@@ -391,6 +394,14 @@ def write_manifest(
     marked with its token in ``carried_from``, so a republish hashes only the
     files it wrote. Observation counts come from the lake, through each
     binding's observation query, so DuckLake answers them from its catalog.
+    Each binding's columns are scanned once. A value in a coded column that
+    is not a code of its codelist or value list, an empty string standing for
+    "no value" say, refuses the publication: an absent value is ``NULL``. The
+    same scan gives the values each dimension holds, the SDMX 3.1
+    `AvailabilityConstraint` for the unfiltered query, which is stored in
+    ``meta.duckdb`` so a server answers it without scanning the observations
+    (`BundleRegistry.availability`).
+
     The manifest goes in through a temporary file and a rename, so a reader
     never sees half of one.
 
@@ -411,13 +422,16 @@ def write_manifest(
         expire_snapshots: Whether to expire every snapshot but the current
             one, so the manifest lists only the files it reads. Time travel
             to an earlier state is lost.
+        availability: Whether to store each binding's availability. The
+            coded columns are checked either way.
 
     Returns:
         The manifest written.
 
     Raises:
         ManifestError: If the publication is already published, was not
-            started by `LocalRegistry.build`, or a builder still holds it open.
+            started by `LocalRegistry.build`, a builder still holds it open, or
+            a coded column holds a value that is not one of its codes.
     """
     root = Path(path)
     data = root / DATA_PATH
@@ -448,6 +462,8 @@ def write_manifest(
             referenced = lake_files(reg.connection, data)
         ducklake, spec = _ducklake_versions(reg.connection) if lake else (None, None)
         counts = binding_counts(reg, artefacts)
+        if lake:
+            _survey_bindings(root, reg, counts, store=availability)
     # Closing the last connection checkpoints a database, so a log left by a
     # builder that exited is gone by now. One that remains means another
     # connection still holds the database for writing, and its log holds
@@ -491,6 +507,30 @@ def write_manifest(
     staged.write_bytes(encode_manifest(manifest))
     staged.replace(root / MANIFEST_NAME)
     return manifest
+
+
+def _survey_bindings(root: Path, reg: LocalRegistry, counts: Iterable[BindingCount], *, store: bool) -> None:
+    """Scan each binding: refuse a non-code value, and store each availability when `store`.
+
+    Raises:
+        ManifestError: If a coded column holds a value that is not a code.
+    """
+    observations = {count.dataflow: count.observations for count in counts}
+    surveyed = [
+        (binding, *survey(reg, binding, obs_count=observations.get(str(binding.dataflow.urn), 0)))
+        for binding in reg.get_all(DataflowBinding)
+    ]
+    refused = [non_code for _, _, found in surveyed for non_code in found]
+    if refused:
+        lines = "\n".join(f"  {n.dataflow}: {n}" for n in refused)
+        msg = (
+            f"{root} was not published: {len(refused)} value(s) in coded columns are not codes. "
+            f"An absent value is NULL.\n{lines}"
+        )
+        raise ManifestError(msg)
+    if store:
+        for binding, constraint, _ in surveyed:
+            put_availability(reg.connection, str(binding.dataflow.urn), constraint)
 
 
 def _carried(root: Path, previous: str | None) -> dict[str, BundleFile]:

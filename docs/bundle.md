@@ -76,7 +76,7 @@ two spaces, but a reader MUST NOT depend on the layout.
 | `created_at` | required | When the manifest was written: an RFC 3339 timestamp in UTC. |
 | `producer` | required | What built the bundle: a `Producer`. |
 | `sdmxlib_version` | required | The version of sdmxlib that wrote the manifest. |
-| `schema_version` | required | The store schema of `meta.duckdb`, such as `"2.48"` (§4). |
+| `schema_version` | required | The store schema of `meta.duckdb`, such as `"2.49"` (§4). |
 | `duckdb_version` | required | The DuckDB release that wrote the DuckDB files, such as `"2.0.0"`. |
 | `duckdb_storage_version` | required | The newest storage version among `meta.duckdb` and `lake.ducklake`, the integer each file's header records (§4). |
 | `ducklake_version` | required | The DuckLake extension that wrote `lake.ducklake`, or `null` for a publication without one. |
@@ -310,12 +310,30 @@ component to its column.
 
 A stored binding's `database_role` is `lake`. `LocalRegistry.bundle`
 attaches `lake.ducklake` under `<prefix>__lake` (Opening read-only) when
-observations are first read, and `BundleRegistry.locate` gives a binding
-naming that catalog. Opening a bundle to read artefacts alone never attaches
-the lake.
+something first asks for a binding or reads observations, and
+`BundleRegistry.locate` gives a binding naming that catalog, attached.
+Opening a bundle to read artefacts alone never attaches the lake.
 
 The manifest's `bindings` MUST list exactly the dataflows bound in the store,
 each with the row count of its table.
+
+A column a codelist or value list enumerates MUST hold codes of it, or
+`NULL`. `NULL` is how a value is absent: an empty string, or any other
+stand-in for "no value", is not a code and refuses the publication.
+
+### Availability
+
+`meta.duckdb` holds each binding's availability: the SDMX 3.1
+`AvailabilityConstraint` for the unfiltered query, one cube region of the
+values each dimension holds, and the observation count. The IM makes it no
+maintainable artefact ("generated dynamically based on the query", SDMX 3.1
+§12.3.2), so it has no id, version or name and is keyed by the dataflow, in
+the tables `availability` and `availability_value`.
+`BundleRegistry.availability(flow)` reads it, so a server answers
+`/availability/<flow>/all/all` without scanning the observations: on a
+1.14-billion-row bundle, 0.25 s read and serialised in place of a 2.6 s
+scan. A query narrowed by a key is still computed. `write_manifest` stores it
+unless `availability=False`.
 
 ## 5. Overlays
 
@@ -537,6 +555,7 @@ the first:
 | `references` | every reference in the store names an artefact or an item in the store | yes | yes | no | continues |
 | `fingerprints` | every artefact, binding and content fingerprint, recomputed, is the manifest's (§9) | yes | with `fingerprints=True` | no | continues |
 | `expect` | every artefact, binding and content fingerprint the manifest records equals an earlier manifest's, read from the two manifests (§9); for a republish that is to change no content, such as a rebuild at a new store schema | with `expect=` | with `expect=` | with `expect=` | continues |
+| `availability` | every coded column holds codes of its enumeration or `NULL`, and the stored availability is the data's: each dimension's values and the observation count, rescanned (§4) | yes | no | no | continues |
 
 A store file that cannot be read, a damaged `meta.duckdb` or `lake.ducklake`,
 is a finding under the check that tried to read it, and ends the run.
@@ -628,8 +647,11 @@ every check.
    found in a published bundle.
 3. Add any files of your own to the publication directory.
 4. Call `write_manifest(publication, bundle_id=..., producer=...)` last, with
-   `product`, `extensions`, `provenance`, `tiers`, `lifecycle` and
-   `expire_snapshots` as needed. It first settles the lake:
+   `product`, `extensions`, `provenance`, `tiers`, `lifecycle`,
+   `expire_snapshots` and `availability` as needed. It scans each binding's
+   columns once: a coded value that is not a code refuses the publication,
+   naming the column, the value and its row count, and each dimension's values
+   are stored as the binding's availability (§4). It first settles the lake:
    - rows DuckLake inlined into the catalog are flushed into data files;
    - every table holding delete files is rewritten into data files without
      them (`ducklake_rewrite_data_files` with `delete_threshold => 0`: the

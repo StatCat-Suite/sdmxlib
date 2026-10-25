@@ -19,6 +19,29 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## Publishing refuses coded values outside their codelist, and stores availability
+
+The store schema is **2.49**: `meta.duckdb` holds each binding's availability
+in two new tables. A bundle published on 2.48 is republished with this
+sdmxlib, which refuses to open it.
+
+`write_manifest` scans each binding's columns once:
+
+- **A coded value that is not a code refuses the publication.** A column a
+  codelist or value list enumerates holds codes or `NULL`; an empty string
+  standing for "no value" is neither. `ManifestError` names each column,
+  value and row count. Write `NULL` for an absent value.
+- **Each binding's availability is stored**, the SDMX 3.1
+  `AvailabilityConstraint` for the unfiltered query, read with
+  `BundleRegistry.availability(flow)`. `write_manifest(...,
+  availability=False)` skips storing it; the coded columns are checked
+  either way.
+
+`check_bundle(at="publish")` runs a new `availability` check, which rescans
+every row.
+
+---
+
 ## A file's digests are a map by algorithm
 
 `BundleFile.digests` holds each file's digests by algorithm, lowercase hex,

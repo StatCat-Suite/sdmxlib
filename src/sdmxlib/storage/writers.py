@@ -27,7 +27,14 @@ from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.category import Categorisation, CategoryScheme
 from sdmxlib.model.codelist import Codelist, GeoFeatureSetCode, GeographicCodelist, GeoGridCode, GeoGridCodelist
 from sdmxlib.model.concept import ConceptScheme, ISOConceptReference
-from sdmxlib.model.constraint import ComponentValueSet, DataConstraint, DataKeySet, KeyValue, TimeRange
+from sdmxlib.model.constraint import (
+    AvailabilityConstraint,
+    ComponentValueSet,
+    DataConstraint,
+    DataKeySet,
+    KeyValue,
+    TimeRange,
+)
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import Component, DataStructure, Group
 from sdmxlib.model.errors import SdmxParseError
@@ -2883,3 +2890,24 @@ def drop_artefact(conn: duckdb.DuckDBPyConnection, urn: str) -> bool:
         [urn],
     ).fetchone()
     return result is not None
+
+
+def put_availability(conn: duckdb.DuckDBPyConnection, dataflow_urn: str, availability: AvailabilityConstraint) -> None:
+    """Store `availability`, the answer to `dataflow_urn`'s unfiltered availability query, in place of any earlier.
+
+    The IM's `AvailabilityConstraint` is not an artefact (SDMX 3.1 §12.3.2),
+    so it is keyed by the dataflow it describes: its observation count, and
+    each dimension's values in its one cube region.
+    """
+    conn.execute("DELETE FROM availability_value WHERE dataflow_urn = ?", [dataflow_urn])
+    conn.execute("DELETE FROM availability WHERE dataflow_urn = ?", [dataflow_urn])
+    conn.execute(
+        "INSERT INTO availability (dataflow_urn, obs_count, series_count) VALUES (?, ?, ?)",
+        [dataflow_urn, availability.obs_count, availability.series_count],
+    )
+    rows = [
+        (dataflow_urn, key.dimension_id, value)
+        for key in availability.region.keys
+        for value in sorted(v.value for v in key.values)
+    ]
+    _execute_bulk_insert(conn, "availability_value", ("dataflow_urn", "dimension_id", "value"), rows)
