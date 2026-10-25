@@ -1171,6 +1171,10 @@ twice.
 
 ---
 
+::: sdmxlib.model.validation.check_serialisable
+
+---
+
 ::: sdmxlib.model.errors.ValidationIssue
 
 ---

@@ -2738,12 +2738,18 @@ def check_serialisable(msg: StructureMessage, *, version: str | None = None) -> 
     """Raise unless every artefact in *msg* can be written to an SDMX format.
 
     Distinct from what *every* format requires of an artefact alone, which is
-    refused as the artefact is built (#492, once `validate`'s and `add`'s
-    question, #419). This asks what the
-    message and the target format require — a question that only matters at
-    serialise time, so `serialize` calls it and `Registry.add` does not: a DSD
-    with no dimensions is valid SDMX-JSON, and storable, and refused here
-    when the target is SDMX-ML.
+    refused as the artefact is built. This asks what the message and the
+    target format require, a question that only matters at serialise time, so
+    `serialize` calls it and `Registry.add` does not: a DSD with no dimensions
+    is valid SDMX-JSON, and storable, and refused here when the target is
+    SDMX-ML.
+
+    A builder calls it before publishing, once per version its bundle will be
+    served in, so a structure that cannot be written fails the build and not a
+    server's first ``/structure`` request:
+
+        for version in ("2.1", "3.0"):
+            sl.check_serialisable(sl.StructureMessage(...), version=version)
 
     Args:
         msg: The message about to be serialised.
