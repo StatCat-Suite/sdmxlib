@@ -216,6 +216,10 @@ Conforming bundles of any shape, deterministic from a seed, for tests and stress
 
 ---
 
+::: sdmxlib.testing.HierarchyShape
+
+---
+
 ::: sdmxlib.bundle.Manifest
 
 ---
