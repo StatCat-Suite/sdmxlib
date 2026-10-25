@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Literal
 
 import duckdb
+import google_crc32c
 
 from sdmxlib.bundle._canonical import CANONICAL_FORM
 from sdmxlib.bundle._fingerprint import (
@@ -75,17 +76,28 @@ _CHUNK = 1 << 20
 
 def sha256_of(path: Path) -> str:
     """The sha256 of a file, read in chunks so a large one stays out of memory."""
-    return digests_of(path)[0]
+    return digests_of(path)["sha256"]
 
 
-def digests_of(path: Path) -> tuple[str, str]:
-    """The sha256 and md5 of a file, lowercase hex, from one read in chunks."""
-    sha256, md5 = hashlib.sha256(), hashlib.md5(usedforsecurity=False)
+def digests_of(path: Path) -> dict[str, str]:
+    """A file's `REQUIRED_DIGESTS`, each lowercase hex, from one read in chunks."""
+    sha256, md5, crc32c = hashlib.sha256(), hashlib.md5(usedforsecurity=False), google_crc32c.Checksum()
     with path.open("rb") as handle:
         while chunk := handle.read(_CHUNK):
             sha256.update(chunk)
             md5.update(chunk)
-    return sha256.hexdigest(), md5.hexdigest()
+            crc32c.update(chunk)
+    return {"sha256": sha256.hexdigest(), "md5": md5.hexdigest(), "crc32c": crc32c.hexdigest().decode("ascii")}
+
+
+def differing(entry: BundleFile, found: Mapping[str, str]) -> list[str]:
+    """The algorithms whose digest in `found`, a file's, is not the one `entry` records, sorted."""
+    return sorted(name for name, value in entry.digests.items() if found.get(name, value) != value)
+
+
+def recorded(entry: BundleFile, found: Mapping[str, str]) -> bool:
+    """Whether the digests `found` for a file agree with every one `entry` records that `found` holds."""
+    return not differing(entry, found)
 
 
 #: The publication files a server needs before it is ready (design §7.1).
@@ -128,10 +140,9 @@ def inventory(root: Path, tiers: Mapping[str, Tier] | None = None) -> tuple[Bund
     entries: list[BundleFile] = []
     for p in files:
         path = p.relative_to(root).as_posix()
-        sha256, md5 = digests_of(p)
         tier = tier_of(path, "publication", tiers or {})
         entries.append(
-            BundleFile(path=path, size=p.stat().st_size, sha256=sha256, md5=md5, root="publication", tier=tier)
+            BundleFile(path=path, size=p.stat().st_size, digests=digests_of(p), root="publication", tier=tier)
         )
     return tuple(entries)
 
@@ -203,20 +214,10 @@ def _data_inventory(
         size = (data / path).stat().st_size
         earlier = carried.get(path)
         if earlier is not None and earlier.size == size:
-            files.append(
-                BundleFile(
-                    path=path,
-                    size=size,
-                    sha256=earlier.sha256,
-                    md5=earlier.md5,
-                    root="data",
-                    tier=3,
-                    carried_from=token,
-                )
-            )
+            entry = BundleFile(path=path, size=size, digests=earlier.digests, root="data", tier=3, carried_from=token)
         else:
-            sha256, md5 = digests_of(data / path)
-            files.append(BundleFile(path=path, size=size, sha256=sha256, md5=md5, root="data", tier=3))
+            entry = BundleFile(path=path, size=size, digests=digests_of(data / path), root="data", tier=3)
+        files.append(entry)
     return files
 
 

@@ -18,12 +18,14 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from email.utils import format_datetime
 from pathlib import Path
+from urllib.parse import quote
 
+import google_crc32c
 import httpx2
 from attrs import frozen
 
 import sdmxlib as sl
-from sdmxlib.bundle import read_manifest
+from sdmxlib.bundle import RemoteFile, read_manifest
 
 #: Azurite's well-known development account, the same in every install.
 AZURITE_ACCOUNT = "devstoreaccount1"
@@ -172,7 +174,11 @@ def uploader(running: Running, client: httpx2.Client) -> Callable[[str, bytes], 
             client.put(f"/{BUCKET}").raise_for_status()
 
             def put_s3(key: str, body: bytes) -> None:
-                client.put(f"/{BUCKET}/{key}", content=body).raise_for_status()
+                # The CRC32C a publish job sets, from the manifest (`content_crc32c`
+                # gives the same value); the server keeps it and refuses a mismatch.
+                crc32c = base64.b64encode(google_crc32c.Checksum(body).digest()).decode()
+                headers = {"x-amz-checksum-crc32c": crc32c, "x-amz-sdk-checksum-algorithm": "CRC32C"}
+                client.put(f"/{BUCKET}/{key}", content=body, headers=headers).raise_for_status()
 
             return put_s3
         case _:
@@ -193,7 +199,7 @@ def _azure(
     *,
     query: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-) -> None:
+) -> httpx2.Response:
     """One request to Azurite, signed with Azure's SharedKey scheme."""
     md5 = base64.b64encode(hashlib.md5(body, usedforsecurity=False).digest()).decode() if body else ""
     ms = {"x-ms-date": format_datetime(datetime.now(UTC), usegmt=True), "x-ms-version": "2021-08-06", **(headers or {})}
@@ -209,7 +215,36 @@ def _azure(
     sent = {**ms, "Authorization": f"SharedKey {AZURITE_ACCOUNT}:{signature}"}
     if md5:
         sent["Content-MD5"] = md5
-    client.request(method, path, params=query, content=body, headers=sent).raise_for_status()
+    response = client.request(method, path, params=query, content=body, headers=sent)
+    if response.status_code != 404:
+        response.raise_for_status()
+    return response
+
+
+def lookup(running: Running, client: httpx2.Client, key: str) -> RemoteFile | None:
+    """What the store reports for `key` under `BUCKET`: its size and the digests it keeps, or None."""
+    match running.emulator.name:
+        case "azure":
+            response = _azure(client, "HEAD", f"/{AZURITE_ACCOUNT}/{BUCKET}/{key}", b"")
+            if response.status_code == 404:
+                return None
+            md5 = response.headers.get("Content-MD5")
+            return RemoteFile(int(response.headers["Content-Length"]), {"md5": md5} if md5 else {})
+        case "s3":
+            response = client.head(f"/{BUCKET}/{key}", headers={"x-amz-checksum-mode": "ENABLED"})
+            if response.status_code == 404:
+                return None
+            response.raise_for_status()
+            crc32c = response.headers.get("x-amz-checksum-crc32c")
+            return RemoteFile(int(response.headers["Content-Length"]), {"crc32c": crc32c} if crc32c else {})
+        case _:
+            response = client.get(f"/storage/v1/b/{BUCKET}/o/{quote(key, safe='')}")
+            if response.status_code == 404:
+                return None
+            response.raise_for_status()
+            meta = response.json()
+            digests = {name: meta[field] for name, field in (("crc32c", "crc32c"), ("md5", "md5Hash")) if field in meta}
+            return RemoteFile(int(meta["size"]), digests)
 
 
 def upload_publication(put: Callable[[str, bytes], None], publication: Path, *, bundle: str) -> None:

@@ -19,6 +19,53 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## A file's digests are a map by algorithm
+
+`BundleFile.digests` holds each file's digests by algorithm, lowercase hex,
+in place of the `sha256` and `md5` fields: `{"sha256": …, "md5": …,
+"crc32c": …}`. All three are required. CRC32C is new: the digest S3 keeps whole
+for a multipart upload and GCS keeps for every file. The manifest format stays
+2.0, and a bundle published by sdmxlib 0.73 or 0.74 is republished with this
+one: its manifest has the old fields, and `read_manifest` refuses it.
+
+```text
+# before
+entry.sha256, entry.md5
+```
+
+```python
+# now
+entry = sl.bundle.BundleFile(
+    path="meta.duckdb",
+    size=3,
+    digests={"sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+             "md5": "900150983cd24fb0d6963f7d28e17f72", "crc32c": "364b3fb7"},
+    root="publication",
+    tier=1,
+)
+entry.digests["sha256"]
+```
+
+`RemoteFile`, which a `verify_remote` lookup returns, reports every digest the
+store keeps, by algorithm, in place of one `content_md5`:
+
+```text
+# before
+RemoteFile(size, content_md5)
+```
+
+```python
+# now
+remote = sl.bundle.RemoteFile(1024, {"md5": "rL0Y20zC+Fzt72VPzMSk2A=="})
+```
+
+An Azure lookup reports `{"md5": <Content-MD5>}`; an S3 one the checksums
+`HeadObject` returns with checksum mode on (`{"crc32c": ...}`); a GCS one
+`{"crc32c": ..., "md5": ...}` from the object's metadata. `content_crc32c(entry)`
+gives the value an S3 upload sets as `x-amz-checksum-crc32c`.
+
+---
+
 ## The HTTP client is httpx2
 
 sdmxlib's REST client is built on [httpx2](https://pypi.org/project/httpx2/),
@@ -101,8 +148,8 @@ follows.
     `canonical_form`, `content_fingerprint` and `artefacts` (one
     `ArtefactEntry` per artefact, with `stability`, `partial` and
     `fingerprint`);
-  - `BundleFile`: `root` (`"publication"` or `"data"`), `md5`, `tier` and
-    `carried_from`;
+  - `BundleFile`: `root` (`"publication"` or `"data"`), `digests`, `tier`
+    and `carried_from`;
   - `BindingCount`: `structural_version`, the URN of the data structure the
     binding was written against, and its table `fingerprint` and
     `structure_fingerprint` (see [the bundle format](bundle.md), §9). A binding whose `structural_version` tag is

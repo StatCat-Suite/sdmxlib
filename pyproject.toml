@@ -27,6 +27,10 @@ dependencies = [
     # Starlette's TestClient and sdmxlib-rest also use, so the suite installs
     # one HTTP stack. It verifies TLS against the system trust store.
     "httpx2>=2.16.0",
+    # CRC32C, the digest S3 (full-object, any upload) and GCS (always) keep:
+    # the manifest records it so a store can verify a file without a
+    # download (GH-181). The standard library has only CRC-32.
+    "google-crc32c>=1.9.0",
     # >=6.1: `resolve_entities` defaults to 'internal' (CVE-2026-41066), so no
     # parse expands an external entity.
     "lxml>=6.1.3",

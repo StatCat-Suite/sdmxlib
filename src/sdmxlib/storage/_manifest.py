@@ -38,6 +38,11 @@ UNLISTED = frozenset({MANIFEST_NAME, f"{MANIFEST_NAME}.tmp", SIGNATURE_NAME})
 #: publication into a token directory beside a shared ``data/`` (GH-123).
 FORMAT_VERSION = "2.0"
 
+#: The digests every listed file records, each lowercase hex: sha256 anchors
+#: integrity, and each of the others is the one some object store keeps of a
+#: whole file: md5 on Azure, crc32c on S3 (multipart included) and GCS (GH-181).
+REQUIRED_DIGESTS = ("sha256", "md5", "crc32c")
+
 #: Where a publication's data files live, relative to its directory: the
 #: ``data/`` every publication of a bundle shares.
 DATA_PATH = "../data/"
@@ -212,25 +217,41 @@ class BundleFile(msgspec.Struct, frozen=True, kw_only=True):
     Attributes:
         path: ``/``-separated, relative to the directory `root` names.
         size: In bytes.
-        sha256: Of the file's contents, lowercase hex.
-        md5: Of the file's contents, lowercase hex. The ``Content-MD5`` an
-            upload sets is the base64 of the same digest.
+        digests: The file's digests by algorithm, each lowercase hex: every
+            one of `REQUIRED_DIGESTS`, and any other an algorithm name keys.
+            An object store reports the same digests in base64: Azure's
+            ``Content-MD5``, S3's ``x-amz-checksum-crc32c``, GCS's ``crc32c``.
         root: ``publication`` for a file in the publication directory,
             ``data`` for a data file under the manifest's `data_path`.
         tier: The producer's default placement: 1 pulled before a server is
             ready, 2 pulled lazily to local disk, 3 read remotely by byte range.
-        carried_from: The token of the manifest `size`, `sha256` and `md5`
-            were copied from, for a data file an earlier publication listed;
-            None for one hashed by this publication.
+        carried_from: The token of the manifest `size` and the digests were
+            copied from, for a data file an earlier publication listed; None
+            for one hashed by this publication.
     """
 
     path: str
     size: int
-    sha256: str
-    md5: str
+    digests: dict[str, str]
     root: Literal["publication", "data"]
     tier: Tier
     carried_from: str | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse an entry without every required digest, or with one that is not lowercase hex.
+
+        Raises:
+            ValueError: If one is missing or malformed; decoding a manifest
+                reports it as a `msgspec.ValidationError`.
+        """
+        missing = [name for name in REQUIRED_DIGESTS if name not in self.digests]
+        if missing:
+            msg = f"{self.path} records no {', '.join(missing)}; every file records {', '.join(REQUIRED_DIGESTS)}"
+            raise ValueError(msg)
+        for name, value in self.digests.items():
+            if not value or value.strip("0123456789abcdef"):
+                msg = f"{self.path}'s {name} {value!r} is not lowercase hex"
+                raise ValueError(msg)
 
 
 class BindingCount(msgspec.Struct, frozen=True, kw_only=True):

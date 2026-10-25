@@ -18,7 +18,7 @@ import shutil
 from collections.abc import Collection
 from pathlib import Path
 
-from sdmxlib.bundle._write import digests_of
+from sdmxlib.bundle._write import digests_of, recorded
 from sdmxlib.storage._manifest import (
     MANIFEST_NAME,
     SIGNATURE_NAME,
@@ -140,4 +140,4 @@ def _locations(src: Path, dst: Path, manifest: Manifest, entry: BundleFile) -> t
 
 
 def _matches(file: Path, entry: BundleFile) -> bool:
-    return file.is_file() and file.stat().st_size == entry.size and digests_of(file) == (entry.sha256, entry.md5)
+    return file.is_file() and file.stat().st_size == entry.size and recorded(entry, digests_of(file))

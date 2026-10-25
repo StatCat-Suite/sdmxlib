@@ -15,9 +15,10 @@ import polars as pl
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.bundle import check_on_open, copy_bundle
+from sdmxlib.bundle import check_on_open, copy_bundle, read_manifest, verify_remote
 from sdmxlib.testing import Dim, Shape, synthetic_bundle
 from tests.stores import _stores
+from tests.support.narrow import present
 
 pytestmark = pytest.mark.stores
 
@@ -34,8 +35,17 @@ def test_a_server_reads_every_row_from_the_store(store: _stores.Running, tmp_pat
     publication = bundle / synthetic_bundle(bundle, _SHAPE, seed=11).token
     with sl.LocalRegistry.bundle(publication) as reg:
         local = _frame(reg)
+    manifest = read_manifest(publication)
     with httpx2.Client(base_url=store.base, timeout=60) as client:
         _stores.upload_publication(_stores.uploader(store, client), publication, bundle="census")
+        # Every file, verified where it is stored, by a digest the store keeps.
+        keys = {
+            e.path: f"census/data/{e.path}" if e.root == "data" else f"census/{publication.name}/{e.path}"
+            for e in manifest.files
+        }
+        kept = {path: _stores.lookup(store, client, key) for path, key in keys.items()}
+    assert verify_remote(manifest, lambda e: kept[e.path], tiers=(1, 2, 3)) == []
+    assert all(present(kept[e.path]).digests for e in manifest.files), "the store kept a digest of every file"
 
     pod = tmp_path / "pod" / "census" / publication.name
     copy_bundle(publication, pod, tiers=(1, 2))

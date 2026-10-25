@@ -73,8 +73,8 @@ def test_the_next_publication_names_the_one_it_extends_and_carries_its_data_file
     earlier = {f.path: f for f in one.files if f.root == "data"}
     carried = [f for f in two.files if f.root == "data" and f.path in earlier]
     written = [f for f in two.files if f.root == "data" and f.path not in earlier]
-    assert [(f.path, f.size, f.sha256, f.carried_from) for f in carried] == [
-        (f.path, f.size, f.sha256, one.token) for f in earlier.values()
+    assert [(f.path, f.size, f.digests, f.carried_from) for f in carried] == [
+        (f.path, f.size, f.digests, one.token) for f in earlier.values()
     ]
     assert len(written) == 1, "the delta is one new data file"
     assert written[0].carried_from is None

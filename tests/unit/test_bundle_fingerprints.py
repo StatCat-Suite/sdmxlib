@@ -132,8 +132,8 @@ def test_a_synthetic_bundle_fingerprints_as_recorded(tmp_path: Path) -> None:
 def test_two_builds_from_the_same_inputs_have_two_tokens_and_one_content(tmp_path: Path) -> None:
     one, two = _published(tmp_path / "one", rows=200_000), _published(tmp_path / "two", rows=200_000)
     assert one.token != two.token
-    assert [f.sha256 for f in one.files if f.path == "meta.duckdb"] != [
-        f.sha256 for f in two.files if f.path == "meta.duckdb"
+    assert [f.digests["sha256"] for f in one.files if f.path == "meta.duckdb"] != [
+        f.digests["sha256"] for f in two.files if f.path == "meta.duckdb"
     ], "the files differ byte for byte"
     assert one.content_fingerprint == two.content_fingerprint
     assert [(a.urn, a.fingerprint) for a in one.artefacts] == [(a.urn, a.fingerprint) for a in two.artefacts]

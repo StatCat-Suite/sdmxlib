@@ -325,12 +325,12 @@ def test_every_file_carries_its_md5_and_a_carried_file_keeps_it(tmp_path: Path) 
     one = read_manifest(first)
     for entry in one.files:
         base = first if entry.root == "publication" else first.parent / "data"
-        assert entry.md5 == hashlib.md5((base / entry.path).read_bytes(), usedforsecurity=False).hexdigest()
+        assert entry.digests["md5"] == hashlib.md5((base / entry.path).read_bytes(), usedforsecurity=False).hexdigest()
     with sl.LocalRegistry.build(first.parent, previous=first.name) as builder:
         second = builder.publication
     two = write_manifest(second, bundle_id="b", producer=_PRODUCER)
-    carried = {f.path: f.md5 for f in two.files if f.carried_from == one.token}
-    assert carried == {f.path: f.md5 for f in one.files if f.root == "data"}
+    carried = {f.path: f.digests for f in two.files if f.carried_from == one.token}
+    assert carried == {f.path: f.digests for f in one.files if f.root == "data"}
     assert carried, "the first publication's data file is carried"
 
 
@@ -338,7 +338,7 @@ def test_a_changed_md5_alone_is_a_files_finding(tmp_path: Path) -> None:
     publication = publish(make_bundle(tmp_path / "b", 10))
     document = json.loads((publication / MANIFEST_NAME).read_text())
     meta = next(f for f in document["files"] if f["path"] == "meta.duckdb")
-    meta["md5"] = "0" * 32
+    meta["digests"]["md5"] = "0" * 32
     (publication / MANIFEST_NAME).write_text(json.dumps(document))
     assert [(f.check, f.subject) for f in check_bundle(publication, at="publish").findings] == [
         ("files", "meta.duckdb")

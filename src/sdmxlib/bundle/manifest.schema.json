@@ -166,7 +166,7 @@
     },
     "BundleFile": {
       "title": "BundleFile",
-      "description": "One file of the bundle: where it is, its digests, and its placement tier.\n\nAttributes:\n    path: ``/``-separated, relative to the directory `root` names.\n    size: In bytes.\n    sha256: Of the file's contents, lowercase hex.\n    md5: Of the file's contents, lowercase hex. The ``Content-MD5`` an\n        upload sets is the base64 of the same digest.\n    root: ``publication`` for a file in the publication directory,\n        ``data`` for a data file under the manifest's `data_path`.\n    tier: The producer's default placement: 1 pulled before a server is\n        ready, 2 pulled lazily to local disk, 3 read remotely by byte range.\n    carried_from: The token of the manifest `size`, `sha256` and `md5`\n        were copied from, for a data file an earlier publication listed;\n        None for one hashed by this publication.",
+      "description": "One file of the bundle: where it is, its digests, and its placement tier.\n\nAttributes:\n    path: ``/``-separated, relative to the directory `root` names.\n    size: In bytes.\n    digests: The file's digests by algorithm, each lowercase hex: every\n        one of `REQUIRED_DIGESTS`, and any other an algorithm name keys.\n        An object store reports the same digests in base64: Azure's\n        ``Content-MD5``, S3's ``x-amz-checksum-crc32c``, GCS's ``crc32c``.\n    root: ``publication`` for a file in the publication directory,\n        ``data`` for a data file under the manifest's `data_path`.\n    tier: The producer's default placement: 1 pulled before a server is\n        ready, 2 pulled lazily to local disk, 3 read remotely by byte range.\n    carried_from: The token of the manifest `size` and the digests were\n        copied from, for a data file an earlier publication listed; None\n        for one hashed by this publication.",
       "type": "object",
       "properties": {
         "path": {
@@ -175,11 +175,11 @@
         "size": {
           "type": "integer"
         },
-        "sha256": {
-          "type": "string"
-        },
-        "md5": {
-          "type": "string"
+        "digests": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "root": {
           "enum": [
@@ -209,8 +209,7 @@
       "required": [
         "path",
         "size",
-        "sha256",
-        "md5",
+        "digests",
         "root",
         "tier"
       ]

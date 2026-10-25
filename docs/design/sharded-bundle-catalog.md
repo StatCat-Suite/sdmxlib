@@ -137,7 +137,7 @@ bundles/<bundle_id>/
 |---|---|---|
 | `root` | required | `"publication"`: `path` is relative to the publication directory. `"data"`: `path` is relative to `data_path`. |
 | `tier` | required | `1` pulled before a pod is ready; `2` pulled lazily to local disk; `3` read remotely by byte range. |
-| `md5` | required for `root: "data"` | MD5 of the file, matching the `Content-MD5` the publish job sets on the blob. Azure keeps it; S3 and GCS keep no MD5 for a file uploaded in parts, and GH-181 adds a digest they do keep. |
+| `digests` | required | The file's digests by algorithm, lowercase hex: `sha256`, `md5` (the `Content-MD5` an Azure blob keeps) and `crc32c` (what S3 keeps whole for a multipart upload and GCS keeps for every file), and any other a store adds (GH-181). |
 | `carried_from` | optional | The `token` whose manifest this entry's digests were carried forward from. |
 
 `BindingCount`:
@@ -199,8 +199,8 @@ MD5 is a fixed standard. Each term is below 2^62, so a HUGEINT sum does not over
 - **Copy-on-write revisions.** A `live` publication that revises or deletes rows MUST, after `ducklake_flush_inlined_data` (which turns an inlined delete into a delete file), rewrite every table that holds delete files into new data files with `ducklake_rewrite_data_files(catalog, delete_threshold => 0)` (or the catalog option `rewrite_delete_threshold` set to 0), then compact. The default threshold skips a table whose deleted rows are a small fraction, which is exactly a daily delta; spike M1(d) measured that it leaves the delete file at the default and removes it at 0. No delete file ships; the check refuses one.
 - **Compaction for final publications.** A producer SHOULD merge to one sorted file per table when the publish job declares `lifecycle: final` (§6.3). Artefact finality plays no part.
 - **Publication directories.** Written once, never rewritten. Data files written once, never modified.
-- **Carry-forward.** A republish MAY carry forward a data file's `size`, `sha256` and `md5` from the previous manifest, marking `carried_from`, and MUST verify size and the blob's `Content-MD5` against them.
-- **Blob digests.** The publish job MUST set `Content-MD5` on every uploaded file. This is the Azure rule; GH-181 states it for every store the read path supports.
+- **Carry-forward.** A republish MAY carry forward a data file's `size` and digests from the previous manifest, marking `carried_from`, and MUST verify size and a digest the store keeps against them.
+- **Blob digests.** The publish job MUST upload every file so its store keeps a digest the manifest records: `Content-MD5` on Azure, a full-object CRC32C on S3; GCS computes CRC32C itself (`docs/bundle.md`, Remote files).
 
 ### 4.6 `check_bundle` profiles
 
@@ -212,7 +212,7 @@ check_bundle(path, at: Literal["publish", "receive", "open"], ...)
 |---|---|---|---|
 | manifest parse, format, versions | yes | yes | yes |
 | files, `root: publication`: size, sha256, nothing unlisted | yes | yes, once per token (stamp, §4.7) | size only |
-| files, `root: data`: listed entries only | sha256 in full | size and blob `Content-MD5` against `md5` | no |
+| files, `root: data`: listed entries only | sha256 in full | size, and a digest the store keeps | no |
 | lake: every file the current snapshot references exists at the recorded size | yes | yes | no |
 | bindings counts | yes | yes | no |
 | references (SQL, §4.8) | yes | yes | no |
@@ -225,7 +225,7 @@ The orphan dry run is gone from the `lake` check; orphans are defined over the u
 
 After a successful receive-time check a reader MAY write `<pod-local>/verified/<bundle_id>/<token>` recording the manifest SHA-256. A later open at the same token with the same manifest SHA-256 runs the `open` profile; with no stamp, or a stamp for another manifest digest, the reader runs the `receive` profile first.
 
-Built in GH-130 as `check_on_open(path, stamps=dir)`: the stamp is `<stamps>/<bundle_id>/<token>`, JSON holding the manifest sha256, the checks that ran and the time, written by a rename once `receive` finds nothing. At `receive`, `data/` is checked by local size, or with `lookup=` by size and `Content-MD5` through `verify_remote`; the lake and the bindings still read the data where the registry reads it. `fingerprints=True` opts `receive` into the recompute. Extensions take the profile as a fourth argument.
+Built in GH-130 as `check_on_open(path, stamps=dir)`: the stamp is `<stamps>/<bundle_id>/<token>`, JSON holding the manifest sha256, the checks that ran and the time, written by a rename once `receive` finds nothing. At `receive`, `data/` is checked by local size, or with `lookup=` by size and a digest the store keeps through `verify_remote`; the lake and the bindings still read the data where the registry reads it. `fingerprints=True` opts `receive` into the recompute. Extensions take the profile as a fourth argument.
 
 ### 4.8 `references` as SQL
 
@@ -518,7 +518,7 @@ An index is restorable only while every data file its publications reference exi
 3. `build_index()`; drop orphaned search tables.
 4. `publish_bundle(...)` with `previous_token`, fingerprints, `canonical_form`, carry-forward with `carried_from`.
 5. `check_bundle(at="publish")`.
-6. Upload: data files with `Content-MD5` set; then the publication directory under `.staging-<token>/` with `Content-MD5` set; rename to `<token>/` (HNS) or upload the manifest last.
+6. Upload: data files with a digest the store keeps (`Content-MD5` on Azure, a full-object CRC32C on S3); then the publication directory under `.staging-<token>/` the same way; rename to `<token>/` (HNS) or upload the manifest last.
 7. Record `(bundle_id, token, manifest_sha256, lifecycle, pool, pinned, kind, state="staged")` in statcatlib.
 
 ### 11.2 Release sequence (per release)
@@ -574,8 +574,8 @@ Each product bundle carries per-language LanceDB tables over its own datasets, c
 14. Partial codelists missing ancestors fail sdmxlib's parent check → closed under parents. §8.
 15. Full codelists vendored per table at CODR scale → partials; structures bundle. §8.
 16. `references` costs 30 s and 5 GB → anti-joins generated from the edge table. §4.8.
-17. Every pod re-hashes gigabytes → receive stamp; tier-3 by size and `Content-MD5`. §4.6, §4.7.
-18. Blob storage does not compute SHA-256 → publish job sets `Content-MD5`; `md5` in the manifest. §4.2, §4.5.
+17. Every pod re-hashes gigabytes → receive stamp; tier-3 by size and a digest the store keeps. §4.6, §4.7.
+18. Object storage keeps no SHA-256 of a multipart upload → `md5` and `crc32c` in each file's `digests`; the publish job sets one the store keeps. §4.2, §4.5.
 19. A multi-gigabyte pull set makes a scaled pod unavailable for minutes → tiers; search pool; the published store trimmed of unused keys (the labels split is shelved). §4.1, §7.1.
 20. Labelled formats need labels on the first request → names stay in `meta.duckdb`, a tier-1 file. §7.1.
 21. A 1.x reader opens a new-layout bundle and finds no data → manifest 2.0, which a 1.x reader refuses; pinned image sets. §4, §9.

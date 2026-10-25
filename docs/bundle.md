@@ -104,11 +104,19 @@ two spaces, but a reader MUST NOT depend on the layout.
 | --- | --- | --- |
 | `path` | required | The file's path, `/`-separated, relative to the directory `root` names. |
 | `size` | required | Its size in bytes. |
-| `sha256` | required | The SHA-256 of its contents, as lowercase hex. |
-| `md5` | required | The MD5 of its contents, as lowercase hex. An upload's `Content-MD5` header is the base64 of the same 16 bytes. |
+| `digests` | required | Its contents' digests, an object of algorithm name to lowercase hex. It MUST hold `sha256`, `md5` and `crc32c` (below), and MAY hold others; a reader compares those it knows and ignores the rest. |
 | `root` | required | `"publication"` for a file in the publication directory, `"data"` for a data file under `data_path`. |
 | `tier` | required | The producer's default placement: `1` pulled before a server is ready, `2` pulled lazily to local disk, `3` read remotely by byte range (§7). |
-| `carried_from` | optional | For a data file, the `token` of the manifest whose `size`, `sha256` and `md5` this entry copies; `null` for one hashed by this publication. |
+| `carried_from` | optional | For a data file, the `token` of the manifest whose `size` and `digests` this entry copies; `null` for one hashed by this publication. |
+
+Each required digest is there for a reader that holds a different copy of the
+file:
+
+| algorithm | value | read by |
+| --- | --- | --- |
+| `sha256` | 64 hex digits | every check run on the files themselves, and the integrity anchor: the only collision-resistant one of the three |
+| `md5` | 32 hex digits | Azure Blob Storage, which keeps it as `Content-MD5`: the base64 of the same 16 bytes |
+| `crc32c` | 8 hex digits | S3, which keeps it whole for a file uploaded in any number of parts (`x-amz-checksum-crc32c`, the base64 of the same 4 bytes, big-endian), and GCS, which keeps it for every file |
 
 ### `BindingCount`
 
@@ -254,7 +262,7 @@ the server holds no keys.
 `check_bundle` and `check_on_open` take the same `remote=` and `engine=`. At
 `receive`, the `lake` and `bindings` checks then read the data files in the
 store, and the `remote` check sizes each listed one there; a `lookup`
-(below) checks them by `Content-MD5` as well. `at="publish"` refuses
+(below) checks them by a digest the store keeps as well. `at="publish"` refuses
 `remote`, since publishing hashes every file where it is built.
 
 ### The schema and engine checks
@@ -510,7 +518,7 @@ if there is any. `at` names the profile, which is where the check runs:
 
 - `publish`, where the bundle is built: everything, hashed in full;
 - `receive`, where a copy lands: the publication's files hashed, `data/` by
-  size, or in a blob store by `Content-MD5`;
+  size, or in an object store by a digest the store keeps;
 - `open`, each time a server opens it: sizes only, and no check that reads
   the store.
 
@@ -522,7 +530,7 @@ the first:
 | `manifest` | the manifest parses, in a format this reader reads (§2) | yes | yes | yes | the run stops |
 | `files`, the publication's | every listed file is present at its `size` with its `sha256` and `md5`, and no unlisted file is in the publication directory | yes | yes | size only | continues |
 | `files`, `data/`'s | every listed entry is present at its `size` with its `sha256` and `md5`; `data/` is shared, so only listed entries are checked | yes | size, unless `lookup=` | no | continues |
-| `remote` | every `data/` entry is in the blob store at its `size` with a `Content-MD5` equal to its `md5` (see Remote files) | no | with `lookup=` | no | continues |
+| `remote` | every `data/` entry is in the object store at its `size`, with every digest the store and the manifest both hold equal (see Remote files) | no | with `lookup=` | no | continues |
 | `manifest` | the manifest's `schema_version`, `duckdb_storage_version` and `ducklake_spec_version` pass the reader's checks, so the files can be opened (§4) | yes | yes | yes | the run stops |
 | `lake` | every file the current snapshot references exists at the size DuckLake recorded and none is a delete file, and every file the catalog references from any snapshot it keeps is in the manifest; runs only when `lake.ducklake` exists | yes | yes | no | continues |
 | `bindings` | the store's bindings are the manifest's, and each table holds the count the manifest gives | yes | yes | no | continues |
@@ -573,17 +581,28 @@ findings carry its name.
 
 ### Remote files
 
-A server reads tier-3 files from blob storage and never holds them, so it
-cannot hash them. A blob store reports a file's size and, when the uploader
-set it, its `Content-MD5`: the base64 of the MD5 the manifest records in hex
-(`content_md5(entry)` computes it). A publish job MUST set `Content-MD5` on
-every upload.
+A server reads tier-3 files from object storage and never holds them, so it
+cannot hash them. A store reports a file's size and the digests it keeps,
+each base64, and which it keeps depends on the store and the upload:
+
+| store | keeps | digest | upload sets |
+| --- | --- | --- | --- |
+| Azure Blob Storage | `Content-MD5`, when the uploader sets it | `md5` | `content_md5(entry)` as `Content-MD5`, or `x-ms-blob-content-md5` on a block upload |
+| Amazon S3 | the checksum the uploader picks; for a multipart upload only a CRC is of the whole file | `crc32c` | `content_crc32c(entry)` as `x-amz-checksum-crc32c`, with checksum type `FULL_OBJECT` |
+| Google Cloud Storage | CRC32C always; MD5 except for a composite object | `crc32c` | nothing: GCS computes it |
+
+A publish job MUST upload every file so its store keeps a digest the
+manifest records; each store keeps one of the three for any upload.
 
 `verify_remote(manifest, lookup, tiers=(3,))` checks the files of the given
-tiers against what `lookup(entry)` returns for each, a `RemoteFile(size,
-content_md5)` or `None`. sdmxlib holds no blob-store client: the caller's
-lookup asks the store. Each file missing, of another size, without a
-`Content-MD5`, or with a different one is a finding under the check `remote`.
+tiers against what `lookup(entry)` returns for each: a `RemoteFile(size,
+digests)`, `digests` naming each algorithm in lowercase (`md5`, `sha256`,
+`crc32c`), or `None`. sdmxlib holds no blob-store client: the caller's lookup
+asks the store. Every algorithm both sides hold is compared; a composite
+checksum, written with S3's `-<parts>` suffix, is a digest of the parts and
+is set aside. Each file missing, of another size, whose store keeps no digest
+the manifest records, or with one that differs is a finding under the check
+`remote`.
 
 The `Report` lists the checks that ran as `checked`, so a clean report also
 says how much it covered. Another implementation conforms when it refuses
