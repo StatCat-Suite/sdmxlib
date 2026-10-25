@@ -87,6 +87,7 @@ def check_bundle(
     engine: BundleEngine | None = None,
     lookup: Lookup | None = None,
     fingerprints: bool = False,
+    expect: Manifest | str | Path | None = None,
     extensions: Mapping[str, Check] | None = None,
 ) -> Report:
     """Check a published bundle against its manifest and against itself, as profile `at` asks.
@@ -102,6 +103,7 @@ def check_bundle(
     | bindings: the manifest's, each with the count it gives | yes | yes | no |
     | references: every stored reference names something in the store | yes | yes | no |
     | fingerprints: recomputed, equal to the manifest's | yes | with `fingerprints` | no |
+    | expect: fingerprints equal to an earlier manifest's | with `expect` | with `expect` | with `expect` |
     | extensions | yes | yes | yes, told the profile |
 
     ``data/`` is shared by publications, so only its listed entries are
@@ -128,6 +130,13 @@ def check_bundle(
             entry, or None for a file it does not hold (see `verify_remote`).
         fingerprints: At ``receive``, also recompute the fingerprints, which
             ``publish`` always does.
+        expect: An earlier publication's manifest, or its directory, whose
+            content this one must have: a republish that is to change no
+            content, such as every bundle rebuilt at a new store schema. Each
+            artefact, binding and the bundle fingerprint that differs is a
+            finding under ``expect``. Read from the manifests alone, so at
+            ``publish``, where the fingerprints are also recomputed, a clean
+            run says the store's content is the earlier one's.
         extensions: More checks, by name, for parts of the bundle other
             packages own (statcatlib's search index, say).
 
@@ -147,6 +156,14 @@ def check_bundle(
         return Report(root, at, tuple(checked), (Finding("manifest", MANIFEST_NAME, str(exc)),))
     findings = list(_files(root, manifest, at, remote=lookup is not None or remote is not None))
     checked.append("files")
+    if expect is not None:
+        try:
+            expected = expect if isinstance(expect, Manifest) else read_manifest(Path(expect))
+        except ManifestError as exc:
+            findings.append(Finding("expect", MANIFEST_NAME, f"the expected manifest cannot be read: {exc}"))
+        else:
+            findings += _expected(manifest, expected)
+        checked.append("expect")
     if lookup is not None:
         data_only = msgspec.structs.replace(manifest, files=tuple(f for f in manifest.files if f.root == "data"))
         findings += verify_remote(data_only, lookup, tiers=(1, 2, 3))
@@ -369,6 +386,54 @@ def _fingerprints(root: Path, manifest: Manifest, opened: BundleRegistry) -> lis
                 f"content_fingerprint {content}, the manifest says {manifest.content_fingerprint}",
             )
         )
+    return findings
+
+
+def _expected(manifest: Manifest, expected: Manifest) -> list[Finding]:
+    """Each fingerprint `manifest` records that `expected`, an earlier publication's, records otherwise."""
+    if manifest.canonical_form != expected.canonical_form:
+        detail = (
+            f"canonical_form {manifest.canonical_form}, the expected manifest's is {expected.canonical_form}: "
+            "fingerprints at different forms are never compared"
+        )
+        return [Finding("expect", MANIFEST_NAME, detail)]
+    ours = {a.urn: {"fingerprint": a.fingerprint} for a in manifest.artefacts}
+    theirs = {a.urn: {"fingerprint": a.fingerprint} for a in expected.artefacts}
+    findings = _compared(ours, theirs, "artefacts")
+    ours = {
+        b.dataflow: {"fingerprint": b.fingerprint, "structure_fingerprint": b.structure_fingerprint}
+        for b in manifest.bindings
+    }
+    theirs = {
+        b.dataflow: {"fingerprint": b.fingerprint, "structure_fingerprint": b.structure_fingerprint}
+        for b in expected.bindings
+    }
+    findings += _compared(ours, theirs, "bindings")
+    if manifest.content_fingerprint != expected.content_fingerprint:
+        detail = (
+            f"content_fingerprint {manifest.content_fingerprint}, "
+            f"the expected manifest's is {expected.content_fingerprint}"
+        )
+        findings.append(Finding("expect", MANIFEST_NAME, detail))
+    return findings
+
+
+def _compared(
+    ours: Mapping[str, Mapping[str, str | None]], theirs: Mapping[str, Mapping[str, str | None]], kind: str
+) -> list[Finding]:
+    """Each URN in one manifest's `kind` only, and each fingerprint of a shared one that differs."""
+    findings: list[Finding] = []
+    for urn in sorted(ours.keys() | theirs.keys()):
+        if urn not in theirs:
+            findings.append(Finding("expect", urn, f"in this manifest's {kind} but not the expected one's"))
+        elif urn not in ours:
+            findings.append(Finding("expect", urn, f"in the expected manifest's {kind} but not this one's"))
+        else:
+            findings += [
+                Finding("expect", urn, f"{name} {value}, the expected manifest's is {theirs[urn][name]}")
+                for name, value in ours[urn].items()
+                if value != theirs[urn][name]
+            ]
     return findings
 
 

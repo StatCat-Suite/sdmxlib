@@ -536,6 +536,7 @@ the first:
 | `bindings` | the store's bindings are the manifest's, and each table holds the count the manifest gives | yes | yes | no | continues |
 | `references` | every reference in the store names an artefact or an item in the store | yes | yes | no | continues |
 | `fingerprints` | every artefact, binding and content fingerprint, recomputed, is the manifest's (§9) | yes | with `fingerprints=True` | no | continues |
+| `expect` | every artefact, binding and content fingerprint the manifest records equals an earlier manifest's, read from the two manifests (§9); for a republish that is to change no content, such as a rebuild at a new store schema | with `expect=` | with `expect=` | with `expect=` | continues |
 
 A store file that cannot be read, a damaged `meta.duckdb` or `lake.ducklake`,
 is a finding under the check that tried to read it, and ends the run.
