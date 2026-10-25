@@ -80,6 +80,10 @@ The format itself, field by field, is [the bundle format](bundle.md).
 
 ---
 
+::: sdmxlib.bundle.manifest_schema
+
+---
+
 ::: sdmxlib.bundle.check_bundle
 
 ---
@@ -108,6 +112,10 @@ The format itself, field by field, is [the bundle format](bundle.md).
 
 ---
 
+::: sdmxlib.bundle.content_md5
+
+---
+
 ::: sdmxlib.bundle.canonical_json
 
 ---
@@ -122,13 +130,17 @@ The format itself, field by field, is [the bundle format](bundle.md).
 
 #### Annotation overlays
 
-Display annotations changed without a rebuild, the token a cache keys on when they are applied, and folding them into a bundle.
+Display annotations changed without a rebuild, the token a cache keys on when they are applied, and folding them into a bundle. Name and description changes (`OverlayText`) are folded only.
 
 ::: sdmxlib.bundle.apply_overlays
 
 ---
 
 ::: sdmxlib.bundle.effective_token
+
+---
+
+::: sdmxlib.bundle.overlay_digest
 
 ---
 
@@ -164,7 +176,19 @@ Display annotations changed without a rebuild, the token a cache keys on when th
 
 ---
 
+::: sdmxlib.bundle.OverlayAnnotation
+
+---
+
+::: sdmxlib.bundle.OverlayText
+
+---
+
 ::: sdmxlib.bundle.OverlayError
+
+---
+
+::: sdmxlib.bundle.overlay_schema
 
 ---
 
@@ -201,6 +225,14 @@ Conforming bundles of any shape, deterministic from a seed, for tests and stress
 ---
 
 ::: sdmxlib.bundle.ArtefactEntry
+
+---
+
+::: sdmxlib.bundle.BindingCount
+
+---
+
+::: sdmxlib.bundle.Producer
 
 ---
 
