@@ -19,6 +19,32 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## `RemoteFile` reports digests by algorithm
+
+The manifest is format 2.1: each `BundleFile` records a `crc32c` beside
+`sha256` and `md5`, the digest S3 keeps whole for a multipart upload and GCS
+keeps for every file. A 2.0 reader reads a 2.1 manifest and ignores the field.
+
+`RemoteFile`, which a `verify_remote` lookup returns, reports every digest the
+store keeps, by algorithm, in place of one `content_md5`:
+
+```text
+# before
+RemoteFile(size, content_md5)
+```
+
+```python
+# now
+remote = sl.bundle.RemoteFile(1024, {"md5": "rL0Y20zC+Fzt72VPzMSk2A=="})
+```
+
+An Azure lookup reports `{"md5": <Content-MD5>}`; an S3 one the checksums
+`HeadObject` returns with checksum mode on (`{"crc32c": ...}`); a GCS one
+`{"crc32c": ..., "md5": ...}` from the object's metadata. `content_crc32c(entry)`
+gives the value an S3 upload sets as `x-amz-checksum-crc32c`.
+
+---
+
 ## The HTTP client is httpx2
 
 sdmxlib's REST client is built on [httpx2](https://pypi.org/project/httpx2/),

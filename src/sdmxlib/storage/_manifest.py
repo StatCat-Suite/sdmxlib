@@ -35,8 +35,9 @@ UNLISTED = frozenset({MANIFEST_NAME, f"{MANIFEST_NAME}.tmp", SIGNATURE_NAME})
 
 #: The format this build writes. A reader takes any ``2.x``: a minor version
 #: only adds fields, which a reader that predates them ignores. 2.0 moved a
-#: publication into a token directory beside a shared ``data/`` (GH-123).
-FORMAT_VERSION = "2.0"
+#: publication into a token directory beside a shared ``data/`` (GH-123);
+#: 2.1 adds each file's ``crc32c`` (GH-181).
+FORMAT_VERSION = "2.1"
 
 #: Where a publication's data files live, relative to its directory: the
 #: ``data/`` every publication of a bundle shares.
@@ -215,13 +216,17 @@ class BundleFile(msgspec.Struct, frozen=True, kw_only=True):
         sha256: Of the file's contents, lowercase hex.
         md5: Of the file's contents, lowercase hex. The ``Content-MD5`` an
             upload sets is the base64 of the same digest.
+        crc32c: The CRC32C of the file's contents, lowercase hex, eight
+            digits: the digest S3 keeps for a file uploaded in any number of
+            parts, and GCS keeps for every file. None in a manifest written
+            before format 2.1.
         root: ``publication`` for a file in the publication directory,
             ``data`` for a data file under the manifest's `data_path`.
         tier: The producer's default placement: 1 pulled before a server is
             ready, 2 pulled lazily to local disk, 3 read remotely by byte range.
-        carried_from: The token of the manifest `size`, `sha256` and `md5`
-            were copied from, for a data file an earlier publication listed;
-            None for one hashed by this publication.
+        carried_from: The token of the manifest `size` and the digests were
+            copied from, for a data file an earlier publication listed; None
+            for one hashed by this publication.
     """
 
     path: str
@@ -230,6 +235,7 @@ class BundleFile(msgspec.Struct, frozen=True, kw_only=True):
     md5: str
     root: Literal["publication", "data"]
     tier: Tier
+    crc32c: str | None = None
     carried_from: str | None = None
 
 

@@ -30,6 +30,7 @@ from sdmxlib.bundle import (
     read_manifest,
     write_manifest,
 )
+from sdmxlib.bundle._write import Digests
 from sdmxlib.local.registry import BundleRegistry
 from tests.support.bundles import FLOW, make_bundle
 
@@ -67,7 +68,7 @@ def hashed(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     seen: list[str] = []
     original = _check.digests_of
 
-    def counting(path: Path) -> tuple[str, str]:
+    def counting(path: Path) -> Digests:
         seen.append(path.name)
         return original(path)
 
@@ -101,7 +102,7 @@ def test_receive_finds_a_changed_publication_file(tmp_path: Path) -> None:
     root = _published(tmp_path / "b")
     _flip_a_byte(root / "lake.ducklake")
     findings = [f for f in check_bundle(root, at="receive").findings if f.check == "files"]
-    assert findings == [Finding("files", "lake.ducklake", "contents differ from the manifest's sha256 or md5")]
+    assert findings == [Finding("files", "lake.ducklake", "contents differ from the manifest's sha256, md5 or crc32c")]
 
 
 def _store(root: Path, manifest: Manifest) -> dict[str, RemoteFile]:
@@ -111,7 +112,7 @@ def _store(root: Path, manifest: Manifest) -> dict[str, RemoteFile]:
         if entry.root == "data":
             data = (root / DATA_PATH / entry.path).read_bytes()
             md5 = base64.b64encode(hashlib.md5(data, usedforsecurity=False).digest()).decode()
-            reported[entry.path] = RemoteFile(len(data), md5)
+            reported[entry.path] = RemoteFile(len(data), {"md5": md5})
     return reported
 
 
@@ -136,7 +137,7 @@ def test_receive_with_a_lookup_names_a_blob_that_differs(tmp_path: Path) -> None
     root = _published(tmp_path / "b")
     store = _store(root, read_manifest(root))
     (path,) = store
-    store[path] = RemoteFile(store[path].size, base64.b64encode(b"\x00" * 16).decode())
+    store[path] = RemoteFile(store[path].size, {"md5": base64.b64encode(b"\x00" * 16).decode()})
     findings = list(check_bundle(root, at="receive", lookup=lambda e: store[e.path]).findings)
     assert [(f.check, f.subject) for f in findings] == [("remote", f"{DATA_PATH}{path}")]
 

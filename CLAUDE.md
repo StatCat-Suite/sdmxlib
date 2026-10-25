@@ -44,8 +44,9 @@ come back as Polars frames.
 ## Architecture rules
 
 - Baseline runtime deps: `attrs`, `httpx2`, `lxml`, `duckdb`, `polars`,
-  `pyarrow`, `msgspec`, `typing-extensions` (PEP 728 closed TypedDicts, until
-  `typing` has them in 3.15). All required — none are optional extras. Any module may
+  `pyarrow`, `msgspec`, `google-crc32c` (the manifest's CRC32C, GH-181),
+  `typing-extensions` (PEP 728 closed TypedDicts, until `typing` has them in
+  3.15). All required — none are optional extras. Any module may
   import them. `msgspec` is used everywhere we touch JSON (SDMX-JSON
   reader/writer/metadata/data): typed `msgspec.Struct` DTOs encoded via the
   shared `_dto.ENCODER`, typed `msgspec.convert` / `msgspec.json.decode` on
