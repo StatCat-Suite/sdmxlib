@@ -658,15 +658,20 @@ release-notes VERSION:
     fi
     printf '%s\n' "${NOTES}"
 
-# Step 5 — Build and publish to PyPI (requires UV_PUBLISH_TOKEN env var)
+# Step 5 — Build and publish to PyPI (requires UV_PUBLISH_TOKEN and UV_PUBLISH_TOKEN_CLI)
 [group('release')]
 release-5-pypi:
     #!/usr/bin/env bash
     set -euo pipefail
-    if [[ -z "${UV_PUBLISH_TOKEN:-}" ]]; then
-        echo "error: UV_PUBLISH_TOKEN is not set" >&2
-        exit 1
-    fi
+    # One project-scoped token per package: PyPI refuses an sdmxlib token for
+    # sdmxlib-cli, which left 0.72.1's CLI unpublished. Both are checked before
+    # anything is built, so a missing one cannot stop a release halfway.
+    for KEY in UV_PUBLISH_TOKEN UV_PUBLISH_TOKEN_CLI; do
+        if [[ -z "${!KEY:-}" ]]; then
+            echo "error: ${KEY} is not set (sdmxlib's token, then sdmxlib-cli's)" >&2
+            exit 1
+        fi
+    done
     # Build from a checked-out tag, never from a branch that has moved past it.
     if ! VER=$(git describe --tags --exact-match HEAD 2>/dev/null); then
         echo "error: HEAD is not a release tag; run git switch --detach vX.Y.Z" >&2
@@ -686,5 +691,6 @@ release-5-pypi:
     rm -rf dist
     # Every workspace package: sdmxlib and sdmxlib-cli, at one version (GH-67).
     uv build --all-packages
-    uv publish
+    uv publish --token "${UV_PUBLISH_TOKEN}" dist/sdmxlib-"${VER#v}"[.-]*
+    uv publish --token "${UV_PUBLISH_TOKEN_CLI}" dist/sdmxlib_cli-"${VER#v}"[.-]*
     echo "Published ${VER} to PyPI"
