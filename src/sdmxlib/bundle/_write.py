@@ -1,6 +1,7 @@
 """Publishing a bundle: inventory it, count it, and write its manifest last (GH-66)."""
 
 import hashlib
+import posixpath
 import re
 from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime
@@ -135,7 +136,7 @@ def inventory(root: Path, tiers: Mapping[str, Tier] | None = None) -> tuple[Bund
     return tuple(entries)
 
 
-def lake_files(conn: duckdb.DuckDBPyConnection, data: Path, *, lake: str = "lake") -> list[str]:
+def lake_files(conn: duckdb.DuckDBPyConnection, data: Path | str, *, lake: str = "lake") -> list[str]:
     """Every data file the attached lake catalog references, as ``/``-separated paths under `data`, sorted.
 
     Read from DuckLake's metadata tables, so it covers every snapshot the
@@ -144,7 +145,8 @@ def lake_files(conn: duckdb.DuckDBPyConnection, data: Path, *, lake: str = "lake
 
     Args:
         conn: A connection with the publication's lake attached as `lake`.
-        data: The lake's data path.
+        data: The lake's data path: a local directory, or a URI ending in
+            ``/`` for data files in object storage.
         lake: The alias the lake is attached as.
 
     Returns:
@@ -156,15 +158,40 @@ def lake_files(conn: duckdb.DuckDBPyConnection, data: Path, *, lake: str = "lake
     found: set[str] = set()
     for row in conn.execute(_LAKE_FILES.format(lake=lake)).fetchall():
         path = ""
+        anchored = False
         for part, relative in zip(row[::2], row[1::2], strict=True):
-            path = f"{path}{part}" if relative else str(part)
-        full = Path(path) if Path(path).is_absolute() else data / path
-        try:
-            found.add(full.resolve().relative_to(data.resolve()).as_posix())
-        except ValueError as exc:
-            msg = f"the lake catalog references {full}, outside its data path {data}"
-            raise ManifestError(msg) from exc
+            if relative:
+                path = f"{path}{part}"
+            else:
+                path, anchored = str(part), True
+        found.add(_under(data, path, anchored=anchored))
     return sorted(found)
+
+
+def _under(data: Path | str, path: str, *, anchored: bool) -> str:
+    """`path`, which DuckLake recorded, as a ``/``-separated path under `data`.
+
+    `anchored` says DuckLake recorded it whole rather than relative to the
+    data path.
+
+    Raises:
+        ManifestError: If it names a file outside `data`.
+    """
+    msg = f"the lake catalog references {path}, outside its data path {data}"
+    if isinstance(data, Path):
+        full = Path(path) if anchored else data / path
+        try:
+            return full.resolve().relative_to(data.resolve()).as_posix()
+        except ValueError as exc:
+            raise ManifestError(msg) from exc
+    if anchored:
+        if not path.startswith(data):
+            raise ManifestError(msg)
+        path = path[len(data) :]
+    relative = posixpath.normpath(path)
+    if relative.startswith(("../", "/")) or relative == "..":
+        raise ManifestError(msg)
+    return relative
 
 
 def _data_inventory(

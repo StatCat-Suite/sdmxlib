@@ -53,6 +53,7 @@ from sdmxlib.formats.sdmx_json.data import read_observations
 from sdmxlib.local._scan import resolve_flow, scan_csv_into, scan_frame_into
 from sdmxlib.local.data_store import DuckDBDataStore, store_path
 from sdmxlib.local.engine import BundleEngine, spill_directory
+from sdmxlib.local.object_store import data_uri, sql_literal
 from sdmxlib.model._binding import binding
 from sdmxlib.model._items import find_item, owner_classes
 from sdmxlib.model._refshape import can_reach_ref, walk_plan
@@ -651,6 +652,9 @@ class BundleRegistry(SessionFactory):
         self._data_plane_lock = threading.Lock()
         #: ATTACH spec a `bundle()` supplied, replayed when the store is built.
         self._attach: dict[str, str | tuple[str, str]] | None = None
+        #: The lake's ``DATA_PATH``, a local directory or a remote URI, ending
+        #: in ``/``; None where no lake is attached through the registry.
+        self._data_path: str | None = None
         #: The manifest `bundle()` read, if the bundle had one (GH-66).
         self._manifest: Manifest | None = None
         #: The catalog whose ``sdmx`` schema every handle reads: the file's own
@@ -673,6 +677,16 @@ class BundleRegistry(SessionFactory):
     def uri(self) -> Path:
         """The URI this registry references. Available before opening."""
         return self._uri
+
+    @property
+    def data_path(self) -> str | None:
+        """Where the lake reads its data files: a local directory or a remote URI, ending in ``/``.
+
+        The manifest's relative ``data_path`` resolved against the
+        publication, or against its remote root (`bundle`'s ``remote``). None
+        for a registry with no lake of its own.
+        """
+        return self._data_path
 
     @property
     def manifest(self) -> Manifest | None:
@@ -818,6 +832,7 @@ class BundleRegistry(SessionFactory):
         # whatever it wants visible. `_data_plane` then builds a store over
         # that connection and finds the lake already there.
         instance._attach = None
+        instance._data_path = None
         instance._manifest = None
         instance._catalog = None
         instance._engine = None
@@ -1409,6 +1424,7 @@ class BundleRegistry(SessionFactory):
         cls,
         path: str | Path,
         *,
+        remote: str | None = None,
         engine: BundleEngine | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
     ) -> BundleRegistry:
@@ -1423,7 +1439,33 @@ class BundleRegistry(SessionFactory):
             <bundle>/<token>/lake.ducklake          DuckLake catalog over ``data/``
 
         The lake reads its data files from the manifest's ``data_path``,
-        resolved against `path`.
+        resolved against `path`, or against `remote` when the data files are
+        in object storage.
+
+        **Data files in object storage.** A server may hold only a
+        publication's catalog files, tiers 1 and 2, on local disk and read its
+        data files, tier 3, from the store they were published to. `remote`
+        names the publication directory there, and the manifest's
+        ``data_path`` is resolved against it, so nothing in the bundle names
+        a location::
+
+            engine = sl.BundleEngine(
+                secrets=[
+                    sl.StoreSecret(
+                        "azure", provider="credential_chain", options={"account_name": "acct"}
+                    )
+                ]
+            )
+            reg = sl.LocalRegistry.bundle(
+                "/var/bundles/census/019a…/",
+                remote="abfss://c@acct.dfs.core.windows.net/bundles/census/019a…/",
+                engine=engine,
+            )
+
+        Any store DuckDB reads: ``s3://`` (and S3-compatible servers),
+        ``r2://``, ``gs://``, ``az://``, ``abfss://``, ``http(s)://``, and
+        ``file://`` for a mounted one. The engine loads the extension the
+        scheme needs and holds the credentials, as `StoreSecret` values.
 
         **Published means a manifest** (``bundle.manifest.json``,
         `sdmxlib.bundle`). It is required, read first, and its store schema
@@ -1452,6 +1494,9 @@ class BundleRegistry(SessionFactory):
 
         Args:
             path: The publication directory.
+            remote: The publication directory in object storage, as a URI,
+                when the data files are read from there; the data files are
+                beside `path` when None.
             engine: The engine to attach into; one of its own when None.
             resolve_cache_items: As the `LocalRegistry` constructor.
 
@@ -1464,6 +1509,7 @@ class BundleRegistry(SessionFactory):
                 format is newer than this build reads.
             ManifestError: If there is no manifest, or it is malformed or in a
                 format this build cannot read.
+            ValueError: If `remote` is not a URI DuckDB reads.
         """
         root = Path(path)
         manifest = read_manifest(root)
@@ -1475,11 +1521,14 @@ class BundleRegistry(SessionFactory):
             )
             raise StoreSchemaError(msg)
         refuse_engine_mismatch(manifest, root)
+        data = root / manifest.data_path if remote is None else data_uri(remote, manifest.data_path)
         owned = engine is None
         shared = BundleEngine() if engine is None else engine
+        if remote is not None:
+            shared.load_for_uri(remote)
         prefix = shared.attach(root, bundle_id=manifest.bundle_id, token=manifest.token)
         registry = BundleRegistry._over_bundle(
-            root, root / manifest.data_path, resolve_cache_items=resolve_cache_items, lake=f"{prefix}__lake"
+            root, data, resolve_cache_items=resolve_cache_items, lake=f"{prefix}__lake"
         )
         registry._manifest = manifest
         registry._engine, registry._prefix, registry._owns_engine = shared, prefix, owned
@@ -1495,13 +1544,16 @@ class BundleRegistry(SessionFactory):
     def _over_bundle(
         cls,
         root: Path,
-        data: Path,
+        data: Path | str,
         *,
         source_registry: str | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
         lake: str = "lake",
     ) -> Self:
         """An unopened registry of this class over publication `root`, its lake's data files in `data`.
+
+        `data` is a local directory, or a URI ending in ``/`` for data files
+        in object storage.
 
         The lake attaches as `lake`: ``lake`` for a builder or the manifest
         writer, ``<prefix>__lake`` for a bundle in an engine.
@@ -1525,10 +1577,12 @@ class BundleRegistry(SessionFactory):
         # where its data files are. The catalog's remembered path is
         # provenance, not truth.
         read_only = ", READ_ONLY" if cls._READ_ONLY else ""
+        data_path = data if isinstance(data, str) else f"{data.resolve()}/"
+        registry._data_path = data_path
         registry._attach = {
             lake: (
-                f"'ducklake:{root / 'lake.ducklake'}'",
-                f"(DATA_PATH '{data.resolve()}/', OVERRIDE_DATA_PATH true{read_only})",
+                sql_literal(f"ducklake:{root / 'lake.ducklake'}"),
+                f"(DATA_PATH {sql_literal(data_path)}, OVERRIDE_DATA_PATH true{read_only})",
             )
         }
         return registry

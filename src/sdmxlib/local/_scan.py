@@ -21,7 +21,7 @@ name per dataflow would let the second scan change what the first query reads.
 **The one literal in a DDL.** A view cannot hold a bound parameter — DuckDB
 refuses `CREATE VIEW … read_csv(?)` as a statement that "can't be prepared" —
 so the path and the column types are written into it as quoted literals, as
-`CREATE SECRET`'s values are (`_sql_string_literal`).
+`CREATE SECRET`'s values are (`sql_literal`).
 """
 
 import tempfile
@@ -31,7 +31,8 @@ from pathlib import Path
 
 import polars as pl
 
-from sdmxlib.local.data_store import DuckDBDataStore, _sql_string_literal, column_types
+from sdmxlib.local.data_store import DuckDBDataStore, column_types
+from sdmxlib.local.object_store import sql_literal
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure
@@ -68,8 +69,8 @@ def scan_csv_into(
                 f"CREATE TABLE {relation} AS SELECT * FROM read_csv(?, types=?, header=true)", [str(path), types]
             )
     else:
-        literal_types = ", ".join(f"{_sql_string_literal(c)}: {_sql_string_literal(t)}" for c, t in types.items())
-        path_literal = _sql_string_literal(str(Path(source).resolve()))
+        literal_types = ", ".join(f"{sql_literal(c)}: {sql_literal(t)}" for c, t in types.items())
+        path_literal = sql_literal(str(Path(source).resolve()))
         plane.connection.execute(
             f"CREATE VIEW {relation} AS SELECT * FROM read_csv({path_literal}, types={{{literal_types}}}, header=true)"
         )

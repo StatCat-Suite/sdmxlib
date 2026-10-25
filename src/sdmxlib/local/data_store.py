@@ -29,6 +29,7 @@ import duckdb
 import polars as pl
 
 from sdmxlib.data_store import WriteSource
+from sdmxlib.local.object_store import OptionValue, StoreSecret
 from sdmxlib.local.sql import SchemaInspector
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.datastructure import DataStructure
@@ -824,28 +825,22 @@ def _azure_create_secret_sql(creds: dict[str, str]) -> str:
       "client_secret": ...}`` → ``PROVIDER 'service_principal'``.
     * ``{"chain": "cli"|"env"|"managed_identity"}`` →
       ``PROVIDER 'credential_chain'``.
+
+    Each is a `StoreSecret`, the form `BundleEngine` takes.
     """
     name = "sdmxlib_azure"
     if "connection_string" in creds:
-        cs = _sql_string_literal(creds["connection_string"])
-        return f"CREATE OR REPLACE SECRET {name} (TYPE AZURE, PROVIDER 'config', CONNECTION_STRING {cs})"
+        options: dict[str, OptionValue] = {"connection_string": creds["connection_string"]}
+        return StoreSecret("azure", provider="config", options=options, name=name).statement()
     if "chain" in creds:
-        chain = _sql_string_literal(creds["chain"])
-        clauses = ["TYPE AZURE", "PROVIDER 'credential_chain'", f"CHAIN {chain}"]
+        options = {"chain": creds["chain"]}
         if "account_name" in creds:
-            clauses.append(f"ACCOUNT_NAME {_sql_string_literal(creds['account_name'])}")
-        return f"CREATE OR REPLACE SECRET {name} ({', '.join(clauses)})"
-    required = {"account_name", "tenant_id", "client_id", "client_secret"}
-    if required.issubset(creds):
-        return (
-            f"CREATE OR REPLACE SECRET {name} ("
-            f"TYPE AZURE, PROVIDER 'service_principal', "
-            f"TENANT_ID {_sql_string_literal(creds['tenant_id'])}, "
-            f"CLIENT_ID {_sql_string_literal(creds['client_id'])}, "
-            f"CLIENT_SECRET {_sql_string_literal(creds['client_secret'])}, "
-            f"ACCOUNT_NAME {_sql_string_literal(creds['account_name'])}"
-            f")"
-        )
+            options["account_name"] = creds["account_name"]
+        return StoreSecret("azure", provider="credential_chain", options=options, name=name).statement()
+    required = ("tenant_id", "client_id", "client_secret", "account_name")
+    if set(required).issubset(creds):
+        options = {key: creds[key] for key in required}
+        return StoreSecret("azure", provider="service_principal", options=options, name=name).statement()
     msg = (
         "azure_credentials must be one of: "
         "{'connection_string': ...}, "
@@ -854,12 +849,6 @@ def _azure_create_secret_sql(creds: dict[str, str]) -> str:
         f"Got keys: {sorted(creds.keys())}"
     )
     raise ValueError(msg)
-
-
-def _sql_string_literal(value: str) -> str:
-    """Quote a value as a SQL string literal — single-quotes, doubled internals."""
-    escaped = value.replace("'", "''")
-    return f"'{escaped}'"
 
 
 def _as_relation(

@@ -83,6 +83,7 @@ markers = [
   "slow: tests that dominate suite wall-time; deselect for tight loops",
   "serial: thread-heavy tests `just test` runs alone, after the parallel phase; under -n they starve",
   "bench: performance benchmarks; excluded from default test runs",
+  "stores: object-store emulators in containers; skipped, and said so, without a container runtime",
   # The bundle tier (#379) reads a real 2.6 GB SDMX bundle that is not, and
   # cannot be, in the repo. Split from `bench` so `just bench` means the same
   # thing on every machine and `bench/baselines/` stays comparable across them.
