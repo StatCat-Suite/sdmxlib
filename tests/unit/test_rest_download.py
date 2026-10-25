@@ -7,7 +7,7 @@ it — a format argument that nothing verifies is decorative, which is the state
 this replaced (`Accept` was hardcoded to ``text/csv``, so a download's path
 extension was the only hint and SDMX-ML could not be requested at all).
 
-These drive the **real** `httpx.Client` through a `MockTransport`, rather than
+These drive the **real** `httpx2.Client` through a `MockTransport`, rather than
 stubbing `download_data`. The header construction and the `Content-Type` check
 are the feature; a stub at that seam would test neither.
 """
@@ -18,7 +18,7 @@ import re
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
 
-import httpx
+import httpx2
 import pytest
 
 import sdmxlib as sl
@@ -31,30 +31,30 @@ _CSV = b"DATAFLOW,FREQ,OBS_VALUE\nECB:EXR(1.0),M,1.2\n"
 
 @contextmanager
 def _registry(
-    handler: Callable[[httpx.Request], httpx.Response],
-) -> Generator[tuple[sl.RestRegistry, list[httpx.Request]]]:
+    handler: Callable[[httpx2.Request], httpx2.Response],
+) -> Generator[tuple[sl.RestRegistry, list[httpx2.Request]]]:
     """A registry whose HTTP is `handler`, and the requests it made.
 
     The list used to be stashed on the registry as an undeclared attribute,
     which needed a suppression to write and made every `seen` an attribute
     error (#347). Yielding the pair says the same thing, declared.
     """
-    seen: list[httpx.Request] = []
+    seen: list[httpx2.Request] = []
 
-    def _record(request: httpx.Request) -> httpx.Response:
+    def _record(request: httpx2.Request) -> httpx2.Response:
         seen.append(request)
         return handler(request)
 
-    with sl.RestRegistry("https://example.test/service", id="ECB", transport=httpx.MockTransport(_record)) as reg:
+    with sl.RestRegistry("https://example.test/service", id="ECB", transport=httpx2.MockTransport(_record)) as reg:
         yield reg, seen
 
 
 def _serving(
     body: bytes = _CSV,
     content_type: str | None = "application/vnd.sdmx.data+csv;version=2.0.0",
-) -> Callable[[httpx.Request], httpx.Response]:
+) -> Callable[[httpx2.Request], httpx2.Response]:
     headers = {} if content_type is None else {"content-type": content_type}
-    return lambda _request: httpx.Response(200, content=body, headers=headers)
+    return lambda _request: httpx2.Response(200, content=body, headers=headers)
 
 
 # ── the format reaches the wire ───────────────────────────────────────────

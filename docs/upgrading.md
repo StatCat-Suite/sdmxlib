@@ -19,6 +19,52 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## The HTTP client is httpx2
+
+sdmxlib's REST client is built on [httpx2](https://pypi.org/project/httpx2/),
+Pydantic's maintained fork of httpx 0.28.1, in place of httpx. httpx is no
+longer installed with sdmxlib. httpx2 keeps httpx's API under the import name
+`httpx2`, so a call that passes an httpx object to sdmxlib passes the httpx2
+one:
+
+```text
+# before
+import httpx
+reg = sl.RestRegistry(url, transport=httpx.MockTransport(handler), auth=httpx.BasicAuth("u", "p"))
+```
+
+```python
+# now
+import httpx2
+
+
+def handler(request: httpx2.Request) -> httpx2.Response:
+    return httpx2.Response(404)
+
+
+reg = sl.RestRegistry(
+    "https://registry.example.org/sdmx",
+    transport=httpx2.MockTransport(handler),
+    auth=httpx2.BasicAuth("u", "p"),
+)
+```
+
+The same holds for every option `HttpxOptions` forwards (`transport`,
+`mounts`, `auth`, `proxy`, `limits`, `cookies`, `params`) on `RestRegistry`,
+`FmrRegistry`, `SdmxClient` and `fetch_bundle`, and for the exceptions a
+caller catches: `httpx2.HTTPStatusError`, `httpx2.TransportError`.
+
+Two behaviours move with the package:
+
+- **TLS trust.** httpx2 verifies certificates against the operating system's
+  trust store (through `truststore`); httpx used the `certifi` bundle. A CA
+  installed in the system store is now trusted; to pin a bundle, pass
+  `verify=ssl.create_default_context(cafile=...)`.
+- **The logger** is named `httpx2`. A program that quieted `httpx` by name
+  quiets `logging.getLogger("httpx2")`.
+
+---
+
 ## A bundle is a directory of publications over a shared `data/`
 
 A bundle is now a directory holding one directory per publication, named by

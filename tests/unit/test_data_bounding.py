@@ -18,7 +18,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
-import httpx
+import httpx2
 import pytest
 
 from sdmxlib.api.client import ResponseTooLargeError, _raise_for_status
@@ -138,7 +138,7 @@ def test_a_size_refusal_is_named_and_says_what_to_do(status: int, phrase: str) -
     fix is narrowing the query, and no way for a caller to catch *this* rather
     than every HTTP failure.
     """
-    response = httpx.Response(status, request=httpx.Request("GET", "https://x/data/all"))
+    response = httpx2.Response(status, request=httpx2.Request("GET", "https://x/data/all"))
     with pytest.raises(ResponseTooLargeError) as caught:
         _raise_for_status(response, url="https://x/data/all")
     assert phrase in str(caught.value)
@@ -149,11 +149,11 @@ def test_a_size_refusal_is_named_and_says_what_to_do(status: int, phrase: str) -
 def test_other_failures_keep_httpx_s_own_error() -> None:
     """There is nothing this layer can add to a 500 that the message does not
     already say, and swallowing it into a library type would lose the status."""
-    response = httpx.Response(500, request=httpx.Request("GET", "https://x/"))
-    with pytest.raises(httpx.HTTPStatusError):
+    response = httpx2.Response(500, request=httpx2.Request("GET", "https://x/"))
+    with pytest.raises(httpx2.HTTPStatusError):
         _raise_for_status(response, url="https://x/")
 
 
 def test_success_passes_through() -> None:
-    response = httpx.Response(200, request=httpx.Request("GET", "https://x/"))
+    response = httpx2.Response(200, request=httpx2.Request("GET", "https://x/"))
     _raise_for_status(response, url="https://x/")

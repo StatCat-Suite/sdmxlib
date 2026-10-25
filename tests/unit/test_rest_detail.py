@@ -22,7 +22,7 @@ available.
 
 from __future__ import annotations
 
-import httpx
+import httpx2
 import pytest
 
 import sdmxlib as sl
@@ -50,11 +50,11 @@ def reg():
     """A registry recording the `detail=` of every request it makes."""
     details: list[str | None] = []
 
-    def _handler(request: httpx.Request) -> httpx.Response:
+    def _handler(request: httpx2.Request) -> httpx2.Response:
         details.append(request.url.params.get("detail"))
-        return httpx.Response(200, content=_BODY, headers={"content-type": "application/xml"})
+        return httpx2.Response(200, content=_BODY, headers={"content-type": "application/xml"})
 
-    with sl.RestRegistry("https://x.test/s", id="AG", transport=httpx.MockTransport(_handler)) as registry:
+    with sl.RestRegistry("https://x.test/s", id="AG", transport=httpx2.MockTransport(_handler)) as registry:
         registry.details = details  # type: ignore[attr-defined]
         yield registry
 

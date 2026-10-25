@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import httpx
+import httpx2
 import pytest
 
 import sdmxlib as sl
@@ -63,12 +63,12 @@ def _codelist(cid: str, version: str = "1.0") -> sl.Codelist:
     )
 
 
-def _serving(*codelists: tuple[str, str]) -> Callable[[httpx.Request], httpx.Response]:
-    return lambda _r: httpx.Response(200, content=_message(*codelists), headers={"content-type": "application/xml"})
+def _serving(*codelists: tuple[str, str]) -> Callable[[httpx2.Request], httpx2.Response]:
+    return lambda _r: httpx2.Response(200, content=_message(*codelists), headers={"content-type": "application/xml"})
 
 
-def _rest(store: sl.LocalRegistry, handler: Callable[[httpx.Request], httpx.Response]) -> sl.RestRegistry:
-    return sl.RestRegistry("https://x.test/s", id="X", store=store, transport=httpx.MockTransport(handler))
+def _rest(store: sl.LocalRegistry, handler: Callable[[httpx2.Request], httpx2.Response]) -> sl.RestRegistry:
+    return sl.RestRegistry("https://x.test/s", id="X", store=store, transport=httpx2.MockTransport(handler))
 
 
 # ── the two measured symptoms ─────────────────────────────────────────────
@@ -99,10 +99,10 @@ def test_an_earlier_question_does_not_leak_into_a_later_one() -> None:
     first's rows — which looked right whenever the provider happened to serve
     a superset, and wrong otherwise."""
     served = iter([_serving(("CL_ONE", "1.0")), _serving(("CL_TWO", "1.0"))])
-    handlers: list[Callable[[httpx.Request], httpx.Response]] = [next(served), next(served)]
+    handlers: list[Callable[[httpx2.Request], httpx2.Response]] = [next(served), next(served)]
     calls = {"n": 0}
 
-    def _handler(request: httpx.Request) -> httpx.Response:
+    def _handler(request: httpx2.Request) -> httpx2.Response:
         response = handlers[min(calls["n"], 1)](request)
         calls["n"] += 1
         return response
@@ -144,7 +144,7 @@ def test_a_re_fetch_replaces_rather_than_accumulates() -> None:
     responses = [_serving(("CL_OLD", "1.0")), _serving(("CL_NEW", "1.0"))]
     calls = {"n": 0}
 
-    def _handler(request: httpx.Request) -> httpx.Response:
+    def _handler(request: httpx2.Request) -> httpx2.Response:
         response = responses[min(calls["n"], 1)](request)
         calls["n"] += 1
         return response

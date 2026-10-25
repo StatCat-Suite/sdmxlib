@@ -1,6 +1,6 @@
 """Tests for FederatedRegistry — agency routing across multiple sources."""
 
-import httpx
+import httpx2
 import pytest
 
 import sdmxlib as sl
@@ -154,7 +154,7 @@ class _FailingRegistry:
 
 
 def test_an_unreachable_source_raises_and_names_itself():
-    failing = _FailingRegistry(httpx.ConnectError("network down"), id="ESTAT")
+    failing = _FailingRegistry(httpx2.ConnectError("network down"), id="ESTAT")
     fed = FederatedRegistry(routing={"ESTAT": failing})
     with pytest.raises(RegistryUnavailable, match="ESTAT"):
         fed.get(Codelist.urn_for(agency="ESTAT", id="X", version="1.0"))
@@ -164,7 +164,7 @@ def test_the_refusal_names_what_was_tried():
     """§5.8 asks for both. In a federation "which source?" is the first
     question and "reading what?" is the second, and a bare
     ``ConnectError: connection refused`` answers neither."""
-    fed = FederatedRegistry(routing={"ESTAT": _FailingRegistry(httpx.ConnectError("down"), id="ESTAT")})
+    fed = FederatedRegistry(routing={"ESTAT": _FailingRegistry(httpx2.ConnectError("down"), id="ESTAT")})
     urn = Codelist.urn_for(agency="ESTAT", id="X", version="1.0")
     with pytest.raises(RegistryUnavailable) as caught:
         fed.get(urn)
@@ -176,7 +176,7 @@ def test_the_refusal_names_what_was_tried():
 
 
 def test_the_underlying_cause_survives():
-    cause = httpx.ConnectError("network down")
+    cause = httpx2.ConnectError("network down")
     fed = FederatedRegistry(routing={"ESTAT": _FailingRegistry(cause, id="ESTAT")})
     with pytest.raises(RegistryUnavailable) as caught:
         fed.get(Codelist.urn_for(agency="ESTAT", id="X", version="1.0"))
@@ -198,7 +198,7 @@ def test_a_dead_source_is_never_reported_as_absent():
     outcome to the caller"*. They are different facts and the caller's
     response differs: retry a dead source, fall back for a missing artefact.
     """
-    fed = FederatedRegistry(routing={"ESTAT": _FailingRegistry(httpx.ConnectError("down"), id="ESTAT")})
+    fed = FederatedRegistry(routing={"ESTAT": _FailingRegistry(httpx2.ConnectError("down"), id="ESTAT")})
     urn = Codelist.urn_for(agency="ESTAT", id="X", version="1.0")
 
     # Written as a bare try rather than `pytest.raises`, because the claim is
@@ -222,7 +222,7 @@ def test_a_nested_registrys_refusal_is_not_re_wrapped():
     """A `FederatedRegistry` inside another already named its source. Wrapping
     again would bury the inner id behind the outer one — the message would
     name the router rather than the registry that actually failed."""
-    inner = FederatedRegistry(routing={"ESTAT": _FailingRegistry(httpx.ConnectError("down"), id="INNER")})
+    inner = FederatedRegistry(routing={"ESTAT": _FailingRegistry(httpx2.ConnectError("down"), id="INNER")})
     outer = FederatedRegistry(routing={"ESTAT": inner})
     with pytest.raises(RegistryUnavailable, match="INNER") as caught:
         outer.get(Codelist.urn_for(agency="ESTAT", id="X", version="1.0"))
@@ -332,12 +332,12 @@ def _rest_serving_by_detail():
     `partial=` decides its `detail`."""
     asked: list[tuple[str, str]] = []
 
-    def _handler(request: httpx.Request) -> httpx.Response:
+    def _handler(request: httpx2.Request) -> httpx2.Response:
         detail = request.url.params.get("detail", "")
         references = request.url.params.get("references", "none")
         asked.append((references, detail))
         codes = None if references == "none" else (_UNTRIMMED if detail == "full" else _TRIMMED)
-        return httpx.Response(200, content=_wire(codes), headers={"content-type": "application/xml"})
+        return httpx2.Response(200, content=_wire(codes), headers={"content-type": "application/xml"})
 
     return _handler, asked
 
@@ -351,7 +351,7 @@ def test_resolve_reaches_the_routed_rest_source():
     that was accepted and then dropped would still return a DSD.
     """
     handler, _ = _rest_serving_by_detail()
-    with sl.RestRegistry("https://x.test/s", id="ESTAT", transport=httpx.MockTransport(handler)) as estat:
+    with sl.RestRegistry("https://x.test/s", id="ESTAT", transport=httpx2.MockTransport(handler)) as estat:
         fed = FederatedRegistry(routing={"ESTAT": estat})
         shallow = fed.get(_DSD)
         assert shallow is not None
@@ -376,7 +376,7 @@ def test_partial_false_reaches_the_wire_through_a_federation():
     keyword on the way.
     """
     handler, asked = _rest_serving_by_detail()
-    with sl.RestRegistry("https://x.test/s", id="ESTAT", transport=httpx.MockTransport(handler)) as estat:
+    with sl.RestRegistry("https://x.test/s", id="ESTAT", transport=httpx2.MockTransport(handler)) as estat:
         fed = FederatedRegistry(routing={"ESTAT": estat})
         fed.get(_LATEST_DSD, resolve=True)
         assert "full" not in [detail for _, detail in asked], "partial defaults to True"
@@ -447,7 +447,7 @@ def test_a_mixed_federation_refuses_only_the_route_that_cannot_answer():
     own = _cl(agency="MY_ORG")
     with (
         LocalRegistry(":memory:") as local,
-        sl.RestRegistry("https://x.test/s", id="ESTAT", transport=httpx.MockTransport(handler)) as estat,
+        sl.RestRegistry("https://x.test/s", id="ESTAT", transport=httpx2.MockTransport(handler)) as estat,
     ):
         local.add(own)
         fed = FederatedRegistry(routing={"ESTAT": estat}, default=local)
@@ -462,7 +462,7 @@ def test_a_nested_federation_forwards_both():
     """A `FederatedRegistry` is itself a source, and now takes both keywords —
     so the composition case must not lose them at the outer layer."""
     handler, asked = _rest_serving_by_detail()
-    with sl.RestRegistry("https://x.test/s", id="ESTAT", transport=httpx.MockTransport(handler)) as estat:
+    with sl.RestRegistry("https://x.test/s", id="ESTAT", transport=httpx2.MockTransport(handler)) as estat:
         inner = FederatedRegistry(routing={"ESTAT": estat})
         outer = FederatedRegistry(routing={"ESTAT": inner})
         got = outer.get(_DSD, resolve=True, partial=False)

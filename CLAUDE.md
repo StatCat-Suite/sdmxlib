@@ -43,7 +43,7 @@ come back as Polars frames.
 
 ## Architecture rules
 
-- Baseline runtime deps: `attrs`, `httpx`, `lxml`, `duckdb`, `polars`,
+- Baseline runtime deps: `attrs`, `httpx2`, `lxml`, `duckdb`, `polars`,
   `pyarrow`, `msgspec`, `typing-extensions` (PEP 728 closed TypedDicts, until
   `typing` has them in 3.15). All required — none are optional extras. Any module may
   import them. `msgspec` is used everywhere we touch JSON (SDMX-JSON
@@ -506,7 +506,7 @@ when SDMX-TWG publishes a new schema tag.
 
 ## Dependencies
 
-- Core: attrs (model), httpx (api), polars + pyarrow (data plane)
+- Core: attrs (model), httpx2 (api), polars + pyarrow (data plane)
 - Formats: lxml (XML), msgspec (SDMX-JSON)
 - Storage: duckdb (local registry, DuckLake catalogs)
 

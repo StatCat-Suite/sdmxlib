@@ -15,7 +15,7 @@ that a reference was withdrawn is checked against one that was resolved.
 
 from typing import Any
 
-import httpx
+import httpx2
 import msgspec
 import pytest
 
@@ -160,9 +160,9 @@ def _codelist(id_: str, *, valid: bool) -> sl.Codelist:
     return sl.Codelist(id=id_, maintainer="T", name={"en": id_}, codes=[code])
 
 
-def _serving_codelists() -> httpx.MockTransport:
+def _serving_codelists() -> httpx2.MockTransport:
     body = write21(sl.StructureMessage(codelists=[_codelist("CL_OK", valid=True), _codelist("CL_BAD", valid=False)]))
-    return httpx.MockTransport(lambda _request: httpx.Response(200, content=body))
+    return httpx2.MockTransport(lambda _request: httpx2.Response(200, content=body))
 
 
 def test_a_rest_fetch_keeps_what_it_can_and_says_what_it_refused():

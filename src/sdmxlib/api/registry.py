@@ -1264,7 +1264,7 @@ class FmrRegistry(RestRegistry):
         id: str | None = None,
         store: LocalRegistry | None = None,
         # Transport options only: this constructor owns `auth` (it also takes a
-        # BearerToken, which becomes a header rather than an httpx auth object),
+        # BearerToken, which becomes a header rather than an httpx2 auth object),
         # so the forwarded shape must not carry one.
         **kwargs: Unpack[HttpxTransportOptions],
     ) -> None:

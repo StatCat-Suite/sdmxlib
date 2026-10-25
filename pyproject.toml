@@ -23,7 +23,10 @@ dependencies = [
     # unfinished result raises rather than clobbering it (`session.completed`).
     # The tests assert 2.0's profile JSON, error text and sort costs.
     "duckdb>=2.0.0",
-    "httpx>=0.28.1",
+    # httpx2: Pydantic's maintained fork of httpx 0.28.1 (GH-141), which
+    # Starlette's TestClient and sdmxlib-rest also use, so the suite installs
+    # one HTTP stack. It verifies TLS against the system trust store.
+    "httpx2>=2.16.0",
     # >=6.1: `resolve_entities` defaults to 'internal' (CVE-2026-41066), so no
     # parse expands an external entity.
     "lxml>=6.1.3",
@@ -38,8 +41,8 @@ dependencies = [
     "pyarrow>=26.0.0",
     # PEP 728's `closed=True` TypedDict, which `typing` gains only in 3.15: a
     # TypedDict unpacked into a constructor (`**read_reference_attrs(el)`) must
-    # be closed for a checker to know it holds no other key. httpx already
-    # brings it in, through anyio; declared because we now import it.
+    # be closed for a checker to know it holds no other key. Declared because
+    # we import it.
     "typing-extensions>=4.16.0",
 ]
 
@@ -136,6 +139,9 @@ dev = [
   "pytest-xdist>=3.8.0",
   "pytest-memray>=1.7.0",
   "pytest-recording>=0.13.4",
+  # 8.3 patches httpx2's transports, so the integration tier's cassettes replay
+  # sdmxlib's requests; an older vcrpy lets them reach the network.
+  "vcrpy>=8.3.0",
   "pydoclint>=0.11.1,<0.12",
   "pyrefly>=1.4.0,<1.5",
   "ruff>=0.17.1,<0.18",
@@ -156,11 +162,6 @@ dev = [
   # an undefined `Request` and an undefined `parse_c_params`. Not a runtime
   # dependency and must not become one: sdmxlib has no web framework.
   "fastapi>=0.115",
-  # Starlette's TestClient asks for this by name — on plain `httpx` it emits a
-  # StarletteDeprecationWarning, which `filterwarnings = ["error"]` turns into
-  # a failure. Taking the fix it names beats ignoring the warning it raises.
-  # Test-only, like fastapi; sdmxlib's own client stays on httpx.
-  "httpx2>=2.12",
 ]
 # Optional: third-party SDMX libraries for the competitive benchmarks
 # (tests/bench/test_compete.py, and `just bench-compete` — bench/compete/).

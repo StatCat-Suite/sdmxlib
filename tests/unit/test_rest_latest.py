@@ -22,7 +22,7 @@ exist.
 
 from __future__ import annotations
 
-import httpx
+import httpx2
 import pytest
 
 import sdmxlib as sl
@@ -60,19 +60,19 @@ def _publishing(*editions: tuple[str, str], no_store: bool = False):
     """
     served: list[str] = []
 
-    def _handler(_request: httpx.Request) -> httpx.Response:
+    def _handler(_request: httpx2.Request) -> httpx2.Response:
         version, name = editions[min(len(served), len(editions) - 1)]
         served.append(version)
         headers = {"content-type": "application/xml"}
         if no_store:
             headers["cache-control"] = "no-cache, no-store, max-age=0, must-revalidate"
-        return httpx.Response(200, content=_body(version, name), headers=headers)
+        return httpx2.Response(200, content=_body(version, name), headers=headers)
 
     return _handler, served
 
 
 def _registry(handler):
-    return sl.RestRegistry("https://x.test/s", id="AG", transport=httpx.MockTransport(handler))
+    return sl.RestRegistry("https://x.test/s", id="AG", transport=httpx2.MockTransport(handler))
 
 
 # ── the pointer is re-asked ───────────────────────────────────────────────

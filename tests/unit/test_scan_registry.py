@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Literal
 
 import duckdb
-import httpx
+import httpx2
 import polars as pl
 import pytest
 
@@ -177,16 +177,16 @@ def test_a_dataflow_this_registry_lacks_is_refused(registry: sl.LocalRegistry, t
 
 def test_a_rest_registry_scans_with_the_structure_it_fetches(tmp_path: Path) -> None:
     """One request — the dataflow with its descendants — and no data fetch: the rows are the file's."""
-    requests: list[httpx.Request] = []
+    requests: list[httpx2.Request] = []
     body = write21(
         sl.StructureMessage(dataflows=[_FLOW], data_structures=[_DSD], codelists=[_AREAS], concept_schemes=[_CONCEPTS])
     )
 
-    def serve(request: httpx.Request) -> httpx.Response:
+    def serve(request: httpx2.Request) -> httpx2.Response:
         requests.append(request)
-        return httpx.Response(200, content=body)
+        return httpx2.Response(200, content=body)
 
-    with sl.RestRegistry("https://example.test/service", id="T", transport=httpx.MockTransport(serve)) as reg:
+    with sl.RestRegistry("https://example.test/service", id="T", transport=httpx2.MockTransport(serve)) as reg:
         obs = reg.scan_csv(_write(tmp_path, _TWO))
         assert obs.structure == _DSD
         assert obs.frame().get_column("OBS_VALUE").to_list() == [1.5, 2.5]

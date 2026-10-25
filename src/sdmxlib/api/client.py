@@ -1,4 +1,4 @@
-"""SdmxClient — thin httpx wrapper around the SDMX REST API."""
+"""SdmxClient — thin httpx2 wrapper around the SDMX REST API."""
 
 import ssl
 import threading
@@ -9,7 +9,7 @@ from http.cookiejar import CookieJar
 from pathlib import Path
 from typing import Self, Unpack
 
-import httpx
+import httpx2
 from typing_extensions import TypedDict
 
 from sdmxlib.api._freshness import Freshness, read_freshness
@@ -19,27 +19,27 @@ from sdmxlib.formats.data_format import DataFormat
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.rest_api import ApiVersion
 
-# Mirrors httpx's private `_types.PrimitiveData`. Spelled out rather than
-# imported because `httpx._types` is not public API.
+# Mirrors httpx2's private `_types.PrimitiveData`. Spelled out rather than
+# imported because `httpx2._types` is not public API.
 type _PrimitiveData = str | int | float | bool | None
 
 
 class _HttpxTransportFields(TypedDict, total=False):
     """`HttpxOptions` minus ``auth`` — see there for the full rationale.
 
-    Split out because `GlobalRegistry` exposes its own richer ``auth``
+    Split out because `FmrRegistry` exposes its own richer ``auth``
     parameter (it also accepts a ``BearerToken``, which becomes a header
-    rather than an httpx auth object). A caller-facing ``auth`` keyword and an
+    rather than an httpx2 auth object). A caller-facing ``auth`` keyword and an
     ``Unpack`` shape that also carries ``auth`` are a static conflict, so that
     constructor accepts this narrower set and supplies ``auth`` itself.
     """
 
-    # `params` and `cookies` mirror httpx's `QueryParamTypes` / `CookieTypes`
+    # `params` and `cookies` mirror httpx2's `QueryParamTypes` / `CookieTypes`
     # in full. The tuple/list spellings are exact rather than widened to
-    # `Sequence[...]`: httpx's own aliases name `list` and `tuple` concretely,
+    # `Sequence[...]`: httpx2's own aliases name `list` and `tuple` concretely,
     # and a `Sequence` here would not be assignable at the forwarding call.
     params: (
-        httpx.QueryParams
+        httpx2.QueryParams
         | Mapping[str, _PrimitiveData | Sequence[_PrimitiveData]]
         | list[tuple[str, _PrimitiveData]]
         | tuple[tuple[str, _PrimitiveData], ...]
@@ -47,31 +47,31 @@ class _HttpxTransportFields(TypedDict, total=False):
         | bytes
         | None
     )
-    cookies: httpx.Cookies | CookieJar | dict[str, str] | list[tuple[str, str]] | None
+    cookies: httpx2.Cookies | CookieJar | dict[str, str] | list[tuple[str, str]] | None
     verify: ssl.SSLContext | str | bool
     cert: str | tuple[str, str] | tuple[str, str, str] | None
     trust_env: bool
     http1: bool
     http2: bool
-    proxy: httpx.Proxy | httpx.URL | str | None
-    mounts: Mapping[str, httpx.BaseTransport | None] | None
+    proxy: httpx2.Proxy | httpx2.URL | str | None
+    mounts: Mapping[str, httpx2.BaseTransport | None] | None
     follow_redirects: bool
-    limits: httpx.Limits
+    limits: httpx2.Limits
     max_redirects: int
-    transport: httpx.BaseTransport | None
+    transport: httpx2.BaseTransport | None
     default_encoding: str | Callable[[bytes], str]
 
 
 class _HttpxAuthField(TypedDict, total=False):
     """Just ``auth``, so it can be unpacked alongside `HttpxTransportOptions`.
 
-    `GlobalRegistry` supplies ``auth`` itself and forwards the rest untouched.
+    `FmrRegistry` supplies ``auth`` itself and forwards the rest untouched.
     Both halves have to be separate shapes for that to type-check: two ``**``
     unpackings in one call must have provably disjoint key sets, which they do
     not if either side is the combined `HttpxOptions`.
     """
 
-    auth: httpx.Auth | tuple[str | bytes, str | bytes] | Callable[[httpx.Request], httpx.Request] | None
+    auth: httpx2.Auth | tuple[str | bytes, str | bytes] | Callable[[httpx2.Request], httpx2.Request] | None
 
 
 class HttpxTransportOptions(_HttpxTransportFields, total=False, closed=True):
@@ -87,28 +87,28 @@ class HttpxAuthOption(_HttpxAuthField, total=False, closed=True):
 
 
 class HttpxOptions(_HttpxTransportFields, _HttpxAuthField, total=False, closed=True):
-    """The `httpx.Client` options sdmxlib forwards, as a PEP 692 kwargs shape.
+    """The `httpx2.Client` options sdmxlib forwards, as a PEP 692 kwargs shape.
 
-    This is the *supported surface*, not a mirror of httpx: `headers`,
+    This is the *supported surface*, not a mirror of httpx2: `headers`,
     `timeout` and `base_url` are deliberately absent because `SdmxClient` owns
     them — passing one used to be a runtime ``TypeError`` from a duplicate
     keyword, and is now a type error at the call site.
 
-    Every option that *is* here carries httpx's own type in full. Narrowing one
-    below httpx would reject a call httpx would have accepted, and there is no
-    SDMX-level reason to: none of these values is read by sdmxlib, and httpx
-    normalises them at construction (``params`` becomes a `httpx.QueryParams`
+    Every option that *is* here carries httpx2's own type in full. Narrowing one
+    below httpx2 would reject a call httpx2 would have accepted, and there is no
+    SDMX-level reason to: none of these values is read by sdmxlib, and httpx2
+    normalises them at construction (``params`` becomes a `httpx2.QueryParams`
     before any request is built), so all accepted spellings behave identically.
     The only legitimate narrowing is dropping an option entirely, as above.
 
     Used as ``**httpx_kwargs: Unpack[HttpxOptions]`` so the pass-through stays
     fully checked end to end. The alternative shapes both cost something the
     library should not pay: ``**kwargs: object`` is *provably* wrong at the
-    httpx boundary (every one of its parameters rejects `object`, which is why
+    httpx2 boundary (every one of its parameters rejects `object`, which is why
     a single blanket suppression was hiding 17 errors), and ``**kwargs: Any``
     is honest but silently accepts typos and wrong types at a public API.
 
-    ``event_hooks`` is omitted on purpose: httpx types its hooks as
+    ``event_hooks`` is omitted on purpose: httpx2 types its hooks as
     ``Callable[..., Any]``, which would put `Any` back into this signature for
     a rarely-used option. Add it — with a narrower callable type — if a real
     caller needs it.
@@ -176,7 +176,7 @@ def _version_parts(version: str) -> tuple[int, ...]:
     return tuple(parts)
 
 
-def _check_content_type(response: httpx.Response, fmt: DataFormat, *, url: str) -> None:
+def _check_content_type(response: httpx2.Response, fmt: DataFormat, *, url: str) -> None:
     """Refuse a response that is not the format that was asked for.
 
     Without this the format argument is decorative — which is precisely the
@@ -216,7 +216,7 @@ def _check_content_type(response: httpx.Response, fmt: DataFormat, *, url: str) 
     raise ValueError(msg)
 
 
-def _require_csv(response: httpx.Response, *, accept: str, url: str) -> None:
+def _require_csv(response: httpx2.Response, *, accept: str, url: str) -> None:
     """Refuse an observation fetch's response that is not CSV (GH-50).
 
     The data plane hands the body to DuckDB's CSV reader, which reads an
@@ -243,10 +243,10 @@ def _require_csv(response: httpx.Response, *, accept: str, url: str) -> None:
     raise ValueError(msg)
 
 
-def _raise_for_status(response: httpx.Response, *, url: str) -> None:
+def _raise_for_status(response: httpx2.Response, *, url: str) -> None:
     """`raise_for_status`, with the two size refusals named.
 
-    Everything else keeps httpx's own error — there is nothing this layer can
+    Everything else keeps httpx2's own error — there is nothing this layer can
     add to a 500 that the message does not already say.
     """
     reason = _TOO_LARGE.get(response.status_code)
@@ -280,7 +280,7 @@ NOT_MODIFIED = object()
 
 
 class SdmxClient:
-    """Thin httpx wrapper that fetches SDMX REST resources and parses them.
+    """Thin httpx2 wrapper that fetches SDMX REST resources and parses them.
 
     Handles URL construction, Accept headers, and response parsing.
 
@@ -342,7 +342,7 @@ class SdmxClient:
             default_headers = {"Accept": "application/xml"}
         if headers:
             default_headers.update(headers)
-        self._client = httpx.Client(
+        self._client = httpx2.Client(
             headers=default_headers,
             timeout=timeout,
             **httpx_kwargs,
@@ -510,12 +510,12 @@ class SdmxClient:
 
         with self._reaching(url):
             response = self._client.get(url, params=params, headers=validators or None)
-        if response.status_code == httpx.codes.NOT_FOUND:
+        if response.status_code == httpx2.codes.NOT_FOUND:
             err = f"{resource} {agency}:{id}({version}) not found at {self._endpoint}"
             raise KeyError(err)
         if cache_key is not None:
             self._remember(cache_key, response.headers)
-        if response.status_code == httpx.codes.NOT_MODIFIED:
+        if response.status_code == httpx2.codes.NOT_MODIFIED:
             # The provider confirmed the pointer has not moved. There is no
             # body to parse — that is the whole saving — so the caller reuses
             # what it resolved last time.
@@ -569,7 +569,7 @@ class SdmxClient:
         """
         try:
             yield
-        except (httpx.TransportError, OSError) as exc:
+        except (httpx2.TransportError, OSError) as exc:
             raise RegistryUnavailable(self._endpoint, exc, tried=url) from exc
 
     def _data_url(

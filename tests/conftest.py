@@ -33,12 +33,12 @@ from hypothesis import HealthCheck, settings
 # `just mutate` forks a child per mutant. On Darwin, `urllib.request.getproxies`
 # is `getproxies_environment() or getproxies_macosx_sysconf()`, and the second
 # reaches into the SystemConfiguration framework, which is **not fork-safe**.
-# Constructing an `httpx.Client` calls it, so `RestRegistry(...)` in a forked
+# Constructing an `httpx2.Client` calls it, so `RestRegistry(...)` in a forked
 # child crashes the interpreter outright:
 #
 #     Fatal Python error: Segmentation fault
 #       urllib/request.py in getproxies_macosx_sysconf
-#       httpx/_client.py  in _get_proxy_map
+#       httpx2/_client.py  in _get_proxy_map
 #       sdmxlib/api/client.py:156 in __init__
 #       tests/unit/test_rest_registry.py in test_store_writes_through...
 #

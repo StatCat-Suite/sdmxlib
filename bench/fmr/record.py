@@ -23,7 +23,7 @@ import re
 from pathlib import Path
 
 import attrs
-import httpx
+import httpx2
 from lxml import etree
 
 from bench.fmr import documents
@@ -63,7 +63,7 @@ class Fmr:
     """The few calls the recorder makes to one FMR instance."""
 
     def __init__(self, url: str, auth: tuple[str, str]) -> None:
-        self._client = httpx.Client(base_url=url, auth=auth, timeout=300)
+        self._client = httpx2.Client(base_url=url, auth=auth, timeout=300)
 
     def version(self) -> str:
         """FMR's own version, from its product info."""
@@ -72,12 +72,12 @@ class Fmr:
         assert isinstance(version, str)
         return version
 
-    def submit(self, body: bytes, action: str = "REPLACE") -> httpx.Response:
+    def submit(self, body: bytes, action: str = "REPLACE") -> httpx2.Response:
         """Post structures, as `ACTION` says."""
         headers = {"ACTION": action, "Content-Type": "application/xml"}
         return self._client.post("/ws/secure/sdmxapi/rest/", content=body, headers=headers)
 
-    def fetch(self, agency: str, accept: str) -> httpx.Response:
+    def fetch(self, agency: str, accept: str) -> httpx2.Response:
         """Everything one agency maintains, in one format."""
         return self._client.get(f"/sdmx/v2/structure/*/{agency}/*/*", headers={"Accept": accept})
 
@@ -85,7 +85,7 @@ class Fmr:
         """Delete what the agencies maintain, until nothing is left (deletes can depend on each other)."""
         for _ in range(5):
             served = [self.fetch(agency, FORMATS["ml30"][0]) for agency in agencies]
-            served = [r for r in served if r.status_code == httpx.codes.OK]
+            served = [r for r in served if r.status_code == httpx2.codes.OK]
             if not served:
                 return
             for response in served:
@@ -94,7 +94,7 @@ class Fmr:
         raise RuntimeError(msg)
 
 
-def outcome(response: httpx.Response) -> dict[str, object]:
+def outcome(response: httpx2.Response) -> dict[str, object]:
     """A submission's status, the URNs it accepted, and the first refusal's text."""
     accepted: list[str] = []
     refusals: list[str] = []
@@ -176,7 +176,7 @@ def record(url: str, auth: tuple[str, str]) -> Path:
     # Fetched with something to serve, so a refusal is about 3.1 and not an empty result.
     fmr.submit(documents.adjusted("3.0", "shape")).raise_for_status()
     served = fmr.fetch("AG", _ML31)
-    assert fmr.fetch("AG", FORMATS["ml30"][0]).status_code == httpx.codes.OK
+    assert fmr.fetch("AG", FORMATS["ml30"][0]).status_code == httpx2.codes.OK
     _dump(
         out / "fmr.json",
         {
