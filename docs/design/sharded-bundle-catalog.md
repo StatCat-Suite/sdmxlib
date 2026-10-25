@@ -475,7 +475,7 @@ Layered bundles (`requires`) remain the recorded alternative and stay rejected.
 ### 9.2 Rollout procedure for a schema bump
 
 1. Pin sdmxlib, statcatlib, DuckDB and DuckLake in one image tag for the publish job and the pods.
-2. Republish every serving bundle at the new schema into new token directories sharing `data/`, with `previous_token` and fingerprints; `check_bundle(at="publish", expect=<previous manifest>)` stops the job if any fingerprint moved, naming the binding or artefact (GH-183, not yet built).
+2. Republish every serving bundle at the new schema into new token directories sharing `data/`, with `previous_token` and fingerprints; `check_bundle(at="publish", expect=<previous publication>)` (`sdmxlib bundle check --expect`) stops the job if any fingerprint moved, naming the binding or artefact (GH-183).
 3. Publish an index holding both publications of each `bundle_id` as `serving`, with both schema versions.
 4. Roll pods; old pods see old entries, new pods new ones; the ingress routes by `bundle_id`.
 5. Publish an index with only the new entries; old ones follow §11.3.

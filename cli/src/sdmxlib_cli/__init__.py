@@ -53,15 +53,23 @@ def check(
             help="The profile: publish (hashes everything), receive (data files by size) or open (sizes only).",
         ),
     ],
+    expect: Annotated[
+        Path | None,
+        typer.Option(
+            help="An earlier publication whose content this one must have: each fingerprint that differs is a finding.",
+        ),
+    ] = None,
 ) -> None:
     """Check a published bundle against its manifest and against itself.
 
     Prints each finding and what was checked. Exits 1 if anything was found.
+    ``--expect`` guards a republish that is to change no content, such as a
+    rebuild at a new store schema.
 
     Raises:
         Exit: With status 1 when the bundle has findings, 0 otherwise.
     """
-    report = check_bundle(path, at=_PROFILES[at])
+    report = check_bundle(path, at=_PROFILES[at], expect=expect)
     for finding in report.findings:
         typer.echo(str(finding))
     found = len(report.findings)
