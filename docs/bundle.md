@@ -627,8 +627,9 @@ sdmxlib also produces bundles itself:
   over the dimension's codelist and a `HierarchyAssociation` linking it to
   the dimension.
 - `sdmxlib.testing.profile_bundle(path, flow)` reads the `Shape` of one
-  dataflow in a real bundle (counts and fan-outs, never values), so a
-  synthetic bundle can stand in for it.
+  dataflow in a real bundle (counts and fan-outs, never values), each
+  dimension's associated hierarchies included, so a synthetic bundle can
+  stand in for it.
 
 ## 8. Copying a publication
 

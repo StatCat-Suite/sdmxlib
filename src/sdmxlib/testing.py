@@ -23,6 +23,7 @@ import hashlib
 import math
 from pathlib import Path
 
+import duckdb
 from attrs import field, frozen
 
 from sdmxlib.bundle import Manifest, Producer, write_manifest
@@ -49,6 +50,9 @@ _TABLE = "synthetic"
 _FIRST_YEAR = 2000
 #: Each attribute's codelist size.
 _ATTRIBUTE_CODES = 3
+#: The largest `HierarchyShape.multi_parent` a profile reports: the field is
+#: below 1, and a real hierarchy may place codes more than twice.
+_MOST_MULTI_PARENT = 0.99
 
 
 class _Draws:
@@ -448,10 +452,18 @@ def profile_bundle(path: str | Path, flow: SdmxUrn[Dataflow]) -> Shape:
     """The `Shape` of one dataflow in a published bundle: counts and fan-outs, never values.
 
     Reads each enumerated key dimension's codelist size, hierarchy depth and
-    fan-out, the observation count, the number of distinct periods
-    (approximate on a large table), the languages names are given in, the
-    attribute count, and the fraction of codes annotated. A dimension without
-    a codelist has nothing a `Dim` can describe and is left out.
+    fan-out, and the `Hierarchy` artefacts associated with it; the observation
+    count, the number of distinct periods (approximate on a large table), the
+    languages names are given in, the attribute count, and the fraction of
+    codes annotated. A dimension without a codelist has nothing a `Dim` can
+    describe and is left out.
+
+    A hierarchy belongs to a dimension when a `HierarchyAssociation` links it
+    to that dimension, with no context or this dataflow as context. They are
+    listed by URN: SDMX gives associations no order. Each is read as a
+    `HierarchyShape`: the share of the codelist's codes it places, its depth
+    and fan-out, and the share of its non-root codes placed a second time
+    (`multi_parent`, capped below 1).
 
     Args:
         path: The bundle directory.
@@ -492,7 +504,8 @@ def profile_bundle(path: str | Path, flow: SdmxUrn[Dataflow]) -> Shape:
             if row is None or fan is None or row[0] == 0:
                 continue
             codelists.append(urn)
-            dims.append(Dim(codes=row[0], depth=row[1], fanout=(fan[0], fan[1])))
+            hierarchies = _profile_hierarchies(conn, dsd, dim.id, flow, urn, row[0])
+            dims.append(Dim(codes=row[0], depth=row[1], fanout=(fan[0], fan[1]), hierarchies=hierarchies))
         languages = conn.execute(
             "SELECT DISTINCT unnest(map_keys(name)) FROM sdmx.code WHERE list_contains(?, codelist_urn) ORDER BY 1",
             [codelists],
@@ -519,3 +532,55 @@ def profile_bundle(path: str | Path, flow: SdmxUrn[Dataflow]) -> Shape:
         attributes=len(dsd.attributes),
         annotated=float(annotated[0]) if annotated is not None else 0.0,
     )
+
+
+def _profile_hierarchies(
+    conn: duckdb.DuckDBPyConnection,
+    dsd: DataStructure,
+    dimension: str,
+    flow: SdmxUrn[Dataflow],
+    codelist: str,
+    codes: int,
+) -> tuple[HierarchyShape, ...]:
+    """The shapes of the hierarchies associated with `dimension`, by URN; one over another codelist is left out."""
+    linked = conn.execute(
+        """
+        SELECT DISTINCT linked_hierarchy_urn FROM sdmx.hierarchy_association
+        WHERE linked_object_owner_urn = ? AND linked_object_item_id = ?
+          AND (context_object_urn IS NULL OR context_object_urn = ?)
+        ORDER BY linked_hierarchy_urn
+        """,
+        [str(dsd.urn), dimension, str(flow)],
+    ).fetchall()
+    shapes: list[HierarchyShape] = []
+    for (hierarchy,) in linked:
+        row = conn.execute(
+            """
+            WITH nodes AS (SELECT code_urn, parent_path, depth FROM sdmx.hierarchy_node WHERE hierarchy_urn = $h),
+            children AS (SELECT count(*) AS n FROM nodes WHERE parent_path IS NOT NULL GROUP BY parent_path)
+            SELECT
+                (SELECT count(DISTINCT code_urn) FROM nodes
+                 WHERE code_urn IN (SELECT code_urn FROM sdmx.code WHERE codelist_urn = $cl)),
+                (SELECT count(*) FROM nodes),
+                (SELECT count(DISTINCT code_urn) FROM nodes),
+                (SELECT count(*) FROM nodes WHERE parent_path IS NOT NULL),
+                (SELECT coalesce(max(depth), 0) + 1 FROM nodes),
+                (SELECT coalesce(min(n), 2) FROM children),
+                (SELECT coalesce(max(n), 10) FROM children)
+            """,
+            {"h": hierarchy, "cl": codelist},
+        ).fetchone()
+        if row is None or row[0] == 0:
+            continue
+        placed, nodes, distinct, non_root, depth, least, most = row
+        again = nodes - distinct
+        share = again / (non_root - again) if non_root > again else 0.0
+        shapes.append(
+            HierarchyShape(
+                coverage=min(placed / codes, 1.0),
+                depth=depth,
+                fanout=(least, max(least, most)),
+                multi_parent=min(share, _MOST_MULTI_PARENT),
+            )
+        )
+    return tuple(shapes)
