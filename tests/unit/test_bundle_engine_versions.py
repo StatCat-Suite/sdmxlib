@@ -78,14 +78,79 @@ def test_a_publication_without_a_lake_records_no_ducklake_versions(tmp_path: Pat
         assert reg.get_all(sl.DataStructure)
 
 
-@pytest.mark.parametrize(("storage", "number"), [("v1.0.0", 64), ("v1.2.0", 65), ("v1.4.0", 67), ("v1.5.0", 68)])
+@pytest.mark.parametrize(
+    ("storage", "number"), [("v1.0.0", 64), ("v1.2.0", 65), ("v1.4.0", 67), ("v1.5.0", 68), ("v2.0.0", 69)]
+)
 def test_the_storage_version_is_read_from_the_file_header(tmp_path: Path, storage: str, number: int) -> None:
     path = tmp_path / "x.duckdb"
+    _write_at(path, storage)
+    assert storage_version_of(path) == number
+
+
+def test_a_file_in_duckdb_2_0s_own_format_reads_as_69_and_not_999(tmp_path: Path) -> None:
+    """DuckDB 2.0 writes 999 in the main header and the version in the database header (GH-174)."""
+    path = tmp_path / "x.duckdb"
+    duckdb.connect(str(path)).close()
+    assert _main_header(path) == 999, "discrimination: the main header must hold the 999 this test is about"
+    assert storage_version_of(path) == 69 == engine_storage_version()
+
+
+@pytest.mark.parametrize(("bumped_to", "number"), [("v1.5.0", 68), ("v2.0.0", 69)])
+def test_a_file_bumped_in_place_reads_as_the_version_it_was_bumped_to(
+    tmp_path: Path, bumped_to: str, number: int
+) -> None:
+    """A bump leaves the main header at the version the file was created with, at most 65 (GH-174)."""
+    path = tmp_path / "x.duckdb"
+    _write_at(path, "v1.2.0")
+    _write_at(path, bumped_to)
+    assert _main_header(path) == 65, "discrimination: the main header must understate the version"
+    assert storage_version_of(path) == number
+
+
+def test_a_newer_2x_format_reads_as_its_own_number(tmp_path: Path) -> None:
+    """A future DuckDB records its version past 69 in the database header; 999 stays in the main one."""
+    path = tmp_path / "x.duckdb"
+    duckdb.connect(str(path)).close()
+    _set_storage_field(path, 70)
+    assert storage_version_of(path) == 70
+
+
+def test_a_manifest_recording_999_opens_from_its_files_headers(tmp_path: Path) -> None:
+    """sdmxlib 0.73.0 recorded 999 for a DuckDB 2.0 file; the reader reads the headers instead (GH-174)."""
+    publication = publish(make_bundle(tmp_path / "b", 10))
+    _edit(publication, duckdb_storage_version=999)
+    with sl.LocalRegistry.bundle(publication) as reg:
+        assert reg.obs(FLOW.urn).count() == 10
+
+
+def test_a_manifest_recording_999_over_a_newer_file_is_refused_unopened(tmp_path: Path) -> None:
+    publication = publish(make_bundle(tmp_path / "b", 10))
+    _edit(publication, duckdb_storage_version=999, duckdb_version="9.9.9")
+    # The edited header no longer matches its checksum, so DuckDB could not open the file either.
+    _set_storage_field(publication / "meta.duckdb", 70)
+    with pytest.raises(StoreFormatError, match=r"storage version 70 \(written by DuckDB 9\.9\.9\).*reads up to 69"):
+        sl.LocalRegistry.bundle(publication)
+
+
+def _write_at(path: Path, storage: str) -> None:
+    """A table written into `path` attached at `storage`, creating or bumping the file."""
     conn = duckdb.connect()
     conn.execute(f"ATTACH '{path}' AS x (STORAGE_VERSION '{storage}')")
-    conn.execute("CREATE TABLE x.t AS SELECT 1 AS v")
+    conn.execute("CREATE OR REPLACE TABLE x.t AS SELECT 1 AS v")
+    conn.execute("CHECKPOINT x")
     conn.close()
-    assert storage_version_of(path) == number
+
+
+def _main_header(path: Path) -> int:
+    return int.from_bytes(path.read_bytes()[12:20], "little")
+
+
+def _set_storage_field(path: Path, value: int) -> None:
+    """Overwrite the storage field of `path`'s active database header, as a newer DuckDB would write it."""
+    data = bytearray(path.read_bytes())
+    active = max((4096, 8192), key=lambda start: int.from_bytes(data[start + 8 : start + 16], "little"))
+    data[active + 56 : active + 64] = value.to_bytes(8, "little")
+    path.write_bytes(bytes(data))
 
 
 def test_a_file_that_is_not_duckdb_has_no_storage_version(tmp_path: Path) -> None:

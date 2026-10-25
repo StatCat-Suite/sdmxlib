@@ -54,10 +54,26 @@ type JsonValue = Annotated[object, msgspec.Meta(extra_json_schema={"description"
 #: fails there first.
 DUCKLAKE_SPEC_VERSION = "1.1"
 
-#: Where a DuckDB file's header holds its storage version: a little-endian
-#: 64-bit integer after an 8-byte checksum and the ``DUCK`` magic.
+#: A DuckDB file's main header: an 8-byte checksum, the ``DUCK`` magic, then
+#: a little-endian 64-bit version number.
 _MAGIC = slice(8, 12)
-_STORAGE_VERSION = slice(12, 20)
+_MAIN_VERSION = slice(12, 20)
+#: The main header's version from DuckDB 2.0 on, which says to read the
+#: database header instead (`MainHeader::DEPRECATED_VERSION_NUMBER`).
+_DEPRECATED = 999
+#: DuckDB 2.0's storage version, the first a database header records directly.
+_V2_0_0 = 69
+#: Where the two database headers start. The one with the higher iteration
+#: count is active; after its 8-byte checksum come six 64-bit fields
+#: (iteration first) and then the storage field.
+_DATABASE_HEADERS = (4096, 8192)
+_ITERATION = 8
+_STORAGE_FIELD = 56
+#: Before DuckDB 2.0 a database header's storage field holds a serialization
+#: number, which names the storage version (`SetStorageVersionInDatabaseHeader`
+#: in DuckDB's `single_file_block_manager.cpp`). 0 and 64 are values old
+#: releases wrote by mistake.
+_SERIALIZATION = {0: 64, 1: 64, 2: 64, 3: 64, 64: 64, 4: 65, 5: 66, 6: 67, 7: 68}
 
 
 class ManifestError(ValueError):
@@ -72,10 +88,14 @@ class StoreFormatError(Exception):
 
 
 def storage_version_of(path: Path) -> int:
-    """The storage version a DuckDB file's header records, read without opening it as a database.
+    """The storage version a DuckDB file's headers record, read without opening it as a database.
 
     DuckDB numbers its file formats: 64 for files compatible with 1.0, 65 with
-    1.2, 67 with 1.4, 68 with 1.5. A release reads every number up to its own.
+    1.2, 66 with 1.3, 67 with 1.4, 68 with 1.5, 69 with 2.0. A release reads
+    every number up to its own. The number is read as DuckDB reads it, from
+    the active database header. The main header's own number is 999 from 2.0
+    on, and stays at the version a file was created with, at most 65, when
+    the file is later bumped to a newer one (GH-174).
 
     Args:
         path: A DuckDB database file.
@@ -84,14 +104,32 @@ def storage_version_of(path: Path) -> int:
         The number.
 
     Raises:
-        StoreFormatError: If the file is not a DuckDB database.
+        StoreFormatError: If the file is not a DuckDB database, or records a
+            storage field no DuckDB release writes.
     """
     with path.open("rb") as handle:
-        header = handle.read(_STORAGE_VERSION.stop)
-    if header[_MAGIC] != b"DUCK":
+        header = handle.read(_DATABASE_HEADERS[-1] + _STORAGE_FIELD + 8)
+    if header[_MAGIC] != b"DUCK" or len(header) < _DATABASE_HEADERS[-1] + _STORAGE_FIELD + 8:
         msg = f"{path} is not a DuckDB database file"
         raise StoreFormatError(msg)
-    return int.from_bytes(header[_STORAGE_VERSION], "little")
+
+    def field(start: int, offset: int) -> int:
+        return int.from_bytes(header[start + offset : start + offset + 8], "little")
+
+    active = max(_DATABASE_HEADERS, key=lambda start: field(start, _ITERATION))
+    stored = field(active, _STORAGE_FIELD)
+    main = int.from_bytes(header[_MAIN_VERSION], "little")
+    if main == _DEPRECATED or stored >= _V2_0_0:
+        return stored
+    if stored not in _SERIALIZATION:
+        msg = f"{path} records storage field {stored}, which no DuckDB release writes"
+        raise StoreFormatError(msg)
+    return _SERIALIZATION[stored]
+
+
+def publication_storage_version(root: Path) -> int:
+    """The newest storage version among a publication's DuckDB files, which a reader must open."""
+    return max(storage_version_of(root / name) for name in ("meta.duckdb", "lake.ducklake") if (root / name).exists())
 
 
 def engine_storage_version() -> int:
@@ -118,15 +156,22 @@ def refuse_engine_mismatch(manifest: Manifest, root: Path) -> None:
 
     Args:
         manifest: The publication's manifest.
-        root: The publication directory, for the message.
+        root: The publication directory: named in the message, and its DuckDB
+            files' headers read when the manifest records 999.
 
     Raises:
         StoreFormatError: Naming the bundle's version and the engine's.
     """
     engine = engine_storage_version()
-    if manifest.duckdb_storage_version > engine:
+    recorded = manifest.duckdb_storage_version
+    if recorded == _DEPRECATED:
+        # sdmxlib 0.73.0 recorded the main header's 999 for a file in a DuckDB
+        # 2.x format, which names no version (GH-174). The database headers
+        # do; reading them opens no database.
+        recorded = publication_storage_version(root)
+    if recorded > engine:
         msg = (
-            f"{root} holds DuckDB storage version {manifest.duckdb_storage_version} (written by DuckDB "
+            f"{root} holds DuckDB storage version {recorded} (written by DuckDB "
             f"{manifest.duckdb_version}), and DuckDB {duckdb.__version__} here reads up to {engine}, so it was "
             f"not opened. Read it with DuckDB {manifest.duckdb_version} or later."
         )
@@ -276,8 +321,10 @@ class Manifest(msgspec.Struct, frozen=True, kw_only=True):
             file is opened.
         duckdb_version: The DuckDB release that wrote the DuckDB files.
         duckdb_storage_version: The newest storage version among the DuckDB
-            files, as their headers record it (`storage_version_of`). A reader
-            refuses one newer than its engine before opening any file.
+            files, as DuckDB reads it from each file's active database header
+            (`storage_version_of`). A reader refuses one newer than its engine
+            before opening any file. sdmxlib 0.73.0 recorded 999 for a file in
+            DuckDB 2.0's format; a reader reads the headers for that.
         ducklake_version: The DuckLake extension that wrote ``lake.ducklake``,
             or None for a publication without one.
         ducklake_spec_version: The DuckLake format the catalog records, or

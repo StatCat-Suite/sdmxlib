@@ -232,10 +232,27 @@ file**, and refuse the publication, leaving its files unopened, if one fails:
 | `duckdb_storage_version` | at most the storage version the reader's DuckDB writes: DuckDB reads every older one | `StoreFormatError` |
 | `ducklake_spec_version` | `null`, or at most the DuckLake format the reader's DuckLake writes, `sdmxlib.bundle.DUCKLAKE_SPEC_VERSION`: DuckLake reads an older catalog read-only without migrating it | `StoreFormatError` |
 
-DuckDB numbers its storage versions in each file's header (bytes 12 to 19, a
-little-endian integer after the `DUCK` magic): 64 for files compatible with
-DuckDB 1.0, 65 with 1.2, 67 with 1.4, 68 with 1.5, and 999 for a file in
-DuckDB 2.0's own format.
+DuckDB numbers its storage versions: 64 for files compatible with DuckDB 1.0,
+65 with 1.2, 66 with 1.3, 67 with 1.4, 68 with 1.5, 69 with 2.0. A
+producer records the number as DuckDB reads it, from the file's active
+database header, without opening the file as a database. A DuckDB file
+starts with a main header (an 8-byte checksum, the `DUCK` magic, a
+little-endian 64-bit version) and holds two database headers, at bytes 4096
+and 8192. The active one has the higher iteration count, the 64-bit integer
+after its 8-byte checksum. Its storage field is the 64-bit integer 56 bytes
+after the checksum:
+
+- When the main header's version is 999, as DuckDB 2.0 writes it, or the
+  field is 69 or more, the field is the storage version.
+- Otherwise the field is a serialization number: 0 to 3 name 64, 4 names 65,
+  5 names 66, 6 names 67 and 7 names 68. Some old releases wrote 64 itself
+  there, which names 64.
+
+The main header's own version is not the storage version: from DuckDB 2.0
+it is 999, and a file bumped in place to a newer version keeps the version
+it was created with there, at most 65. A manifest that records 999, as
+sdmxlib 0.73.0 wrote for a file in DuckDB 2.0's format, names no version:
+a reader MUST read it from the files' database headers instead.
 
 A bundle is never migrated in place: it is rebuilt from its source with a
 matching sdmxlib.
