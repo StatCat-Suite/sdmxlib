@@ -2,6 +2,56 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.73.0] - 2026-10-25
+
+### Breaking Changes
+
+- **local**: Open published bundles read-only as BundleRegistry (GH-122)
+- **bundle**: Publish into token directories over a shared data/ (GH-123)
+- **bundle**: Record engine versions, artefacts, tiers and md5 in manifest 2.0 (GH-124)
+- **bundle**: Table, artefact, structure and bundle fingerprints in the manifest (GH-127)
+- **bundle**: Flush, rewrite, compact and expire the lake before publishing (GH-128)
+- **bundle**: Check references in SQL from the stored references and edges (GH-129)
+- **bundle**: Check profiles for publish, receive and open, with a receive stamp (GH-130)
+- **bundle**: The effective token covers the applied audience and each merge hook (GH-131)
+- **local**: Serve many bundles from one DuckDB engine (GH-133)
+- **bundle**: Publish meta.duckdb without the keys reads do not use (GH-165)
+
+### Bug Fixes
+
+- **release**: Skip deleting a release branch GitHub already deleted (GH-89)
+- **storage**: Record a concept's core representation and a component map's representation map in artefact_ref (GH-152)
+
+### Documentation
+
+- Link tracker references on the docs site (GH-85)
+- **design**: Add the sharded bundle catalog design (GH-136)
+- **design**: Correct the statcatlib status in the sharded bundle review (GH-136)
+- **design**: Sharded bundle catalog design v4 (GH-136)
+- README badges; record the no-byline and install-order conventions (GH-156)
+- Adopt the StatCat Suite site block (GH-143)
+- **design**: An overlay may change names, applied only by fold_overlays (GH-134)
+- **design**: Names stay in meta.duckdb; the labels split is shelved (GH-139)
+
+### Features
+
+- **bundle**: Canonical JSON text of model objects for fingerprints (GH-126)
+- **bundle**: Verify remote files by Content-MD5 and reserve the manifest signature (GH-125)
+- **formats**: A render version per written format, for cache keys (GH-132)
+- **bundle**: Name and description texts in overlays, applied only by fold_overlays (GH-163)
+
+### Miscellaneous
+
+- **ci**: Split the gate into ci-fast and the bundle tier; cap the tier's threads
+
+### Performance
+
+- **local**: Resolve item refs past a cached lazy codelist in one batched read (GH-150)
+
+### Testing
+
+- Stop xdist's per-test worker rename on macOS
+
 ## [0.72.1] - 2026-10-23
 
 ### Bug Fixes
