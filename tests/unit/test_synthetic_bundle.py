@@ -15,8 +15,10 @@ import polars as pl
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.bundle import check_bundle, read_manifest
+from sdmxlib.bundle import Producer, check_bundle, read_manifest, write_manifest
 from sdmxlib.testing import Dim, HierarchyShape, Shape, profile_bundle, synthetic_bundle
+from tests.support.factories import code_urn
+from tests.support.narrow import present
 
 pytestmark = pytest.mark.unit
 
@@ -252,3 +254,72 @@ def test_the_manifest_records_the_hierarchies_only_when_there_are_some(hierarchi
 def test_a_hierarchy_shape_out_of_range_is_refused(make: Callable[[], HierarchyShape], message: str) -> None:
     with pytest.raises(ValueError, match=message):
         make()
+
+
+# ── profiling hierarchies (GH-100) ────────────────────────────────────────
+
+
+def test_a_profile_reads_the_hierarchies_back(hierarchical: Path) -> None:
+    profiled = profile_bundle(hierarchical, _FLOW).dimensions[0].hierarchies
+    assert len(profiled) == len(_HIERARCHIES)
+    for got, spec in zip(profiled, _HIERARCHIES, strict=True):
+        assert got.coverage == max(1, round(spec.coverage * 500)) / 500
+        assert got.depth == spec.depth
+        assert abs(got.multi_parent - spec.multi_parent) < 0.1, "a share drawn per node"
+        if spec.multi_parent == 0 and spec.depth > 1:
+            low, high = got.fanout
+            assert 1 <= low <= high <= spec.fanout[1], "a truncated last subtree may hold fewer than the least"
+
+
+def test_a_dimension_without_hierarchies_profiles_as_before(hierarchical: Path, built: Path) -> None:
+    assert profile_bundle(hierarchical, _FLOW).dimensions[1].hierarchies == ()
+    assert all(d.hierarchies == () for d in profile_bundle(built, _FLOW).dimensions)
+
+
+def test_a_profile_builds_a_stand_in_with_the_same_hierarchies(tmp_path: Path, hierarchical: Path) -> None:
+    profile = profile_bundle(hierarchical, _FLOW)
+    twin = profile_bundle(_synthetic(tmp_path / "twin", profile, seed=11), _FLOW)
+    assert [(h.coverage, h.depth) for h in twin.dimensions[0].hierarchies] == [
+        (h.coverage, h.depth) for h in profile.dimensions[0].hierarchies
+    ]
+
+
+def test_only_this_dimensions_hierarchies_over_its_codelist_are_read(tmp_path: Path) -> None:
+    """An association in another dataflow's context, or to a hierarchy over another codelist, is not this one's."""
+    first = _synthetic(tmp_path / "b", _WITH, seed=5)
+    with sl.LocalRegistry.bundle(first) as reg:
+        dsd = present(reg.dsd(_FLOW))
+    hierarchy = sl.Ref[sl.Hierarchy].unresolved(sl.Hierarchy.urn_for(agency="SYNTHETIC", id="H_DIM_1_3", version="1.0"))
+    other_flow = sl.Dataflow.urn_for(agency="SYNTHETIC", id="DF_OTHER", version="1.0")
+    # Over dimension 1's codes, and associated with it only in another dataflow's context.
+    elsewhere = sl.Hierarchy(
+        id="H_ELSEWHERE",
+        maintainer="SYNTHETIC",
+        name={"en": "elsewhere"},
+        tree=[sl.HierarchicalCode(id="D1_000", code=code_urn("CL_DIM_1", "D1_000", agency="SYNTHETIC"))],
+    )
+    extra = [
+        elsewhere,
+        sl.HierarchyAssociation(
+            id="HA_ELSEWHERE",
+            maintainer="SYNTHETIC",
+            name={"en": "in another dataflow"},
+            linked_hierarchy=sl.Ref.to(elsewhere),
+            linked_object=dsd.ref_to("DIM_1"),
+            context_object=sl.Ref[object].unresolved(other_flow),
+        ),
+        sl.HierarchyAssociation(
+            id="HA_OTHER_CODELIST",
+            maintainer="SYNTHETIC",
+            name={"en": "over dimension 1's codes"},
+            linked_hierarchy=hierarchy,
+            linked_object=dsd.ref_to("DIM_2"),
+        ),
+    ]
+    with sl.LocalRegistry.build(first.parent, previous=first.name) as builder:
+        builder.add_all(extra)
+        second = builder.publication
+    write_manifest(second, bundle_id="synthetic-5", producer=Producer(name="tests", version="0"))
+    dims = profile_bundle(second, _FLOW).dimensions
+    assert len(dims[0].hierarchies) == len(_HIERARCHIES), "the association in another context is not counted"
+    assert dims[1].hierarchies == (), "a hierarchy over another codelist is not dimension 2's"
