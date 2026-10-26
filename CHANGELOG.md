@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.75.0] - 2026-10-26
+
+### Breaking Changes
+
+- **api**: Build the REST client on httpx2 (GH-141)
+- **bundle**: Verify remote files by any digest the store keeps; record crc32c (GH-181)
+- **bundle**: A file's digests are a map by algorithm (GH-181)
+- **bundle**: Store each binding's availability at publish; refuse coded values outside their codelist (GH-194)
+
+### Bug Fixes
+
+- **local**: Attach the lake a binding names before handing it out
+
+### Documentation
+
+- **design**: Name the sdmxlib work tier 3 and object storage need (GH-136)
+
+### Features
+
+- **local**: Open a bundle with its data files in object storage (GH-180)
+- **bundle**: List a publication's files by tier for any copy tool (GH-182)
+- **bundle**: Check a republish against an earlier publication's fingerprints (GH-183)
+- Export check_serialisable for a builder's pre-publish check (GH-193)
+- **local**: LocalRegistry.write_observations, partitioning the table partition_by names (GH-198)
+
+### Testing
+
+- **bench**: Read the published census-2021-cpt bundle in place; drop the republish
+
 ## [0.74.0] - 2026-10-25
 
 ### Bug Fixes
