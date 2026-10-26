@@ -2768,7 +2768,7 @@ class LocalRegistry(BundleRegistry):
         table: str,
         source: WriteSource,
         partition_by: tuple[str, ...] = (),
-        sort_by: tuple[str, ...] = (),
+        sorted_by: tuple[str, ...] = (),
         mode: Literal["overwrite", "append"] = "overwrite",
     ) -> None:
         """Write rows into a table of this registry's lake, ``<lake>.<schema>.<table>``.
@@ -2783,19 +2783,20 @@ class LocalRegistry(BundleRegistry):
             schema: Schema in the lake, created if absent.
             table: Table in the schema.
             source: The rows.
-            partition_by: Columns to partition the table by, in order; record
-                the SDMX ids on the binding's ``partition_layout``.
-            sort_by: Columns to store the rows sorted by, outermost first;
-                record the SDMX ids on the binding's ``sort_order``.
+            partition_by: Columns to partition the table by, in order. The
+                lake's catalog records them, and queries read them from there.
+            sorted_by: DuckLake sort expressions, outermost first, set as the
+                table's ``SORTED BY`` so DuckLake writes and keeps the rows
+                sorted (`DuckDBDataStore.write_observations`).
             mode: ``"overwrite"`` replaces the table; ``"append"`` inserts
                 into it and keeps its partitioning.
 
         Raises:
             KeyError: If this registry has no lake: one `build` starts has it,
                 `LocalRegistry(path)` has not.
-            ValueError: If a name is not an identifier, a ``partition_by`` or
-                ``sort_by`` column is not one of ``source``'s, or an append
-                names ``partition_by``.
+            ValueError: If a name is not an identifier, a ``partition_by``
+                column is not one of ``source``'s, or an append names
+                ``partition_by`` or ``sorted_by``.
         """
         store = self._data_plane()
         attached = {
@@ -2813,7 +2814,7 @@ class LocalRegistry(BundleRegistry):
             table=table,
             source=source,
             partition_by=partition_by,
-            sort_by=sort_by,
+            sorted_by=sorted_by,
             mode=mode,
             lake_alias=self.lake_alias,
         )

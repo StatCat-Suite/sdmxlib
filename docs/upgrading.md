@@ -19,6 +19,26 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## A lake table's layout is DuckLake's
+
+The store schema is **2.50**. A bundle published on 2.49 is republished with
+this sdmxlib, which refuses to open it.
+
+A table's partitioning and sort live in the lake's DuckLake catalog, which
+ships with the bundle, and nowhere on the binding
+([GH-205](https://github.com/StatCat-Suite/sdmxlib/issues/205)):
+
+- `DataflowBinding` has no `partition_layout` or `sort_order`, and
+  `DataflowBinding.from_dsd` no `partition_layout`. Delete them; a query
+  reads the partitioning from the catalog.
+- `write_observations(sort_by=...)` is `sorted_by=...`. It sets the table's
+  DuckLake `SORTED BY`, takes DuckLake sort expressions (`"GEO"`,
+  `"TIME_PERIOD DESC"`), and refuses a lake that is not DuckLake and an
+  append.
+- `write_manifest(lifecycle="final")` merges each table's files and sorts
+  nothing itself. A table sorted on `final` before now is sorted by setting
+  `sorted_by` where it is written.
+
 ## Publishing refuses coded values outside their codelist, and stores availability
 
 The store schema is **2.49**: `meta.duckdb` holds each binding's availability

@@ -130,7 +130,6 @@ def catalog():
                 dataflow=Ref[Dataflow].unresolved(_FLOW),
                 database_role="memory",
                 table_location="data.observations",
-                partition_layout=(),
                 dimension_column_map={d: d for d in _DIMS},
                 measure_column_map={"OBS_VALUE": "OBS_VALUE"},
                 attribute_column_map={},

@@ -192,7 +192,10 @@ import duckdb
 #: the values each dimension holds. It is the SDMX 3.1 ``AvailabilityConstraint``
 #: for the unfiltered query, which the IM does not make maintainable, so it is
 #: keyed by the dataflow rather than stored as an artefact.
-SCHEMA_VERSION = "2.49"
+#:
+#: 2.50 drops ``dataflow_binding``'s ``partition_layout`` and ``sort_order``
+#: (GH-205): a table's partitioning and sort are DuckLake's, in its catalog.
+SCHEMA_VERSION = "2.50"
 
 
 #: The `Representation` sum type, as columns — **defined once and interpolated
@@ -920,10 +923,6 @@ CREATE TABLE IF NOT EXISTS dataflow_binding (
     dataflow_urn                 TEXT NOT NULL,
     table_location               TEXT NOT NULL,
     database_role                TEXT NOT NULL DEFAULT 'lake',
-    partition_layout             TEXT[],
-    -- Component ids the rows were written sorted by (#330). A layout hint,
-    -- not a guarantee of read order — see `DataflowBinding.sort_order`.
-    sort_order                   TEXT[],
     dimension_column_map         MAP(VARCHAR, VARCHAR),
     measure_column_map           MAP(VARCHAR, VARCHAR),
     attribute_column_map         MAP(VARCHAR, VARCHAR),

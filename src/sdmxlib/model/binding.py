@@ -23,7 +23,6 @@ Example:
         dataflow=Ref[Dataflow].unresolved(dataflow_urn),
         database_role="lake",
         table_location="census_2021.observations",
-        partition_layout=("GEO_LEVEL",),
         dimension_column_map={"REF_AREA": "REF_AREA", "TIME_PERIOD": "TIME_PERIOD"},
         measure_column_map={"OBS_COUNT": "OBS_COUNT"},
         attribute_column_map={"GEO_NAME": "GEO_NAME"},
@@ -76,24 +75,6 @@ class DataflowBinding(ParsesUrn):
             by `database_role`. Does NOT include the database
             alias; the resolver prepends it. For raw Parquet stores
             without an ATTACH this can be a path or URI.
-        partition_layout: SDMX dimension ids the table is partitioned on,
-            in partition order. Drives partition pruning at query time.
-        sort_order: SDMX component ids the rows are stored sorted by, outermost
-            first. Empty means the layout says nothing, not that the rows are
-            unsorted.
-
-            Declared for the reason `partition_layout` is: it is a property of
-            how the data was *written*, and a reader that knows it can plan
-            differently. Iceberg carries both for the same reason.
-
-            **It does not make a query's `ORDER BY` free.** DuckDB has no
-            read-in-order optimisation, measured: sorting an already-sorted 4M
-            rows still cost 102 MB against 251 MB shuffled — 2.5x cheaper,
-            not free. And a plain scan of a sorted table comes back in order
-            only while `preserve_insertion_order` is true, which is the DuckDB
-            default and exactly the setting a caller would turn off for a large
-            result. So this is a hint for planning and pruning, never a
-            guarantee a consumer may rely on for order.
         dimension_column_map: SDMX dimension id → table column name.
             Identity mapping is the common case.
         measure_column_map: SDMX measure id → table column name.
@@ -120,8 +101,6 @@ class DataflowBinding(ParsesUrn):
     dataflow: Ref[Dataflow] = field(converter=to_ref, validator=refuse_urn_text)
     table_location: str
     database_role: str = "lake"
-    partition_layout: tuple[str, ...] = field(factory=tuple, converter=tuple)
-    sort_order: tuple[str, ...] = field(factory=tuple, converter=tuple)
     dimension_column_map: dict[str, str] = field(factory=dict)
     measure_column_map: dict[str, str] = field(factory=dict)
     attribute_column_map: dict[str, str] = field(factory=dict)
@@ -205,7 +184,6 @@ class DataflowBinding(ParsesUrn):
         dataflow: Ref[Dataflow],
         schema: str,
         table: str,
-        partition_layout: tuple[str, ...] = (),
         source_registry: str = "local",
         materialized_at: datetime | None = None,
         bound_at: datetime | None = None,
@@ -229,8 +207,6 @@ class DataflowBinding(ParsesUrn):
             dataflow: Ref to the bound dataflow.
             schema: Schema portion of ``table_location``.
             table: Table portion of ``table_location``.
-            partition_layout: SDMX dimension ids the table is partitioned
-                on, in partition order.
             source_registry: Provenance label for the structural side.
             materialized_at: When the data was last refreshed. Defaults
                 to ``datetime.now(UTC)``.
@@ -256,7 +232,6 @@ class DataflowBinding(ParsesUrn):
             dataflow=dataflow,
             database_role=database_role,
             table_location=f"{schema}.{table}",
-            partition_layout=partition_layout,
             dimension_column_map=dim_map,
             measure_column_map=measure_map,
             attribute_column_map=attr_map,

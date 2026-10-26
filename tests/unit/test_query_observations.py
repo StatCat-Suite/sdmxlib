@@ -47,8 +47,7 @@ def _binding(
     dimension_column_map: dict[str, str] | None = None,
     measure_column_map: dict[str, str] | None = None,
     attribute_column_map: dict[str, str] | None = None,
-    partition_layout: tuple[str, ...] = (),
-    sort_order: tuple[str, ...] = (),
+    database_role: str = "memory",
 ) -> DataflowBinding:
     """A binding whose SDMX ids differ from its physical columns.
 
@@ -58,7 +57,7 @@ def _binding(
     """
     return DataflowBinding(
         dataflow=Ref[Dataflow].unresolved(Dataflow.urn_for(agency="AG", id="DF", version="1.0")),
-        database_role="memory",
+        database_role=database_role,
         table_location=table_location,
         dimension_column_map=(
             {"REF_AREA": "GEO", "TIME_PERIOD": "TIME_PERIOD"} if dimension_column_map is None else dimension_column_map
@@ -69,8 +68,6 @@ def _binding(
         source_registry="local",
         materialized_at=datetime(2026, 1, 1, tzinfo=UTC),
         bound_at=datetime(2026, 1, 1, tzinfo=UTC),
-        partition_layout=partition_layout,
-        sort_order=sort_order,
         series_attributes_location=series_attributes_location,
     )
 
@@ -457,8 +454,8 @@ def test_a_stream_returns_the_same_rows_either_way(plane) -> None:
 
 
 @pytest.fixture
-def partitioned():
-    """A binding partitioned on REF_AREA, with rows deliberately out of order."""
+def partitioned(tmp_path):
+    """A DuckLake table partitioned on REF_AREA's column, with rows deliberately out of order."""
     frame = pl.DataFrame(
         {
             "GEO": ["QC", "CA", "ON", "CA", "ON"],
@@ -468,12 +465,11 @@ def partitioned():
         }
     )
     with LocalRegistry(":memory:") as registry:
-        conn = registry.connection
-        conn.register("obs_frame", frame)
-        conn.execute("CREATE SCHEMA IF NOT EXISTS data")
-        conn.execute("CREATE OR REPLACE TABLE data.obs AS SELECT * FROM obs_frame")
-        binding = _binding(partition_layout=("REF_AREA",), sort_order=("REF_AREA", "TIME_PERIOD"))
-        yield DuckDBDataStore.from_registry(registry), binding, Observations(binding)
+        store = DuckDBDataStore.from_registry(registry)
+        store.connection.execute(f"ATTACH 'ducklake:{tmp_path / 'lake.ducklake'}' AS lake (DATA_PATH '{tmp_path}/')")
+        store.write_observations(schema="data", table="obs", source=frame, partition_by=("GEO",))
+        binding = _binding(database_role="lake")
+        yield store, binding, Observations(binding, partitions=("GEO",))
 
 
 def _streamed(query, chunk_rows: int = 2) -> list[tuple[object, ...]]:
@@ -518,23 +514,30 @@ def test_an_order_the_partitions_cannot_serve_falls_back(partitioned) -> None:
     assert values == sorted(values)
 
 
-def test_an_unpartitioned_binding_takes_the_global_sort(plane) -> None:
-    """Nothing declared, nothing planned — and the answer is unchanged."""
+def test_the_store_reads_the_partitions_from_the_lake(partitioned) -> None:
+    """DuckLake's catalog says how the table is partitioned; the binding says nothing."""
+    store, binding, _ = partitioned
+    assert store.inspect().partition_columns("lake", "data.obs") == ("GEO",)
+    assert store.obs(binding).plan.root.__partitions__ == ("GEO",)
+
+
+def test_an_unpartitioned_table_takes_the_global_sort(plane) -> None:
+    """Nothing in a catalog, nothing planned — and the answer is unchanged."""
     store, binding, obs = plane
     assert Observations(binding).__partitions__ == ()
     query = store.obs(binding).order_by(obs["REF_AREA"]).select(g=obs["REF_AREA"])
     assert _streamed(query) == [tuple(row) for row in query.collect().rows()]
 
 
-def test_a_partition_id_the_binding_cannot_map_is_dropped() -> None:
-    """A wrong partition column would plan a stream returning a subset.
+def test_a_partition_column_the_binding_does_not_map_is_dropped() -> None:
+    """A partition column no component reads plans nothing.
 
-    So an id with no column is dropped rather than guessed — the layout is
-    declared by whoever wrote the data, and this root only trusts what the
-    binding can actually resolve.
+    The per-partition plan visits partitions of the columns an `ORDER BY`
+    starts with, and an order names components; a column the binding leaves
+    out can never lead one.
     """
-    binding = _binding(partition_layout=("REF_AREA", "NOT_A_COMPONENT"))
-    assert Observations(binding).__partitions__ == ("GEO",)
+    binding = _binding()
+    assert Observations(binding, partitions=("GEO", "GEO_LEVEL")).__partitions__ == ("GEO",)
 
 
 def test_an_empty_table_still_streams(partitioned) -> None:

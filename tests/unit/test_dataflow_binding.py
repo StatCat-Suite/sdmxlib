@@ -18,7 +18,6 @@ def _binding(**overrides: object) -> DataflowBinding:
     defaults: dict[str, object] = {
         "dataflow": Ref[Dataflow].unresolved(Dataflow.urn_for(agency="STATCAN", id="CENSUS_PROFILE", version="2021")),
         "table_location": "lake.census_2021.observations",
-        "partition_layout": ("GEO_LEVEL",),
         "dimension_column_map": {"REF_AREA": "REF_AREA", "TIME_PERIOD": "TIME_PERIOD"},
         "measure_column_map": {"OBS_COUNT": "OBS_COUNT"},
         "attribute_column_map": {"GEO_NAME": "GEO_NAME"},
@@ -47,12 +46,6 @@ def test_id_derived_from_dataflow():
 def test_version_derived_from_dataflow():
     b = _binding()
     assert b.version == "2021"
-
-
-def test_partition_layout_converts_iterable_to_tuple():
-    b = _binding(partition_layout=["GEO_LEVEL", "FREQ"])
-    assert b.partition_layout == ("GEO_LEVEL", "FREQ")
-    assert isinstance(b.partition_layout, tuple)
 
 
 def test_series_attributes_location_defaults_to_none():
@@ -90,7 +83,6 @@ def test_round_trip_through_local_registry():
         result = local.get(urn)
         assert result is not None
         assert result.table_location == binding.table_location
-        assert result.partition_layout == binding.partition_layout
         assert result.dimension_column_map == binding.dimension_column_map
         assert result.measure_column_map == binding.measure_column_map
         assert result.attribute_column_map == binding.attribute_column_map

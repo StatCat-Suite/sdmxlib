@@ -149,6 +149,7 @@ class Observations(Cols[ObsRow]):
         sidecar: Sidecar | None = None,
         *,
         physical: Callable[[], Mapping[str, str]] | None = None,
+        partitions: tuple[str, ...] = (),
     ) -> None:
         """Root the language at `binding`'s table.
 
@@ -170,6 +171,10 @@ class Observations(Cols[ObsRow]):
                 when a component's DSD gives it no type (#511). A callable,
                 because most components never need it and a remote table does
                 not exist until its first fetch.
+            partitions: The physical columns the table is partitioned by, in
+                order: what the store's DuckLake catalog records
+                (`SchemaInspector.partition_columns`). Empty for a table that
+                is not partitioned.
         """
         super().__init__()
         self._binding = binding
@@ -196,13 +201,11 @@ class Observations(Cols[ObsRow]):
         #: and the `ORDER BY` tiebreak work here for the same reason they work
         #: over a structural relation, rather than by special case.
         self.__key__ = tuple(binding.dimension_column_map.values())
-        #: The binding's partition columns, mapped from SDMX ids to physical
-        #: names. A partition id the binding does not map is dropped rather
-        #: than guessed: a wrong partition column would plan a stream that
-        #: silently returned a subset.
-        self.__partitions__ = tuple(
-            column for column in (self._columns.get(part) for part in binding.partition_layout) if column is not None
-        )
+        #: The table's partition columns, as the store's catalog records them.
+        #: Only a column the binding maps is kept: a stream planned on a
+        #: column no component names would have nothing to order by.
+        mapped = set(self._columns.values())
+        self.__partitions__ = tuple(column for column in partitions if column in mapped)
         #: `None`. A dataflow's table holds that dataflow's rows and no others,
         #: while the structural constraint exists because many artefact types
         #: share `sdmx.artefact`.

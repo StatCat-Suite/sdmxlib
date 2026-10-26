@@ -63,7 +63,6 @@ def _build_binding(local: LocalRegistry) -> DataflowBinding:
         dataflow=Ref[Dataflow].unresolved(_FLOW_URN),
         database_role="memory",
         table_location="data.observations",
-        partition_layout=(),
         dimension_column_map={"FREQ": "FREQ", "REF_AREA": "REF_AREA"},
         measure_column_map={"OBS_VALUE": "OBS_VALUE"},
         attribute_column_map={},

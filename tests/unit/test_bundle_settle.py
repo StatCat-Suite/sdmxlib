@@ -2,7 +2,7 @@
 
 `write_manifest` settles the lake before its inventory: inlined rows flushed
 into data files, every table holding delete files rewritten without them, a
-``final`` publication compacted to one sorted file per table, and with
+``final`` publication compacted to one file per table, and with
 ``expire_snapshots`` one snapshot left. Nothing is deleted from ``data/``.
 """
 
@@ -91,7 +91,7 @@ def test_a_revising_republish_ships_no_delete_file(tmp_path: Path) -> None:
         assert report.ok, "\n".join(map(str, report.findings))
 
 
-def test_a_final_publication_has_one_sorted_file_and_the_same_content(tmp_path: Path) -> None:
+def test_a_final_publication_has_one_file_and_the_same_content(tmp_path: Path) -> None:
     def build(name: str, *, lifecycle: Lifecycle) -> Manifest:
         started = make_bundle(tmp_path / name, 200_000)
         with sl.LocalRegistry.build(started.parent, resume=started.name) as builder:
@@ -107,10 +107,10 @@ def test_a_final_publication_has_one_sorted_file_and_the_same_content(tmp_path: 
     final = build("final", lifecycle="final")
     publication = tmp_path / "final" / final.token
     with _lake(publication) as conn:
-        ((data, delete),) = _current(conn)
+        ((_, delete),) = _current(conn)
         assert delete is None
-        geo = [g for (g,) in conn.execute("SELECT GEO FROM read_parquet(?)", [data]).fetchall()]
-    assert geo == sorted(geo), "sorted by the binding's key, GEO"
+        (sorts,) = conn.execute("SELECT count(*) FROM __ducklake_metadata_lake.ducklake_sort_info").fetchone() or (0,)
+    assert sorts == 0, "a final publication sets no sort of its own (GH-205)"
     with _lake(tmp_path / "live" / live.token) as conn:
         assert len(_current(conn)) == 4, "one file per insert while live"
     assert live.bindings[0].fingerprint == final.bindings[0].fingerprint, "compaction changes no row"

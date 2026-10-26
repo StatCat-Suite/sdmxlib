@@ -221,7 +221,6 @@ binding = sl.DataflowBinding(
     dataflow=sl.Ref[sl.Dataflow].unresolved(flow_urn),
     database_role="lake",  # the ATTACH alias of the database owning the table
     table_location="census_2021.observations",
-    partition_layout=("GEO_LEVEL",),
     dimension_column_map={"REF_AREA": "REF_AREA", "TIME_PERIOD": "TIME_PERIOD"},
     measure_column_map={"OBS_COUNT": "OBS_COUNT"},
     attribute_column_map={"GEO_NAME": "GEO_NAME"},

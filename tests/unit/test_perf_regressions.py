@@ -289,7 +289,6 @@ def test_federated_catalog_query_with_labels():
                 dataflow=Ref[Dataflow].unresolved(flow_urn),
                 database_role="memory",
                 table_location="data.observations",
-                partition_layout=(),
                 dimension_column_map={"LARGE": "LARGE"},
                 measure_column_map={"OBS_VALUE": "OBS_VALUE"},
                 attribute_column_map={},
