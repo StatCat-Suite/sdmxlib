@@ -360,6 +360,39 @@ def codes_by_id(
     return {code.id: code for _, code in _build_codes(cur, rows, annotations=annotations)}
 
 
+def partial_closure(
+    conn: duckdb.DuckDBPyConnection, codelist_urn: str, ids: Collection[str]
+) -> tuple[set[str], list[str]]:
+    """Which of *ids* the codelist holds, and those codes with their ancestors, in codelist order.
+
+    The ancestors come from the ``ancestor_ids`` the writer bakes, so this is
+    two reads whatever the codelist's size: no code is built, and no parent
+    chain is walked in Python.
+    """
+    cur = cursor_for(conn)
+    with value_match(cur, list(ids)) as (match, params):
+        found = {
+            str(code_id)
+            for (code_id,) in cur.execute(
+                f"SELECT code_id FROM sdmx.code WHERE codelist_urn = ? AND code_id {match}",
+                [codelist_urn, *params],
+            ).fetchall()
+        }
+        kept = cur.execute(
+            f"""
+            WITH asked AS (
+                SELECT code_id, ancestor_ids FROM sdmx.code WHERE codelist_urn = ? AND code_id {match}
+            )
+            SELECT code_id FROM sdmx.code
+            WHERE codelist_urn = ?
+              AND code_id IN (SELECT code_id FROM asked UNION SELECT unnest(ancestor_ids) FROM asked)
+            ORDER BY position, code_id
+            """,
+            [codelist_urn, *params, codelist_urn],
+        ).fetchall()
+    return found, [str(code_id) for (code_id,) in kept]
+
+
 def codes_by_ids(conn: duckdb.DuckDBPyConnection, wanted: Mapping[str, Collection[str]]) -> dict[str, dict[str, Code]]:
     """`codes_by_id` for several codelists at once: one code read, one annotation read, one link read (#441).
 

@@ -18,7 +18,14 @@ import duckdb
 from sdmxlib._duckdb import count
 from sdmxlib.model._tree import refuse_bare_id
 from sdmxlib.model.annotations import Annotations
-from sdmxlib.model.codelist import Code, Codelist, CodelistExtension, codelist_of_kind
+from sdmxlib.model.codelist import (
+    Code,
+    Codelist,
+    CodelistExtension,
+    codelist_of_kind,
+    partial_ids,
+    unknown_codes_message,
+)
 from sdmxlib.model.collections import ItemList
 from sdmxlib.model.hierarchy import HierarchicalCode, Hierarchy, Level
 from sdmxlib.model.istring import InternationalString
@@ -671,8 +678,42 @@ class LazyCodelist:
         """
         return checked("Codelist", self._urn, self._build)
 
+    def partial(self, code_ids: Iterable[str]) -> Codelist:
+        """Direct SQL: this codelist cut down to *code_ids* and their ancestors, flagged ``is_partial``.
+
+        The lazy half of `CodelistLike.partial`. The ancestors come from the
+        store's baked ``ancestor_ids``, and only the kept codes are built, so
+        the cost follows the result, not the codelist: a handful of the
+        579,951 geographies costs a handful of codes.
+
+        Args:
+            code_ids: The codes to keep.
+
+        Returns:
+            A `Codelist` of the kept codes, in codelist order, with
+            ``is_partial`` set and no extensions.
+
+        Raises:
+            KeyError: If an id is not a code of this codelist, naming it.
+        """
+        asked = partial_ids(code_ids)
+        found, kept = resolve.partial_closure(self._conn, self._urn, asked)
+        unknown = sorted(asked - found)
+        if unknown:
+            raise KeyError(unknown_codes_message(self._urn, unknown, extended=bool(self.extensions)))
+        built = resolve.codes_by_id(self._conn, self._urn, kept)
+        return checked(
+            "Codelist",
+            self._urn,
+            lambda: self._with([built[code_id] for code_id in kept], is_partial=True, extensions=()),
+        )
+
     def _build(self) -> Codelist:
         codes = _artefacts(self.codes.collect(), Code)
+        return self._with(codes, is_partial=self._is_partial, extensions=self.extensions)
+
+    def _with(self, codes: list[Code], *, is_partial: bool, extensions: Sequence[CodelistExtension]) -> Codelist:
+        """A `Codelist` carrying every field this proxy holds, with *codes*."""
         return codelist_of_kind(
             *resolve.geo_kind(self._conn, self._urn),
             id=self._id,
@@ -688,11 +729,11 @@ class LazyCodelist:
             is_partial_language=self._is_partial_language,
             service_url=self._service_url,
             structure_url=self._structure_url,
-            is_partial=self._is_partial,
+            is_partial=is_partial,
             annotations=self.annotations,
             links=self.links,
             codes=ItemList(codes),
-            extensions=self.extensions,
+            extensions=tuple(extensions),
         )
 
     def __repr__(self) -> str:
