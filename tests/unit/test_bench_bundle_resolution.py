@@ -1,8 +1,8 @@
 """How the bundle benchmarks find a bundle — and refuse to skip quietly (#379).
 
 These are unit tests, not benchmarks, and they run in `just ci` on purpose.
-The tier they guard cannot run here (it needs a 2.6 GB bundle nobody has in
-CI), but its *resolution* is exactly the part that failed silently before:
+The tier they guard cannot run here (it needs a 2.0 GB published bundle
+nobody has in CI), but its *resolution* is exactly the part that failed silently before:
 `test_data_writers._census_geo_path` fell back to a workspace that no longer
 existed and reported it as `SKIPPED [3]` for months.
 
@@ -11,8 +11,6 @@ where it will actually be exercised. Without this file the tier's own skip
 logic would only ever be checked by a machine that has the bundle — that is,
 never on the path where it matters.
 """
-
-from pathlib import Path
 
 import pytest
 
@@ -109,11 +107,15 @@ def test_counting_restores_on_exception():
     assert Thing.__init__ is original
 
 
-def test_required_file_is_the_structural_store():
-    """The tier reads no observations, so it must not demand the lake.
+def test_a_bundle_is_a_publication_whose_lake_is_optional():
+    """The tier reads a published bundle, and its structural half reads no observations.
 
-    Requiring `lake.ducklake` here would refuse a structural-only bundle for
-    benchmarks that never touch the data plane.
+    The manifest is what makes a directory a published bundle; the store is
+    what the structural benchmarks read. Requiring `lake.ducklake` of every
+    bundle would refuse a structural-only one for benchmarks that never touch
+    the data plane, so only the observation tier asks for it.
     """
-    assert _bundle.REQUIRED == "meta.duckdb"
-    assert Path(_bundle.REQUIRED).suffix == ".duckdb"
+    assert _bundle.REQUIRED == "bundle.manifest.json"
+    assert _bundle.STORE == "meta.duckdb"
+    assert "lake.ducklake" in _bundle.DATA_PLANE_FILES
+    assert "lake.ducklake" not in (_bundle.REQUIRED, _bundle.STORE)

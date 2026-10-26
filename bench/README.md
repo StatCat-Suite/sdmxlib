@@ -125,13 +125,13 @@ written (#377, since fixed). So a second tier reads one.
 | `test_bundle_writes.py` | The write path (#140) |
 
 ```bash
-export SDMXLIB_BENCH_BUNDLE=/path/to/bundle   # dir holding meta.duckdb
+export SDMXLIB_BENCH_BUNDLE=/path/to/bundle/<token>   # a publication: holds bundle.manifest.json
 just bench-bundle
 ```
 
 Marked `bundle` as well as `bench`, and **deselected from `just bench`**
 (`-m "bench and not bundle"`). That split is the point: the bundle is
-2.6 GB and cannot be in the repo, so leaving it in would make
+2.0 GB and cannot be in the repo, so leaving it in would make
 `just bench` mean one thing on the machine that has the bundle and
 another everywhere else — and `bench/baselines/NAME/wall.json` would
 hold a different set of rows depending on who saved it.

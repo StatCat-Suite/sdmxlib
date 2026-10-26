@@ -22,7 +22,6 @@ position-table init that the synthetic sizes wouldn't show.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import polars as pl
@@ -32,6 +31,8 @@ import pytest
 from sdmxlib.formats.sdmx_csv.writer import write_sdmx_csv
 from sdmxlib.formats.sdmx_json.data_v1 import write_sdmx_json_data as write_v1
 from sdmxlib.formats.sdmx_json.data_v2 import write_sdmx_json_data as write_v2
+from sdmxlib.local import LocalRegistry
+from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.codelist import Code, Codelist
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import AttachmentLevel, Attribute, DataStructure, Dimension, Measure, TimeDimension
@@ -212,49 +213,27 @@ def test_writer_throughput(
 # ── optional: the census geography codelist ───────────────────────────────────
 
 
-def _census_geo_path() -> Path | None:
-    """Resolve the census bundle's geography_attributes parquet path.
-
-    Resolution is `_bundle.bundle_path()` — the same one the read tier uses
-    (#379) — plus the parquet within the bundle, found by its table name
-    (`parquet/*/geography_attributes`) rather than a bundle-specific directory.
-    ``$SDMXLIB_BENCH_GEOGRAPHY`` still names the parquet directly, for anyone who
-    has that one file without the rest of the bundle.
-
-    This used to carry its own resolution, whose fallback was a sibling
-    workspace that did not exist then. It resolved to ``None`` and skipped,
-    quietly, for months. Sharing the
-    resolution means there is one path to keep correct rather than two, and the
-    shared one raises when it is pointed somewhere wrong.
-    """
-    import os
-
-    env_path = os.environ.get("SDMXLIB_BENCH_GEOGRAPHY")
-    if env_path:
-        p = Path(env_path)
-        return p if p.exists() else None
-    bundle = _bundle.bundle_path()
-    if bundle is None:
-        return None
-    matches = sorted((bundle / "parquet").glob("*/geography_attributes/*.parquet"))
-    return matches[0] if matches else None
-
-
 def _load_census_geo_codelist() -> Codelist | None:
-    """Materialise the 2021 Census geography codelist (~78k entries).
+    """Every geography the bundle publishes observations for (~78k), named, as a codelist.
 
-    Returns None if no bundle is configured — the benchmark then skips. Codes carry the official ``GEO_NAME`` label
-    so the writer's lang-aware name lookup also gets exercised.
+    Read from the bundle `_bundle.bundle_path()` names — the same resolution the
+    read tier uses (#379) — through its binding: the series-attribute sidecar
+    holds one row per geography, with its name as ``GEO_DESC``. Returns None,
+    and the benchmark skips, when no bundle is configured. The codes carry the
+    name so the writer's language-aware name lookup is exercised too.
     """
-    path = _census_geo_path()
+    path = _bundle.bundle_path()
     if path is None:
         return None
-    df = pl.read_parquet(path).select(["REF_AREA", "GEO_NAME"]).unique()
-    codes = [
-        Code(id=row["REF_AREA"], name=InternationalString(en=row["GEO_NAME"]))
-        for row in df.iter_rows(named=True)
-        if row["REF_AREA"]
-    ]
+    with LocalRegistry.bundle(path) as registry:
+        binding = registry.locate(next(iter(registry.get_all(DataflowBinding))))
+        if binding.series_attributes_location is None:
+            return None
+        rows = registry.connection.execute(
+            "SELECT REF_AREA, GEO_DESC FROM query_table($sidecar)",
+            {"sidecar": f"{binding.database_role}.{binding.series_attributes_location}"},
+        ).fetchall()
+    codes = [Code(id=str(area), name=InternationalString(en=str(name))) for area, name in rows if area]
     return Codelist(
         id="CL_CENSUS_GEO",
         maintainer="STATCAN",
