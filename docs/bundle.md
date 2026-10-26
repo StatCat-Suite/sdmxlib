@@ -76,7 +76,7 @@ two spaces, but a reader MUST NOT depend on the layout.
 | `created_at` | required | When the manifest was written: an RFC 3339 timestamp in UTC. |
 | `producer` | required | What built the bundle: a `Producer`. |
 | `sdmxlib_version` | required | The version of sdmxlib that wrote the manifest. |
-| `schema_version` | required | The store schema of `meta.duckdb`, such as `"2.49"` (§4). |
+| `schema_version` | required | The store schema of `meta.duckdb`, such as `"2.51"` (§4). |
 | `duckdb_version` | required | The DuckDB release that wrote the DuckDB files, such as `"2.0.0"`. |
 | `duckdb_storage_version` | required | The newest storage version among `meta.duckdb` and `lake.ducklake`, the integer each file's header records (§4). |
 | `ducklake_version` | required | The DuckLake extension that wrote `lake.ducklake`, or `null` for a publication without one. |

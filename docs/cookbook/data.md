@@ -238,9 +238,16 @@ obs.filter(...).order_by(obs.col("TIME_PERIOD")).stream()   # not bounded
 unordered stream really is unordered — do not rely on the row order of a
 streamed result, even when it looks stable.
 
-If you need both order and bounded memory, sort at the **sink** rather than in
-the query: write the stream to Parquet and sort on read, or partition the query
-and order within each partition.
+One order is bounded: one that begins with the table's partition columns, in
+their order and ascending. `stream()` then reads one partition at a time,
+sorted within it, and the rows come out as one global sort would give them,
+because partitions are disjoint on those columns. Peak memory follows the
+largest partition instead of the table: 39.7 MB against 126 MB over 4M rows.
+The partition columns are the ones the lake's DuckLake catalog records, which
+the producer set with `write_observations(partition_by=...)`.
+
+For any other order with bounded memory, sort at the **sink** rather than in
+the query: write the stream to Parquet and sort on read.
 
 ### `frame()` can drop the tiebreak too — `order_by(None)`
 
