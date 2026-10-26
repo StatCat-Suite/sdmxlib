@@ -195,7 +195,10 @@ import duckdb
 #:
 #: 2.50 drops ``dataflow_binding``'s ``partition_layout`` and ``sort_order``
 #: (GH-205): a table's partitioning and sort are DuckLake's, in its catalog.
-SCHEMA_VERSION = "2.50"
+#:
+#: 2.51 holds a reported attribute's place in its set (GH-197):
+#: ``metadata_value.ordinal``, the document order the tree is rebuilt in.
+SCHEMA_VERSION = "2.51"
 
 
 #: The `Representation` sum type, as columns — **defined once and interpolated
@@ -966,11 +969,14 @@ CREATE TABLE IF NOT EXISTS metadata_value (
     -- attribute_path is the dotted hierarchical attribute id (e.g.
     -- "QUALITY.COVERAGE"); sibling_index disambiguates repeated
     -- ReportedAttributes with the same id (max_occurs > 1 in the MSD).
+    -- ordinal is the row's position in the set, in document order (a
+    -- pre-order walk), which the tree is rebuilt in.
     -- value_kind is 'scalar' | 'i18n' (XHTML is i18n with HTML markup,
     -- distinguished only by the MSD's data type at the application layer).
     set_urn         TEXT NOT NULL,
     attribute_path  TEXT NOT NULL,
     sibling_index   INT NOT NULL,
+    ordinal         INT NOT NULL,
     value_kind      TEXT,
     scalar          TEXT,
     i18n            MAP(VARCHAR, VARCHAR),

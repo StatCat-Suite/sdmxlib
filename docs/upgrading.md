@@ -19,10 +19,26 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
-## A lake table's layout is DuckLake's
+## A MetadataSet keeps its attributes' order
 
-The store schema is **2.50**. A bundle published on 2.49 is republished with
-this sdmxlib, which refuses to open it.
+The store schema is **2.51**. A bundle published on an earlier schema is
+republished with this sdmxlib, which refuses to open it.
+
+A stored MetadataSet reads back with its reported attributes in the order they
+were written, so it equals the set that was added. It read them back sorted by
+path, with `[10]` before `[2]`
+([GH-197](https://github.com/StatCat-Suite/sdmxlib/issues/197)). Each
+`metadata_value` row carries its `ordinal`, its place in document order:
+
+- `metadata_report(set_urn)` returns its sections in document order, where it
+  sorted them by path.
+- `q.reported_attribute.ordinal` orders a query in document order;
+  `reported_attributes()` still orders by path unless asked.
+- A set's fingerprint is over its attributes in order, so a set read from a
+  bundle published before this fingerprints differently from the same set
+  read now.
+
+## A lake table's layout is DuckLake's
 
 A table's partitioning and sort live in the lake's DuckLake catalog, which
 ships with the bundle, and nowhere on the binding

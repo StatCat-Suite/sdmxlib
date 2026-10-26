@@ -140,7 +140,7 @@ def test_underscore_in_a_path_is_not_a_wildcard(catalogue) -> None:
     reg, _, _ = catalogue
     set_urn = str(artefact_urn(reg.get_all(MetadataSet)[0]))
     reg.connection.execute(
-        "INSERT INTO sdmx.metadata_value VALUES (?, 'QUALITY_X', 0, 'scalar', 'literal underscore', NULL)",
+        "INSERT INTO sdmx.metadata_value VALUES (?, 'QUALITY_X', 0, 100, 'scalar', 'literal underscore', NULL)",
         [set_urn],
     )
     assert reg.reported_attributes().filter(q.reported_attribute.attribute_path.str.starts_with("QUALITY_")).ids() == [
@@ -183,7 +183,7 @@ def test_repeated_attributes_are_sibling_rows(catalogue) -> None:
     reg, _, _ = catalogue
     set_urn = str(artefact_urn(reg.get_all(MetadataSet)[0]))
     reg.connection.execute(
-        "INSERT INTO sdmx.metadata_value VALUES (?, 'CONTACT', 1, 'scalar', 'second@example.org', NULL)",
+        "INSERT INTO sdmx.metadata_value VALUES (?, 'CONTACT', 1, 100, 'scalar', 'second@example.org', NULL)",
         [set_urn],
     )
     contacts = reg.reported_attributes().filter(q.reported_attribute.attribute_path == "CONTACT")._key_rows()
@@ -205,11 +205,14 @@ def test_collect_equals_metadata_report(catalogue) -> None:
 
     `collect` goes through `LocalRegistry.metadata_report` rather than re-deriving
     the MSD join, so a divergence here means the query is filtering or ordering
-    differently, not that the typing is wrong.
+    differently, not that the typing is wrong. The report is in document order,
+    which `ordinal` is (GH-197).
     """
     reg, _, _ = catalogue
     set_urn = artefact_urn(reg.get_all(MetadataSet)[0])
-    assert reg.reported_attributes().collect() == reg.metadata_report(set_urn)
+    in_document_order = reg.reported_attributes().order_by(q.reported_attribute.ordinal).collect()
+    assert in_document_order == reg.metadata_report(set_urn)
+    assert in_document_order != reg.reported_attributes().collect(), "path order differs, so the order is tested"
 
 
 def test_collect_follows_the_query_order_not_the_report_order(catalogue) -> None:

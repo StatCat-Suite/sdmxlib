@@ -1848,7 +1848,8 @@ class BundleRegistry(SessionFactory):
         Returns one ``MetadataSection`` per ``metadata_value`` row,
         each carrying the leaf attribute's declared ``text_type`` (e.g.
         ``"String"`` / ``"XHTML"``) and ``is_presentational`` flag joined
-        from the MSD. Sections are ordered by ``(path, sibling_index)``.
+        from the MSD. Sections come in the set's document order, the order the
+        attributes were written.
 
         This is the sectioned input a chunker / search indexer consumes —
         it turns the reported tree + schema into a flat, typed list without
@@ -1866,7 +1867,7 @@ class BundleRegistry(SessionFactory):
             SELECT attribute_path, sibling_index, value_kind, scalar, i18n
             FROM metadata_value
             WHERE set_urn = ?
-            ORDER BY attribute_path, sibling_index
+            ORDER BY ordinal
             """,
             [str(set_urn)],
         ).fetchall()
