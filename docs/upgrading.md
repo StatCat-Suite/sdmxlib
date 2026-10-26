@@ -58,7 +58,9 @@ entry.sha256, entry.md5
 
 ```python
 # now
-entry = sl.bundle.BundleFile(
+from sdmxlib.bundle import BundleFile
+
+entry = BundleFile(
     path="meta.duckdb",
     size=3,
     digests={"sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
@@ -79,7 +81,9 @@ RemoteFile(size, content_md5)
 
 ```python
 # now
-remote = sl.bundle.RemoteFile(1024, {"md5": "rL0Y20zC+Fzt72VPzMSk2A=="})
+from sdmxlib.bundle import RemoteFile
+
+remote = RemoteFile(1024, {"md5": "rL0Y20zC+Fzt72VPzMSk2A=="})
 ```
 
 An Azure lookup reports `{"md5": <Content-MD5>}`; an S3 one the checksums

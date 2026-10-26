@@ -2892,6 +2892,16 @@ def drop_artefact(conn: duckdb.DuckDBPyConnection, urn: str) -> bool:
     return result is not None
 
 
+def clear_availability(conn: duckdb.DuckDBPyConnection) -> None:
+    """Delete every stored availability.
+
+    A publication started from another (`LocalRegistry.build(previous=)`)
+    holds that one's rows until this runs.
+    """
+    conn.execute("DELETE FROM availability_value")
+    conn.execute("DELETE FROM availability")
+
+
 def put_availability(conn: duckdb.DuckDBPyConnection, dataflow_urn: str, availability: AvailabilityConstraint) -> None:
     """Store `availability`, the answer to `dataflow_urn`'s unfiltered availability query, in place of any earlier.
 

@@ -44,7 +44,7 @@ from sdmxlib.storage._manifest import (
 )
 from sdmxlib.storage._trim import compact_for_publication
 from sdmxlib.storage.schema import get_schema_version, meta_value
-from sdmxlib.storage.writers import put_availability
+from sdmxlib.storage.writers import clear_availability, put_availability
 
 #: Every data file and delete file the lake catalog references from any snapshot
 #: it keeps, with the schema and table paths each one's path is relative to.
@@ -278,9 +278,11 @@ def settle_lake(
       (``delete_threshold => 0``: DuckLake's default skips a table whose
       deleted rows are few, which is exactly a daily delta), so no delete file
       ships and every publication reads its rows from data files alone.
-    - A ``final`` publication is compacted to one data file per table, each
-      bound table sorted by its binding's ``sort_order``, else its dimension
-      columns in key order, unless the producer set a sort already.
+    - A ``final`` publication marks each bound table sorted by its binding's
+      ``sort_order``, else its dimension columns in key order, unless the
+      producer set a sort already, and merges each table's files. DuckLake
+      sorts only the files it rewrites: a table already in one file, or one
+      per partition, keeps the order it was written in (GH-201).
     - With `expire_snapshots`, every snapshot but the current one is expired,
       so the catalog and the manifest hold only current files.
 
@@ -417,7 +419,10 @@ def write_manifest(
             prefix matches is tier 1 for ``meta.duckdb`` and ``lake.ducklake``
             and 2 otherwise; a data file is always 3.
         lifecycle: ``final`` for a publication whose observations will not be
-            revised, which compacts each table to one sorted data file;
+            revised, which marks each bound table sorted by its binding's key
+            and merges its files; DuckLake sorts only files it rewrites, so a
+            table already in one file keeps its written order
+            ([GH-201](https://github.com/StatCat-Suite/sdmxlib/issues/201)).
             ``live`` otherwise.
         expire_snapshots: Whether to expire every snapshot but the current
             one, so the manifest lists only the files it reads. Time travel
@@ -462,6 +467,9 @@ def write_manifest(
             referenced = lake_files(reg.connection, data)
         ducklake, spec = _ducklake_versions(reg.connection) if lake else (None, None)
         counts = binding_counts(reg, artefacts)
+        # A publication extending another starts from its store, availability
+        # included; it holds its own bindings' availability, or none (GH-203).
+        clear_availability(reg.connection)
         if lake:
             _survey_bindings(root, reg, counts, store=availability)
     # Closing the last connection checkpoints a database, so a log left by a
