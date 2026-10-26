@@ -239,8 +239,9 @@ constructor when only arguments differ. So `FmrRegistry` stays a subclass of
 `add()` and `sql()` disappear, and `LocalRegistry.bundle(path)` returns a
 `BundleRegistry`, which `LocalRegistry` extends with the writes. Until then a
 bundle differed from a store only in wiring, and `bundle(path)` returned a
-`LocalRegistry`. (`write_observations()` was on this list;
-it turned out to belong to neither registry but to `DuckDBDataStore` — §5.17.)
+`LocalRegistry`. (`write_observations()` was on this list. It is a
+`LocalRegistry` method, the way a builder writes a publication's rows, and
+refuses on a registry with no lake: GH-198, §5.17.)
 
 **`RestRegistry` contains a `LocalRegistry`, and does not inherit one.** It
 already does — `_query_store()` — and inheriting would drag in `add()` and
@@ -365,9 +366,8 @@ rule column says so.
 | `open` / `transaction` / `connection` / `uri` | — | — | Y | | | lifecycle of a database of record |
 | `close` | — | — | Y | Y | | lifecycle |
 
-`write_observations` was a row here (L, write). It is on `DuckDBDataStore`
-(`sl.DuckDBDataStore.from_registry(reg).write_observations(…)`), not on any
-registry — §5.17.
+`write_observations` is `LocalRegistry`'s (L, write): it writes into the
+registry's lake and refuses without one (GH-198, §5.17).
 
 ### 3.2 The tail, and its disposition
 
@@ -533,7 +533,7 @@ the fetch planned from the dimension predicates. **Risk:** §5.2.
 ### 4.4 Builder — fetch structures remotely, write rows locally
 
 ```python
-bundle = sl.LocalRegistry(out_dir / "meta.duckdb")
+bundle = sl.LocalRegistry.build(out_dir)  # a publication: a store and a lake
 with sl.RestRegistry(FMR, store=bundle) as fmr:
     dsd = fmr.get(
         sl.DataStructure.urn_for(agency="STATCAN", id="CENSUS_DSD", version="2021"),
@@ -541,15 +541,14 @@ with sl.RestRegistry(FMR, store=bundle) as fmr:
     )
     # resolved into `bundle` on the way past — the chain filled its cache
 
-store = sl.DuckDBDataStore.from_registry(bundle, attach={"lake": lake_attach})
-store.write_observations(schema="data", table="obs", source=frame, sort_by=("GEO", "TIME_PERIOD"))
+bundle.write_observations(schema="data", table="obs", source=frame, sort_by=("GEO", "TIME_PERIOD"))
 bundle.add(sl.DataflowBinding.from_dsd(dsd, dataflow=flow_ref, schema="data", table="obs"))
 ```
 
 "Fetch remotely, land locally" is a chain whose cache is the artefact being
 built. Confirms the type split too: `add` is absent on
-`RestRegistry`, and `write_observations` is on the data store rather than any
-registry. `LocalRegistry.bundle(path)` *opens* a published bundle, read-only;
+`RestRegistry`, and `write_observations` is on `LocalRegistry`, whose
+publication has a lake. `LocalRegistry.bundle(path)` *opens* a published bundle, read-only;
 its builder writes it through `LocalRegistry.build(path)`.
 
 ### 4.5 Browse, which stays separate
@@ -954,8 +953,9 @@ to be a type after all.
 
 Measured, none of it holds:
 
-* **`write_observations` is not on `LocalRegistry`.** It belongs to the data
-  store. There was nothing there to raise.
+* **`write_observations` needs a lake, and says so.** It is on
+  `LocalRegistry` (GH-198); on a registry without a lake it refuses with a
+  `KeyError` naming `LocalRegistry.build`, rather than DuckDB's catalog error.
 * **`browse()` answers on a plain registry**, with an empty list.
 * **`obs()` answers on a plain registry** whose binding points at a
   local table — which `test_registry_data_plane.py` has relied on since §6

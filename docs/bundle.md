@@ -219,7 +219,10 @@ census = sl.LocalRegistry.bundle(census_path, engine=engine)
 trade = sl.LocalRegistry.bundle(trade_path, engine=engine)
 ```
 
-Each publication attaches under its own prefix, `<bundle_id>__<token>`: its
+Each publication attaches under its own prefix, `<bundle_id>__<token>`, with
+every character of the bundle id outside `[A-Za-z0-9_]` made `_` and the
+token's hyphens dropped (`census-2021-cpt` and `01a178b7-b023-…` give
+`census_2021_cpt__01a178b7b023…`): its
 `meta.duckdb` as `<prefix>__meta`, and its lake, when observations are first
 read, as `<prefix>__lake`. A registry's handles read only its own catalog, so
 a query on one bundle never reads another. A binding keeps the role it was
@@ -320,6 +323,8 @@ each with the row count of its table.
 A column a codelist or value list enumerates MUST hold codes of it, or
 `NULL`. `NULL` is how a value is absent: an empty string, or any other
 stand-in for "no value", is not a code and refuses the publication.
+`write_manifest` checks a column whose component's enumeration the store
+holds; one whose DSD or enumeration the store does not hold is not checked.
 
 ### Availability
 
@@ -540,21 +545,21 @@ if there is any. `at` names the profile, which is where the check runs:
 - `open`, each time a server opens it: sizes only, and no check that reads
   the store.
 
-Each profile runs these checks in order and reports every finding, not only
-the first:
+Each profile runs these checks in the order listed and reports every finding,
+not only the first:
 
 | check | passes when | publish | receive | open | on failure |
 | --- | --- | --- | --- | --- | --- |
 | `manifest` | the manifest parses, in a format this reader reads (§2) | yes | yes | yes | the run stops |
-| `files`, the publication's | every listed file is present at its `size` with its `sha256` and `md5`, and no unlisted file is in the publication directory | yes | yes | size only | continues |
-| `files`, `data/`'s | every listed entry is present at its `size` with its `sha256` and `md5`; `data/` is shared, so only listed entries are checked | yes | size, unless `lookup=` | no | continues |
-| `remote` | every `data/` entry is in the object store at its `size`, with every digest the store and the manifest both hold equal (see Remote files) | no | with `lookup=` | no | continues |
+| `files`, the publication's | every listed file is present at its `size` with every digest the manifest records, and no unlisted file is in the publication directory | yes | yes | size only | continues |
+| `files`, `data/`'s | every listed entry is present at its `size` with every digest the manifest records; `data/` is shared, so only listed entries are checked | yes | size, unless `lookup=` or `remote=` | no | continues |
+| `expect` | every artefact, binding and content fingerprint the manifest records equals an earlier manifest's, read from the two manifests (§9); for a republish that is to change no content, such as a rebuild at a new store schema | with `expect=` | with `expect=` | with `expect=` | continues |
+| `remote` | every `data/` entry is in the object store at its `size`, with every digest the store and the manifest both hold equal (see Remote files); with `remote=` and no `lookup=`, every `data/` entry at its `size` in the store | no | with `lookup=` or `remote=` | no | continues |
 | `manifest` | the manifest's `schema_version`, `duckdb_storage_version` and `ducklake_spec_version` pass the reader's checks, so the files can be opened (§4) | yes | yes | yes | the run stops |
 | `lake` | every file the current snapshot references exists at the size DuckLake recorded and none is a delete file, and every file the catalog references from any snapshot it keeps is in the manifest; runs only when `lake.ducklake` exists | yes | yes | no | continues |
 | `bindings` | the store's bindings are the manifest's, and each table holds the count the manifest gives | yes | yes | no | continues |
 | `references` | every reference in the store names an artefact or an item in the store | yes | yes | no | continues |
 | `fingerprints` | every artefact, binding and content fingerprint, recomputed, is the manifest's (§9) | yes | with `fingerprints=True` | no | continues |
-| `expect` | every artefact, binding and content fingerprint the manifest records equals an earlier manifest's, read from the two manifests (§9); for a republish that is to change no content, such as a rebuild at a new store schema | with `expect=` | with `expect=` | with `expect=` | continues |
 | `availability` | every coded column holds codes of its enumeration or `NULL`, and the stored availability is the data's: each dimension's values and the observation count, rescanned (§4) | yes | no | no | continues |
 
 A store file that cannot be read, a damaged `meta.duckdb` or `lake.ducklake`,
@@ -566,7 +571,7 @@ store.
 
 ### The receive stamp
 
-`check_on_open(path, stamps=dir, lookup=None, extensions=None)` is what a
+`check_on_open(path, stamps=dir, remote=None, engine=None, lookup=None, extensions=None)` is what a
 server runs when it opens a publication. It runs `receive` once per token and
 manifest, and `open` after that:
 
@@ -641,7 +646,9 @@ every check.
    observations into the lake (`write_observations(schema=..., table=...,
    source=..., partition_by=..., sort_by=...)`), adding a `DataflowBinding`
    for each dataflow, its `partition_layout` and `sort_order` naming the same
-   columns by their SDMX ids. A builder
+   columns by their SDMX ids. `write_observations` replaces the table by
+   default; `mode="append"` inserts into it and keeps its partitioning, so it
+   refuses a `partition_by`. A builder
    that writes in more than one step reopens the publication with
    `build(bundle, resume=token)`. Close every connection that wrote: DuckDB
    checkpoints a database when its last connection closes, and a write-ahead
@@ -654,14 +661,22 @@ every check.
    `expire_snapshots` and `availability` as needed. It scans each binding's
    columns once: a coded value that is not a code refuses the publication,
    naming the column, the value and its row count, and each dimension's values
-   are stored as the binding's availability (§4). It first settles the lake:
+   are stored as the binding's availability (§4). A publication holds its own
+   bindings' availability or, with `availability=False`, none: whatever the
+   store held, copied from a previous publication, is deleted first. It first
+   settles the lake:
    - rows DuckLake inlined into the catalog are flushed into data files;
    - every table holding delete files is rewritten into data files without
      them (`ducklake_rewrite_data_files` with `delete_threshold => 0`: the
      default threshold keeps a small delete, which is exactly a daily delta);
-   - with `lifecycle="final"`, each table is compacted to one data file, a
-     bound table sorted by its binding's `sort_order`, else its dimension
-     columns in key order, unless the producer set a sort;
+   - with `lifecycle="final"`, each bound table is marked sorted by its
+     binding's `sort_order`, else its dimension columns in key order, unless
+     the producer set a sort with DuckLake's `SET SORTED BY`, and the table's
+     files are merged. DuckLake sorts only the files it rewrites, and a table
+     already in one file, or one per partition, is not rewritten, so it keeps
+     the order it was written in
+     ([GH-201](https://github.com/StatCat-Suite/sdmxlib/issues/201)). To ship
+     sorted rows, write them sorted: `write_observations(sort_by=...)`;
    - with `expire_snapshots=True`, every snapshot but the current one is
      expired. Without it, earlier snapshots stay readable and the manifest
      lists the files they reach.
@@ -686,7 +701,7 @@ every check.
    every artefact, and writes the manifest to a
    temporary file renamed into place, so a reader never sees half of one. A
    data file the previous publication's manifest lists at the same size keeps
-   that manifest's `sha256`, with `carried_from` naming its token, so a
+   that manifest's digests, with `carried_from` naming its token, so a
    republish hashes only the files it wrote.
 5. Run `check_bundle` on the result.
 
@@ -718,7 +733,7 @@ sdmxlib also produces bundles itself:
 `sdmxlib bundle copy SRC DST` runs it from a shell. It is how a server
 receives a bundle and how a mirror is made. It copies the files the manifest
 lists, the data files into the `data_path` beside `destination`, checks each
-against its `size`, `sha256` and `md5`, and copies the manifest last, byte for byte.
+against its `size` and every digest the manifest records, and copies the manifest last, byte for byte.
 A data file already at the destination with the listed digest is kept, so
 receiving the next publication of a bundle copies only its new data files. An
 interrupted copy leaves a directory without a manifest, which readers refuse

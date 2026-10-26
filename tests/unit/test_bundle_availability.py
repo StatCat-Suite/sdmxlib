@@ -152,3 +152,16 @@ def test_the_availability_check_runs_only_at_publish(tmp_path: Path) -> None:
     _publish(publication)
     assert "availability" not in check_bundle(publication, at="receive").checked
     assert "availability" not in check_bundle(publication, at="open").checked
+
+
+def test_a_publication_extending_another_holds_only_its_own_availability(tmp_path: Path) -> None:
+    """`build(previous=)` copies the store, availability included; `availability=False` stores none (GH-203)."""
+    first = _publication(tmp_path / "b", note="NULL")
+    _publish(first)
+    with sl.LocalRegistry.build(first.parent, previous=first.name) as builder:
+        second = builder.publication
+    _publish(second, availability=False)
+    with sl.LocalRegistry.bundle(second) as reg:
+        assert reg.availability(FLOW.urn) is None
+    with sl.LocalRegistry.bundle(first) as reg:
+        assert reg.availability(FLOW.urn) is not None, "the first publication keeps its own"

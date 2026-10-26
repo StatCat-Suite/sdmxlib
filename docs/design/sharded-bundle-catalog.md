@@ -83,7 +83,7 @@ Blob storage is the hand-off. The publish job and the GC job write `bundles/` an
 
 ## 4. Bundle format changes (manifest 2.0)
 
-The layout change (`data_path`, `root`, `tier`) is a major version. A 1.x reader refuses a 2.0 manifest by the existing rule. The store schema was to bump in the same release with the labels split; the split was shelved (§4.1), and 0.73.0 keeps store schema 2.48. Readers and producers roll out together as one pinned image set (§9).
+The layout change (`data_path`, `root`, `tier`) is a major version. A 1.x reader refuses a 2.0 manifest by the existing rule. The store schema was to bump in the same release with the labels split; the split was shelved (§4.1), and 0.73.0 kept store schema 2.48; 0.75.0 moves it to 2.49 for stored availability (GH-194). Readers and producers roll out together as one pinned image set (§9).
 
 ### 4.0 Bundle granularity
 
@@ -211,12 +211,15 @@ check_bundle(path, at: Literal["publish", "receive", "open"], ...)
 | check | publish | receive | open |
 |---|---|---|---|
 | manifest parse, format, versions | yes | yes | yes |
-| files, `root: publication`: size, sha256, nothing unlisted | yes | yes, once per token (stamp, §4.7) | size only |
-| files, `root: data`: listed entries only | sha256 in full | size, and a digest the store keeps | no |
+| files, `root: publication`: size, every recorded digest, nothing unlisted | yes | yes, once per token (stamp, §4.7) | size only |
+| files, `root: data`: listed entries only | every recorded digest | size | no |
+| expect: fingerprints equal an earlier manifest's | with `expect=` | with `expect=` | with `expect=` |
+| remote: `data/` in the object store, size and a digest the store keeps | no | with `lookup=` (or sizes with `remote=`) | no |
 | lake: every file the current snapshot references exists at the recorded size | yes | yes | no |
 | bindings counts | yes | yes | no |
 | references (SQL, §4.8) | yes | yes | no |
 | fingerprint recompute | yes | optional | no |
+| availability: coded columns hold codes, stored availability is the data's | yes | no | no |
 | extensions (statcat) | yes | yes | section only |
 
 The orphan dry run is gone from the `lake` check; orphans are defined over the union of manifests and belong to GC (§11.4).
@@ -376,7 +379,7 @@ Derived tables were to be materialised at publish into `data_path` as tier 3: la
 
 ### 7.2 Shared engine
 
-A pod runs one DuckDB engine and attaches every bundle it serves into it, so one buffer pool and one thread pool are shared and `memory_limit` means one thing. sdmxlib today assumes one bundle per connection (`search_path = 'sdmx'`, `sdmx.*` qualification, a fixed `lake` alias). The change that supports many bundles per engine without qualifying every table:
+A pod runs one DuckDB engine and attaches every bundle it serves into it, so one buffer pool and one thread pool are shared and `memory_limit` means one thing. sdmxlib assumed one bundle per connection (`search_path = 'sdmx'`, `sdmx.*` qualification, a fixed `lake` alias) until GH-133. The change that supports many bundles per engine without qualifying every table:
 
 - **Per-cursor `search_path`.** Each bundle attaches its DuckDB files under per-bundle aliases (`<bundle_id>__<token short>__meta`, `__lake`; a `__labels` alias went with the shelved split, §7.1). A request's cursor sets `search_path` to the bundle's `meta` catalog, so the existing `sdmx.<table>` spellings resolve as `<schema>.<table>` inside those catalogs. sdmxlib already runs each request on a per-thread cursor; the router sets the path before handing it over.
 - **Role-to-alias map.** `DataflowBinding.database_role` names a role, which it keeps; the registry maps the role to the physical alias at attach time, so the stored binding stays `"lake"` and the SQL uses the per-bundle alias.
@@ -643,7 +646,7 @@ Order follows risk removed per unit of work. Synthetic bundles and `profile_bund
 
 **M1. Spikes.** (a) Per-cursor `search_path` across two attached bundles: **passed**. (b) Copy-and-extend over shared `data/` with snapshots expired and no cleanup: **passed**; the DuckLake layout is `<schema>/<table>/ducklake-<uuid>.parquet` and a small delta stays inlined until flushed. (c) Postgres DuckLake export of one bundle's slice to a file catalog: open; decides §14. (d) Delete-file rewrite: **passed**; `ducklake_rewrite_data_files` with `delete_threshold => 0` leaves no delete file, while the default threshold keeps small deletes as delete files.
 
-**M2. sdmxlib: manifest 2.0 and layout.** Token directories; shared `data/`; `root`, `tier`, `md5`, `carried_from`; version fields; `data_path`; `artefacts` with `stability` and `partial`; `BindingCount` fields; `StoreFormatError` (newer-only for storage); copy-on-write rewrite after flush; `sdmxlib bundle copy --tiers`. Test: a reader on token A keeps answering while B is written sharing A's files; a republish of a CODR-shaped 50 MB bundle with a 1 MB delta uploads under 5 MB plus the catalog files; the census bundle's per-publication catalog upload (`meta.duckdb`, `lake.ducklake`) is measured and recorded; a bundle written by a newer DuckDB is refused with no file opened; no delete file survives a revising republish. Built in GH-123, GH-124, GH-125 and GH-128; GH-165 trims the published `meta.duckdb` to 548 MB on the census bundle.
+**M2. sdmxlib: manifest 2.0 and layout.** Token directories; shared `data/`; `root`, `tier`, `md5`, `carried_from`; version fields; `data_path`; `artefacts` with `stability` and `partial`; `BindingCount` fields; `StoreFormatError` (newer-only for storage); copy-on-write rewrite after flush; `sdmxlib bundle copy --tiers`. Test: a reader on token A keeps answering while B is written sharing A's files; a republish of a CODR-shaped 50 MB bundle with a 1 MB delta uploads under 5 MB plus the catalog files; the census bundle's per-publication catalog upload (`meta.duckdb`, `lake.ducklake`) is measured and recorded; a bundle written by a newer DuckDB is refused with no file opened; no delete file survives a revising republish. Built in GH-123, GH-124, GH-125 and GH-128; GH-165 trims the published `meta.duckdb` to 501 MB on the census bundle.
 
 **M3. sdmxlib: labels split with schema bump.** Shelved after measuring (GH-139, §7.1); GH-165 measures and trims the indexes in its place. As planned: `labels.duckdb`; store `schema_version` bump; cross-catalog table resolution; per-format label needs documented. Test: a key-only CSV request touches `meta.duckdb` only; an SDMX-JSON request attaches labels; old sdmxlib refuses the bundle by schema.
 

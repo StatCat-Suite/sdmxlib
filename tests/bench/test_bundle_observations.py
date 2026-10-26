@@ -39,12 +39,11 @@ materialising it a few times took this tier from two minutes to **35**. The
 bound lands on `FederalElectoralDistrict` — 4,915,280 rows, close to the
 4.26 M partition %19 measured on, and the whole tier runs in ~2 min.
 
-## Why a copy of the bundle
+## The bundle, read in place
 
-The `data_plane_bundle` fixture copies the bundle (~3 s for 2.6 GB on APFS) and
-republishes the copy with `write_manifest`, since the real bundle may carry its
-builder's older manifest, which `bundle()` refuses. `bundle()` then opens the
-copy read-only, so this tier exercises the public constructor #387 fixed.
+`data_plane_bundle` is the published bundle `$SDMXLIB_BENCH_BUNDLE` names,
+which `bundle()` opens read-only, so this tier exercises the public
+constructor #387 fixed, as any consumer of a bundle does.
 """
 
 import time

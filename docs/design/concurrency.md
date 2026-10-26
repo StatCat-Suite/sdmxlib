@@ -18,7 +18,7 @@ without rediscovering the constraints.
 |---|---|
 | `LocalRegistry.get`, `get_all`, `codelist`, `code_map`, `dsd_code_map`, `to_registry`, `__contains__`, `__len__`, `__repr__` | ✅ Yes |
 | `LocalRegistry.query(...)`, `obs(...)` and their terminals | ✅ Yes |
-| `LocalRegistry.add`, `drop`, `replace`, `add_all`, `ingest`; `DuckDBDataStore.write_observations` | ❌ No — single-threaded only |
+| `LocalRegistry.add`, `drop`, `replace`, `add_all`, `ingest`, `write_observations` | ❌ No — single-threaded only |
 | Concurrent access to the **same** `LazyCodelist` / `LazyHierarchy` instance from multiple threads | ✅ Yes |
 | Sharing a `LocalRegistry` across multiple Python *processes* | ❌ No — one DuckDB connection per process |
 | `RestRegistry.get`, `query`, `obs`, `download` | ✅ Yes |

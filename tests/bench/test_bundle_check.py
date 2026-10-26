@@ -1,12 +1,12 @@
-"""The real bundle, republished, checks clean at every profile (GH-67, GH-130).
+"""The published census bundle checks clean at every profile (GH-67, GH-130).
 
-`data_plane_bundle` republishes its copy with `write_manifest`, so this is
-the checker against 2.6 GB of real files and a real lake. At ``publish``:
-every sha256, every file DuckLake references, the bound observation counts,
-the 2.16 million stored references (0.15 s, GH-129) and every fingerprint
-recomputed. That repeats publishing's 6.5 minutes, so it is marked
-`recompute`: `just bench-bundle` runs it and `just ci` does not. ``receive``
-and ``open`` hash less, and must still find nothing on a clean bundle.
+The checker against 2.0 GB of real files and a real lake, read in place. At
+``publish``: every digest, every file DuckLake references, the bound
+observation counts, every stored reference, every fingerprint recomputed and
+the availability rescanned. That repeats much of publishing's work, about
+4.5 minutes, so it is marked `recompute`: `just bench-bundle` runs it and
+`just ci` does not. ``receive`` and ``open`` hash less, and must still find
+nothing on a clean bundle.
 """
 
 import pytest
@@ -21,7 +21,7 @@ pytestmark = [pytest.mark.bench, pytest.mark.bundle]
     [
         pytest.param(
             "publish",
-            ("manifest", "files", "lake", "bindings", "references", "fingerprints"),
+            ("manifest", "files", "lake", "bindings", "references", "fingerprints", "availability"),
             marks=pytest.mark.recompute,
             id="publish",
         ),
