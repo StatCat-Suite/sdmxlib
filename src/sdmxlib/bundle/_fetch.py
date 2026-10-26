@@ -105,7 +105,7 @@ def fetch_bundle(
             # for, so the key is checked against the same slots it fills.
             query = _narrowed(remote.obs(resolved.urn), dsd, remote._client.api, key=key, start=start, end=end)
             table = _table_for(resolved.urn)
-            bundle._data_plane().write_observations(schema=_SCHEMA, table=table, source=query.stream())
+            bundle.write_observations(schema=_SCHEMA, table=table, source=query.stream())
             bundle.add(
                 DataflowBinding.from_dsd(
                     dsd, dataflow=Ref[Dataflow].unresolved(resolved.urn), schema=_SCHEMA, table=table

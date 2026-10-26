@@ -214,7 +214,7 @@ def synthetic_bundle(path: str | Path, shape: Shape, *, seed: int = 0) -> Manife
     with LocalRegistry.build(root) as bundle:
         bundle.add_all(artefacts)
         rows = completed(bundle.connection).sql(_observations_sql(shape, space, draws))
-        bundle._data_plane().write_observations(schema=_SCHEMA, table=_TABLE, source=rows)
+        bundle.write_observations(schema=_SCHEMA, table=_TABLE, source=rows)
         bundle.add(DataflowBinding.from_dsd(dsd, dataflow=Ref.to(flow), schema=_SCHEMA, table=_TABLE))
         publication = bundle.publication
     return write_manifest(

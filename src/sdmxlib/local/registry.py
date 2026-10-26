@@ -47,6 +47,7 @@ import attrs
 import duckdb
 
 from sdmxlib._duckdb import count
+from sdmxlib.data_store import WriteSource
 from sdmxlib.formats.gaps import TARGETS, describe, unrepresentable
 from sdmxlib.formats.sdmx_csv.reader import _resolve_structure
 from sdmxlib.formats.sdmx_json.data import read_observations
@@ -2759,6 +2760,63 @@ class LocalRegistry(BundleRegistry):
             )
         if issues:
             raise ValidationError(issues)
+
+    def write_observations(
+        self,
+        *,
+        schema: str,
+        table: str,
+        source: WriteSource,
+        partition_by: tuple[str, ...] = (),
+        sort_by: tuple[str, ...] = (),
+        mode: Literal["overwrite", "append"] = "overwrite",
+    ) -> None:
+        """Write rows into a table of this registry's lake, ``<lake>.<schema>.<table>``.
+
+        The data-plane half of building a publication (`build`): the rows a
+        `DataflowBinding` then names by ``table_location="<schema>.<table>"``.
+        ``source`` is anything this registry's connection can read: a Polars
+        frame, an Arrow table or reader, or a relation on `connection`,
+        including one over a database attached to it.
+
+        Args:
+            schema: Schema in the lake, created if absent.
+            table: Table in the schema.
+            source: The rows.
+            partition_by: Columns to partition the table by, in order; record
+                the SDMX ids on the binding's ``partition_layout``.
+            sort_by: Columns to store the rows sorted by, outermost first;
+                record the SDMX ids on the binding's ``sort_order``.
+            mode: ``"overwrite"`` replaces the table; ``"append"`` inserts
+                into it and keeps its partitioning.
+
+        Raises:
+            KeyError: If this registry has no lake: one `build` starts has it,
+                `LocalRegistry(path)` has not.
+            ValueError: If a name is not an identifier, a ``partition_by`` or
+                ``sort_by`` column is not one of ``source``'s, or an append
+                names ``partition_by``.
+        """
+        store = self._data_plane()
+        attached = {
+            name for (name,) in store.connection.execute("SELECT database_name FROM duckdb_databases()").fetchall()
+        }
+        if self.lake_alias not in attached:
+            msg = (
+                f"this registry has no lake ({self.lake_alias!r} is not attached; attached: "
+                f"{', '.join(sorted(attached))}), so there is nowhere to write {schema}.{table}. "
+                "A publication's registry has one: LocalRegistry.build(bundle)."
+            )
+            raise KeyError(msg)
+        store.write_observations(
+            schema=schema,
+            table=table,
+            source=source,
+            partition_by=partition_by,
+            sort_by=sort_by,
+            mode=mode,
+            lake_alias=self.lake_alias,
+        )
 
     def sql(self, text: str, **params: object) -> RawSql:
         """Run raw SQL against this registry's layout — the escape hatch.

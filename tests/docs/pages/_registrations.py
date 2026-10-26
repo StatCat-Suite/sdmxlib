@@ -514,7 +514,7 @@ def _facade() -> Generator[dict[str, Any]]:
         # path the page opens; its data files land in `data/` beside it.
         with sl.LocalRegistry.build("built") as writer:
             writer.add_all([areas, freq, dsd, flow])
-            writer._data_plane().write_observations(
+            writer.write_observations(
                 schema="data",
                 table="obs",
                 source=pl.DataFrame(

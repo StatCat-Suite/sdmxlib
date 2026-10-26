@@ -637,8 +637,11 @@ every check.
    `publication` names, and with `previous=` copies that publication's
    `meta.duckdb` and `lake.ducklake` in, so only what changed is written and
    the lake adds only new data files to `data/`.
-2. Write the artefacts at this sdmxlib's store schema and the observations
-   into the lake, adding a `DataflowBinding` for each dataflow. A builder
+2. Write the artefacts at this sdmxlib's store schema (`add_all`) and the
+   observations into the lake (`write_observations(schema=..., table=...,
+   source=..., partition_by=..., sort_by=...)`), adding a `DataflowBinding`
+   for each dataflow, its `partition_layout` and `sort_order` naming the same
+   columns by their SDMX ids. A builder
    that writes in more than one step reopens the publication with
    `build(bundle, resume=token)`. Close every connection that wrote: DuckDB
    checkpoints a database when its last connection closes, and a write-ahead
