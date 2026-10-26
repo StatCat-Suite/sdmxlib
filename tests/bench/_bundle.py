@@ -12,8 +12,10 @@ So this tier reads a bundle that is not, and cannot be, in the repo.
 
 ## Resolution, and why a bad path is an error
 
-`$SDMXLIB_BENCH_BUNDLE` names a bundle directory, and it is the only route:
-unset, the tier skips and says so. There is no default location — a path
+`$SDMXLIB_BENCH_BUNDLE` names a published bundle, a publication directory
+holding `bundle.manifest.json` (the one `write_manifest` wrote), and it is the
+only route: unset, the tier skips and says so. The tier opens it read-only
+with `LocalRegistry.bundle`, as any consumer of a bundle does. There is no default location — a path
 baked in here would name one machine's layout, and the justfile's
 `set dotenv-load` lets a gitignored `.env` carry the variable instead.
 
@@ -43,10 +45,7 @@ It also keeps the numbers honest when the bundle is rebuilt: `H_CP_GEO_FED`
 was "~700k nodes" in #154 and is 499,138 today.
 """
 
-import hashlib
 import os
-import re
-import shutil
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -54,30 +53,29 @@ from pathlib import Path
 
 import duckdb
 
-from sdmxlib.bundle import CANONICAL_FORM, FORMAT_VERSION
 from sdmxlib.local import LocalRegistry
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.query.observations import Observations
 from sdmxlib.storage.schema import SCHEMA_VERSION, get_schema_version
-from tests.support.repo import ROOT
 
-#: Names a bundle directory — one holding `meta.duckdb`. Set it and the tier
-#: runs; set it wrongly and the tier raises rather than skipping.
+#: Names a publication directory, one holding `bundle.manifest.json`. Set it
+#: and the tier runs; set it wrongly and the tier raises rather than skipping.
 ENV_VAR = "SDMXLIB_BENCH_BUNDLE"
 
-#: What makes a directory a bundle at all. The *observation* tier needs more —
-#: see `DATA_PLANE_FILES` — but requiring that here would refuse a
-#: structural-only bundle for the structural benchmarks, which do not read a
-#: single observation.
-REQUIRED = "meta.duckdb"
+#: What makes a directory a published bundle.
+REQUIRED = "bundle.manifest.json"
 
-#: What the observation tier needs on top of `REQUIRED` (#391).
+#: The structural store every benchmark reads.
+STORE = "meta.duckdb"
+
+#: What the observation tier needs on top of the store (#391): the lake's
+#: catalog. Its data files are in the bundle's ``data/``, beside the
+#: publication.
 #:
-#: Checked per *test* rather than folded into `REQUIRED`, because the two tiers
-#: want different things from one directory: a bundle with only `meta.duckdb`
-#: should still run every structural benchmark and skip these, saying which
-#: file it lacked.
-DATA_PLANE_FILES = ("lake.ducklake", "parquet")
+#: Checked per *test* rather than required of every bundle, so a bundle with
+#: no data plane still runs every structural benchmark and skips these,
+#: saying which file it lacked.
+DATA_PLANE_FILES = ("lake.ducklake",)
 
 #: Ceiling on the partition the observation benchmarks materialise.
 #:
@@ -143,30 +141,6 @@ def schema_skip_reason(conn: duckdb.DuckDBPyConnection) -> str | None:
     )
 
 
-#: Store schemas the census republish brings to `SCHEMA_VERSION` in its copy:
-#: those a later version changes only by adding tables, which the schema's own
-#: idempotent DDL creates (`_census.republish`). 2.49 adds the availability
-#: tables (GH-194).
-UPGRADABLE = frozenset({"2.48"})
-
-
-def schema_skip_reason_for(path: Path) -> str | None:
-    """`schema_skip_reason` for a bundle *directory* the tier republishes, opening it read-only.
-
-    For callers that are about to copy the store and open the copy for write:
-    the check has to happen before that, since a mismatched version is
-    dropped and rebuilt rather than refused. A schema in `UPGRADABLE` passes,
-    since the republish brings the copy forward.
-    """
-    conn = connect(path)
-    try:
-        if get_schema_version(conn) in UPGRADABLE:
-            return None
-        return schema_skip_reason(conn)
-    finally:
-        conn.close()
-
-
 class BundlePathError(Exception):
     """`$SDMXLIB_BENCH_BUNDLE` is set and does not name a usable bundle.
 
@@ -180,8 +154,8 @@ def bundle_path() -> Path | None:
 
     Raises:
         BundlePathError: if `$SDMXLIB_BENCH_BUNDLE` is set but does not name a
-            directory containing `meta.duckdb`. The message says which of the
-            two failed, because "no bundle" and "wrong path" must not read
+            directory holding `bundle.manifest.json`. The message says which of
+            the two failed, because "no bundle" and "wrong path" must not read
             alike.
     """
     declared = os.environ.get(ENV_VAR)
@@ -191,7 +165,7 @@ def bundle_path() -> Path | None:
             msg = f"${ENV_VAR} is set to {declared!r}, which is not a directory"
             raise BundlePathError(msg)
         if not (path / REQUIRED).is_file():
-            msg = f"${ENV_VAR} is set to {declared!r}, which has no {REQUIRED}"
+            msg = f"${ENV_VAR} is set to {declared!r}, which has no {REQUIRED}, so it is not a published bundle"
             raise BundlePathError(msg)
         return path
     return None
@@ -200,9 +174,9 @@ def bundle_path() -> Path | None:
 def skip_reason() -> str:
     """Why the tier is not running — shown per-test and in the run summary."""
     return (
-        f"no bundle to benchmark against: ${ENV_VAR} is unset. Set it to a bundle "
-        f"directory (one holding {REQUIRED}) — in the environment or a gitignored .env — "
-        f"to run this tier."
+        f"no bundle to benchmark against: ${ENV_VAR} is unset. Set it to a published "
+        f"bundle's publication directory (one holding {REQUIRED}) — in the environment or "
+        f"a gitignored .env — to run this tier."
     )
 
 
@@ -224,7 +198,7 @@ def connect(path: Path) -> duckdb.DuckDBPyConnection:
     bundle (a catalog build, say) otherwise surfaces as an opaque IO error
     halfway through a run.
     """
-    conn = duckdb.connect(str(path / REQUIRED), read_only=True)
+    conn = duckdb.connect(str(path / STORE), read_only=True)
     # Bounded so a runaway scan fails as a DuckDB error rather than as an
     # OOM kill, which reports nothing and takes the session with it.
     conn.execute("SET memory_limit='8GB'")
@@ -447,70 +421,3 @@ def discover_observations(registry: LocalRegistry) -> ObsShapes:
         sidecar=sidecar is not None,
         sidecar_component=component,
     )
-
-
-# ── the published copy, cached across sessions (GH-127) ──────────────────
-
-
-#: The modules whose source decides what a publication holds: a change to any
-#: of them republishes the cached copy.
-_PUBLISHING = (
-    "src/sdmxlib/bundle/_write.py",
-    "src/sdmxlib/bundle/_fingerprint.py",
-    "src/sdmxlib/bundle/_canonical.py",
-    "src/sdmxlib/storage/_manifest.py",
-    "src/sdmxlib/storage/schema.py",
-    "src/sdmxlib/storage/writers.py",
-    "src/sdmxlib/bundle/_availability.py",
-    "tests/bench/_census.py",
-)
-
-
-#: A cache entry's name: a key, or a key being built.
-_ENTRY = re.compile(r"(\.building-)?[0-9a-f]{64}")
-
-
-def cache_root() -> Path:
-    """Where published copies are kept: ``$SDMXLIB_BENCH_CACHE``, else ``~/.cache/sdmxlib/bench``."""
-    configured = os.environ.get("SDMXLIB_BENCH_CACHE")
-    return Path(configured) if configured else Path.home() / ".cache" / "sdmxlib" / "bench"
-
-
-def publication_key(source: Path) -> str:
-    """What a published copy of `source` depends on, hashed: the source's files and the publishing code."""
-    digest = hashlib.sha256()
-    for name in ("meta.duckdb", "lake.ducklake", "bundle.manifest.json"):
-        path = source / name
-        stat = path.stat() if path.exists() else None
-        digest.update(f"{name}:{stat.st_size if stat else -1}:{stat.st_mtime_ns if stat else -1}\n".encode())
-    for part in (SCHEMA_VERSION, FORMAT_VERSION, CANONICAL_FORM, duckdb.__version__):
-        digest.update(f"{part}\n".encode())
-    for module in _PUBLISHING:
-        digest.update((ROOT / module).read_bytes())
-    return digest.hexdigest()
-
-
-def cached_publication(key: str) -> Path | None:
-    """The published publication cached under `key`, or None."""
-    entry = cache_root() / key
-    manifests = sorted(entry.glob("*/*/bundle.manifest.json"))
-    return manifests[0].parent if len(manifests) == 1 else None
-
-
-def cache_publication(key: str, build: Callable[[Path], Path]) -> Path:
-    """Publish with `build` into the cache under `key`, dropping every other key's copy.
-
-    Built beside the cache under a temporary name and renamed into place, so
-    an interrupted build never reads as a cached one.
-    """
-    root = cache_root()
-    root.mkdir(parents=True, exist_ok=True)
-    for stale in root.iterdir():
-        # Only this cache's own entries: the directory may be one a user named.
-        if _ENTRY.fullmatch(stale.name) and stale.name != key:
-            shutil.rmtree(stale)
-    staging = root / f".building-{key}"
-    shutil.rmtree(staging, ignore_errors=True)
-    publication = build(staging / "census")
-    staging.rename(root / key)
-    return root / key / "census" / publication.name

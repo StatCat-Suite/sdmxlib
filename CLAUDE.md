@@ -295,10 +295,11 @@ just mutate-scope    # what only_mutate covers, and how big
 `just ci` includes `bench-bundle-assertions` — the real-bundle tests that
 *assert a property*, without the eight that only report a number and without
 the `recompute` ones, which redo publishing's work (the census `publish`
-check recomputes every fingerprint, ~6.5 min; `just bench-bundle` runs it). It
-costs ~2 min on a machine holding the 2.6 GB bundle, plus ~6.5 min when a
-change to the publishing code makes it republish its cached copy, and skips in
-~0 s on one that is not, **saying so on its own line**. DuckDB in this tier
+check recomputes every fingerprint, ~4.5 min; `just bench-bundle` runs it). It
+reads the published 2021 Census Profile bundle StatCat-Suite/cpt-builder
+builds (`census-2021-cpt`, 2.0 GB) in place, read-only, from the publication
+`$SDMXLIB_BENCH_BUNDLE` names. It costs ~2 min on a machine holding that
+bundle and skips in ~0 s on one that is not, **saying so on its own line**. DuckDB in this tier
 runs on `SDMXLIB_BENCH_THREADS` threads (default 4). It is in the gate because #386 renamed
 `LocalRegistry`'s `resolve_cache_size` to `resolve_cache_items` past a green
 `just check` and 6,284 green unit tests, and only this tier failed, with 19

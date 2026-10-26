@@ -4,24 +4,22 @@ Marks every test in this directory with ``bench`` so the suite is opt-in
 via ``pytest -m bench``.
 
 Also carries the shared fixtures for the **bundle tier** (#379) — the
-benchmarks that read a real 2.6 GB SDMX bundle rather than a synthetic
-fixture. Those are additionally marked ``bundle`` and deselected from
-``just bench``, so ``just bench`` means the same thing on every machine and
+benchmarks that read a real published SDMX bundle (the 2021 Census Profile,
+2.0 GB, 1.14 billion observations) rather than a synthetic fixture. Those are
+additionally marked ``bundle`` and deselected from ``just bench``, so
+``just bench`` means the same thing on every machine and
 ``bench/baselines/`` stays comparable across them. ``just bench-bundle`` runs
 this tier.
 """
 
-import os
 from pathlib import Path
 
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.storage.schema import get_schema_version
-from tests.bench import _bundle, _census
+from tests.bench import _bundle
 
-#: What the bundle fixtures did that the summary should say: a 6.5-minute
-#: republish is worth a line, and so is a run that reused one.
+#: What the bundle fixtures did that the summary should say: which publication the tier read.
 _NOTES: list[str] = []
 
 
@@ -88,22 +86,13 @@ def bundle():
 
 
 @pytest.fixture(scope="session")
-def bundle_conn(bundle, request):
+def bundle_conn(bundle):
     """A read-only DuckDB connection to the bundle's structural store.
 
     Session-scoped: opening it is cheap, but DuckDB's lock is exclusive, so
     one connection per test would serialise badly against itself.
-
-    A source on a schema the republish brings forward (`_bundle.UPGRADABLE`)
-    is read through its republished copy, which holds the same artefacts on
-    this build's schema; the structural tier would otherwise skip at every
-    additive schema bump. A source on the current schema is read directly, so
-    a bundle with no data plane still runs.
     """
     conn = _bundle.connect(bundle)
-    if get_schema_version(conn) in _bundle.UPGRADABLE:
-        conn.close()
-        conn = _bundle.connect(request.getfixturevalue("data_plane_bundle"))
     try:
         stale = _bundle.schema_skip_reason(conn)
         if stale:
@@ -120,66 +109,23 @@ def shapes(bundle_conn):
 
 
 @pytest.fixture(scope="session")
-def data_plane_bundle(bundle, tmp_path_factory):
-    """A **copy** of the bundle, republished as a publication, which `LocalRegistry.bundle()` opens read-only.
+def data_plane_bundle(bundle: Path) -> Path:
+    """The published bundle, for the tests that read its observations; skips, naming the file, without a lake.
 
-    The copy is what `write_manifest` writes into: sdmxlib owns
-    `bundle.manifest.json`, and the real bundle may carry its builder's older
-    one, which `bundle()` refuses. Republishing a copy leaves the source
-    untouched. Opening it through `bundle()` means this tier exercises the
-    public constructor #387 fixed rather than a hand-rolled stand-in.
-
-    The real bundle keeps the single-directory layout (``meta.duckdb``,
-    ``lake.ducklake``, ``parquet/``); the copy is laid out as a publication
-    (GH-123): `LocalRegistry.build` mints the token and the directory, the
-    real store and catalog replace the empty ones, the token is stamped into
-    the copied store as `build` stamps it, and ``parquet/`` becomes the
-    bundle's ``data/``. Returns the publication directory.
-
-    **Cached across sessions** (GH-127). Publishing computes every fingerprint,
-    about 6.5 minutes on the census bundle, so the published copy is kept under
-    ``$SDMXLIB_BENCH_CACHE`` (``~/.cache/sdmxlib/bench`` by default), keyed on
-    the source bundle and on everything publishing depends on: the store
-    schema, the manifest format, the canonical form, DuckDB's version and the
-    source of the publishing modules. A change to any of them republishes, and
-    the summary says which happened.
-
-    Skips — naming the missing file — when the bundle has no data plane, so a
-    structural-only directory still runs every other benchmark.
-
-    ``$SDMXLIB_BENCH_PUBLICATION`` names a prebuilt publication to read in
-    place of the cached copy, such as one with an index dropped to measure what
-    it costs (GH-165). Its manifest still lists the original files, so the
-    ``files`` check reports any file the variant changed.
+    Read in place: a published bundle is never written, and opening it with
+    `LocalRegistry.bundle()` exercises the public constructor every consumer
+    uses.
     """
-    prebuilt = os.environ.get("SDMXLIB_BENCH_PUBLICATION")
-    if prebuilt:
-        _NOTES.append(f"bundle tier: read the prebuilt publication {prebuilt}")
-        return Path(prebuilt)
     missing = _bundle.data_plane_missing(bundle)
     if missing is not None:
         pytest.skip(_bundle.data_plane_skip_reason(bundle, missing))
-    # Checked before the copy, and on the source rather than the clone: this
-    # fixture opens its copy *read-write*, so a stale schema would be silently
-    # dropped and rebuilt — 2.6 GB cloned and then emptied, surfacing three
-    # fixtures later as "bundle binds no dataflow" (#145).
-    stale = _bundle.schema_skip_reason_for(bundle)
-    if stale:
-        pytest.skip(stale)
-    key = _bundle.publication_key(bundle)
-    cached = _bundle.cached_publication(key)
-    if cached is not None:
-        _NOTES.append(f"bundle tier: reused the census publication cached under {cached.parent.parent}")
-        return cached
-    _NOTES.append(f"bundle tier: republished the census bundle with fingerprints (key {key[:12]})")
-    published = _bundle.cache_publication(key, lambda root: _census.republish(bundle, root))
-    _NOTES.extend(_census.NOTES)
-    return published
+    _NOTES.append(f"bundle tier: read the publication {bundle}")
+    return bundle
 
 
 @pytest.fixture(scope="session")
 def data_plane_registry(data_plane_bundle):
-    """A registry over the copied bundle, artefacts and observations together.
+    """A registry over the bundle, artefacts and observations together.
 
     In an engine of `_bundle.threads()` threads, so the tier leaves the
     machine usable.
