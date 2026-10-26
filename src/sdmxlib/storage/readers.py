@@ -2534,7 +2534,7 @@ def _read_dataflow_binding(conn: duckdb.DuckDBPyConnection, urn: str, _meta: Spi
     """
     row = conn.execute(
         """
-        SELECT dataflow_urn, table_location, database_role, partition_layout, sort_order,
+        SELECT dataflow_urn, table_location, database_role,
                dimension_column_map, measure_column_map, attribute_column_map,
                structural_version, binding_source_registry,
                materialized_at, bound_at, series_attributes_location
@@ -2549,8 +2549,6 @@ def _read_dataflow_binding(conn: duckdb.DuckDBPyConnection, urn: str, _meta: Spi
         dataflow_urn_str,
         table_location,
         database_role,
-        partition_layout,
-        sort_order,
         dim_map,
         meas_map,
         attr_map,
@@ -2565,8 +2563,6 @@ def _read_dataflow_binding(conn: duckdb.DuckDBPyConnection, urn: str, _meta: Spi
         dataflow=Ref[Dataflow].unresolved(Dataflow.parse_urn(dataflow_urn_str)),
         table_location=table_location,
         database_role=database_role,
-        partition_layout=tuple(partition_layout or ()),
-        sort_order=tuple(sort_order or ()),
         dimension_column_map=dict(dim_map or {}),
         measure_column_map=dict(meas_map or {}),
         attribute_column_map=dict(attr_map or {}),

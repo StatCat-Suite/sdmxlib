@@ -266,7 +266,6 @@ _ONE_FILE = 1 << 62
 
 def settle_lake(
     conn: duckdb.DuckDBPyConnection,
-    bindings: Iterable[DataflowBinding],
     *,
     expire_snapshots: bool,
     lifecycle: Lifecycle,
@@ -278,11 +277,10 @@ def settle_lake(
       (``delete_threshold => 0``: DuckLake's default skips a table whose
       deleted rows are few, which is exactly a daily delta), so no delete file
       ships and every publication reads its rows from data files alone.
-    - A ``final`` publication marks each bound table sorted by its binding's
-      ``sort_order``, else its dimension columns in key order, unless the
-      producer set a sort already, and merges each table's files. DuckLake
-      sorts only the files it rewrites: a table already in one file, or one
-      per partition, keeps the order it was written in (GH-201).
+    - A ``final`` publication's tables have their files merged: nothing will
+      be appended. DuckLake sorts what it merges by a table's ``SORTED BY``,
+      which the producer sets (`write_observations`' ``sorted_by``); this sets
+      no sort of its own.
     - With `expire_snapshots`, every snapshot but the current one is expired,
       so the catalog and the manifest hold only current files.
 
@@ -292,42 +290,15 @@ def settle_lake(
 
     Args:
         conn: A connection with the publication's lake attached as ``lake``.
-        bindings: The publication's bindings.
         expire_snapshots: Whether to expire every snapshot but the current one.
         lifecycle: ``final`` to compact; ``live`` otherwise.
     """
     conn.execute("CALL ducklake_flush_inlined_data('lake')")
     conn.execute("CALL ducklake_rewrite_data_files('lake', delete_threshold => 0)")
     if lifecycle == "final":
-        for binding in bindings:
-            if binding.database_role == "lake":
-                _sort(conn, binding)
         conn.execute("CALL ducklake_merge_adjacent_files('lake', max_file_size => ?)", [_ONE_FILE])
     if expire_snapshots:
         conn.execute("CALL ducklake_expire_snapshots('lake', older_than => now())")
-
-
-def _sort(conn: duckdb.DuckDBPyConnection, binding: DataflowBinding) -> None:
-    """Sort a bound table by its binding's key, unless the producer sorted it already."""
-    schema, table = binding.table_location.split(".")
-    (sorted_already,) = conn.execute(
-        """
-        SELECT count(*) > 0
-        FROM __ducklake_metadata_lake.ducklake_sort_info AS i
-        JOIN __ducklake_metadata_lake.ducklake_table AS t ON t.table_id = i.table_id AND t.end_snapshot IS NULL
-        JOIN __ducklake_metadata_lake.ducklake_schema AS s ON s.schema_id = t.schema_id AND s.end_snapshot IS NULL
-        WHERE i.end_snapshot IS NULL AND s.schema_name = ? AND t.table_name = ?
-        """,
-        [schema, table],
-    ).fetchone() or (False,)
-    if sorted_already:
-        return
-    columns = [binding.dimension_column_map.get(c, c) for c in binding.sort_order] or list(
-        binding.dimension_column_map.values()
-    )
-    if columns:
-        relation = f"lake.{_quoted(schema)}.{_quoted(table)}"
-        conn.execute(f"ALTER TABLE {relation} SET SORTED BY ({', '.join(map(_quoted, columns))})")
 
 
 def _quoted(identifier: str) -> str:
@@ -419,11 +390,7 @@ def write_manifest(
             prefix matches is tier 1 for ``meta.duckdb`` and ``lake.ducklake``
             and 2 otherwise; a data file is always 3.
         lifecycle: ``final`` for a publication whose observations will not be
-            revised, which marks each bound table sorted by its binding's key
-            and merges its files; DuckLake sorts only files it rewrites, so a
-            table already in one file keeps its written order
-            ([GH-201](https://github.com/StatCat-Suite/sdmxlib/issues/201)).
-            ``live`` otherwise.
+            revised, which merges each table's files; ``live`` otherwise.
         expire_snapshots: Whether to expire every snapshot but the current
             one, so the manifest lists only the files it reads. Time travel
             to an earlier state is lost.
@@ -458,12 +425,7 @@ def write_manifest(
         lake = (root / "lake.ducklake").exists()
         if lake:
             reg._data_plane()  # ATTACHes the lake
-            settle_lake(
-                reg.connection,
-                reg.get_all(DataflowBinding),
-                expire_snapshots=expire_snapshots,
-                lifecycle=lifecycle,
-            )
+            settle_lake(reg.connection, expire_snapshots=expire_snapshots, lifecycle=lifecycle)
             referenced = lake_files(reg.connection, data)
         ducklake, spec = _ducklake_versions(reg.connection) if lake else (None, None)
         counts = binding_counts(reg, artefacts)

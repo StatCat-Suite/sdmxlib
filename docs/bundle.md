@@ -644,11 +644,16 @@ every check.
    the lake adds only new data files to `data/`.
 2. Write the artefacts at this sdmxlib's store schema (`add_all`) and the
    observations into the lake (`write_observations(schema=..., table=...,
-   source=..., partition_by=..., sort_by=...)`), adding a `DataflowBinding`
-   for each dataflow, its `partition_layout` and `sort_order` naming the same
-   columns by their SDMX ids. `write_observations` replaces the table by
-   default; `mode="append"` inserts into it and keeps its partitioning, so it
-   refuses a `partition_by`. A builder
+   source=..., partition_by=..., sorted_by=...)`), adding a `DataflowBinding`
+   for each dataflow. The table's layout is DuckLake's: `partition_by` sets
+   its `PARTITIONED BY` and `sorted_by` its `SORTED BY`, DuckLake sort
+   expressions such as `"REF_AREA"`, `"TIME_PERIOD DESC"` or a space-filling
+   curve, and DuckLake writes the rows sorted. The lake's catalog records both
+   and ships with the bundle, and a query reads the partitioning from there
+   ([GH-205](https://github.com/StatCat-Suite/sdmxlib/issues/205)).
+   `write_observations` replaces the table by default; `mode="append"`
+   inserts into it and keeps its layout, so it refuses a `partition_by` or
+   `sorted_by`. A builder
    that writes in more than one step reopens the publication with
    `build(bundle, resume=token)`. Close every connection that wrote: DuckDB
    checkpoints a database when its last connection closes, and a write-ahead
@@ -669,14 +674,9 @@ every check.
    - every table holding delete files is rewritten into data files without
      them (`ducklake_rewrite_data_files` with `delete_threshold => 0`: the
      default threshold keeps a small delete, which is exactly a daily delta);
-   - with `lifecycle="final"`, each bound table is marked sorted by its
-     binding's `sort_order`, else its dimension columns in key order, unless
-     the producer set a sort with DuckLake's `SET SORTED BY`, and the table's
-     files are merged. DuckLake sorts only the files it rewrites, and a table
-     already in one file, or one per partition, is not rewritten, so it keeps
-     the order it was written in
-     ([GH-201](https://github.com/StatCat-Suite/sdmxlib/issues/201)). To ship
-     sorted rows, write them sorted: `write_observations(sort_by=...)`;
+   - with `lifecycle="final"`, the lake's files are merged, so a table holds
+     one file, or one per partition. DuckLake sorts what it merges by the
+     table's `SORTED BY`; `write_manifest` sets no sort of its own;
    - with `expire_snapshots=True`, every snapshot but the current one is
      expired. Without it, earlier snapshots stay readable and the manifest
      lists the files they reach.

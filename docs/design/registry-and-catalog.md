@@ -541,7 +541,7 @@ with sl.RestRegistry(FMR, store=bundle) as fmr:
     )
     # resolved into `bundle` on the way past — the chain filled its cache
 
-bundle.write_observations(schema="data", table="obs", source=frame, sort_by=("GEO", "TIME_PERIOD"))
+bundle.write_observations(schema="data", table="obs", source=frame, sorted_by=("GEO", "TIME_PERIOD"))
 bundle.add(sl.DataflowBinding.from_dsd(dsd, dataflow=flow_ref, schema="data", table="obs"))
 ```
 

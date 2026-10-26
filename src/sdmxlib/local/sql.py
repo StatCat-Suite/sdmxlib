@@ -124,6 +124,9 @@ class SchemaInspector:
         #: `_columns_cache`'s lock and lifecycle: both describe a table as it
         #: stands, and `invalidate` is the one signal that it changed.
         self._key_counts_cache: dict[tuple[str, tuple[str, ...]], tuple[int, int]] = {}
+        #: (catalog, schema.table) -> partition columns, read from the DuckLake
+        #: catalog. Shares the lock and `invalidate`: a rewrite can repartition.
+        self._partitions_cache: dict[tuple[str, str], tuple[str, ...]] = {}
         self._lock = threading.Lock()
 
     def columns(self, table: str) -> tuple[str, ...]:
@@ -202,18 +205,47 @@ class SchemaInspector:
             self._key_counts_cache[cache_key] = counts
             return counts
 
+    def partition_columns(self, catalog: str, table_location: str) -> tuple[str, ...]:
+        """The columns DuckLake partitions ``catalog.table_location`` by, in order (cached).
+
+        Read from the table's DuckLake catalog, where `write_observations`'
+        ``partition_by`` records them, so the layout has one source of truth
+        that ships in the bundle. Only identity partitions: one keyed on a
+        transform (``year(ts)``) does not make the rows disjoint on the column
+        itself. A table outside DuckLake, or unpartitioned, has none.
+
+        Args:
+            catalog: The attached catalog holding the table (a binding's
+                located ``database_role``).
+            table_location: ``schema.table`` within it.
+        """
+        cache_key = (catalog, table_location)
+        cached = self._partitions_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        with self._lock:
+            cached = self._partitions_cache.get(cache_key)
+            if cached is not None:
+                return cached
+            partitions = _ducklake_partitions(cursor_for(self._conn), catalog, table_location)
+            self._partitions_cache[cache_key] = partitions
+            return partitions
+
     def invalidate(self, table: str) -> None:
         """Drop everything cached about ``table`` (e.g. after a rewrite)."""
         with self._lock:
             self._columns_cache.pop(table, None)
             for cache_key in [k for k in self._key_counts_cache if k[0] == table]:
                 del self._key_counts_cache[cache_key]
+            for cache_key in [k for k in self._partitions_cache if f"{k[0]}.{k[1]}" == table]:
+                del self._partitions_cache[cache_key]
 
     def invalidate_all(self) -> None:
         """Drop everything cached about every table."""
         with self._lock:
             self._columns_cache.clear()
             self._key_counts_cache.clear()
+            self._partitions_cache.clear()
 
     def plan(self, binding: DataflowBinding) -> QueryPlan:
         """Resolve ``binding``'s main/sidecar tables into a `QueryPlan`.
@@ -257,3 +289,35 @@ class SchemaInspector:
             )
             raise SidecarNotUniqueError(msg)
         return QueryPlan(main=main, sidecar=sidecar, join_keys=join_keys)
+
+
+def _ducklake_partitions(conn: duckdb.DuckDBPyConnection, catalog: str, table_location: str) -> tuple[str, ...]:
+    """A DuckLake table's current identity partition columns, or ``()`` when `catalog` is not a DuckLake catalog."""
+    lakes = conn.execute("SELECT database_name FROM duckdb_databases() WHERE type = 'ducklake'").fetchall()
+    if (catalog,) not in lakes:
+        return ()
+    # DuckLake attaches the catalog's metadata under this name, not listed in
+    # `duckdb_databases()` but readable.
+    metadata = f"__ducklake_metadata_{catalog}"
+    schema, _, table = table_location.rpartition(".")
+    rows = conn.execute(
+        f"""
+        SELECT col.column_name, pc.transform
+        FROM "{metadata}".ducklake_partition_info AS pi
+        JOIN "{metadata}".ducklake_partition_column AS pc USING (partition_id, table_id)
+        JOIN "{metadata}".ducklake_table AS t ON t.table_id = pi.table_id AND t.end_snapshot IS NULL
+        JOIN "{metadata}".ducklake_schema AS s ON s.schema_id = t.schema_id AND s.end_snapshot IS NULL
+        JOIN "{metadata}".ducklake_column AS col
+          ON col.table_id = pi.table_id AND col.column_id = pc.column_id AND col.end_snapshot IS NULL
+        WHERE pi.end_snapshot IS NULL AND s.schema_name = ? AND t.table_name = ?
+        ORDER BY pc.partition_key_index
+        """,
+        [schema or "main", table],
+    ).fetchall()
+    # A transformed key does not partition the column itself; stop at the first.
+    columns: list[str] = []
+    for column, transform in rows:
+        if transform != "identity":
+            break
+        columns.append(str(column))
+    return tuple(columns)

@@ -2746,20 +2746,18 @@ def put_dataflow_binding(
     conn.execute(
         """
         INSERT INTO dataflow_binding (
-            urn, dataflow_urn, table_location, database_role, partition_layout, sort_order,
+            urn, dataflow_urn, table_location, database_role,
             dimension_column_map, measure_column_map, attribute_column_map,
             structural_version, binding_source_registry,
             materialized_at, bound_at, series_attributes_location
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
             urn,
             str(binding.dataflow.urn),
             binding.table_location,
             binding.database_role,
-            list(binding.partition_layout),
-            list(binding.sort_order),
             dict(binding.dimension_column_map),
             dict(binding.measure_column_map),
             dict(binding.attribute_column_map),

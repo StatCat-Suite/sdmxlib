@@ -47,7 +47,6 @@ def _binding(*, structural_version: str = "TEST:DSD_TEST(1.0)") -> DataflowBindi
     return DataflowBinding(
         dataflow=Ref[Dataflow].unresolved(flow_urn),
         table_location="data.observations",
-        partition_layout=(),
         dimension_column_map={"REF_AREA": "REF_AREA"},
         measure_column_map={"OBS_VALUE": "OBS_VALUE"},
         attribute_column_map={},
@@ -131,7 +130,6 @@ def test_check_binding_drift_reports_dsd_unresolvable_when_structure_is_none():
     binding = DataflowBinding(
         dataflow=Ref[Dataflow].unresolved(flow_urn),
         table_location="data.observations",
-        partition_layout=(),
         dimension_column_map={},
         measure_column_map={},
         attribute_column_map={},
