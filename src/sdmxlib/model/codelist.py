@@ -236,6 +236,22 @@ class CodelistLike(EnumerationLike, Protocol):
         """
         ...
 
+    def partial(self, code_ids: Iterable[str]) -> Codelist:
+        """This codelist cut down to *code_ids* and their ancestors, flagged ``is_partial``.
+
+        What SDMX-REST returns for a codelist a query uses only part of:
+        ``detail=referencepartial`` keeps the codes a dataflow's constraints
+        name, and ``/availability`` references keep the codes with data, with
+        their parent codes. Every kept code brings its ancestors, so each
+        ``parent_id`` names a code in the result. Codes keep their order.
+
+        Raises:
+            KeyError: If an id is not a code of this codelist, naming it.
+            TypeError: If *code_ids* is a single string, which would be read
+                as its characters.
+        """
+        ...
+
     def materialize(self) -> Codelist:
         """This codelist with every `Code` built, for callers needing more.
 
@@ -649,6 +665,42 @@ class Codelist(MaintainableArtefact):
         id_set = set(ids)
         return evolve(self, codes=[c for c in self.codes if c.id not in id_set])
 
+    def partial(self, code_ids: Iterable[str]) -> Codelist:
+        """This codelist cut down to *code_ids* and their ancestors, flagged ``is_partial``.
+
+        What SDMX-REST returns for a codelist a query uses only part of:
+        ``detail=referencepartial`` keeps the codes a dataflow's constraints
+        name, and ``/availability`` references keep the codes with data, with
+        their parent codes. Every kept code brings its ancestors, so each
+        ``parent_id`` names a code in the result. Codes keep their order.
+
+        The result carries no extensions: it lists its codes. An inherited code
+        is a code here only once `apply_extensions` has run.
+
+        Args:
+            code_ids: The codes to keep.
+
+        Returns:
+            A new `Codelist` of the kept codes, with ``is_partial`` set.
+
+        Raises:
+            KeyError: If an id is not a code of this codelist, naming it.
+            TypeError: If *code_ids* is a single string, which would be read
+                as its characters.
+        """
+        asked = partial_ids(code_ids)
+        by_id = {code.id: code for code in self.codes}
+        unknown = sorted(asked - by_id.keys())
+        if unknown:
+            raise KeyError(unknown_codes_message(self.urn, unknown, extended=bool(self.extensions)))
+        kept: set[str] = set()
+        for code_id in asked:
+            current: str | None = code_id
+            while current is not None and current not in kept and current in by_id:
+                kept.add(current)
+                current = by_id[current].parent_id
+        return evolve(self, codes=[c for c in self.codes if c.id in kept], is_partial=True, extensions=())
+
     # ── Geographic codelists (SDMX 3.0 / 3.1) ─────────────────────────────────────
 
     def __attrs_post_init__(self) -> None:
@@ -772,6 +824,21 @@ def code_of_kind(*, value: str | None, geo_cell: str | None, **fields: Unpack[Co
 
 #: `CodelistLike.codes_for_each`, bound to a codelist's class.
 type _CodesForEach = Callable[[Sequence[tuple[CodelistLike, Collection[str]]]], list[dict[str, Code]]]
+
+
+def partial_ids(code_ids: Iterable[str]) -> set[str]:
+    """The ids `partial` keeps, refusing a bare string, which iterates as its characters."""
+    if isinstance(code_ids, str):
+        msg = f"partial() takes code ids, not one string: write partial([{code_ids!r}])"
+        raise TypeError(msg)
+    return set(code_ids)
+
+
+def unknown_codes_message(codelist: object, unknown: Sequence[str], *, extended: bool) -> str:
+    """Why `partial` refused: the ids *codelist* does not hold, the first ten named."""
+    shown = ", ".join(unknown[:10]) + (f", and {len(unknown) - 10} more" if len(unknown) > 10 else "")
+    hint = "; it inherits codes through extensions, so apply them first" if extended else ""
+    return f"{len(unknown)} id(s) are not codes of {codelist}: {shown}{hint}"
 
 
 def codes_for_all[K](requests: Mapping[K, tuple[CodelistLike, Collection[str]]]) -> dict[K, dict[str, Code]]:
