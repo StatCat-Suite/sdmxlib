@@ -5,9 +5,9 @@
 `LocalRegistry.bundle()` attaches — so on `LocalRegistry("meta.duckdb")` they
 must *raise*, which §2 says only a type can prevent."
 
-**Measured, the premise does not hold.** `write_observations` is not on
-`LocalRegistry` at all — it belongs to the data store. `browse()` answers on a
-plain registry, with an empty list. And `obs()` answers perfectly well
+**Measured, the premise does not hold.** `write_observations` refuses on a
+registry without a lake, naming `LocalRegistry.build` (GH-198). `browse()`
+answers on a plain registry, with an empty list. And `obs()` answers perfectly well
 on a plain registry whose binding points at a local table, which
 `test_registry_data_plane.py` has relied on all along. None of the three needs a
 lake.
@@ -26,6 +26,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+import polars as pl
 import pytest
 
 import sdmxlib as sl
@@ -88,10 +89,13 @@ def test_browse_answers_on_a_plain_registry(reg) -> None:
     assert reg.browse() == []
 
 
-def test_write_observations_is_not_on_the_registry(reg) -> None:
-    """It belongs to the data store. §5.17 listed it as a registry method that
-    must raise without a lake; there is nothing there to raise."""
-    assert not hasattr(reg, "write_observations")
+def test_write_observations_without_a_lake_says_where_one_comes_from(reg) -> None:
+    """A builder writes through the registry (GH-198); one with no lake refuses, naming `build`."""
+    with pytest.raises(KeyError) as caught:
+        reg.write_observations(schema="data", table="obs", source=pl.DataFrame({"REF_AREA": ["CA"]}))
+    message = str(caught.value)
+    assert "no lake" in message
+    assert "LocalRegistry.build(bundle)" in message
 
 
 # ── the refusal that was actually missing ─────────────────────────────────

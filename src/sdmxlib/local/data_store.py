@@ -648,12 +648,9 @@ class DuckDBDataStore(SessionFactory):
         """Materialise observation rows into a DuckLake-managed table.
 
         Routes through the ATTACHed lake (``lake_alias``, default ``lake``).
-        Schema is created if missing. ``mode="overwrite"`` uses
-        ``CREATE OR REPLACE TABLE``; ``mode="append"`` uses ``INSERT INTO``
-        and requires the target table to already exist with a compatible
-        schema. ``partition_by`` is currently informational — DuckLake
-        infers partition columns from table definition; we record the
-        layout on the matching `DataflowBinding`.
+        Schema is created if missing. ``mode="overwrite"`` replaces the
+        table; ``mode="append"`` uses ``INSERT INTO`` and requires the target
+        table to already exist with a compatible schema.
 
         Args:
             schema: Target schema inside the lake (created if absent).
@@ -663,7 +660,13 @@ class DuckDBDataStore(SessionFactory):
             source: Rows to write. Anything DuckDB can register as a
                 virtual relation — Polars frames, Arrow tables, or an
                 existing DuckDB relation.
-            partition_by: SDMX dimension ids the table is partitioned on.
+            partition_by: Columns of ``source`` to partition the table by, in
+                order: DuckLake writes one set of data files per distinct
+                value, so a query filtering on one reads only its files. An
+                overwrite creates the table empty, sets ``PARTITIONED BY``,
+                then inserts. Physical column names, as ``sort_by``; record
+                the SDMX ids on the binding's ``partition_layout``. An append
+                keeps the table's partitioning and refuses a ``partition_by``.
             sort_by: Columns of ``source`` to store the rows sorted by,
                 outermost first. Empty writes them in the order they arrive.
 
@@ -703,8 +706,19 @@ class DuckDBDataStore(SessionFactory):
             target = f"{lake_alias}.{schema}.{table}"
             conn.execute(f"CREATE SCHEMA IF NOT EXISTS {lake_alias}.{schema}")
             order = _sort_clause(conn, view_name, sort_by)
-            if mode == "overwrite":
+            partitions = _column_list(conn, view_name, partition_by, argument="partition_by")
+            if mode == "overwrite" and partitions:
+                conn.execute(f"CREATE OR REPLACE TABLE {target} AS SELECT * FROM {view_name} LIMIT 0")
+                conn.execute(f"ALTER TABLE {target} SET PARTITIONED BY ({partitions})")
+                conn.execute(f"INSERT INTO {target} SELECT * FROM {view_name}{order}")
+            elif mode == "overwrite":
                 conn.execute(f"CREATE OR REPLACE TABLE {target} AS SELECT * FROM {view_name}{order}")
+            elif mode == "append" and partitions:
+                msg = (
+                    f"an append keeps {target}'s partitioning; partition_by applies only to an overwrite, "
+                    "which creates the table"
+                )
+                raise ValueError(msg)
             elif mode == "append":
                 # An append sorts only what it inserts. The table as a whole is
                 # then sorted in runs rather than globally, which is what every
@@ -723,14 +737,19 @@ class DuckDBDataStore(SessionFactory):
         # (tiny) cache rather than guess the exact key. Writes are rare.
         if self._inspector is not None:
             self._inspector.invalidate_all()
-        _ = partition_by  # silence unused — see docstring
 
 
 # ── SQL helpers ─────────────────────────────────────────────────────────
 
 
 def _sort_clause(conn: duckdb.DuckDBPyConnection, view_name: str, sort_by: tuple[str, ...]) -> str:
-    """`ORDER BY` for a write, with every column checked against the source.
+    """`ORDER BY` for a write, with every column checked against the source (`_column_list`)."""
+    columns = _column_list(conn, view_name, sort_by, argument="sort_by")
+    return f" ORDER BY {columns}" if columns else ""
+
+
+def _column_list(conn: duckdb.DuckDBPyConnection, view_name: str, names: tuple[str, ...], *, argument: str) -> str:
+    """`names` as a comma-separated identifier list, each checked to be a column of `view_name`.
 
     Identifier interpolation, so the names cannot come from anywhere but the
     source relation itself: a name that is not a column of `view_name` is
@@ -738,18 +757,19 @@ def _sort_clause(conn: duckdb.DuckDBPyConnection, view_name: str, sort_by: tuple
     likelier mistake, which is passing an SDMX component id where a physical
     column was wanted — `REF_AREA` when the column is `GEO`.
     """
-    if not sort_by:
+    if not names:
         return ""
     available = {str(row[0]) for row in conn.execute(f"DESCRIBE {view_name}").fetchall()}
-    unknown = [name for name in sort_by if name not in available]
+    unknown = [name for name in names if name not in available]
     if unknown:
+        verb = "sort" if argument == "sort_by" else "partition"
         msg = (
-            f"cannot sort the write by {', '.join(unknown)}: not "
+            f"cannot {verb} the write by {', '.join(unknown)}: not "
             f"{'a column' if len(unknown) == 1 else 'columns'} of the source, which has "
-            f"{', '.join(sorted(available))}. `sort_by` takes physical column names, not SDMX ids."
+            f"{', '.join(sorted(available))}. `{argument}` takes physical column names, not SDMX ids."
         )
         raise ValueError(msg)
-    return " ORDER BY " + ", ".join(_sql_identifier(name) for name in sort_by)
+    return ", ".join(_sql_identifier(name) for name in names)
 
 
 def _sql_identifier(name: str) -> str:
