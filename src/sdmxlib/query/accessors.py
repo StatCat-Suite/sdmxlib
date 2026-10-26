@@ -1069,6 +1069,9 @@ class _ReportedAttribute[R: RowKind](Cols[R, MetadataSection]):
     #: Which sibling this is, where an attribute repeats. SDMX models
     #: repetition as sibling rows sharing an id, never as a values list.
     position: Num[R] = ncol("metadata_value", "sibling_index")
+    #: The value's place in its set, in document order: the order the
+    #: attributes were written, a parent before its children.
+    ordinal: Num[R] = ncol("metadata_value", "ordinal")
     kind: Str[R] = col("metadata_value", "value_kind")
     scalar: Str[R] = col("metadata_value", "scalar")
     value: Localised[R] = label("metadata_value", "i18n")

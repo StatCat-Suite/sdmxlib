@@ -2378,26 +2378,29 @@ def _strip_sibling_index(segment: str) -> tuple[str, int]:
 def _build_reported_tree(
     rows: list[tuple[str, int, str | None, str | None, dict[str, str] | None]],
 ) -> ItemList[ReportedAttribute]:
-    """Reconstruct a ReportedAttribute tree from metadata_value rows.
+    """Reconstruct a ReportedAttribute tree from metadata_value rows, in document order.
 
-    Rows are ``(attribute_path, sibling_index, value_kind, scalar, i18n)``.
-    Paths are dot-joined attribute ids; repeated siblings carry an
+    Rows are ``(attribute_path, sibling_index, value_kind, scalar, i18n)``,
+    ordered by ``ordinal``: a pre-order walk of the tree as written, so a
+    parent comes before its children and siblings come in their order
+    (GH-197). Paths are dot-joined attribute ids; repeated siblings carry an
     ``[N]`` suffix on the segment, e.g. ``"QUALITY.NOTE[1]"``.
     """
     # Nodes by full path (with [N] suffixes) so the tree structure is
-    # unambiguous even with sibling repetition; every prefix, so presentational
-    # ancestors materialise too. Siblings in (depth, path) order, as before;
-    # each node is built after its children, with its value (#492).
-    values = {path: _build_reported_value(kind, scalar, i18n) for path, _idx, kind, scalar, i18n in rows}
-    all_paths: set[str] = set()
-    for path in values:
-        parts = path.split(".")
-        all_paths.update(".".join(parts[:depth]) for depth in range(1, len(parts) + 1))
-
+    # unambiguous even with sibling repetition; every prefix, so an ancestor
+    # with no row of its own still materialises, at its first descendant.
+    # Each node is built after its children, with its value (#492).
+    values: dict[str, ReportedAttributeValue | None] = {}
     children_map: dict[str | None, list[str]] = {}
-    for path in sorted(all_paths, key=lambda p: (p.count("."), p)):
-        parent = path.rsplit(".", 1)[0] if "." in path else None
-        children_map.setdefault(parent, []).append(path)
+    placed: set[str] = set()
+    for path, _idx, kind, scalar, i18n in rows:
+        values[path] = _build_reported_value(kind, scalar, i18n)
+        parts = path.split(".")
+        for depth in range(1, len(parts) + 1):
+            node = ".".join(parts[:depth])
+            if node not in placed:
+                placed.add(node)
+                children_map.setdefault(".".join(parts[: depth - 1]) or None, []).append(node)
 
     def build(path: str, kids: ItemList[ReportedAttribute]) -> ReportedAttribute:
         leaf_id, _ = _strip_sibling_index(path.rsplit(".", 1)[-1])
@@ -2506,6 +2509,7 @@ def _read_metadata_set(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineRow
         SELECT attribute_path, sibling_index, value_kind, scalar, i18n
         FROM metadata_value
         WHERE set_urn = ?
+        ORDER BY ordinal
         """,
         [urn],
     ).fetchall()

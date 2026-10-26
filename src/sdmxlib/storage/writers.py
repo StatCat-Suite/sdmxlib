@@ -2609,6 +2609,8 @@ def _collect_reported_values(
 
     Repetition (multiple sibling ReportedAttributes with the same id) is
     encoded by ``sibling_index`` — counted per (parent_path, attribute_id).
+    Each row's ``ordinal`` is its place in a pre-order walk, so the rows in
+    ``ordinal`` order are the tree in document order.
     """
     for attr in attributes:
         sibling_key = f"{prefix}|{attr.id}"
@@ -2621,7 +2623,7 @@ def _collect_reported_values(
             path = f"{path}[{idx}]"
 
         kind, scalar, i18n = _serialize_reported_value(attr.value)
-        value_rows.append([set_urn, path, idx, kind, scalar, i18n])
+        value_rows.append([set_urn, path, idx, len(value_rows), kind, scalar, i18n])
 
         if attr.children:
             _collect_reported_values(attr.children, path, set_urn, sibling_counters, value_rows)
@@ -2631,6 +2633,7 @@ _METADATA_VALUE_COLS = [
     "set_urn",
     "attribute_path",
     "sibling_index",
+    "ordinal",
     "value_kind",
     "scalar",
     "i18n",
