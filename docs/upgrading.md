@@ -19,6 +19,23 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## Observations come in codelist order
+
+An observation query's default order sorts each dimension enumerated by a
+codelist or a value list by its code's position in that scheme, then by the
+code id. It sorted every dimension as text, so the census's characteristics
+came `1`, `10`, `100`
+([GH-213](https://github.com/StatCat-Suite/sdmxlib/issues/213)):
+
+- The rows a page holds, by `limit` / `offset` or `after()`, change. A paged
+  response or snapshot taken under the old order differs from one taken now.
+- A cursor taken before the upgrade is accepted and continues in the new
+  order, so it can skip or repeat rows. Start a page walk again.
+- `order_by(obs.col(id))` still sorts the stored value as text. To keep the
+  old order for a whole query, pass every dimension to `order_by`.
+- `TIME_PERIOD`, an unenumerated dimension, and `DuckDBDataStore.obs(binding)`
+  without `dsd=` sort as before.
+
 ## A MetadataSet keeps its attributes' order
 
 The store schema is **2.51**. A bundle published on an earlier schema is

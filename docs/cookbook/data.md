@@ -255,7 +255,8 @@ By default every terminal except `stream()` sorts on all of the dataflow's
 dimensions, whether the caller needs the order or not. A dimension enumerated
 by a codelist or a value list sorts by its code's position in the codelist,
 then by the code id; `TIME_PERIOD` and an unenumerated dimension sort as
-stored. Each enumerated dimension adds one join to its codelist's positions:
+stored. Each enumerated dimension adds one join to its codelist's positions,
+unless a key passed to `order_by` already sorts by that column:
 
 ```sql
 FROM lake.census.obs s0
@@ -286,19 +287,19 @@ that codelist does:
   text order from a store without its structures.
 - A cursor carries the key values alone, so `after()` accepts one taken under
   another order and continues in the current one. A page walk that spans a
-  change of codelist, or of sdmxlib across this change, can skip or repeat
-  rows. Start the walk again.
+  change of codelist can skip or repeat rows. Start the walk again.
 
 That clause exists so `limit`/`offset` paging is stable, and on a codelist it
-is free. On observations it is not. Measured on a 4,261,081-row partition of
-a 2021 Census Profile bundle, before the codelist joins were added:
+is free. On observations it is not. Measured on the 4,261,081-row
+`CensusDivision` partition of the 2021 Census Profile bundle, three columns
+selected, best of 3, DuckDB on 4 threads:
 
 | | ms |
 | --- | --- |
-| `select(...).collect()` | 337 |
-| `order_by(None).select(...).collect()` | **75** |
-| `frame()` — 27 columns | 1061 |
-| `order_by(None).frame()` | **495** |
+| `select(...).collect()` | 450 |
+| `order_by(None).select(...).collect()` | **183** |
+| `frame()` — 27 columns | 800 |
+| `order_by(None).frame()` | **408** |
 
 ```python
 with sl.LocalRegistry("lake.duckdb") as local:
