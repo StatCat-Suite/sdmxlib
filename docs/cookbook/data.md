@@ -274,6 +274,21 @@ list sorts after every code it does. An explicit
 compare them and as polars sorts the frame's `pl.Enum` column, whose
 categories are the code ids in sorted order.
 
+The order reads the codelist the registry stores, so it holds for as long as
+that codelist does:
+
+- A codelist version that lists its codes in another order changes the order
+  of every dataflow it enumerates. Within one publication the codelist is
+  fixed, and so is the order.
+- A registry that does not hold the codelist sorts that dimension as text. So
+  does `DuckDBDataStore.obs(binding)` without `dsd=`, for every dimension. One
+  dataflow can therefore come back in codelist order from its bundle and in
+  text order from a store without its structures.
+- A cursor carries the key values alone, so `after()` accepts one taken under
+  another order and continues in the current one. A page walk that spans a
+  change of codelist, or of sdmxlib across this change, can skip or repeat
+  rows. Start the walk again.
+
 That clause exists so `limit`/`offset` paging is stable, and on a codelist it
 is free. On observations it is not. Measured on a 4,261,081-row partition of
 a 2021 Census Profile bundle, before the codelist joins were added:
