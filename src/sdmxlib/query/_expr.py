@@ -32,7 +32,7 @@ from sdmxlib._time import to_storage
 from sdmxlib.model._label_match import Fold
 from sdmxlib.model.version import sort_key as version_sort_key
 from sdmxlib.query._common import Descending, canonical_key
-from sdmxlib.query._joins import STRUCTURAL_SCHEMA, PathError, RootJoin, trim
+from sdmxlib.query._joins import STRUCTURAL_SCHEMA, KeyRank, PathError, RootJoin, trim
 from sdmxlib.sql import SqlRelation
 
 
@@ -2567,6 +2567,14 @@ class AnyCols:
     #: *and* a guaranteed order, where a global sort gives only the second
     #: (#331).
     __partitions__: tuple[str, ...] = ()
+
+    #: Key columns the natural order sorts by an item scheme's positions.
+    #:
+    #: Empty for every structural relation, whose key is a URN. A dataflow's
+    #: dimensions hold codes, and its observations come in codelist order
+    #: rather than code-id text order (GH-213): the root-key tiebreak sorts
+    #: each listed column by its code's position first.
+    __key_ranks__: tuple[KeyRank, ...] = ()
 
     #: Schema qualifying `__table__`, or `None` when it is qualified already.
     #:

@@ -1103,7 +1103,7 @@ def test_a_sidecar_column_compiled_after_the_from_clause_is_refused() -> None:
     )
     root = Observations(binding, sidecar=Sidecar("data.series", ("GEO",), frozenset({"GEO", "GEO_NAME"})))
     scope = _Scope(root.__table__, (), _Namespace(), schema=root.__schema__, joins=root.__joins__)
-    assert "JOIN" not in scope.from_sql(), "nothing referenced it"
+    assert "JOIN" not in scope.from_sql().text, "nothing referenced it"
     with pytest.raises(PathError, match="had already been pruned"):
         scope.reference(root["GEO_NAME"])
 

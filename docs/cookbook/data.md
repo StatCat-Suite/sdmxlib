@@ -252,23 +252,54 @@ the query: write the stream to Parquet and sort on read.
 ### `frame()` can drop the tiebreak too — `order_by(None)`
 
 By default every terminal except `stream()` sorts on all of the dataflow's
-dimensions, whether the caller needs the order or not:
+dimensions, whether the caller needs the order or not. A dimension enumerated
+by a codelist or a value list sorts by its code's position in the codelist,
+then by the code id; `TIME_PERIOD` and an unenumerated dimension sort as
+stored. Each enumerated dimension adds one join to its codelist's positions,
+unless a key passed to `order_by` already sorts by that column:
 
 ```sql
-ORDER BY s0.FREQ NULLS LAST, s0.REF_AREA NULLS LAST, s0.CHARACTERISTIC NULLS LAST,
-         s0.GENDER NULLS LAST, s0.STAT_MEASURE NULLS LAST, s0.TIME_PERIOD NULLS LAST
+FROM lake.census.obs s0
+LEFT JOIN sdmx.code s0_k0 ON s0_k0.codelist_urn = ? AND s0_k0.code_id = s0.REF_AREA
+LEFT JOIN sdmx.code s0_k1 ON s0_k1.codelist_urn = ? AND s0_k1.code_id = s0.CHARACTERISTIC
+...
+ORDER BY coalesce(s0_k0.position, 2147483647), s0.REF_AREA NULLS LAST,
+         coalesce(s0_k1.position, 2147483647), s0.CHARACTERISTIC NULLS LAST,
+         ..., s0.TIME_PERIOD NULLS LAST
 ```
 
+So the first page of a query holds the top of each codelist: characteristics
+`1`, `2`, `3`, … rather than `1`, `10`, `100`. A code the codelist does not
+list sorts after every code it does. An explicit
+`order_by(obs.col("CHARACTERISTIC"))` sorts the codes as text, as `==` and `<`
+compare them and as polars sorts the frame's `pl.Enum` column, whose
+categories are the code ids in sorted order.
+
+The order reads the codelist the registry stores, so it holds for as long as
+that codelist does:
+
+- A codelist version that lists its codes in another order changes the order
+  of every dataflow it enumerates. Within one publication the codelist is
+  fixed, and so is the order.
+- A registry that does not hold the codelist sorts that dimension as text. So
+  does `DuckDBDataStore.obs(binding)` without `dsd=`, for every dimension. One
+  dataflow can therefore come back in codelist order from its bundle and in
+  text order from a store without its structures.
+- A cursor carries the key values alone, so `after()` accepts one taken under
+  another order and continues in the current one. A page walk that spans a
+  change of codelist can skip or repeat rows. Start the walk again.
+
 That clause exists so `limit`/`offset` paging is stable, and on a codelist it
-is free. On observations it is not. Measured on a 4,261,081-row partition of
-a 2021 Census Profile bundle:
+is free. On observations it is not. Measured on the 4,261,081-row
+`CensusDivision` partition of the 2021 Census Profile bundle, three columns
+selected, best of 3, DuckDB on 4 threads:
 
 | | ms |
 | --- | --- |
-| `select(...).collect()` | 337 |
-| `order_by(None).select(...).collect()` | **75** |
-| `frame()` — 27 columns | 1061 |
-| `order_by(None).frame()` | **495** |
+| `select(...).collect()` | 450 |
+| `order_by(None).select(...).collect()` | **183** |
+| `frame()` — 27 columns | 800 |
+| `order_by(None).frame()` | **408** |
 
 ```python
 with sl.LocalRegistry("lake.duckdb") as local:

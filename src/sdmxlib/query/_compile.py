@@ -65,6 +65,7 @@ from sdmxlib.query._joins import (
     Hop,
     Join,
     JoinPlan,
+    KeyRank,
     PathError,
     RootJoin,
     plan_joins,
@@ -87,6 +88,11 @@ class Sql:
 #: A constant rather than a field on `CompiledQuery`, because that had to
 #: become a plain `(sql, params)` pair to satisfy `sdmxlib.sql.SqlRelation`.
 ROOT_ALIAS = "s0"
+
+#: The position an item takes when its scheme gives it none, or does not list
+#: it: DuckDB's largest `INT`, so it sorts after every positioned item, as
+#: `NULLS LAST` would, and the keyset comparison never meets a null rank.
+_UNRANKED = 2_147_483_647
 
 
 class CompiledQuery(NamedTuple):
@@ -498,7 +504,18 @@ class _Scope:
     two routes through the same relation share one join.
     """
 
-    __slots__ = ("_names", "_plan", "_rendered", "_root_joins", "_strip", "_table", "_tail", "_used")
+    __slots__ = (
+        "_names",
+        "_plan",
+        "_ranked",
+        "_ranks",
+        "_rendered",
+        "_root_joins",
+        "_strip",
+        "_table",
+        "_tail",
+        "_used",
+    )
 
     def __init__(
         self,
@@ -511,6 +528,7 @@ class _Scope:
         extra_paths: Sequence[tuple[str, ...]] = (),
         schema: str | None = STRUCTURAL_SCHEMA,
         joins: Sequence[RootJoin] = (),
+        ranks: Sequence[KeyRank] = (),
     ) -> None:
         self._table = table
         self._names = names
@@ -576,6 +594,27 @@ class _Scope:
         #: `_qualify_paths` each came by their own docstring about a clause they
         #: had missed.
         self._used: set[str] = set()
+        #: The item-scheme join each ranked key column sorts through, keyed by
+        #: the column. `LEFT` and row-preserving: the scheme's table is unique
+        #: on scheme and item id.
+        self._ranks: dict[str, tuple[Join, KeyRank]] = {
+            rank.column: (
+                Join(
+                    f"{prefix}k{index}",
+                    rank.table,
+                    optional=True,
+                    on=(
+                        f"{prefix}k{index}.{rank.scheme_column} = ? "
+                        f"AND {prefix}k{index}.{rank.item_column} = {alias}.{rank.column}"
+                    ),
+                ),
+                rank,
+            )
+            for index, rank in enumerate(ranks)
+        }
+        #: Ranked columns something in this statement sorts by. Pruned as
+        #: `_used` is: a `count()` sorts nothing, so it joins no codelist.
+        self._ranked: set[str] = set()
         #: Set by `from_sql`, so a reference made after the `FROM` was rendered
         #: is a raise rather than an alias the statement never joined.
         self._rendered = False
@@ -584,7 +623,7 @@ class _Scope:
     def plan(self) -> JoinPlan:
         return self._plan
 
-    def from_sql(self) -> str:
+    def from_sql(self) -> Sql:
         """The `FROM` clause, with the root joins nothing referenced left out.
 
         **Call this last.** It reads `_used`, which fills in as the other
@@ -600,14 +639,52 @@ class _Scope:
         unprojected read, so the join is row-preserving wherever it is correct
         at all — which is the assumption DuckDB cannot make for itself and we
         can.
+
+        The item-scheme joins a ranked key column sorts through come last, one
+        per column the statement sorts by, each binding its scheme's URN.
         """
         self._rendered = True
         used = tuple(join for table, join in self._root_joins.items() if table in self._used)
-        if not used:
-            return self._plan.to_sql()
         # Ahead of the hop joins: this one hangs off the root, and a hop's
         # `ON` may name the root alias but never the sidecar's.
-        return attrs.evolve(self._plan, joins=(*used, *self._plan.joins)).to_sql()
+        plan = attrs.evolve(self._plan, joins=(*used, *self._plan.joins)) if used else self._plan
+        ranked = [(join, rank) for column, (join, rank) in self._ranks.items() if column in self._ranked]
+        text = "\n".join([plan.to_sql(), *(join.to_sql() for join, _ in ranked)])
+        return Sql(text, tuple(rank.scheme for _, rank in ranked))
+
+    def ranked(self, column: str) -> Sql | None:
+        """The position `column`'s value holds in its item scheme, or `None` for a column without one.
+
+        An item the scheme does not list, or one with no position, ranks after
+        every positioned item: `_UNRANKED` stands in for its position, so the
+        rank is never null and the keyset comparison in `_after_sql` needs no
+        null case for it.
+        """
+        entry = self._ranks.get(column)
+        if entry is None:
+            return None
+        if self._rendered:
+            msg = (
+                f"the order on {column!r} was compiled after this statement's FROM clause was "
+                f"rendered, so the join it needs had already been pruned. Build every other "
+                f"clause before from_sql()."
+            )
+            raise PathError(msg)
+        self._ranked.add(column)
+        return Sql(f"coalesce({entry[0].alias}.position, {_UNRANKED})")
+
+    def rank_of(self, column: str, value: object) -> Sql:
+        """The position `value` holds in `column`'s item scheme, as `ranked` reads it.
+
+        Uncorrelated, so DuckDB evaluates it once per statement: a cursor's
+        values are fixed when the statement is built.
+        """
+        _, rank = self._ranks[column]
+        return Sql(
+            f"coalesce((SELECT position FROM {STRUCTURAL_SCHEMA}.{rank.table} "
+            f"WHERE {rank.scheme_column} = ? AND {rank.item_column} = ?), {_UNRANKED})",
+            (rank.scheme, value),
+        )
 
     def _use(self, table: str, join: Join) -> str:
         """Mark a root join referenced and give back its alias.
@@ -968,9 +1045,10 @@ class _Scope:
             direction = " DESC" if order[1] else ""
             order_sql = Sql(f"{key_ref.text}{direction}", key_ref.params)
         body = self._agg_body(agg, inner, remainders[: len(agg.columns)], order_sql)
+        source = inner.from_sql()
         return Sql(
-            f"(SELECT {body.text} FROM {inner.from_sql()} WHERE {where.text})",
-            body.params + where.params,
+            f"(SELECT {body.text} FROM {source.text} WHERE {where.text})",
+            body.params + source.params + where.params,
         )
 
     def _agg_body(self, agg: AnyAgg, inner: _Scope, remainders: list[tuple[str, ...]], order: Sql | None = None) -> Sql:
@@ -1229,9 +1307,10 @@ class _Scope:
 
         where = _conjoin([correlation, facet, conditions])
         keyword = "NOT EXISTS" if negate else "EXISTS"
+        source = inner.from_sql()
         return Sql(
-            f"{keyword} (SELECT 1 FROM {inner.from_sql()} WHERE {where.text})",
-            where.params,
+            f"{keyword} (SELECT 1 FROM {source.text} WHERE {where.text})",
+            source.params + where.params,
         )
 
 
@@ -1407,15 +1486,55 @@ def _order_sql(
     if order is None:
         return Sql("")
     parts = [scope.order(key) for key in order]
-    keys = list(tiebreak) if tiebreak is not None else [f"{scope.alias}.{column} NULLS LAST" for column in root.__key__]
+    keys = list(tiebreak) if tiebreak is not None else _key_order(root, scope, order)
     text = ", ".join([*(p.text for p in parts), *keys])
     if not text:
         return Sql("")
     return Sql(f"\nORDER BY {text}", tuple(itertools.chain.from_iterable(p.params for p in parts)))
 
 
-def _order_terms(root: AnyCols, scope: _Scope, order: Sequence[OrderKey]) -> list[tuple[Sql, bool]]:
-    """Every `ORDER BY` term as `(reference, ascending)`, tiebreak included.
+def _key_order(root: AnyCols, scope: _Scope, order: Sequence[OrderKey]) -> list[str]:
+    """The root-key tiebreak's `ORDER BY` terms: each key column, after its rank when it has one.
+
+    A dataflow's dimension enumerated by a codelist sorts by the code's
+    position, then by its id (GH-213). Every other key column sorts as stored,
+    as does one a caller's key already sorts by (`_ranked_key`).
+    """
+    terms: list[str] = []
+    for column in root.__key__:
+        rank = _ranked_key(scope, order, column)
+        if rank is not None:
+            terms.append(rank.text)
+        terms.append(f"{scope.alias}.{column} NULLS LAST")
+    return terms
+
+
+def _ranked_key(scope: _Scope, order: Sequence[OrderKey], column: str) -> Sql | None:
+    """`column`'s rank in the tiebreak, or `None` when it sorts as stored.
+
+    A key column a caller's key already sorts by gets no rank: every tie the
+    tiebreak breaks holds one value of it, so its rank decides nothing, and
+    leaving it out leaves out its codelist's join. A partition stream ordered
+    by geography otherwise builds `CL_GEOGRAPHY`'s 579,951 positions once per
+    partition, 40 % of its time on the census bundle.
+    """
+    if any(key.column.column == column and not scope._rel(tuple(key.column.path)) for key in order):
+        return None
+    return scope.ranked(column)
+
+
+class _SortTerm(NamedTuple):
+    """One key of a query's total order, as the keyset comparison reads it."""
+
+    reference: Sql
+    ascending: bool
+    #: The rank this term sorts by before its own value, and the key column it
+    #: ranks — `None` for a term sorted as stored. See `_key_order`.
+    rank: tuple[Sql, str] | None = None
+
+
+def _order_terms(root: AnyCols, scope: _Scope, order: Sequence[OrderKey]) -> list[_SortTerm]:
+    """Every `ORDER BY` term, tiebreak included, one per cursor value.
 
     The keyset half of the sort key: `after()` compares exactly the columns the
     order sorts by, and a cursor built from a different list would skip rows.
@@ -1429,8 +1548,12 @@ def _order_terms(root: AnyCols, scope: _Scope, order: Sequence[OrderKey]) -> lis
     # and the keyset `after()` comparison stay built from the same columns. A
     # cursor carrying `version` while the sort read `version_sort` would skip
     # rows, silently and only on catalogues that reach double digits.
-    terms = [(scope._sort_reference(key.column), key.ascending) for key in order]
-    terms.extend((Sql(f"{scope.alias}.{column}"), True) for column in root.__key__)
+    terms = [_SortTerm(scope._sort_reference(key.column), key.ascending) for key in order]
+    for column in root.__key__:
+        rank = _ranked_key(scope, order, column)
+        terms.append(
+            _SortTerm(Sql(f"{scope.alias}.{column}"), ascending=True, rank=None if rank is None else (rank, column))
+        )
     return terms
 
 
@@ -1456,7 +1579,7 @@ def _after_sql(root: AnyCols, scope: _Scope, order: Sequence[OrderKey], cursor: 
             f"that produced it — page with the same order_by()."
         )
         raise PathError(msg)
-    if tuple(ascending for _, ascending in terms) != cursor.ascending:
+    if tuple(term.ascending for term in terms) != cursor.ascending:
         msg = (
             "this cursor was taken from a query with a different sort "
             "direction. A cursor is only meaningful against the order that "
@@ -1464,19 +1587,28 @@ def _after_sql(root: AnyCols, scope: _Scope, order: Sequence[OrderKey], cursor: 
         )
         raise PathError(msg)
 
+    # A ranked term compares its rank first, then its value: the cursor
+    # carries the value alone, and its rank is looked up from it.
+    compared: list[tuple[Sql, bool, Sql | None]] = []
+    for term, value in zip(terms, cursor.values, strict=True):
+        if term.rank is not None:
+            rank, column = term.rank
+            compared.append((rank, term.ascending, scope.rank_of(column, value)))
+        compared.append((term.reference, term.ascending, None if value is None else Sql("?", (value,))))
+
     clause = Sql("1 = 0")  # past the last row: nothing follows
-    for (reference, ascending), value in zip(reversed(terms), reversed(cursor.values), strict=True):
+    for reference, ascending, value in reversed(compared):
         equal = (
             Sql(f"{reference.text} IS NULL", reference.params)
             if value is None
-            else Sql(f"{reference.text} IS NOT DISTINCT FROM ?", (*reference.params, value))
+            else Sql(f"{reference.text} IS NOT DISTINCT FROM {value.text}", (*reference.params, *value.params))
         )
         strictly = (
             Sql("1 = 0")
             if value is None
             else Sql(
-                f"({reference.text} {'>' if ascending else '<'} ? OR {reference.text} IS NULL)",
-                (*reference.params, value, *reference.params),
+                f"({reference.text} {'>' if ascending else '<'} {value.text} OR {reference.text} IS NULL)",
+                (*reference.params, *value.params, *reference.params),
             )
         )
         rest = strictly if clause.text == "1 = 0" else _disjoin(strictly, _conjoin([equal, clause]))
@@ -1556,6 +1688,7 @@ def compile_projection(
         extra_paths=extra,
         schema=root.__schema__,
         joins=root.__joins__,
+        ranks=root.__key_ranks__,
     )
     projected = [scope.grouped(name, item) if grouped else scope.projection(name, item) for name, item in items]
     constraint = _constraint_clause(root.__constraint__, scope.alias)
@@ -1614,10 +1747,11 @@ def compile_projection(
     else:
         ordered = _order_sql(root, scope, order, tiebreak=tiebreak)
     # `from_sql` last: it emits only the root joins something above referenced.
-    sql = f"SELECT {'DISTINCT ' if distinct else ''}{select} FROM {scope.from_sql()}"
+    source = scope.from_sql()
+    sql = f"SELECT {'DISTINCT ' if distinct else ''}{select} FROM {source.text}"
     return CompiledQuery(
         sql + "".join(clauses) + ordered.text,
-        list(params + where.params + windowed.params + having_params + ordered.params),
+        list(params + source.params + where.params + windowed.params + having_params + ordered.params),
     )
 
 
@@ -1684,25 +1818,34 @@ def compile_page(
     """
     table = root.__table__
     extra = [*_order_paths(table, order), *_qualify_paths(table, qualify)]
-    scope = _Scope(table, predicates, _Namespace(), extra_paths=extra, schema=root.__schema__, joins=root.__joins__)
+    scope = _Scope(
+        table,
+        predicates,
+        _Namespace(),
+        extra_paths=extra,
+        schema=root.__schema__,
+        joins=root.__joins__,
+        ranks=root.__key_ranks__,
+    )
     terms = _order_terms(root, scope, order)
     constraint = _constraint_clause(root.__constraint__, scope.alias)
     keyset = _after_sql(root, scope, order, after) if after is not None else Sql("")
     scoped = _scope_clause(fetch_scope, scope.alias, root.__schema__)
     where = _conjoin([constraint, scoped, keyset, *(scope.compile(p) for p in predicates)])
 
-    selected = ", ".join([f"{scope.alias}.{urn_column}", *(reference.text for reference, _ in terms)])
-    params = tuple(itertools.chain.from_iterable(reference.params for reference, _ in terms))
+    selected = ", ".join([f"{scope.alias}.{urn_column}", *(term.reference.text for term in terms)])
+    params = tuple(itertools.chain.from_iterable(term.reference.params for term in terms))
     windowed = _qualify_sql(scope, qualify)
     ordered = _order_sql(root, scope, order)
     # `from_sql` last: it emits only the root joins something above referenced.
     where_sql = f"\nWHERE {where.text}" if where.text != "TRUE" else ""
-    sql = f"SELECT {selected} FROM {scope.from_sql()}{where_sql}"
+    source = scope.from_sql()
+    sql = f"SELECT {selected} FROM {source.text}{where_sql}"
     compiled = CompiledQuery(
         f"{sql}{windowed.text}{ordered.text}\nLIMIT {limit}",
-        list(params + where.params + windowed.params + ordered.params),
+        list(params + source.params + where.params + windowed.params + ordered.params),
     )
-    return compiled, tuple(ascending for _, ascending in terms)
+    return compiled, tuple(term.ascending for term in terms)
 
 
 def compile_select(
@@ -1723,7 +1866,15 @@ def compile_select(
     """
     table = root.__table__
     extra = [*_order_paths(table, order), *_qualify_paths(table, qualify)]
-    scope = _Scope(table, predicates, _Namespace(), extra_paths=extra, schema=root.__schema__, joins=root.__joins__)
+    scope = _Scope(
+        table,
+        predicates,
+        _Namespace(),
+        extra_paths=extra,
+        schema=root.__schema__,
+        joins=root.__joins__,
+        ranks=root.__key_ranks__,
+    )
     constraint = _constraint_clause(root.__constraint__, scope.alias)
     keyset = _after_sql(root, scope, order or (), after) if after is not None else Sql("")
     scoped = _scope_clause(fetch_scope, scope.alias, root.__schema__)
@@ -1734,5 +1885,9 @@ def compile_select(
     ordered = _order_sql(root, scope, order)
     # `from_sql` last: it emits only the root joins something above referenced.
     where_sql = f"\nWHERE {where.text}" if where.text != "TRUE" else ""
-    sql = f"SELECT {columns} FROM {scope.from_sql()}{where_sql}"
-    return CompiledQuery(sql + windowed.text + ordered.text, list(where.params + windowed.params + ordered.params))
+    source = scope.from_sql()
+    sql = f"SELECT {columns} FROM {source.text}{where_sql}"
+    return CompiledQuery(
+        sql + windowed.text + ordered.text,
+        list(source.params + where.params + windowed.params + ordered.params),
+    )

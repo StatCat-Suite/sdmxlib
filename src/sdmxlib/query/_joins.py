@@ -262,6 +262,33 @@ class RootJoin:
 
 
 @attrs.frozen
+class KeyRank:
+    """Where a root key column's values take their position: one item scheme's rows.
+
+    A dataflow's dimension enumerated by a codelist holds code ids, and the
+    codelist orders them by `position`. The root's natural order sorts each such
+    column by that position, with the id as the tiebreak (GH-213). The scheme's
+    items live in a structural table keyed by scheme and item id, so the order
+    joins it once per column, `LEFT` so a value the scheme does not list keeps
+    its row and sorts after every listed one.
+
+    Attributes:
+        column: The root key column, as stored.
+        table: The structural table holding the scheme's items: `code` or
+            `value_item`.
+        scheme_column: That table's column naming the scheme.
+        item_column: That table's column holding the item id.
+        scheme: The scheme's URN, as the store keys it. Bound as a parameter.
+    """
+
+    column: str
+    table: str
+    scheme_column: str
+    item_column: str
+    scheme: str
+
+
+@attrs.frozen
 class JoinPlan:
     """The `FROM` clause for a set of to-one paths, with aliases assigned."""
 
