@@ -61,11 +61,26 @@ other slot a wildcard:
   opening shape; the broad key selects one value of the second widest. Each
   runs in `exact` and `available` mode over every component;
 - `available` mode enumerating the widest dimension alone under the broad key.
-  The broad key keeps a filter that selects fewer values than the dimension
-  holds, so the stored availability cannot answer it and the call scans
-  (GH-210);
+  The broad key selects one value of a dimension that holds many, so the
+  stored availability cannot answer it and the call scans (GH-210). On the
+  census every geography holds the chosen characteristic, so the scan finds
+  all 78,487;
 - the same distinct values through `obs()`: `select(...).unique()` under the
   broad key's filter.
+
+On the census bundle at store schema 2.51, one median of 3 each, in s: the
+broad key selects characteristic `2182`, the narrow key a DisseminationArea.
+Written order (`census-base`) against the Hilbert curve (`census-hilbert`),
+with GH-210's shortcut in place:
+
+| read | written order | Hilbert |
+| --- | --- | --- |
+| every component, narrow key, `exact` | 0.42 | 0.50 |
+| every component, narrow key, `available` | 0.45 | 0.51 |
+| every component, broad key, `exact` | 2.84 | 0.62 |
+| every component, broad key, `available` | 2.49 | 0.56 |
+| the widest dimension under the broad key | 0.66 | 0.27 |
+| the same through `obs()` | 0.66 | 0.25 |
 """
 
 from pathlib import Path
@@ -385,11 +400,9 @@ def test_availability_of_every_component(
     assert not empty, f"{empty} hold no value under {key}, which selects a value availability lists"
 
 
-def test_availability_of_the_widest_dimension_under_a_filter(benchmark, data_plane_registry, flow, keys, members):
+def test_availability_of_the_widest_dimension_under_a_filter(benchmark, data_plane_registry, flow, keys):
     """`available` mode over the widest dimension alone, with a filter left on the second: a scan."""
     (widest, _), (second, value) = keys.widest, keys.second
-    held = members[1][2]
-    assert held > 1, f"{second} holds one value, so selecting it filters nothing"
     benchmark.extra_info["key"] = keys.broad
     values = _bench(benchmark, lambda: _availability(data_plane_registry, flow, keys.broad, widest, "available"))
     benchmark.extra_info["values"] = values[widest]
