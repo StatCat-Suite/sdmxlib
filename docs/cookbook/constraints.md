@@ -221,8 +221,8 @@ enumerated is relaxed.
 
 ### On batching the scans
 
-`build_component_availability` runs **one `SELECT DISTINCT` per component**,
-by design. Batching them into a single
+`build_component_availability` runs at most **one `SELECT DISTINCT` per
+component**, by design. Batching them into a single
 `array_agg(DISTINCT c) FILTER (…)` per column — the shape a consumer
 hand-wrote on the assumption it would be cheaper — measured **1.2× to 2.5×
 slower** across every width, row count and cardinality tried, on parquet and
@@ -233,6 +233,22 @@ bytes as one query projecting N: there is no I/O to save, and a single-column
 parallel hash-distinct beats N distinct sets built inside one operator.
 `tests/bench/test_availability_scan_shape.py` keeps that answer attached to
 its evidence and fails if a DuckDB release ever reverses it.
+
+### Answering from stored availability
+
+A published bundle stores the values each dimension holds
+(`BundleRegistry.availability`), and `build_component_availability` reads them
+to skip work. A selection that lists every value a dimension holds excludes no
+row, so that dimension's constraint is dropped before scanning. A dimension
+left with no constraint, after that and after `available` mode drops its own,
+takes its values from the stored availability and runs no scan.
+
+So over key slots `FREQ.REF_AREA.GENDER`, a UI that opens on one area and every
+gender, `key=".CA._T+1+2"`, enumerates `REF_AREA` in `available` mode without
+reading an observation. The answer is
+the scan's in every case. Attributes always scan, since stored availability
+lists dimensions only, and a `LocalRegistry` always scans: a publication being
+built may hold the availability of the one it extends.
 
 ---
 
