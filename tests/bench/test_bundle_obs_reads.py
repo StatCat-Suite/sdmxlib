@@ -36,18 +36,20 @@ They cover the kinds of read a layout trades against each other:
 - every row grouped, and the partition's count.
 
 Each takes the middle value in sort order, since the first would favour a
-layout that happens to start with it. On the census bundle as published at
-store schema 2.51 (rows in geography-major order, one median of 3), in s:
+layout that happens to start with it. On the census bundle at store schema
+2.51, one median of 3 each, in s: rows in written order (`0001_census-base`)
+against rows along a Hilbert curve over geography and characteristic
+(`0002_census-hilbert`, StatCat-Suite/cpt-builder#27):
 
-| read | s |
-| --- | --- |
-| one geography | 0.24 |
-| one characteristic | 1.88 |
-| one cell | 0.25 |
-| ten characteristics | 2.58 |
-| one characteristic in one province | 1.78 |
-| grouped by characteristic | 1.41 |
-| count | 0.22 |
+| read | written order | Hilbert |
+| --- | --- | --- |
+| one geography | 0.24 | 0.23 |
+| one characteristic | 1.88 | 0.30 |
+| one cell | 0.25 | 0.20 |
+| ten characteristics | 2.58 | 0.72 |
+| one characteristic in one province | 1.78 | 0.26 |
+| grouped by characteristic | 1.41 | 1.82 |
+| count | 0.22 | 0.18 |
 """
 
 from pathlib import Path
