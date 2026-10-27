@@ -31,7 +31,7 @@ from typing import Literal
 
 import duckdb
 
-from sdmxlib.local.registry import BundleRegistry
+from sdmxlib.local.registry import BundleRegistry, LocalRegistry
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.constraint import (
     ComponentValueSet,
@@ -169,6 +169,15 @@ def build_component_availability(
     `tests/bench/test_availability_scan_shape.py` keeps that answer attached to
     evidence, and fails if a DuckDB release ever reverses it.
 
+    A published bundle's stored availability (`BundleRegistry.availability`)
+    removes work without changing the answer. A dimension whose selected
+    values include every value it holds excludes no row, so its constraint is
+    dropped before scanning; a dimension left with no constraint at all takes
+    its values from the stored availability, with no scan. An attribute
+    always scans, since stored availability lists dimensions only, and so
+    does every component of a `LocalRegistry`, whose stored availability may
+    belong to the publication it extends.
+
     The two modes differ only in which filter applies while enumerating a
     component ``C``:
 
@@ -248,17 +257,23 @@ def build_component_availability(
 
     targets = sorted(binding.dimension_column_map) if component_id == "all" else [component_id]
 
+    held = _held_values(registry, dataflow_urn)
+    component_filter = _drop_covering(component_filter, held)
+
     table = f"{binding.database_role}.{binding.table_location}"
     key_values: list[KeyValue] = []
     components: list[ComponentValueSet] = []
     for target in targets:
         column = _component_column(binding, target)
         applied = _drop_constraint(component_filter, target) if mode == "available" else component_filter
-        where, params = applied.to_where_clauses(
-            binding.dimension_column_map,
-            binding.attribute_column_map,
-        )
-        values = frozenset(_distinct_values(conn, table, column, where=where, params=params))
+        if applied.is_wildcard and target in held:
+            values = held[target]
+        else:
+            where, params = applied.to_where_clauses(
+                binding.dimension_column_map,
+                binding.attribute_column_map,
+            )
+            values = frozenset(_distinct_values(conn, table, column, where=where, params=params))
         # A dimension is a region's key; an attribute is one of its component
         # value sets (2.1 `Attribute`, 3.x `Component`). Both were keys until
         # #433 gave components a field, so an attribute read as a dimension.
@@ -311,6 +326,41 @@ def _component_column(binding: DataflowBinding, component_id: str) -> str:
         )
         raise KeyError(err)
     return column
+
+
+def _held_values(registry: BundleRegistry, dataflow_urn: SdmxUrn[Dataflow]) -> dict[str, frozenset[str]]:
+    """The values each dimension holds, from the publication's stored availability; empty when it has none.
+
+    Only a published bundle's stored availability describes its data. A
+    `LocalRegistry` started with ``build(previous=)`` holds the previous
+    publication's availability until `write_manifest` replaces it, while its
+    lake may already hold other rows, so it reads as none here and every
+    component scans.
+    """
+    if isinstance(registry, LocalRegistry):
+        return {}
+    stored = registry.availability(dataflow_urn)
+    if stored is None:
+        return {}
+    return {kv.dimension_id: kv.codes() for kv in stored.region.keys}
+
+
+def _drop_covering(component_filter: ComponentFilter, held: dict[str, frozenset[str]]) -> ComponentFilter:
+    """Return a copy of ``component_filter`` without each dimension whose selection covers every value it holds.
+
+    Such a selection excludes no row, so the scan's answer is the same
+    without it. A dimension selected by a `SqlRelation`, or absent
+    from ``held``, keeps its constraint.
+    """
+    dimensions = [
+        None if isinstance(selected, list) and dim_id in held and held[dim_id] <= set(selected) else selected
+        for dim_id, selected in zip(component_filter.dimension_ids, component_filter.dimensions, strict=True)
+    ]
+    return ComponentFilter(
+        dimension_ids=component_filter.dimension_ids,
+        dimensions=dimensions,
+        attributes=component_filter.attributes,
+    )
 
 
 def _drop_constraint(component_filter: ComponentFilter, component_id: str) -> ComponentFilter:

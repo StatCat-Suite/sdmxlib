@@ -1643,8 +1643,9 @@ class BundleRegistry(SessionFactory):
         The SDMX 3.1 `AvailabilityConstraint`, which `write_manifest` stores at
         publish: one cube region of the values each dimension holds, and the
         observation count. Read from the store, so a server answers
-        ``/availability/<flow>/all/all`` without scanning the observations. A
-        filtered query is still computed (`build_component_availability`).
+        ``/availability/<flow>/all/all`` without scanning the observations.
+        `build_component_availability` computes a filtered query, and reads
+        from here each dimension the filter leaves unconstrained.
 
         Args:
             flow: The dataflow, as an artefact, a `Ref`, or a URN.
