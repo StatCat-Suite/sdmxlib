@@ -1486,26 +1486,41 @@ def _order_sql(
     if order is None:
         return Sql("")
     parts = [scope.order(key) for key in order]
-    keys = list(tiebreak) if tiebreak is not None else _key_order(root, scope)
+    keys = list(tiebreak) if tiebreak is not None else _key_order(root, scope, order)
     text = ", ".join([*(p.text for p in parts), *keys])
     if not text:
         return Sql("")
     return Sql(f"\nORDER BY {text}", tuple(itertools.chain.from_iterable(p.params for p in parts)))
 
 
-def _key_order(root: AnyCols, scope: _Scope) -> list[str]:
+def _key_order(root: AnyCols, scope: _Scope, order: Sequence[OrderKey]) -> list[str]:
     """The root-key tiebreak's `ORDER BY` terms: each key column, after its rank when it has one.
 
     A dataflow's dimension enumerated by a codelist sorts by the code's
-    position, then by its id (GH-213). Every other key column sorts as stored.
+    position, then by its id (GH-213). Every other key column sorts as stored,
+    as does one a caller's key already sorts by (`_ranked_key`).
     """
     terms: list[str] = []
     for column in root.__key__:
-        rank = scope.ranked(column)
+        rank = _ranked_key(scope, order, column)
         if rank is not None:
             terms.append(rank.text)
         terms.append(f"{scope.alias}.{column} NULLS LAST")
     return terms
+
+
+def _ranked_key(scope: _Scope, order: Sequence[OrderKey], column: str) -> Sql | None:
+    """`column`'s rank in the tiebreak, or `None` when it sorts as stored.
+
+    A key column a caller's key already sorts by gets no rank: every tie the
+    tiebreak breaks holds one value of it, so its rank decides nothing, and
+    leaving it out leaves out its codelist's join. A partition stream ordered
+    by geography otherwise builds `CL_GEOGRAPHY`'s 579,951 positions once per
+    partition, 40 % of its time on the census bundle.
+    """
+    if any(key.column.column == column and not scope._rel(tuple(key.column.path)) for key in order):
+        return None
+    return scope.ranked(column)
 
 
 class _SortTerm(NamedTuple):
@@ -1535,7 +1550,7 @@ def _order_terms(root: AnyCols, scope: _Scope, order: Sequence[OrderKey]) -> lis
     # rows, silently and only on catalogues that reach double digits.
     terms = [_SortTerm(scope._sort_reference(key.column), key.ascending) for key in order]
     for column in root.__key__:
-        rank = scope.ranked(column)
+        rank = _ranked_key(scope, order, column)
         terms.append(
             _SortTerm(Sql(f"{scope.alias}.{column}"), ascending=True, rank=None if rank is None else (rank, column))
         )

@@ -467,7 +467,8 @@ class ObsQuery(Query[ObsRow]):
     `order_by(obs.col(id))` sorts by the stored value, codes included: as text,
     as `==` and `<` compare it, and as polars sorts the frame's `pl.Enum`
     column, whose categories are the code ids in sorted order. The dimension
-    order then breaks its ties.
+    order then breaks its ties, and joins no codelist for a column the
+    explicit key already sorts.
 
     This is also where §6.2's `Query`/`KeyedQuery` split will land: `ids()` and
     `urns()` have nothing to return for an observation and should be absent

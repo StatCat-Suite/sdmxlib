@@ -210,6 +210,34 @@ def test_a_cursor_adds_one_lookup_per_ranked_value(obs: sl.ObsQuery) -> None:
     assert sql.count("(SELECT position FROM sdmx.") == 4
 
 
+def test_a_column_an_explicit_key_sorts_joins_no_scheme(obs: sl.ObsQuery) -> None:
+    """`CHAR` sorted as text decides every tie its rank could, so only `SEX` joins its scheme."""
+    sql = obs.order_by(obs.col("CHAR")).to_sql().sql
+    assert _joins(sql) == ["value_item"]
+    assert sql.split("ORDER BY", 1)[1].count("coalesce(") == 1
+
+
+def test_every_dimension_in_order_by_restores_the_text_order(obs: sl.ObsQuery) -> None:
+    """What `docs/upgrading.md` tells a caller who needs the text order back; it joins no scheme."""
+    ordered = obs.order_by(*(obs.col(c) for c in _KEY))
+    assert _keys(ordered) == sorted(_expected())
+    assert _joins(ordered.to_sql().sql) == []
+
+
+@pytest.mark.parametrize("size", [1, 4, 5])
+def test_pages_by_cursor_under_an_explicit_order_partition_the_result(obs: sl.ObsQuery, size: int) -> None:
+    """The cursor carries the explicit key and the key values; the unranked `CHAR` term compares as text."""
+    ordered = obs.order_by(obs.col("CHAR"))
+    walked: list[tuple[str, ...]] = []
+    query = ordered.limit(size)
+    while page := _keys(query):
+        walked.extend(page)
+        last = page[-1]
+        query = ordered.after(sl.Cursor[ObsRow]((last[0], *last), (True,) * (len(_KEY) + 1))).limit(size)
+    assert walked == _keys(ordered)
+    assert walked != _expected(), "the explicit text order differs from the codelist order"
+
+
 def test_an_unsorted_read_joins_no_scheme(obs: sl.ObsQuery) -> None:
     """`count()` compiles unordered, as `order_by(None)` does, so neither joins a codelist."""
     assert _joins(obs.to_sql(columns="count(*)", ordered=False).sql) == []
