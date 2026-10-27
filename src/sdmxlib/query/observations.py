@@ -50,12 +50,12 @@ import pyarrow.parquet as pq
 from sdmxlib.formats._arrow import frame_of
 from sdmxlib.formats.sdmx_json import data_v1, data_v2
 from sdmxlib.model.binding import DataflowBinding
-from sdmxlib.model.datastructure import ComponentRole, DataStructure, MeasureDimension
+from sdmxlib.model.datastructure import ComponentRole, DataStructure, Dimension, MeasureDimension
 from sdmxlib.model.ref import Ref
 from sdmxlib.model.representation import Facet
 from sdmxlib.polars import _TEXT_TYPE_MAP, validation_report
 from sdmxlib.query._expr import Cols, ColumnKind, ComponentNum, ComponentStr, Num, RowKind, Str, Untyped
-from sdmxlib.query._joins import RootJoin
+from sdmxlib.query._joins import KeyRank, RootJoin
 from sdmxlib.query.query import Page, Query, Resolver, _typed
 from sdmxlib.rest import ComponentFilter
 
@@ -201,6 +201,11 @@ class Observations(Cols[ObsRow]):
         #: and the `ORDER BY` tiebreak work here for the same reason they work
         #: over a structural relation, rather than by special case.
         self.__key__ = tuple(binding.dimension_column_map.values())
+        #: Each key column enumerated by a codelist or value list, with the
+        #: scheme whose positions order it: observations come in codelist
+        #: order, not code-id text order (GH-213). Empty without a DSD, which
+        #: alone says what enumerates a column.
+        self.__key_ranks__ = _key_ranks(binding, dsd)
         #: The table's partition columns, as the store's catalog records them.
         #: Only a column the binding maps is kept: a stream planned on a
         #: column no component names would have nothing to order by.
@@ -392,6 +397,43 @@ class Observations(Cols[ObsRow]):
         return self._sidecar.table if column in self._sidecar.columns else self.__table__
 
 
+#: The structural table holding each kind of enumeration's items, as
+#: `(table, scheme column, item column)`, keyed by the artefact class a
+#: representation's URN names. A measure dimension's concept scheme is absent:
+#: its column sorts as stored.
+_ITEM_TABLES: dict[str, tuple[str, str, str]] = {
+    "Codelist": ("code", "codelist_urn", "code_id"),
+    "GeographicCodelist": ("code", "codelist_urn", "code_id"),
+    "GeoGridCodelist": ("code", "codelist_urn", "code_id"),
+    "ValueList": ("value_item", "value_list_urn", "item_id"),
+}
+
+
+def _key_ranks(binding: DataflowBinding, dsd: DataStructure | None) -> tuple[KeyRank, ...]:
+    """The item scheme ordering each enumerated dimension column, in key order.
+
+    The scheme is named by the URN the store keys its items by: the resolved
+    target's, when the reference resolves, since a reference may name a
+    version the store holds under another. A scheme the store does not hold
+    gives every value of its column the same rank, so the column sorts by
+    code id.
+    """
+    if dsd is None:
+        return ()
+    ranks: list[KeyRank] = []
+    for component_id, column in binding.dimension_column_map.items():
+        component = dsd.find_component(component_id)
+        if not isinstance(component, Dimension) or not isinstance(component.representation, Ref):
+            continue
+        representation = component.representation
+        table = _ITEM_TABLES.get(representation.urn.artefact_class)
+        if table is None:
+            continue
+        scheme = representation().urn if representation.resolved else representation.urn
+        ranks.append(KeyRank(column, *table, scheme=str(scheme)))
+    return tuple(ranks)
+
+
 class ObsQuery(Query[ObsRow]):
     """A query over observations, which also names their columns.
 
@@ -413,6 +455,19 @@ class ObsQuery(Query[ObsRow]):
     Overriding it here would give one spelling two meanings depending on the
     root — the LSP violation basedpyright rejected, and a genuine trap for
     anyone reading a query without knowing which root it has.
+
+    **Order.** Rows come sorted by the dataflow's dimensions, in key order. A
+    dimension enumerated by a codelist or a value list sorts by its code's
+    position there, then by the code id; one the scheme does not list sorts
+    after every listed code. `TIME_PERIOD` and an unenumerated dimension sort
+    as stored. So a page by `limit` / `offset` or `after` holds the top of
+    each codelist, and the order needs one join per enumerated dimension
+    ([GH-213](https://github.com/StatCat-Suite/sdmxlib/issues/213)).
+
+    `order_by(obs.col(id))` sorts by the stored value, codes included: as text,
+    as `==` and `<` compare it, and as polars sorts the frame's `pl.Enum`
+    column, whose categories are the code ids in sorted order. The dimension
+    order then breaks its ties.
 
     This is also where §6.2's `Query`/`KeyedQuery` split will land: `ids()` and
     `urns()` have nothing to return for an observation and should be absent
@@ -706,7 +761,7 @@ class ObsQuery(Query[ObsRow]):
 
         Returns:
             The wide frame, rows in the order their series first appear in
-            `frame()` — key order, unless the query sorts otherwise.
+            `frame()`: by dimension, each in codelist order, unless the query sorts otherwise.
 
         Raises:
             ValueError: If there is no axis — `on` is not a dimension, or is
