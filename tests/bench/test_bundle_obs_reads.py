@@ -50,18 +50,37 @@ against rows along a Hilbert curve over geography and characteristic
 | one characteristic in one province | 1.78 | 0.26 |
 | grouped by characteristic | 1.41 | 1.82 |
 | count | 0.22 | 0.18 |
+
+The `test_availability_*` reads time the `/availability` calls the .Stat
+Data Explorer makes on every selection change, which sdmxlib-rest answers with
+`build_component_availability` (GH-211). Each key selects the middle value, in
+sort order, of one dimension the stored availability lists, and leaves every
+other slot a wildcard:
+
+- the narrow key selects one value of the widest dimension, the explorer's
+  opening shape; the broad key selects one value of the second widest. Each
+  runs in `exact` and `available` mode over every component;
+- `available` mode enumerating the widest dimension alone under the broad key.
+  The broad key keeps a filter that selects fewer values than the dimension
+  holds, so the stored availability cannot answer it and the call scans
+  (GH-210);
+- the same distinct values through `obs()`: `select(...).unique()` under the
+  broad key's filter.
 """
 
 from pathlib import Path
+from typing import Literal
 
 import attrs
 import pytest
 
 import sdmxlib as sl
+from sdmxlib.builders.contentconstraint import build_component_availability
 from sdmxlib.local.registry import BundleRegistry
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.query.observations import ObsQuery
 from tests.bench import _bundle
+from tests.support.narrow import present
 
 pytestmark = pytest.mark.bundle
 
@@ -296,3 +315,96 @@ def test_level_aggregate(benchmark, data_plane_registry, flow, level):
 def test_level_count(benchmark, data_plane_registry, flow, level):
     count = _bench(benchmark, lambda: _in_level(data_plane_registry, flow, level).count())
     assert count == level.rows
+
+
+# ── availability: the calls the explorer makes on each selection ──────────────
+
+# The explorer speaks SDMX-REST 1.5, whose key has no time slot.
+_API = "2.1"
+
+
+@attrs.frozen
+class Keys:
+    """Dotted availability keys over values the bundle's stored availability lists."""
+
+    #: The widest and second widest dimensions, each with its middle value in sort order.
+    widest: tuple[str, str]
+    second: tuple[str, str]
+    #: One value of the widest dimension, every other slot a wildcard: the explorer's opening shape.
+    narrow: str
+    #: One value of the second widest dimension, every other slot a wildcard.
+    broad: str
+
+
+@pytest.fixture(scope="module")
+def keys(data_plane_registry, flow, members) -> Keys:
+    """The keys the availability reads send, chosen as `level` chooses its values."""
+    availability = present(data_plane_registry.availability(flow))
+    held: dict[str, list[str]] = {kv.dimension_id: sorted(kv.codes()) for kv in availability.region.keys}
+    (widest, _, _), (second, _, _) = members
+    slots = present(data_plane_registry.dsd(flow)).key_slot_ids(_API)
+
+    def key(dimension: str, value: str) -> str:
+        assert dimension in slots, f"{dimension} is not a slot of the {_API} key {slots}"
+        return ".".join(value if slot == dimension else "" for slot in slots)
+
+    def middle(dimension: str) -> str:
+        return held[dimension][len(held[dimension]) // 2]
+
+    geography, characteristic = middle(widest), middle(second)
+    return Keys(
+        widest=(widest, geography),
+        second=(second, characteristic),
+        narrow=key(widest, geography),
+        broad=key(second, characteristic),
+    )
+
+
+def _availability(
+    reg: BundleRegistry, flow: SdmxUrn[sl.Dataflow], key: str, component_id: str, mode: Literal["exact", "available"]
+) -> dict[str, int]:
+    """How many values each dimension `build_component_availability` enumerates has under ``key``."""
+    constraint = build_component_availability(
+        reg, flow, name={"en": "Availability"}, key=key, component_id=component_id, api=_API, mode=mode
+    )
+    return {kv.dimension_id: len(kv.values) for kv in constraint.regions[0].keys}
+
+
+@pytest.mark.parametrize("mode", ["exact", "available"])
+@pytest.mark.parametrize("shape", ["narrow", "broad"])
+def test_availability_of_every_component(
+    benchmark, data_plane_registry, flow, keys, shape: str, mode: Literal["exact", "available"]
+):
+    """One selected value, every component enumerated: the explorer's call on each selection change."""
+    key = getattr(keys, shape)
+    benchmark.extra_info["key"] = key
+    values = _bench(benchmark, lambda: _availability(data_plane_registry, flow, key, "all", mode))
+    benchmark.extra_info["values"] = values
+    empty = sorted(dimension for dimension, n in values.items() if n == 0)
+    assert values, "the constraint lists no dimension"
+    assert not empty, f"{empty} hold no value under {key}, which selects a value availability lists"
+
+
+def test_availability_of_the_widest_dimension_under_a_filter(benchmark, data_plane_registry, flow, keys, members):
+    """`available` mode over the widest dimension alone, with a filter left on the second: a scan."""
+    (widest, _), (second, value) = keys.widest, keys.second
+    held = members[1][2]
+    assert held > 1, f"{second} holds one value, so selecting it filters nothing"
+    benchmark.extra_info["key"] = keys.broad
+    values = _bench(benchmark, lambda: _availability(data_plane_registry, flow, keys.broad, widest, "available"))
+    benchmark.extra_info["values"] = values[widest]
+    assert values[widest] > 0, f"no {widest} value has {second} == {value}, which availability lists"
+
+
+def test_availability_distinct_through_obs(benchmark, data_plane_registry, flow, keys):
+    """The widest dimension's distinct values under the broad key's filter, through `obs()`."""
+    (widest, _), (second, value) = keys.widest, keys.second
+    benchmark.extra_info["filter"] = f"{second} == {value}"
+
+    def read() -> int:
+        obs = _one(data_plane_registry, flow, second, value)
+        return obs.select(v=obs.col(widest)).unique().collect().height
+
+    distinct = _bench(benchmark, read)
+    benchmark.extra_info["values"] = distinct
+    assert distinct > 0, f"no {widest} value has {second} == {value}, which availability lists"
