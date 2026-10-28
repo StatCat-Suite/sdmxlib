@@ -117,6 +117,7 @@ nav:
           - Evidence: design/query-language-evidence.md
           - Explorations that did not survive: design/query-language-explorations.md
       - Sharded bundle catalog: design/sharded-bundle-catalog.md
+      - Sharded bundle catalog plan: design/sharded-bundle-catalog-plan.md
       - Data plane:
           - Querying observations without SQL: design/data-plane-query.md
           - Pushing an observation query to REST: design/data-plane-pushdown.md
