@@ -57,6 +57,12 @@ def fetch_bundle(
     manifest is written last, with `Provenance` naming the source, the request
     and every artefact fetched. It then passes `check_bundle`.
 
+    The closure is fetched with ``references=all``, so it holds the
+    constraints and hierarchy associations that refer to the dataflow as well
+    as what the dataflow refers to: the structural fingerprint covers both.
+    Over SDMX 2.1 no hierarchy association arrives, since 2.1 has
+    none.
+
     Args:
         source: A `Provider` entry, or a REST endpoint URL (then give ``api``
             and ``source_id``).
@@ -92,7 +98,7 @@ def fetch_bundle(
         LocalRegistry.build(root) as bundle,
         RestRegistry(source, store=bundle, api=api, id=source_id, **options) as remote,
     ):
-        resolved = remote.get(flow, resolve=True)
+        resolved = remote.get(flow, resolve="all")
         if not isinstance(resolved, Dataflow):
             msg = f"{flow} is not a dataflow at {remote}"
             raise TypeError(msg)

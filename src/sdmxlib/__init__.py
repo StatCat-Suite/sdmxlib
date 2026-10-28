@@ -10,7 +10,7 @@ from sdmxlib.api.providers import Provider
 from sdmxlib.formats.data_format import DataFormat
 from sdmxlib.formats.gaps import DroppedArtefact, Gap, dropped, unrepresentable
 from sdmxlib.api.client import ResponseTooLargeError
-from sdmxlib.api.registry import BearerToken, FmrRegistry, RestRegistry
+from sdmxlib.api.registry import BearerToken, FmrRegistry, Resolve, RestRegistry
 from sdmxlib.data_store import DataStore, WriteSource
 from sdmxlib.model.datastructure import ComponentRole
 from sdmxlib.model.ref import short_urn as short_urn
@@ -393,6 +393,7 @@ __all__ = [
     "Representation",
     "RepresentationMap",
     "RepresentationMapping",
+    "Resolve",
     "ResolvePeriod",
     "ResponseTooLargeError",
     "RestRegistry",

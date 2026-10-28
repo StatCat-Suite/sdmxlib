@@ -5,20 +5,20 @@ interactions:
       accept:
       - application/xml
       accept-encoding:
-      - gzip, deflate
+      - gzip, deflate, zstd
       connection:
       - keep-alive
       host:
       - data-api.ecb.europa.eu
       user-agent:
-      - python-httpx/0.28.1
+      - python-httpx2/2.16.0
     method: GET
-    uri: https://data-api.ecb.europa.eu/service/dataflow/ECB/EXR/latest?detail=referencepartial&references=descendants
+    uri: https://data-api.ecb.europa.eu/service/dataflow/ECB/EXR/latest?detail=referencepartial&references=all
   response:
     body:
       string: '<?xml version=''1.0'' encoding=''UTF-8''?><mes:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:xml="http://www.w3.org/XML/1998/namespace" xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message"
-        xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common"><mes:Header><mes:ID>IREF234934</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2026-10-23T02:44:54Z</mes:Prepared><mes:Sender
+        xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common"><mes:Header><mes:ID>IREF653402</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2026-10-28T05:29:02Z</mes:Prepared><mes:Sender
         id="Unknown"/><mes:Receiver id="not_supplied"/></mes:Header><mes:Structures><str:OrganisationSchemes><str:AgencyScheme
         urn="urn:sdmx:org.sdmx.infomodel.base.AgencyScheme=SDMX:AGENCIES(1.0)" isExternalReference="false"
         agencyID="SDMX" id="AGENCIES" isFinal="false" version="1.0"><com:Name xml:lang="en">SDMX
@@ -46,7 +46,121 @@ interactions:
         urn="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EXR(1.0)" isExternalReference="false"
         agencyID="ECB" id="EXR" isFinal="false" version="1.0"><com:Name xml:lang="en">Exchange
         Rates</com:Name><str:Structure><Ref package="datastructure" agencyID="ECB"
-        id="ECB_EXR1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow></str:Dataflows><str:Codelists><str:Codelist
+        id="ECB_EXR1" version="1.0" class="DataStructure"/></str:Structure></str:Dataflow></str:Dataflows><str:CategorySchemes><str:CategoryScheme
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=ECB.DISS:WDC_NAVI(1.0)"
+        isExternalReference="false" agencyID="ECB.DISS" id="WDC_NAVI" isFinal="false"
+        version="1.0"><com:Name xml:lang="en">WDC Economic concepts</com:Name><com:Description
+        xml:lang="en">This category scheme is used for the Tableau web data connector
+        application. It is used for grouping all dataflows following the top-level
+        categories displayed on the SDW portal.</com:Description><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI(1.0).01"
+        id="01"><com:Name xml:lang="en">ECB/Eurosystem policy and exchange rates</com:Name><com:Description
+        xml:lang="en">This category includes statistics for official interest rate,
+        minimum reserves and liquidity, Eurosystem balance sheet, banknotes and coins,
+        TARGET balances of participating NCBs and exchange rates</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI(1.0).02"
+        id="02"><com:Name xml:lang="en">Money, credit and banking</com:Name><com:Description
+        xml:lang="en">This category includes information from the balance sheets of
+        credit institutions, money market funds, euro area national central banks
+        and the ECB, which together make up the monetary financial institutions (MFI)
+        sector.</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI(1.0).03"
+        id="03"><com:Name xml:lang="en">Financial corporations</com:Name><com:Description
+        xml:lang="en">This category includes balance sheets of financial corporations
+        other than monetary financial institutions: financial vehicle corporations
+        (FVCs), investment funds other than money market funds (non-MMF investment
+        funds), insurance corporations and pension funds.</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI(1.0).04"
+        id="04"><com:Name xml:lang="en">Financial markets and interest rates</com:Name><com:Description
+        xml:lang="en">This category includes wide range of data on financial markets
+        and interest rates</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI(1.0).05"
+        id="05"><com:Name xml:lang="en">Macroeconomic and sectoral statistics</com:Name><com:Description
+        xml:lang="en">This category includes a wide range of key statistics for the
+        whole economy, individual sectors and the relationships between them.</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI(1.0).06"
+        id="06"><com:Name xml:lang="en">Balance of payments and other external statistics</com:Name><com:Description
+        xml:lang="en">This category includes balance of payments statistics, as well
+        as statistics on international investment position and  international reserves.</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI(1.0).07"
+        id="07"><com:Name xml:lang="en">Supervisory and prudential statistics</com:Name><com:Description
+        xml:lang="en">This category includes macroprudential and supervisory statistics</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI(1.0).08"
+        id="08"><com:Name xml:lang="en">Payments statistics</com:Name><com:Description
+        xml:lang="en">This category includes statistics on payment instructions processed
+        by TARGET and other euro large-value interbank funds transfer systems.</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI(1.0).09"
+        id="09"><com:Name xml:lang="en">ECB surveys</com:Name><com:Description xml:lang="en">This
+        scategory includes data related to the ECB surveys.</com:Description></str:Category></str:CategoryScheme><str:CategoryScheme
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=ECB.DISS:WDC_NAVI_OLD(1.0)"
+        isExternalReference="false" agencyID="ECB.DISS" id="WDC_NAVI_OLD" isFinal="false"
+        version="1.0"><com:Name xml:lang="en">Economic concepts</com:Name><com:Description
+        xml:lang="en">This category scheme is used for the Tableau web data connector
+        application. It is used for grouping all dataflows following the top-level
+        categories displayed on the SDW portal.</com:Description><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI_OLD(1.0).01"
+        id="01"><com:Name xml:lang="en">Monetary operations</com:Name><com:Description
+        xml:lang="en">This section shows the key ECB interest rates for the euro area
+        as well as statistics on minimum reserves and liquidity factors and conditions.</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI_OLD(1.0).02"
+        id="02"><com:Name xml:lang="en">Prices, output, demand and labour market</com:Name><com:Description
+        xml:lang="en">HICP, national accounts, labour market and survey indicator
+        data.</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI_OLD(1.0).03"
+        id="03"><com:Name xml:lang="en">Monetary and financial statistics</com:Name><com:Description
+        xml:lang="en">Statistics regarding monetary financial institutions (MFIs),
+        investment funds, financial stability and financial markets, and payments
+        within the euro area. This includes the monetary aggregates, their counterparts
+        and other monetary stocks and flows statistics, including minimum reserve
+        and liquidity statistics and all seasonally adjusted statistics; statistics
+        on securities issues (including quoted shares), investment funds and other
+        financial intermediaries, statistics on yields and interest rates, banking
+        statistics, financial market statistics, financial integration indicators,
+        and STEP statistics.</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI_OLD(1.0).04"
+        id="04"><com:Name xml:lang="en">Euro area accounts</com:Name><com:Description
+        xml:lang="en">These statistics present balance sheets (stocks) and financial
+        and non-financial flows of the different sectors of the euro area, and between
+        these sectors and the rest of the world. Selected items for other economic
+        areas are also included.</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI_OLD(1.0).05"
+        id="05"><com:Name xml:lang="en">Government finance</com:Name><com:Description
+        xml:lang="en">These statistics show the general government deficit, debt and
+        deficit-debt adjustment.</com:Description></str:Category><str:Category urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI_OLD(1.0).06"
+        id="06"><com:Name xml:lang="en">External transactions and positions</com:Name><com:Description
+        xml:lang="en">This section provides data on balance of payments (b.o.p.) statistics,
+        euro area external trade in goods, aggregated data on the international investment
+        position (i.i.p.) and the outstanding amounts of the Eurosystem''s international
+        reserves The euro area b.o.p. is compiled by the ECB whereas the main source
+        for trade data is the European Commission (Eurostat).</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI_OLD(1.0).07"
+        id="07"><com:Name xml:lang="en">Exchange rates</com:Name><com:Description
+        xml:lang="en">This section shows the euro foreign exchange reference rates
+        that are based on the regular daily concertation procedure between central
+        banks within and outside the European System of Central Banks, which normally
+        takes place at 2.15 p.m. ECB time (CET). It also shows the nominal effective
+        exchange rates of the euro as calculated by the ECB.</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI_OLD(1.0).08"
+        id="08"><com:Name xml:lang="en">Payments and securities trading, clearing,
+        settlement</com:Name><com:Description xml:lang="en">Covers statistics of:
+        payment instructions processed by TARGET and other selected interbank fund
+        transfer systems, domestic payments in each RTGS system participating in or
+        connected to TARGET, and statistics on cross-border payments. All data are
+        presented both by volume and by value of transactions.</com:Description></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI_OLD(1.0).09"
+        id="09"><com:Name xml:lang="en">Banknotes and Coins</com:Name></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI_OLD(1.0).10"
+        id="10"><com:Name xml:lang="en">Indicators of Financial Integration</com:Name></str:Category><str:Category
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Category=ECB.DISS:WDC_NAVI_OLD(1.0).11"
+        id="11"><com:Name xml:lang="en">Real Time Database (research database)</com:Name><com:Description
+        xml:lang="en">This is an experimental dataset constructed to provide historical
+        vintages of data published in the Monthly Bulletin since January 2001.</com:Description></str:Category></str:CategoryScheme></str:CategorySchemes><str:Categorisations><str:Categorisation
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Categorisation=ECB:21E97B57-5950-EAAB-EEAD-1534306B28AF(1.0)"
+        isExternalReference="false" agencyID="ECB" id="21E97B57-5950-EAAB-EEAD-1534306B28AF"
+        isFinal="false" version="1.0"><com:Name xml:lang="en">Category ''ECB.DISS:WDC_NAVI(1.0).01''
+        linking to Dataflow ''ECB:EXR(1.0)''</com:Name><str:Source><Ref package="datastructure"
+        agencyID="ECB" id="EXR" version="1.0" class="Dataflow"/></str:Source><str:Target><Ref
+        maintainableParentID="WDC_NAVI" package="categoryscheme" maintainableParentVersion="1.0"
+        agencyID="ECB.DISS" id="01" class="Category"/></str:Target></str:Categorisation><str:Categorisation
+        urn="urn:sdmx:org.sdmx.infomodel.categoryscheme.Categorisation=ECB:53A341E8-D48B-767E-D5FF-E2E3E0E2BB19(1.0)"
+        isExternalReference="false" agencyID="ECB" id="53A341E8-D48B-767E-D5FF-E2E3E0E2BB19"
+        isFinal="false" version="1.0"><com:Name xml:lang="en">Categorise: DATAFLOWECB:EXR(1.0)</com:Name><str:Source><Ref
+        package="datastructure" agencyID="ECB" id="EXR" version="1.0" class="Dataflow"/></str:Source><str:Target><Ref
+        maintainableParentID="WDC_NAVI_OLD" package="categoryscheme" maintainableParentVersion="1.0"
+        agencyID="ECB.DISS" id="07" class="Category"/></str:Target></str:Categorisation></str:Categorisations><str:Codelists><str:Codelist
         urn="urn:sdmx:org.sdmx.infomodel.codelist.Codelist=ECB:CL_COLLECTION(1.0)"
         isExternalReference="false" agencyID="ECB" id="CL_COLLECTION" isFinal="false"
         version="1.0"><com:Name xml:lang="en">Collection indicator code list</com:Name><str:Code
@@ -5070,7 +5184,17 @@ interactions:
         id="OBS_VALUE"><str:ConceptIdentity><Ref maintainableParentID="ECB_CONCEPTS"
         package="conceptscheme" maintainableParentVersion="1.0" agencyID="ECB" id="OBS_VALUE"
         class="Concept"/></str:ConceptIdentity><str:LocalRepresentation><str:TextFormat
-        isSequence="false" textType="String" maxLength="30"/></str:LocalRepresentation></str:PrimaryMeasure></str:MeasureList></str:DataStructureComponents></str:DataStructure></str:DataStructures></mes:Structures></mes:Structure>
+        isSequence="false" textType="String" maxLength="30"/></str:LocalRepresentation></str:PrimaryMeasure></str:MeasureList></str:DataStructureComponents></str:DataStructure></str:DataStructures><str:Constraints><str:ContentConstraint
+        urn="urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=ECB:EXR_CONSTRAINTS(1.0)"
+        isExternalReference="false" agencyID="ECB" id="EXR_CONSTRAINTS" isFinal="false"
+        type="Allowed" version="1.0"><com:Name xml:lang="en">Constraints for the EXR
+        dataflow.</com:Name><str:ConstraintAttachment><str:Dataflow><Ref package="datastructure"
+        agencyID="ECB" id="EXR" version="1.0" class="Dataflow"/></str:Dataflow></str:ConstraintAttachment><str:CubeRegion
+        include="true"><com:KeyValue id="FREQ"><com:Value>A</com:Value><com:Value>D</com:Value><com:Value>H</com:Value><com:Value>M</com:Value><com:Value>Q</com:Value></com:KeyValue><com:KeyValue
+        id="CURRENCY"><com:Value>AED</com:Value><com:Value>ARS</com:Value><com:Value>AUD</com:Value><com:Value>BGN</com:Value><com:Value>BRL</com:Value><com:Value>CAD</com:Value><com:Value>CHF</com:Value><com:Value>CLP</com:Value><com:Value>CNY</com:Value><com:Value>COP</com:Value><com:Value>CYP</com:Value><com:Value>CZK</com:Value><com:Value>DKK</com:Value><com:Value>DZD</com:Value><com:Value>E01</com:Value><com:Value>E02</com:Value><com:Value>E03</com:Value><com:Value>EEK</com:Value><com:Value>EGP</com:Value><com:Value>GBP</com:Value><com:Value>GRD</com:Value><com:Value>H00</com:Value><com:Value>H01</com:Value><com:Value>H02</com:Value><com:Value>H03</com:Value><com:Value>H37</com:Value><com:Value>H42</com:Value><com:Value>HKD</com:Value><com:Value>HRK</com:Value><com:Value>HUF</com:Value><com:Value>IDR</com:Value><com:Value>ILS</com:Value><com:Value>INR</com:Value><com:Value>ISK</com:Value><com:Value>JPY</com:Value><com:Value>KRW</com:Value><com:Value>LTL</com:Value><com:Value>LVL</com:Value><com:Value>MAD</com:Value><com:Value>MTL</com:Value><com:Value>MXN</com:Value><com:Value>MYR</com:Value><com:Value>NOK</com:Value><com:Value>NZD</com:Value><com:Value>PEN</com:Value><com:Value>PHP</com:Value><com:Value>PLN</com:Value><com:Value>RON</com:Value><com:Value>RUB</com:Value><com:Value>SAR</com:Value><com:Value>SEK</com:Value><com:Value>SGD</com:Value><com:Value>SIT</com:Value><com:Value>SKK</com:Value><com:Value>THB</com:Value><com:Value>TRY</com:Value><com:Value>TWD</com:Value><com:Value>UAH</com:Value><com:Value>USD</com:Value><com:Value>ZAR</com:Value></com:KeyValue><com:KeyValue
+        id="CURRENCY_DENOM"><com:Value>AED</com:Value><com:Value>ARS</com:Value><com:Value>ATS</com:Value><com:Value>AUD</com:Value><com:Value>BEF</com:Value><com:Value>BGN</com:Value><com:Value>BRL</com:Value><com:Value>CAD</com:Value><com:Value>CHF</com:Value><com:Value>CLP</com:Value><com:Value>CNY</com:Value><com:Value>COP</com:Value><com:Value>CYP</com:Value><com:Value>CZK</com:Value><com:Value>DEM</com:Value><com:Value>DKK</com:Value><com:Value>DZD</com:Value><com:Value>EEK</com:Value><com:Value>ESP</com:Value><com:Value>EUR</com:Value><com:Value>FIM</com:Value><com:Value>FRF</com:Value><com:Value>GBP</com:Value><com:Value>GRD</com:Value><com:Value>HKD</com:Value><com:Value>HRK</com:Value><com:Value>HUF</com:Value><com:Value>IDR</com:Value><com:Value>IEP</com:Value><com:Value>ILS</com:Value><com:Value>INR</com:Value><com:Value>ISK</com:Value><com:Value>ITL</com:Value><com:Value>JPY</com:Value><com:Value>KRW</com:Value><com:Value>LTL</com:Value><com:Value>LUF</com:Value><com:Value>LVL</com:Value><com:Value>MAD</com:Value><com:Value>MTL</com:Value><com:Value>MXN</com:Value><com:Value>MYR</com:Value><com:Value>NLG</com:Value><com:Value>NOK</com:Value><com:Value>NZD</com:Value><com:Value>PEN</com:Value><com:Value>PHP</com:Value><com:Value>PLN</com:Value><com:Value>PTE</com:Value><com:Value>RON</com:Value><com:Value>RUB</com:Value><com:Value>SAR</com:Value><com:Value>SEK</com:Value><com:Value>SGD</com:Value><com:Value>SIT</com:Value><com:Value>SKK</com:Value><com:Value>THB</com:Value><com:Value>TRY</com:Value><com:Value>TWD</com:Value><com:Value>UAH</com:Value><com:Value>USD</com:Value><com:Value>ZAR</com:Value></com:KeyValue><com:KeyValue
+        id="EXR_TYPE"><com:Value>BRC0</com:Value><com:Value>EN00</com:Value><com:Value>ERC0</com:Value><com:Value>ERD0</com:Value><com:Value>ERP0</com:Value><com:Value>ERU0</com:Value><com:Value>ERU1</com:Value><com:Value>NN00</com:Value><com:Value>NRC0</com:Value><com:Value>NRD0</com:Value><com:Value>NRP0</com:Value><com:Value>NRU0</com:Value><com:Value>NRU1</com:Value><com:Value>SP00</com:Value></com:KeyValue><com:KeyValue
+        id="EXR_SUFFIX"><com:Value>A</com:Value><com:Value>E</com:Value><com:Value>P</com:Value><com:Value>R</com:Value><com:Value>S</com:Value><com:Value>T</com:Value></com:KeyValue></str:CubeRegion></str:ContentConstraint></str:Constraints></mes:Structures></mes:Structure>
 
         '
     headers:
@@ -5083,7 +5207,7 @@ interactions:
       content-type:
       - application/vnd.sdmx.structure+xml;version=2.1
       date:
-      - Fri, 23 Oct 2026 02:44:54 GMT
+      - Wed, 28 Oct 2026 05:29:02 GMT
       expires:
       - '0'
       pragma:

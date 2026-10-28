@@ -35,12 +35,12 @@ Example:
 import annotationlib
 import functools
 import inspect
-from collections.abc import Sequence
 from typing import overload
 
 import httpx2
 
 from sdmxlib.api.policy import RegistryUnavailable
+from sdmxlib.api.registry import Resolve
 from sdmxlib.model.binding import DataflowBinding, DriftError, DriftIssue, _validate_binding
 from sdmxlib.model.ref import Ref, target_urn
 from sdmxlib.model.registry import RegistryReader
@@ -129,7 +129,7 @@ class FederatedRegistry:
         /,
         *,
         expect: type[T],
-        resolve: bool | Sequence[type] = False,
+        resolve: Resolve = False,
         partial: bool = True,
     ) -> T | None: ...
 
@@ -139,7 +139,7 @@ class FederatedRegistry:
         target: SdmxUrn[T] | Ref[T],
         /,
         *,
-        resolve: bool | Sequence[type] = False,
+        resolve: Resolve = False,
         partial: bool = True,
     ) -> T | None: ...
 
@@ -149,7 +149,7 @@ class FederatedRegistry:
         /,
         *,
         expect: type[T] | None = None,
-        resolve: bool | Sequence[type] = False,
+        resolve: Resolve = False,
         partial: bool = True,
     ) -> object:
         """Resolve ``target`` via the routed source.
@@ -175,8 +175,10 @@ class FederatedRegistry:
             target: Identity of the artefact to read — a URN, or a `Ref`
                 naming one. Routing reads the *agency* off it, so a `Ref`
                 had to be unwrapped before this could route at all.
-            resolve: How deep to follow references. `True` for every
-                reference, a sequence of artefact types for only those.
+            resolve: How deep to follow references, as on `RestRegistry.get`:
+                `True` for every reference, `"all"` or `"parents"` for the
+                artefacts referring to it, a sequence of artefact types for
+                only those.
             partial: `False` asks for untrimmed codelists.
             expect: The class the caller requires. The artefact is returned
                 when it is an instance, `None` otherwise — see
@@ -218,7 +220,7 @@ class FederatedRegistry:
         source: RegistryReader,
         urn: SdmxUrn[object],
         *,
-        resolve: bool | Sequence[type],
+        resolve: Resolve,
         partial: bool,
     ) -> dict[str, object]:
         """Which of ``resolve`` / ``partial`` this source can be asked for.
