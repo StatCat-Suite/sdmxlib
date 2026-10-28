@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.76.2] - 2026-10-28
+
+### Miscellaneous
+
+- Releases are published from GitHub Actions with PyPI trusted publishing. Each file on PyPI carries an attestation naming the repository, workflow and commit that built it, and the GitHub release holds every wheel and sdist with its Sigstore signature (GH-238)
+
 ## [0.76.1] - 2026-10-28
 
 ### Documentation
