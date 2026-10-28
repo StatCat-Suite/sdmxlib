@@ -20,7 +20,7 @@ Example:
     reg.get(dsd.urn).dimensions["FREQ"].codelist()  # Codelist — no fetch needed
 """
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from typing import overload
 
 from sdmxlib.model._items import resolve_item
@@ -296,6 +296,10 @@ class InMemoryRegistry:
     def __len__(self) -> int:
         """Number of artefacts stored."""
         return len(self._store)
+
+    def __iter__(self) -> Iterator[SupportsUrn]:
+        """Every artefact stored, in insertion order, one per URN."""
+        return iter(list(self._store.values()))
 
     def __repr__(self) -> str:
         counts = ", ".join(f"{t.__name__}={len(v)}" for t, v in self._by_type.items())

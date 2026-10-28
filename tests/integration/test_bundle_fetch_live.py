@@ -68,6 +68,10 @@ def test_structures_only_fetches_no_observations(tmp_path: Path) -> None:
     assert manifest.provenance is not None
     assert manifest.provenance.structures_only
     assert check_bundle(root / manifest.token, at="publish").ok
+    # ECB's ECB_EXR1 serves six more dataflows under references=parents;
+    # none of them is EXR's to keep.
+    dataflows = {a.urn for a in manifest.artefacts if ".Dataflow=" in a.urn}
+    assert dataflows == {"urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EXR(1.0)"}
 
 
 @pytest.mark.vcr
@@ -104,7 +108,11 @@ def test_fmr_3_0_closure_holds_what_refers_to_the_dataflow(tmp_path: Path) -> No
 
 @pytest.mark.vcr
 def test_fmr_2_1_closure_holds_no_hierarchy_association(tmp_path: Path) -> None:
-    """SDMX 2.1 has no hierarchy association, so over 2.1 only the other two arrive."""
+    """SDMX 2.1 has no hierarchy association, so over 2.1 only the constraint is kept.
+
+    FMR serves the hierarchy too, but without the association nothing links it
+    to `EXR` or its data structure, so it is outside the structural closure.
+    """
     fetched = _fetched_from_fmr(tmp_path, path="/ws/public/sdmxapi/rest", api="2.1")
-    association = "urn:sdmx:org.sdmx.infomodel.codelist.HierarchyAssociation=ECB:HA_EXR_CURRENCY_PROBE(1.0)"
-    assert _PROBES & fetched == _PROBES - {association}
+    constraint = "urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=ECB:CC_EXR_PROBE(1.0)"
+    assert _PROBES & fetched == {constraint}

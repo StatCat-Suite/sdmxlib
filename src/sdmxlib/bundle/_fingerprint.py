@@ -137,12 +137,17 @@ class References:
                 pending.extend(self._out.get(urn, ()))
         return seen
 
+    def referring(self, urn: str) -> set[str]:
+        """The stored artefacts that refer to `urn`."""
+        return set(self._in.get(urn, ()))
+
     def closure(self, dataflow: str, structures: Iterable[str]) -> set[str]:
         """A dataflow's structural closure.
 
         What the dataflow and its structures reach, every artefact referring
-        to one of them, and what those reach.
+        to one of them, and what those reach. Another dataflow of the same
+        data structure refers to it, so it is in the closure.
         """
         anchors = {dataflow, *structures}
-        referring = {source for anchor in anchors for source in self._in.get(anchor, ())}
+        referring = {source for anchor in anchors for source in self.referring(anchor)}
         return self.reach(anchors | referring)
