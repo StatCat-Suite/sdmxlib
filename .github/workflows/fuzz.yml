@@ -1,0 +1,68 @@
+# Fuzz the readers behind sl.parse with Atheris (GH-241).
+#
+# Each target in tests/fuzz/targets.py runs for 10 minutes weekly, and for
+# 1 minute on a pull request that changes a reader or the fuzz targets. The
+# corpus each run grows is kept in the Actions cache for the next one. A crash
+# fails the job and uploads its input as an artifact; save it under
+# tests/fuzz/crashes/<target>/ with the fix, and the unit tier replays it.
+# Like the other hosted jobs, this reports and blocks nothing.
+
+name: fuzz
+
+on:
+  schedule:
+    - cron: "41 5 * * 2"
+  pull_request:
+    paths:
+      - "src/sdmxlib/formats/**"
+      - "fuzz/**"
+      - "tests/fuzz/**"
+      - ".github/workflows/fuzz.yml"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: fuzz-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [ml21, ml30, ml31, json, detect]
+    env:
+      SECONDS_PER_TARGET: ${{ github.event_name == 'pull_request' && '60' || '600' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.14"
+          enable-cache: false
+      - run: uv sync --no-dev --group fuzz
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: corpus/${{ matrix.target }}
+          key: fuzz-corpus-${{ matrix.target }}-${{ github.run_id }}
+          restore-keys: fuzz-corpus-${{ matrix.target }}-
+      - name: Fuzz ${{ matrix.target }}
+        env:
+          TARGET: ${{ matrix.target }}
+          PYTHONPATH: .
+        run: |
+          mkdir -p "crashes/${TARGET}"
+          uv run --no-sync python fuzz/run.py "${TARGET}" "corpus/${TARGET}" \
+            -max_total_time="${SECONDS_PER_TARGET}" -timeout=10 -rss_limit_mb=2048 \
+            -artifact_prefix="crashes/${TARGET}/"
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: crashes-${{ matrix.target }}
+          path: crashes/${{ matrix.target }}/
+          if-no-files-found: ignore
