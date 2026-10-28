@@ -722,6 +722,14 @@ sdmxlib also produces bundles itself:
   hierarchy associations that refer to the dataflow; over SDMX 2.1 no
   hierarchy association arrives, since 2.1 has none.
   `sdmxlib bundle fetch` runs it from a shell.
+- `build_bundle(source, dataflows, path, bundle_id=..., producer=..., observations=...)`
+  builds a bundle from dataflows' structural closures at a `RestRegistry` or
+  a published bundle and the observations a producer holds, a Polars frame or
+  a DuckDB relation over a DuckLake table say. It cuts each codelist to the
+  codes the observations and the allowed constraints use, with their
+  ancestors, and records `cut_from`; a codelist a hierarchy places stays
+  full, since SDMX has no partial hierarchy. `fetch_bundle` is a call to it
+  with every codelist full.
 - `sdmxlib.testing.synthetic_bundle(path, shape, seed=...)` builds a bundle
   of a given `Shape` deterministically from its seed, for tests and
   benchmarks. A `Dim` may carry `HierarchyShape`s: each becomes a `Hierarchy`

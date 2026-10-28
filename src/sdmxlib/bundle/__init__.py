@@ -10,7 +10,9 @@ an ETag keys on. ``LocalRegistry.bundle(publication)`` opens it read-only.
 `check_bundle` checks a publication against it and against itself;
 `copy_bundle` copies one elsewhere, manifest last, and `bundle_files` lists
 what such a copy needs for another tool; `verify_remote` checks the
-files a server reads from object storage by size and a digest the store keeps; and `fetch_bundle` lands
+files a server reads from object storage by size and a digest the store keeps; `build_bundle`
+builds one from dataflows' closures at a registry and the observations a
+producer holds, cutting codelists to partials; and `fetch_bundle` lands
 one dataflow from an SDMX REST source as a published bundle, its provenance
 recorded. `apply_overlays` changes display annotations without a rebuild,
 `effective_token` is what a cache keys on when it does, and `fold_overlays`
@@ -42,6 +44,7 @@ from sdmxlib.bundle._check import Check, Profile, Report, check_bundle, check_on
 from sdmxlib.bundle._finding import Finding
 from sdmxlib.bundle._copy import bundle_files, copy_bundle
 from sdmxlib.bundle._remote import RemoteFile, content_crc32c, content_md5, verify_remote
+from sdmxlib.bundle._build import build_bundle
 from sdmxlib.bundle._fetch import fetch_bundle
 from sdmxlib.bundle._overlay import (
     OVERLAY_FORMAT,
@@ -110,6 +113,7 @@ __all__ = [
     "Tier",
     "applied",
     "apply_overlays",
+    "build_bundle",
     "bundle_files",
     "canonical_json",
     "check_bundle",
