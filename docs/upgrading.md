@@ -19,6 +19,23 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## Sibling dataflows leave each other's structure fingerprints
+
+A dataflow's structural closure leaves out every other dataflow of the same
+data structure, and what only that one reaches
+([GH-228](https://github.com/StatCat-Suite/sdmxlib/issues/228)). It included
+them, so editing one dataflow moved the structure fingerprint of every
+sibling, and with it their result-store keys.
+
+- A bundle that holds several dataflows of one data structure gets new
+  `structure_fingerprint`s when it is republished, and
+  `check_bundle(expect=...)` against a publication made before the upgrade
+  reports them. A bundle with one dataflow per data structure, the census
+  bundle among them, keeps its fingerprints.
+- `CANONICAL_FORM` stays `1`: the canonical text is unchanged.
+- `fetch_bundle` and `build_bundle` store this closure, so a sibling dataflow
+  that a data structure's `references=parents` request returns is not kept.
+
 ## Observations come in codelist order
 
 An observation query's default order sorts each dimension enumerated by a
