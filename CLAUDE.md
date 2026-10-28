@@ -314,6 +314,11 @@ no hosted job blocks a merge:
   push to `main`, resolving the dependencies fresh since `uv.lock` is
   gitignored (GH-236).
 - `.github/workflows/docs.yml` publishes the docs to GitHub Pages.
+- `.github/workflows/release.yml` publishes a release to PyPI when
+  `just release-4-merge` publishes its GitHub release (GH-238). It builds from
+  the tag, waits for the maintainer to approve the `pypi` environment, uploads
+  with trusted publishing and attestations, and attaches the files and their
+  Sigstore signatures to the release. No PyPI token is stored.
 - The security checks report to the Security tab (GH-220): `zizmor.yml` lints
   the workflows, `scorecard.yml` scores the repository, and GitHub runs
   CodeQL, secret scanning and Dependabot from the repository settings.

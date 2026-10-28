@@ -705,39 +705,37 @@ release-notes VERSION:
     fi
     printf '%s\n' "${NOTES}"
 
-# Step 5 — Build and publish to PyPI (requires UV_PUBLISH_TOKEN and UV_PUBLISH_TOKEN_CLI)
+# Step 5 — Follow the release workflow's publish, then check both packages on PyPI
 [group('release')]
 release-5-pypi:
     #!/usr/bin/env bash
+    # Publishing runs on GitHub (`.github/workflows/release.yml`, GH-238):
+    # step 4's `gh release create` starts it, it builds from the tag, and it
+    # waits for the maintainer to approve the `pypi` environment in the
+    # Actions tab before it uploads. This step waits for that run and then
+    # asks PyPI for both packages at the tag's version.
     set -euo pipefail
-    # One project-scoped token per package: PyPI refuses an sdmxlib token for
-    # sdmxlib-cli, which left 0.72.1's CLI unpublished. Both are checked before
-    # anything is built, so a missing one cannot stop a release halfway.
-    for KEY in UV_PUBLISH_TOKEN UV_PUBLISH_TOKEN_CLI; do
-        if [[ -z "${!KEY:-}" ]]; then
-            echo "error: ${KEY} is not set (sdmxlib's token, then sdmxlib-cli's)" >&2
-            exit 1
-        fi
-    done
-    # Build from a checked-out tag, never from a branch that has moved past it.
     if ! VER=$(git describe --tags --exact-match HEAD 2>/dev/null); then
         echo "error: HEAD is not a release tag; run git switch --detach vX.Y.Z" >&2
         exit 1
     fi
-    # `uv publish` defaults to public PyPI, but a shell configured for a
-    # private mirror redirects it silently. Check the target by allow-list,
-    # for the same reason `just check-indexes` does.
-    ALLOWED="upload.pypi.org test.pypi.org"
-    TARGET="${UV_PUBLISH_URL:-https://upload.pypi.org/legacy/}"
-    HOST=$(printf '%s' "${TARGET}" | sed -E 's#^[a-z]+://([^/]+).*#\1#')
-    if ! grep -qw -- "${HOST}" <<< "${ALLOWED}"; then
-        echo "error: publish target is not a public index (${HOST})" >&2
-        echo "       unset UV_PUBLISH_URL to publish to PyPI." >&2
+    RUN=""
+    for _ in $(seq 1 12); do
+        RUN=$(gh run list --workflow release.yml --event release --limit 20 \
+            --json databaseId,headBranch --jq ".[] | select(.headBranch == \"${VER}\") | .databaseId" | head -1)
+        [[ -n "${RUN}" ]] && break
+        sleep 5
+    done
+    if [[ -z "${RUN}" ]]; then
+        echo "error: no release workflow run for ${VER}; did step 4 publish the GitHub release?" >&2
         exit 1
     fi
-    rm -rf dist
-    # Every workspace package: sdmxlib and sdmxlib-cli, at one version (GH-67).
-    uv build --all-packages
-    uv publish --token "${UV_PUBLISH_TOKEN}" dist/sdmxlib-"${VER#v}"[.-]*
-    uv publish --token "${UV_PUBLISH_TOKEN_CLI}" dist/sdmxlib_cli-"${VER#v}"[.-]*
-    echo "Published ${VER} to PyPI"
+    echo "Approve the pypi environment: $(gh run view "${RUN}" --json url --jq .url)"
+    gh run watch "${RUN}" --exit-status
+    for PACKAGE in sdmxlib sdmxlib-cli; do
+        if ! curl -fsS "https://pypi.org/pypi/${PACKAGE}/${VER#v}/json" >/dev/null; then
+            echo "error: PyPI has no ${PACKAGE} ${VER#v}" >&2
+            exit 1
+        fi
+    done
+    echo "Published ${VER} to PyPI, with attestations; signed files are on the GitHub release"
