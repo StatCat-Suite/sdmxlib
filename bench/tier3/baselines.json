@@ -1,0 +1,679 @@
+{
+  "_publication": "01a17fcb-14fa-7492-9dc7-5d339667927c",
+  "_sdmxlib": "0.75.0",
+  "_store": "azurite",
+  "results": {
+    "off": {
+      "start": [
+        {
+          "query": "one geography",
+          "read": 1,
+          "rows": 14533,
+          "gets": 940,
+          "bytes": 84027673,
+          "s": 1.0197671249625273
+        },
+        {
+          "query": "one geography",
+          "read": 2,
+          "rows": 14533,
+          "gets": 940,
+          "bytes": 84027673,
+          "s": 0.8181961249792948
+        },
+        {
+          "query": "one characteristic",
+          "read": 1,
+          "rows": 482856,
+          "gets": 1971,
+          "bytes": 232095127,
+          "s": 1.7091741249896586
+        },
+        {
+          "query": "one characteristic",
+          "read": 2,
+          "rows": 482856,
+          "gets": 1971,
+          "bytes": 232095127,
+          "s": 1.5623862079810351
+        },
+        {
+          "query": "count",
+          "read": 1,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.002296874998137355
+        },
+        {
+          "query": "count",
+          "read": 2,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.0017208339995704591
+        },
+        {
+          "cache_bytes": 0,
+          "spilled_bytes": 0,
+          "peak_rss_bytes": 1253146624
+        }
+      ],
+      "restart": [
+        {
+          "query": "one geography",
+          "read": 1,
+          "rows": 14533,
+          "gets": 940,
+          "bytes": 84027673,
+          "s": 0.7779340419801883
+        },
+        {
+          "query": "one geography",
+          "read": 2,
+          "rows": 14533,
+          "gets": 940,
+          "bytes": 84027673,
+          "s": 0.7701095420052297
+        },
+        {
+          "query": "one characteristic",
+          "read": 1,
+          "rows": 482856,
+          "gets": 1971,
+          "bytes": 232095127,
+          "s": 1.4839347079978324
+        },
+        {
+          "query": "one characteristic",
+          "read": 2,
+          "rows": 482856,
+          "gets": 1971,
+          "bytes": 232095127,
+          "s": 1.5241926669841632
+        },
+        {
+          "query": "count",
+          "read": 1,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.0024804589920677245
+        },
+        {
+          "query": "count",
+          "read": 2,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.0020708750234916806
+        },
+        {
+          "cache_bytes": 0,
+          "spilled_bytes": 0,
+          "peak_rss_bytes": 1267515392
+        }
+      ]
+    },
+    "memory": {
+      "start": [
+        {
+          "query": "one geography",
+          "read": 1,
+          "rows": 14533,
+          "gets": 938,
+          "bytes": 85103524,
+          "s": 0.7437812080024742
+        },
+        {
+          "query": "one geography",
+          "read": 2,
+          "rows": 14533,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.266376500017941
+        },
+        {
+          "query": "one characteristic",
+          "read": 1,
+          "rows": 482856,
+          "gets": 1919,
+          "bytes": 224045279,
+          "s": 1.4359012499917299
+        },
+        {
+          "query": "one characteristic",
+          "read": 2,
+          "rows": 482856,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.4313673749566078
+        },
+        {
+          "query": "count",
+          "read": 1,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.002370874979533255
+        },
+        {
+          "query": "count",
+          "read": 2,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.0018150829710066319
+        },
+        {
+          "cache_bytes": 310466976,
+          "spilled_bytes": 0,
+          "peak_rss_bytes": 1609269248
+        }
+      ],
+      "restart": [
+        {
+          "query": "one geography",
+          "read": 1,
+          "rows": 14533,
+          "gets": 938,
+          "bytes": 85103524,
+          "s": 0.7651008749962784
+        },
+        {
+          "query": "one geography",
+          "read": 2,
+          "rows": 14533,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.2700228749890812
+        },
+        {
+          "query": "one characteristic",
+          "read": 1,
+          "rows": 482856,
+          "gets": 1919,
+          "bytes": 224045279,
+          "s": 1.454014457995072
+        },
+        {
+          "query": "one characteristic",
+          "read": 2,
+          "rows": 482856,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.4280650420114398
+        },
+        {
+          "query": "count",
+          "read": 1,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.002162959019187838
+        },
+        {
+          "query": "count",
+          "read": 2,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.0017014170298352838
+        },
+        {
+          "cache_bytes": 310466976,
+          "spilled_bytes": 0,
+          "peak_rss_bytes": 1626144768
+        }
+      ]
+    },
+    "memory, 400MB limit": {
+      "start": [
+        {
+          "query": "one geography",
+          "read": 1,
+          "rows": 14533,
+          "gets": 938,
+          "bytes": 85103524,
+          "s": 0.8293327499995939
+        },
+        {
+          "query": "one geography",
+          "read": 2,
+          "rows": 14533,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.28689662500983104
+        },
+        {
+          "query": "one characteristic",
+          "read": 1,
+          "rows": 482856,
+          "gets": 1941,
+          "bytes": 227065279,
+          "s": 1.644486166012939
+        },
+        {
+          "query": "one characteristic",
+          "read": 2,
+          "rows": 482856,
+          "gets": 1811,
+          "bytes": 219101234,
+          "s": 1.6166031250031665
+        },
+        {
+          "query": "count",
+          "read": 1,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.002375125011894852
+        },
+        {
+          "query": "count",
+          "read": 2,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.0016966669936664402
+        },
+        {
+          "cache_bytes": 41883223,
+          "spilled_bytes": 0,
+          "peak_rss_bytes": 1380843520
+        }
+      ],
+      "restart": [
+        {
+          "query": "one geography",
+          "read": 1,
+          "rows": 14533,
+          "gets": 938,
+          "bytes": 85103524,
+          "s": 0.8137262499658391
+        },
+        {
+          "query": "one geography",
+          "read": 2,
+          "rows": 14533,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.2840502919862047
+        },
+        {
+          "query": "one characteristic",
+          "read": 1,
+          "rows": 482856,
+          "gets": 1947,
+          "bytes": 227929535,
+          "s": 1.6748903330299072
+        },
+        {
+          "query": "one characteristic",
+          "read": 2,
+          "rows": 482856,
+          "gets": 1764,
+          "bytes": 214765151,
+          "s": 1.5653547080000862
+        },
+        {
+          "query": "count",
+          "read": 1,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.002396541996859014
+        },
+        {
+          "query": "count",
+          "read": 2,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.00189520901767537
+        },
+        {
+          "cache_bytes": 39687758,
+          "spilled_bytes": 0,
+          "peak_rss_bytes": 1372798976
+        }
+      ]
+    },
+    "memory, 1MB min block": {
+      "start": [
+        {
+          "query": "one geography",
+          "read": 1,
+          "rows": 14533,
+          "gets": 133,
+          "bytes": 149963684,
+          "s": 0.7622229580301791
+        },
+        {
+          "query": "one geography",
+          "read": 2,
+          "rows": 14533,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.2611196670331992
+        },
+        {
+          "query": "one characteristic",
+          "read": 1,
+          "rows": 482856,
+          "gets": 354,
+          "bytes": 382539999,
+          "s": 1.818951457971707
+        },
+        {
+          "query": "one characteristic",
+          "read": 2,
+          "rows": 482856,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.41800616699038073
+        },
+        {
+          "query": "count",
+          "read": 1,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.002290375006850809
+        },
+        {
+          "query": "count",
+          "read": 2,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.001693541998974979
+        },
+        {
+          "cache_bytes": 533821856,
+          "spilled_bytes": 0,
+          "peak_rss_bytes": 1835630592
+        }
+      ],
+      "restart": [
+        {
+          "query": "one geography",
+          "read": 1,
+          "rows": 14533,
+          "gets": 133,
+          "bytes": 149963684,
+          "s": 0.9069038340239786
+        },
+        {
+          "query": "one geography",
+          "read": 2,
+          "rows": 14533,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.2663437079754658
+        },
+        {
+          "query": "one characteristic",
+          "read": 1,
+          "rows": 482856,
+          "gets": 358,
+          "bytes": 382539999,
+          "s": 1.9593475420260802
+        },
+        {
+          "query": "one characteristic",
+          "read": 2,
+          "rows": 482856,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.4209029579651542
+        },
+        {
+          "query": "count",
+          "read": 1,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.00217945798067376
+        },
+        {
+          "query": "count",
+          "read": 2,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.0019325829925946891
+        },
+        {
+          "cache_bytes": 533821856,
+          "spilled_bytes": 0,
+          "peak_rss_bytes": 1837170688
+        }
+      ]
+    },
+    "memory, grid sizing": {
+      "start": [
+        {
+          "query": "one geography",
+          "read": 1,
+          "rows": 14533,
+          "gets": 82,
+          "bytes": 168838052,
+          "s": 0.9948053329717368
+        },
+        {
+          "query": "one geography",
+          "read": 2,
+          "rows": 14533,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.26287549996050075
+        },
+        {
+          "query": "one characteristic",
+          "read": 1,
+          "rows": 482856,
+          "gets": 207,
+          "bytes": 410851551,
+          "s": 2.1100222499808297
+        },
+        {
+          "query": "one characteristic",
+          "read": 2,
+          "rows": 482856,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.4178222499904223
+        },
+        {
+          "query": "count",
+          "read": 1,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.002150624990463257
+        },
+        {
+          "query": "count",
+          "read": 2,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.0017820419743657112
+        },
+        {
+          "cache_bytes": 581007776,
+          "spilled_bytes": 0,
+          "peak_rss_bytes": 1844838400
+        }
+      ],
+      "restart": [
+        {
+          "query": "one geography",
+          "read": 1,
+          "rows": 14533,
+          "gets": 82,
+          "bytes": 168838052,
+          "s": 1.0046551669947803
+        },
+        {
+          "query": "one geography",
+          "read": 2,
+          "rows": 14533,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.26699750003172085
+        },
+        {
+          "query": "one characteristic",
+          "read": 1,
+          "rows": 482856,
+          "gets": 207,
+          "bytes": 410851551,
+          "s": 2.105428999988362
+        },
+        {
+          "query": "one characteristic",
+          "read": 2,
+          "rows": 482856,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.4550542499637231
+        },
+        {
+          "query": "count",
+          "read": 1,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.002471832965966314
+        },
+        {
+          "query": "count",
+          "read": 2,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.0020210000220686197
+        },
+        {
+          "cache_bytes": 581007776,
+          "spilled_bytes": 0,
+          "peak_rss_bytes": 1820049408
+        }
+      ]
+    },
+    "spill, 400MB limit": {
+      "start": [
+        {
+          "query": "one geography",
+          "read": 1,
+          "rows": 14533,
+          "gets": 938,
+          "bytes": 85103524,
+          "s": 0.9531061670277268
+        },
+        {
+          "query": "one geography",
+          "read": 2,
+          "rows": 14533,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.27880887500941753
+        },
+        {
+          "query": "one characteristic",
+          "read": 1,
+          "rows": 482856,
+          "gets": 1946,
+          "bytes": 226185971,
+          "s": 1.6461409999756142
+        },
+        {
+          "query": "one characteristic",
+          "read": 2,
+          "rows": 482856,
+          "gets": 1664,
+          "bytes": 125987501,
+          "s": 1.3475781659944914
+        },
+        {
+          "query": "count",
+          "read": 1,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.002223999996203929
+        },
+        {
+          "query": "count",
+          "read": 2,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.0018581670010462403
+        },
+        {
+          "cache_bytes": 29274435,
+          "spilled_bytes": 103883901,
+          "peak_rss_bytes": 1342242816
+        }
+      ],
+      "restart": [
+        {
+          "query": "one geography",
+          "read": 1,
+          "rows": 14533,
+          "gets": 938,
+          "bytes": 85103524,
+          "s": 0.8633842500275932
+        },
+        {
+          "query": "one geography",
+          "read": 2,
+          "rows": 14533,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.2838683750014752
+        },
+        {
+          "query": "one characteristic",
+          "read": 1,
+          "rows": 482856,
+          "gets": 1944,
+          "bytes": 225977075,
+          "s": 1.6877812089514919
+        },
+        {
+          "query": "one characteristic",
+          "read": 2,
+          "rows": 482856,
+          "gets": 1673,
+          "bytes": 129854491,
+          "s": 1.359869832987897
+        },
+        {
+          "query": "count",
+          "read": 1,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.0023096249788068235
+        },
+        {
+          "query": "count",
+          "read": 2,
+          "rows": 1169477143,
+          "gets": 0,
+          "bytes": 0,
+          "s": 0.0017870839801616967
+        },
+        {
+          "cache_bytes": 27629595,
+          "spilled_bytes": 103076537,
+          "peak_rss_bytes": 1339326464
+        }
+      ]
+    }
+  }
+}
