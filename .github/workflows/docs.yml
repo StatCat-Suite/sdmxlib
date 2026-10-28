@@ -1,8 +1,7 @@
 # Publish the mkdocs site to GitHub Pages.
 #
-# This is the only hosted job, and it runs no tests: the quality gate is local
-# (`just ci`). That is a hosting decision, not a design one — see CLAUDE.md,
-# "Testing".
+# It runs no tests: the quality gate is local (`just ci`). That is a hosting
+# decision, not a design one — see CLAUDE.md, "Testing".
 #
 # It builds on every push to main that touches what the site is made of, and
 # can be run by hand from the Actions tab.
@@ -22,10 +21,8 @@ on:
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+# Nothing by default; each job asks for what it uses.
+permissions: {}
 
 # One deployment at a time; a newer push supersedes a queued one, but never
 # cancels a deployment already under way.
@@ -36,29 +33,36 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.3.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: "3.14"
           enable-cache: true
           cache-dependency-glob: pyproject.toml
-      - uses: extractions/setup-just@v4
+      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4
         with:
           just-version: "1.46.0"
       - run: uv sync --group dev
       - run: just docs-build
-      - uses: actions/configure-pages@v6
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: site
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
