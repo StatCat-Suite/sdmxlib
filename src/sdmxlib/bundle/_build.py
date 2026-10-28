@@ -4,11 +4,11 @@
 its codelists cut to partials. `fetch_bundle` is a call to it; so is any
 producer holding structures in a registry and observations in a lake.
 
-**The closure.** What the dataflow and its data structure refer to, every
-artefact referring to one of them, and what those refer to, as
-`References.closure` selects it, less any other dataflow of the same data
-structure: that one refers to the data structure too, and is left out with
-what only it reaches. A `RestRegistry` is asked for the dataflow with
+**The closure is the fingerprint's.** It is what `References.closure` selects
+from the dataflow and its data structure: what they refer to, every artefact
+other than a dataflow referring to one of them, and what those refer to.
+Another dataflow of the same data structure is left out with what only it
+reaches. A `RestRegistry` is asked for the dataflow with
 ``references=all`` and for its data structure with ``references=parents``, so
 the constraints and hierarchy associations that name either arrive.
 
@@ -173,23 +173,9 @@ def _held(registry: BundleRegistry) -> set[str]:
 
 
 def _closure(registry: BundleRegistry, flows: Iterable[tuple[Dataflow, DataStructure]]) -> set[str]:
-    """What the bundle keeps of `registry`'s store: each dataflow's closure, less the dataflows not built.
-
-    `References.closure` counts another dataflow of the same data structure as
-    referring to it; such a dataflow, and what only it reaches, stays out. The
-    structural fingerprint still counts it (GH-228).
-    """
-    held = _held(registry)
-    references = References(registry.connection, held)
-    pairs = list(flows)
-    built = {str(flow.urn) for flow, _ in pairs}
-    others = {urn for urn in held if SdmxUrn.parse(urn).artefact_class == "Dataflow"} - built
-    kept: set[str] = set()
-    for flow, dsd in pairs:
-        anchors = {str(flow.urn), str(dsd.urn)}
-        referring = {source for anchor in anchors for source in references.referring(anchor)} - others
-        kept |= references.reach(anchors | referring)
-    return kept
+    """The union of each dataflow's structural closure in `registry`'s store."""
+    references = References(registry.connection, _held(registry))
+    return {urn for flow, dsd in flows for urn in references.closure(str(flow.urn), [str(dsd.urn)])}
 
 
 def _write(

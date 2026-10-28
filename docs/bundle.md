@@ -809,10 +809,13 @@ FROM lake.<schema>.<table> AS t
 ```
 
 A dataflow's **structural closure** is what the dataflow and its data
-structure refer to, transitively; every artefact that refers to either (a
-constraint, a provision agreement, a hierarchy association: these point at
-the dataflow, not the reverse); and what those refer to, transitively. A
-reference to an item counts as one to the artefact holding it.
+structure refer to, transitively; every artefact other than a dataflow that
+refers to either (a constraint, a provision agreement, a hierarchy
+association: these point at the dataflow, not the reverse); and what those
+refer to, transitively. Another dataflow of the same data structure refers to
+it and is left out, so a change to one dataflow leaves its siblings' structure
+fingerprints. A reference to an item counts as one to the artefact holding
+it.
 
 ### Canonical text of an artefact
 

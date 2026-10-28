@@ -185,6 +185,18 @@ def test_a_constraint_on_the_dataflow_moves_its_structure_fingerprint(tmp_path: 
     assert len(fingerprints) == 3
 
 
+def test_a_sibling_dataflow_does_not_move_the_structure_fingerprint(tmp_path: Path) -> None:
+    """Another dataflow of the same data structure refers to it, and is left out of the closure (GH-228)."""
+    sibling = sl.Dataflow(id="G", maintainer="SDMX", version="1.0", name={"en": "G"}, structure=Ref.to(DSD))
+    renamed = attrs.evolve(sibling, name={"en": "G, renamed"})
+    without = _published(tmp_path / "without")
+    with_one = _published(tmp_path / "with", extra=(sibling,))
+    with_renamed = _published(tmp_path / "renamed", extra=(renamed,))
+    fingerprints = {m.bindings[0].structure_fingerprint for m in (without, with_one, with_renamed)}
+    assert len(fingerprints) == 1
+    assert with_one.content_fingerprint != with_renamed.content_fingerprint, "the bundle holds the sibling"
+
+
 def test_an_artefact_outside_the_closure_does_not_move_the_structure_fingerprint(tmp_path: Path) -> None:
     without = _published(tmp_path / "without")
     with_unrelated = _published(tmp_path / "with", extra=(_UNRELATED,))

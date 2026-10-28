@@ -13,9 +13,11 @@ form `CANONICAL_FORM` versions (design §4.4):
 - **artefact**: the SHA-256 of `canonical_json`.
 - **structure**: per dataflow, the SHA-256 of the artefact fingerprints of its
   closure, in URN order, joined by newlines. The closure is everything the
-  dataflow and its data structure reach, plus every artefact that refers to
-  either (constraints, provision agreements, hierarchy associations: they point
-  at the dataflow, not the reverse) and everything those reach.
+  dataflow and its data structure reach, plus every artefact other than a
+  dataflow that refers to either (constraints, provision agreements, hierarchy
+  associations: they point at the dataflow, not the reverse) and everything
+  those reach. Another dataflow of the same data structure refers to it and is
+  left out, so editing one dataflow leaves its siblings' fingerprints (GH-228).
 - **bundle**: the SHA-256 of ``artefacts:``, each artefact fingerprint in URN
   order, ``bindings:``, then the dataflow URN, a tab and the table
   fingerprint per binding in dataflow order, joined by newlines.
@@ -144,10 +146,16 @@ class References:
     def closure(self, dataflow: str, structures: Iterable[str]) -> set[str]:
         """A dataflow's structural closure.
 
-        What the dataflow and its structures reach, every artefact referring
-        to one of them, and what those reach. Another dataflow of the same
-        data structure refers to it, so it is in the closure.
+        What the dataflow and its structures reach, every artefact other than
+        a dataflow referring to one of them, and what those reach. Another
+        dataflow of the same data structure refers to it and is left out,
+        with what only it reaches (GH-228).
         """
         anchors = {dataflow, *structures}
-        referring = {source for anchor in anchors for source in self.referring(anchor)}
+        referring = {
+            source
+            for anchor in anchors
+            for source in self.referring(anchor)
+            if SdmxUrn.parse(source).artefact_class != "Dataflow"
+        }
         return self.reach(anchors | referring)
