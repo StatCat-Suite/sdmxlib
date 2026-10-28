@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Breaking Changes
 
-- Data reads raise SdmxParseError and one type ValueError (GH-247): `scan_json`, `scan_csv` and a REST `obs()` / `data()` response raise `SdmxParseError` for data that cannot be read and the "does not fit its component's type" `ValueError` for a value that does not fit, in place of msgspec, DuckDB, polars and `csv` exceptions. See [Upgrading](docs/upgrading.md#data-reads-raise-sdmxparseerror-and-one-type-valueerror)
+- Data reads raise SdmxParseError and one type ValueError (GH-247): `scan_json`, `scan_csv` and a REST `obs()` / `data()` response raise `SdmxParseError` for data that cannot be read and the "does not fit its component's type" `ValueError` for a value that does not fit, in place of msgspec, DuckDB, polars and `csv` exceptions. See [Upgrading](https://statcat-suite.github.io/sdmxlib/upgrading/#data-reads-raise-sdmxparseerror-and-one-type-valueerror)
 
 ### Bug Fixes
 
