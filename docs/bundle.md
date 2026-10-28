@@ -715,8 +715,11 @@ sdmxlib also produces bundles itself:
 
 - `fetch_bundle(source, flow, path, key=..., start=..., end=...)` fetches one
   dataflow from an SDMX REST source, narrowed by a key and periods, with its
-  structural closure, and records `Provenance`. `sdmxlib bundle fetch` runs
-  it from a shell.
+  structural closure, and records `Provenance`. The closure is fetched with
+  `references=all`, so it holds the constraints, categorisations and
+  hierarchy associations that refer to the dataflow; over SDMX 2.1 no
+  hierarchy association arrives, since 2.1 has none.
+  `sdmxlib bundle fetch` runs it from a shell.
 - `sdmxlib.testing.synthetic_bundle(path, shape, seed=...)` builds a bundle
   of a given `Shape` deterministically from its seed, for tests and
   benchmarks. A `Dim` may carry `HierarchyShape`s: each becomes a `Hierarchy`

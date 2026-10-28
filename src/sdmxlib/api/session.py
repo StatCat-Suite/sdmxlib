@@ -43,6 +43,10 @@ class Completeness(IntEnum):
     FULL = 2
 
 
+#: The ``references=`` values that follow none of an artefact's own references.
+_UPWARD = frozenset({"none", "parents", "parentsandsiblings", "ancestors"})
+
+
 def completeness_of(*, detail: str, references: str) -> Completeness:
     """What a fetch with these wire parameters learns.
 
@@ -52,8 +56,13 @@ def completeness_of(*, detail: str, references: str) -> Completeness:
     `references` about depth — and reading `detail` alone would mark the
     commonest unresolved fetch in the library as the most complete one there
     is.
+
+    A request for the artefacts that refer to this one (``parents``, and the
+    other directions that point up the graph) follows none of its own
+    references, so it is `UNRESOLVED` too. What it learns is recorded apart,
+    by `Session.record_parents` (GH-221).
     """
-    if references == "none":
+    if references in _UPWARD:
         return Completeness.UNRESOLVED
     return Completeness.FULL if detail == "full" else Completeness.PARTIAL
 
@@ -68,6 +77,11 @@ class Session:
     Two indices, both keyed by the **versioned** URN string:
     - ``_map``: URN → artefact (all ingested)
     - ``_completeness``: URN → `Completeness`, how deeply it has been fetched
+
+    and a set, ``_parents``, of the URNs whose referring artefacts were
+    fetched too (``references=parents`` or ``all``). Direction is apart from
+    depth: a ``descendants`` fetch at any depth says nothing about what refers
+    to an artefact, so it must not answer a request that needs that (GH-221).
 
     The second is a record, not a second cache: `_map` holds the one object
     per URN, and a fuller fetch replaces it — a reference held into the older
@@ -90,6 +104,7 @@ class Session:
         # and admits the registry-cache path that writes an unbounded ``T``.
         self._map: dict[str, object] = {}
         self._completeness: dict[str, Completeness] = {}
+        self._parents: set[str] = set()
         self._class_tomsg_field: dict[str, str] = {}
 
     def ingest(
@@ -148,22 +163,30 @@ class Session:
             return hit  # pyrefly: ignore[bad-return]
         return None
 
-    def get_at_least[T](self, urn: SdmxUrn[T], completeness: Completeness) -> T | None:
+    def get_at_least[T](self, urn: SdmxUrn[T], completeness: Completeness, *, parents: bool = False) -> T | None:
         """A cached artefact, if it is known at least this completely.
 
         `None` otherwise — including when the artefact *is* held but less
         completely than asked. That case must go to
-        the provider, and returning the shallower object is #344.
+        the provider, and returning the shallower object is #344. With
+        `parents`, also `None` unless the artefacts referring to it were
+        fetched (`record_parents`).
 
         Same `latest` rule as `get` — see there for why.
         """
         key = str(urn)
         if self._completeness.get(key, Completeness.UNRESOLVED) < completeness:
             return None
+        if parents and key not in self._parents:
+            return None
         hit = self._map.get(key)
         if hit is not None:
             return hit  # pyrefly: ignore[bad-return]
         return None
+
+    def record_parents(self, urn: SdmxUrn[object]) -> None:
+        """Record that the artefacts referring to `urn` were fetched with it."""
+        self._parents.add(str(urn))
 
     def completeness_for(self, urn: SdmxUrn[object]) -> Completeness:
         """How completely `urn` is known here. `UNRESOLVED` when not held."""

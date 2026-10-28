@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mes:Structure
+  xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+  xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure"
+  xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common">
+  <mes:Header>
+    <mes:ID>INCOMING_REFS_PROBE</mes:ID>
+    <mes:Test>true</mes:Test>
+    <mes:Prepared>2026-10-27T00:00:00</mes:Prepared>
+    <mes:Sender id="ECB"/>
+  </mes:Header>
+  <mes:Structures>
+    <str:DataConstraints>
+      <str:DataConstraint agencyID="ECB" id="CC_EXR_PROBE" version="1.0" role="Allowed">
+        <com:Name xml:lang="en">EXR probe constraint</com:Name>
+        <str:ConstraintAttachment>
+          <str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EXR(1.0)</str:Dataflow>
+        </str:ConstraintAttachment>
+        <str:CubeRegion include="true">
+          <str:KeyValue id="CURRENCY">
+            <str:Value>USD</str:Value>
+            <str:Value>GBP</str:Value>
+          </str:KeyValue>
+        </str:CubeRegion>
+      </str:DataConstraint>
+    </str:DataConstraints>
+    <str:Hierarchies>
+      <str:Hierarchy agencyID="ECB" id="H_CURRENCY_PROBE" version="1.0" hasFormalLevels="false">
+        <com:Name xml:lang="en">Currency probe hierarchy</com:Name>
+        <str:HierarchicalCode id="ALL">
+          <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ECB:CL_CURRENCY(1.0)._T</str:Code>
+          <str:HierarchicalCode id="USD">
+            <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ECB:CL_CURRENCY(1.0).USD</str:Code>
+          </str:HierarchicalCode>
+          <str:HierarchicalCode id="GBP">
+            <str:Code>urn:sdmx:org.sdmx.infomodel.codelist.Code=ECB:CL_CURRENCY(1.0).GBP</str:Code>
+          </str:HierarchicalCode>
+        </str:HierarchicalCode>
+      </str:Hierarchy>
+    </str:Hierarchies>
+    <str:HierarchyAssociations>
+      <str:HierarchyAssociation agencyID="ECB" id="HA_EXR_CURRENCY_PROBE" version="1.0">
+        <com:Name xml:lang="en">EXR CURRENCY probe association</com:Name>
+        <str:LinkedHierarchy>urn:sdmx:org.sdmx.infomodel.codelist.Hierarchy=ECB:H_CURRENCY_PROBE(1.0)</str:LinkedHierarchy>
+        <str:LinkedObject>urn:sdmx:org.sdmx.infomodel.datastructure.Dimension=ECB:ECB_EXR1(1.0).CURRENCY</str:LinkedObject>
+        <str:ContextObject>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:EXR(1.0)</str:ContextObject>
+      </str:HierarchyAssociation>
+    </str:HierarchyAssociations>
+  </mes:Structures>
+</mes:Structure>

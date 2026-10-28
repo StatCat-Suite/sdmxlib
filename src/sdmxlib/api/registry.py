@@ -5,7 +5,7 @@ import threading
 from collections.abc import Sequence
 from contextlib import AbstractContextManager
 from pathlib import Path
-from typing import Never, Self, Unpack, cast, overload
+from typing import Literal, Never, Self, Unpack, cast, overload
 
 import attrs
 
@@ -115,17 +115,26 @@ def _to_references(reference_type: type) -> str:
     return sdmx_class.lower()
 
 
-def _references_for(*, resolve: bool | Sequence[type]) -> str:
+#: What `RestRegistry.get` follows: nothing, every reference, the artefacts
+#: referring to it as well (``"all"``), only those (``"parents"``), or the
+#: references to these types.
+type Resolve = bool | Literal["all", "parents"] | Sequence[type]
+
+
+def _references_for(*, resolve: Resolve) -> str:
     """The `references=` a resolution depth asks for.
 
     Lifted out of `_read` when the freshness paths pushed it past the
     complexity gate — and it reads better alone, being the one place the
-    three-way `resolve` argument becomes a wire parameter.
+    `resolve` argument becomes a wire parameter. The two words come before
+    the sequence case, which a `str` would otherwise satisfy.
     """
     if resolve is True:
         return "descendants"
     if resolve is False:
         return "none"
+    if isinstance(resolve, str):
+        return resolve
     return ",".join(sorted(_to_references(t) for t in resolve))
 
 
@@ -550,7 +559,7 @@ class RestRegistry:
             return cached
         return self._local_cache_lookup(urn)
 
-    def _confirmed[T](self, urn: SdmxUrn[T], *, completeness: Completeness) -> T | None:
+    def _confirmed[T](self, urn: SdmxUrn[T], *, completeness: Completeness, parents: bool = False) -> T | None:
         """What a confirmed-unmoved pointer resolves to, or `None` to ask again.
 
         `None` means the provider vouched for a pointer whose artefact this
@@ -558,12 +567,12 @@ class RestRegistry:
         freshness that vouched for it is dropped on the way out, so the retry
         goes to the provider instead of looping on the same confirmation.
         """
-        held = self._settled_answer(urn, completeness=completeness)
+        held = self._settled_answer(urn, completeness=completeness, parents=parents)
         if held is None:
             self._forget(str(urn))
         return held
 
-    def _settled_answer[T](self, urn: SdmxUrn[T], *, completeness: Completeness) -> T | None:
+    def _settled_answer[T](self, urn: SdmxUrn[T], *, completeness: Completeness, parents: bool = False) -> T | None:
         """What a confirmed-unmoved `latest` pointer resolves to, if still held.
 
         This is a `latest -> pinned` map, which #338 deleted. The difference is
@@ -579,7 +588,7 @@ class RestRegistry:
         # cannot say so — the documented "localize the unsafe object -> T step
         # to the accessor" case from CLAUDE.md, written as a cast rather than a
         # suppression so it belongs to no single checker.
-        held = self._session.get_at_least(settled, completeness)
+        held = self._session.get_at_least(settled, completeness, parents=parents)
         return cast("T | None", held)
 
     def _remember_pointer(self, latest: str, pinned: SdmxUrn[object]) -> None:
@@ -763,7 +772,7 @@ class RestRegistry:
         /,
         *,
         expect: type[T],
-        resolve: bool | Sequence[type] = False,
+        resolve: Resolve = False,
         partial: bool = True,
     ) -> T | None: ...
 
@@ -773,7 +782,7 @@ class RestRegistry:
         target: SdmxUrn[T] | Ref[T],
         /,
         *,
-        resolve: bool | Sequence[type] = False,
+        resolve: Resolve = False,
         partial: bool = True,
     ) -> T | None: ...
 
@@ -783,7 +792,7 @@ class RestRegistry:
         /,
         *,
         expect: type[T] | None = None,
-        resolve: bool | Sequence[type] = False,
+        resolve: Resolve = False,
         partial: bool = True,
     ) -> object:
         """Read one artefact by identity.
@@ -801,6 +810,16 @@ class RestRegistry:
             reg.get(urn, resolve=True)            # every reference followed
             reg.get(urn, resolve=[sl.Codelist])   # only refs of these types
             reg.get(urn, resolve=True, partial=False)   # and untrimmed
+            reg.get(urn, resolve="all")           # and what refers to it
+            reg.get(urn, resolve="parents")       # only what refers to it
+
+        `"all"` and `"parents"` bring the artefacts that refer to this one:
+        the constraints on a dataflow, and the hierarchy associations linked
+        to it or to its DSD's dimensions. A ``descendants`` fetch never
+        returns them, so a bundle's structural closure needs one of these.
+        Over SDMX 2.1 no hierarchy association arrives, since 2.1
+        has none. `"parents"` asks for the artefact's own fields in full and
+        follows none of its references.
 
         **The default differs from `LocalRegistry.get`, and that is not an
         inconsistency.** Resolving is a join away locally and another round
@@ -810,7 +829,9 @@ class RestRegistry:
         Args:
             target: A URN, or a `Ref` from graph traversal. Positional-only,
                 and the same two types every other `get` takes.
-            resolve: `False` for a skeleton, `True` for every reference, or a
+            resolve: `False` for a skeleton, `True` for every reference,
+                `"all"` for every reference and every artefact referring to
+                this one, `"parents"` for only the referring ones, or a
                 sequence of artefact types to follow only those.
             partial: When resolving, trim referenced ItemSchemes by their
                 DataConstraints. `False` for a full audit.
@@ -844,13 +865,15 @@ class RestRegistry:
             return found if isinstance(found, expect) else None
         return found
 
-    def _read[T](self, urn: SdmxUrn[T], *, resolve: bool | Sequence[type], partial: bool) -> T:
+    def _read[T](self, urn: SdmxUrn[T], *, resolve: Resolve, partial: bool) -> T:
         """`get` without the not-found translation, for callers that require one."""
-        wants_refs = bool(resolve)
+        wants_refs = bool(resolve) and resolve != "parents"
         detail = ("referencepartial" if partial else "full") if wants_refs else "full"
         references = _references_for(resolve=resolve)
         wanted = completeness_of(detail=detail, references=references)
-        cached = self._session.get_at_least(urn, wanted)
+        # The two words are the only `str` values; a type list is unhashable.
+        parents = isinstance(resolve, str)
+        cached = self._session.get_at_least(urn, wanted, parents=parents)
         if cached is not None:
             return cached
         if not wants_refs:
@@ -867,7 +890,7 @@ class RestRegistry:
                 references=references,
             )
         if fetched is NOT_MODIFIED:
-            confirmed = self._confirmed(urn, completeness=wanted)
+            confirmed = self._confirmed(urn, completeness=wanted, parents=parents)
             if confirmed is not None:
                 return confirmed
             return self._read(urn, resolve=resolve, partial=partial)
@@ -880,6 +903,8 @@ class RestRegistry:
             self._raise_if_refused(urn)
             err = f"{urn} not found in response"
             raise KeyError(err)
+        if parents and isinstance(result, SupportsUrn):
+            self._session.record_parents(artefact_urn(result))
         if urn.version == "latest" and isinstance(result, SupportsUrn):
             self._remember_pointer(str(urn), artefact_urn(result))
         return result
