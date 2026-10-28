@@ -19,6 +19,38 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## Data reads raise `SdmxParseError` and one type `ValueError`
+
+Reading observations raises two exceptions
+([GH-247](https://github.com/StatCat-Suite/sdmxlib/issues/247)), from
+`reg.scan_csv`, `reg.scan_json` and a REST `obs()` / `data()` response:
+
+- **`sl.SdmxParseError`** for data that cannot be read: truncated or
+  malformed SDMX-JSON, a CSV row DuckDB cannot split or decode, a file
+  without a column its structure declares, an observation key outside its
+  declaration. These raised msgspec's `DecodeError` / `ValidationError`,
+  DuckDB's `InvalidInputException` / `BinderException`, `IndexError`, a
+  polars `ShapeError` or Python's `csv.Error`; the original is now
+  `__cause__`.
+- **`ValueError`**, "an observation column does not fit its component's
+  type", for a value such as text in a numeric measure. A CSV read raised
+  DuckDB's `ConversionException` for it.
+
+A file that names no structure, or one the registry does not hold, raises
+`ValueError` as before. `SdmxParseError` is a `ValueError`, so an
+`except ValueError` catches all of these. An `except msgspec.MsgspecError`
+or `except duckdb.Error` around these calls catches none of them now; catch
+`sl.SdmxParseError` instead.
+
+A scanned path is read when a query runs, so its errors are raised by the
+query's terminal (`frame()`, `count()`, a drained `stream()`), with the same
+two types.
+
+An SDMX-JSON data message whose measure mixes integers and decimals (`1` and
+`-2.25`) reads as one `Float64` column; it raised a polars `TypeError`.
+
+---
+
 ## Sibling dataflows leave each other's structure fingerprints
 
 A dataflow's structural closure leaves out every other dataflow of the same

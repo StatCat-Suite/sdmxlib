@@ -60,6 +60,7 @@ from sdmxlib.formats.sdmx_json._data_common import (
 from sdmxlib.formats.sdmx_json._dto import ENCODER, _camel_rename, prepared_text
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure
+from sdmxlib.model.errors import SdmxParseError
 from sdmxlib.model.ref import Ref
 
 ActionLiteral = Literal["Information", "Append", "Replace", "Delete"]
@@ -194,12 +195,12 @@ def read_observations(source: bytes | str | Path) -> tuple[pl.DataFrame, str | N
         ``rel="dataflow"`` link's URN, or `None` when the message has none.
 
     Raises:
-        ValueError: If the document is not a recognisable data message of this version.
+        SdmxParseError: If the document is not a recognisable data message of this version.
     """
     payload = _load(source)
     if not payload.data_sets or payload.structure is None:
         msg = "Source does not look like a SDMX-JSON 1.0 data message — missing top-level dataSets / structure"
-        raise ValueError(msg)
+        raise SdmxParseError(msg)
     dataset_block = payload.data_sets[0]
     structure_block = payload.structure
 

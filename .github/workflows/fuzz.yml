@@ -1,4 +1,5 @@
-# Fuzz the readers behind sl.parse with Atheris (GH-241).
+# Fuzz the readers with Atheris (GH-241, GH-247): sl.parse's, and the data
+# readers behind scan_json and scan_csv.
 #
 # Each target in tests/fuzz/targets.py runs for 10 minutes weekly, and for
 # 1 minute on a pull request that changes a reader or the fuzz targets. The
@@ -15,6 +16,8 @@ on:
   pull_request:
     paths:
       - "src/sdmxlib/formats/**"
+      - "src/sdmxlib/local/_scan.py"
+      - "src/sdmxlib/_read_errors.py"
       - "fuzz/**"
       - "tests/fuzz/**"
       - ".github/workflows/fuzz.yml"
@@ -34,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [ml21, ml30, ml31, json, detect]
+        target: [ml21, ml30, ml31, json, detect, data_json, data_csv]
     env:
       SECONDS_PER_TARGET: ${{ github.event_name == 'pull_request' && '60' || '600' }}
     steps:

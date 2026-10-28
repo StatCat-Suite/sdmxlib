@@ -25,6 +25,7 @@ import duckdb
 import polars as pl
 import pyarrow as pa
 
+from sdmxlib._read_errors import converting, csv_errors, reads_scan, type_mismatch
 from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.model.representation import Facet
 from sdmxlib.query._closure import columns_in
@@ -195,12 +196,7 @@ def _typed(frame: pl.DataFrame, root: AnyCols, columns: Mapping[str, str] | None
     try:
         return frame.with_columns(_converted(name, frame.schema[name], dtype) for name, dtype in casts.items())
     except pl.exceptions.PolarsError as exc:
-        msg = (
-            f"an observation column does not fit its component's type in {dsd.id}: {exc}. Results are "
-            "typed from the DSD. .stream() reads the raw rows; an observation query's .validate(), "
-            "or sdmxlib.polars.validation_report(dsd, frame), names every value that does not fit."
-        )
-        raise ValueError(msg) from exc
+        raise type_mismatch(dsd.id, exc, raw_rows=True) from exc
 
 
 #: `xs:boolean`'s lexical forms.
@@ -1362,6 +1358,7 @@ class Query[R: RowKind, A = object]:
         return f"{compiled.sql}\n-- binds: {binds}{fetch}"
 
     @property
+    @csv_errors
     def columns(self) -> tuple[str, ...]:
         """Column names this query produces — the `SqlRelation` contract.
 
@@ -1423,6 +1420,7 @@ class Query[R: RowKind, A = object]:
         """
         return ROOT_ALIAS
 
+    @csv_errors
     def _rows(self, columns: str) -> list[tuple[object, ...]]:
         compiled = self.to_sql(columns=columns)
         return self._cursor().execute(compiled.sql, list(compiled.params)).fetchall()
@@ -1490,6 +1488,7 @@ class Query[R: RowKind, A = object]:
         """Matching ids. No resolution."""
         return [str(r[0]) for r in self._rows(f"{self._alias}.{self.root.__id__}")]
 
+    @csv_errors
     def count(self) -> int:
         """Number of matching rows — `COUNT(*)`, fetching none of them.
 
@@ -1523,6 +1522,7 @@ class Query[R: RowKind, A = object]:
         """
         return self._with(attrs.evolve(self.plan, limit_n=narrow_limit(self.limit_n, n)))
 
+    @csv_errors
     def exists(self) -> bool:
         """Whether any row matches. Fetches no rows."""
         compiled = self._window(1).to_sql(columns="1", ordered=False)
@@ -1595,6 +1595,7 @@ class Query[R: RowKind, A = object]:
         rows = self._key_rows()
         return _as_artefacts(resolve(rows) if annotations else resolve(rows, annotations=False))
 
+    @csv_errors
     def page(self, n: int) -> Page[R, A]:
         """The next `n` rows, and a cursor for the ones after them.
 
@@ -1632,6 +1633,7 @@ class Query[R: RowKind, A = object]:
         cursor = Cursor[R](tuple(rows[-1][1:]), ascending) if len(rows) == n else None
         return Page(urns=urns, cursor=cursor, resolve=self._resolve)
 
+    @csv_errors
     def frame(self, *, labels: str | Sequence[str] = (), label_suffix: str = "_label") -> pl.DataFrame:
         """Every column of the root relation, as a `polars.DataFrame`.
 
@@ -1721,14 +1723,25 @@ class Query[R: RowKind, A = object]:
         if partitions:
             by_partition = _stream_by_partition(self, partitions, chunk_rows, lambda narrowed: narrowed.to_sql())
             if by_partition is not None:
-                return by_partition
+                return self._converting(by_partition)
         compiled = self.to_sql(ordered=self._is_ordered())
         # A cursor of its own, not the shared handle: two concurrent streams
         # on one connection would overwrite each other's row buffer (#75), and
         # the reader holds this one until it is exhausted or closed.
         cursor = own_handle(self._cursor())
-        return completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
+        return self._converting(
+            completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
+        )
 
+    def _converting(self, reader: pa.RecordBatchReader) -> pa.RecordBatchReader:
+        """`reader`, converting a scanned file's read errors as it is drained (GH-247).
+
+        Only a scan's rows are parsed while a stream runs, so any other query's
+        reader is returned as it is.
+        """
+        return converting(reader, query=self) if reads_scan(self) else reader
+
+    @csv_errors
     def _partition_values(self, partitions: tuple[str, ...]) -> list[tuple[object, ...]]:
         """Every partition, in key order — one small query before the stream.
 
@@ -2355,6 +2368,7 @@ class Select[R: RowKind, A = object]:
         fetch = "\n-- fetches before running; the SQL below is over materialised rows" if fetches else ""
         return f"{compiled.sql}\n-- binds: {binds}{fetch}"
 
+    @csv_errors
     def collect(self, *, labels: str | Sequence[str] = (), label_suffix: str = "_label") -> pl.DataFrame:
         """Execute and return a `polars.DataFrame`. The only executing call.
 
@@ -2471,13 +2485,15 @@ class Select[R: RowKind, A = object]:
                 lambda narrowed: attrs.evolve(self, query=narrowed).to_sql(),
             )
             if by_partition is not None:
-                return by_partition
+                return self._query._converting(by_partition)
         compiled = self.to_sql(ordered=self._query._is_ordered())
         # A cursor of its own, not the shared handle: two concurrent streams
         # on one connection would overwrite each other's row buffer (#75), and
         # the reader holds this one until it is exhausted or closed.
         cursor = own_handle(self._query._cursor(self._query._projection_columns(self.items)))
-        return completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
+        return self._query._converting(
+            completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
+        )
 
     @override
     def __repr__(self) -> str:

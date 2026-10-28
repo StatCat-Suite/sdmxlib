@@ -191,6 +191,11 @@ WRITERS: dict[str, tuple[str, Callable[[], bytes]]] = {
 }
 
 
+def data_flow() -> list[MaintainableArtefact]:
+    """What the golden data files are observations of: `DF_RENDER`, its structure and codelists."""
+    return [_FREQ, _STATUS, _DSD, _FLOW]
+
+
 def written(media_type: str) -> bytes:
     """What sdmxlib writes now in `media_type`, from that format's pinned input."""
     return WRITERS[media_type][1]()

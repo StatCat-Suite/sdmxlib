@@ -74,6 +74,7 @@ from sdmxlib.formats.sdmx_json._data_common import (
 from sdmxlib.formats.sdmx_json._dto import ENCODER, _camel_rename, prepared_text
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure
+from sdmxlib.model.errors import SdmxParseError
 from sdmxlib.model.ref import Ref
 
 #: The SDMX-JSON 2.0.0 data schema, where SDMX publishes it and FMR points, as
@@ -219,12 +220,12 @@ def read_observations(source: bytes | str | Path) -> tuple[pl.DataFrame, str | N
         ``rel="dataflow"`` link's URN, or `None` when the message has none.
 
     Raises:
-        ValueError: If the document is not a recognisable data message of this version.
+        SdmxParseError: If the document is not a recognisable data message of this version.
     """
     payload = _load(source).data
     if payload is None or not payload.data_sets or not payload.structures:
         msg = "Source does not look like a SDMX-JSON 2.0 data message — missing data.dataSets / data.structures"
-        raise ValueError(msg)
+        raise SdmxParseError(msg)
     dataset_block = payload.data_sets[0]
     structure_block = payload.structures[0]
 
@@ -248,9 +249,8 @@ class _DataMessageJson(msgspec.Struct):
 def _load(source: bytes | str | Path) -> _DataMessageJson:
     """Decode *source* into the typed envelope.
 
-    A shape violation surfaces as ``msgspec.ValidationError``, which is a
-    ``ValueError`` — so the documented contract of `read_observations`
-    still holds for a malformed document.
+    A shape violation surfaces as ``msgspec.ValidationError``, which
+    `sdmx_json.data.read_observations` converts to `SdmxParseError`.
     """
     if isinstance(source, (bytes, bytearray)):
         return msgspec.json.decode(source, type=_DataMessageJson)

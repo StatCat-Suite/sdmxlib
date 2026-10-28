@@ -7,6 +7,8 @@ job's artifact when its fix lands, and is replayed here through the same
 
 from pathlib import Path
 
+import msgspec
+import polars as pl
 import pytest
 
 import sdmxlib as sl
@@ -31,8 +33,8 @@ def test_check_reports_an_exception_other_than_a_parse_error(monkeypatch: pytest
     def broken(data: bytes) -> object:
         raise KeyError(data)
 
-    monkeypatch.setitem(targets.TARGETS, "ml21", (broken, ()))
-    with pytest.raises(targets.UnexpectedReaderError, match=r"KeyError escaped sl\.parse"):
+    monkeypatch.setitem(targets.TARGETS, "ml21", (broken, (), targets.TARGETS["ml21"][2]))
+    with pytest.raises(targets.UnexpectedReaderError, match=r"KeyError escaped the reader"):
         targets.check("ml21", b"<x/>")
 
 
@@ -48,16 +50,32 @@ def test_every_seed_reads_to_something(target: str) -> None:
     seed that only fails to raise proves nothing; it must yield an artefact or
     a metadata set.
     """
-    read, _ = targets.TARGETS[target]
+    read, _, _ = targets.TARGETS[target]
     for seed in targets.seeds(target):
-        message = read(seed.read_bytes())
-        if isinstance(message, sl.StructureMessage):
-            assert list(message.all_artefacts()), seed
-        else:
-            assert isinstance(message, sl.MetadataMessage)
-            assert message.metadata_sets, seed
+        result = read(seed.read_bytes())
+        if isinstance(result, sl.StructureMessage):
+            assert list(result.all_artefacts()), seed
+        elif isinstance(result, sl.MetadataMessage):
+            assert result.metadata_sets, seed
+        elif isinstance(result, tuple):  # data_json: (frame, dataflow URN)
+            frame, urn = result
+            assert isinstance(frame, pl.DataFrame)
+            assert frame.height, seed
+            assert urn, seed
+        else:  # data_csv
+            assert isinstance(result, pl.DataFrame)
+            assert result.height, seed
 
 
 def test_the_seed_counts() -> None:
     counts = {target: len(targets.seeds(target)) for target in targets.TARGETS}
-    assert counts == {"ml21": 6, "ml30": 12, "ml31": 12, "json": 9, "detect": 3}
+    assert counts == {"ml21": 6, "ml30": 12, "ml31": 12, "json": 9, "detect": 3, "data_json": 2, "data_csv": 1}
+
+
+def test_data_csv_allows_a_plain_value_error_and_no_subclass_of_one() -> None:
+    """The documented ``ValueError`` passes; msgspec's, which subclasses it, is a finding."""
+    _, _, allowed = targets.TARGETS["data_csv"]
+    assert allowed(ValueError("names no dataflow"))
+    assert allowed(sl.SdmxParseError("unreadable"))
+    assert not allowed(msgspec.DecodeError("truncated"))
+    assert not allowed(KeyError("x"))

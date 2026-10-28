@@ -11,6 +11,7 @@ import msgspec
 import polars as pl
 
 from sdmxlib.formats.sdmx_json import data_v1, data_v2
+from sdmxlib.model.errors import SdmxParseError
 
 
 class _Envelope(msgspec.Struct):
@@ -28,7 +29,15 @@ def read_observations(source: bytes | str | Path) -> tuple[pl.DataFrame, str | N
 
     Returns:
         What `data_v2.read_observations` / `data_v1.read_observations` return.
+
+    Raises:
+        SdmxParseError: If `source` is not a readable SDMX-JSON data message.
+            msgspec's error, or a bad UTF-8 sequence, is the ``__cause__``.
     """
     raw = source if isinstance(source, bytes) else Path(source).read_bytes()
-    envelope = msgspec.json.decode(raw, type=_Envelope)
-    return (data_v2 if len(envelope.data) else data_v1).read_observations(raw)
+    try:
+        envelope = msgspec.json.decode(raw, type=_Envelope)
+        return (data_v2 if len(envelope.data) else data_v1).read_observations(raw)
+    except (msgspec.MsgspecError, UnicodeDecodeError) as exc:
+        msg = f"could not read {len(raw)} bytes as an SDMX-JSON data message: {exc}"
+        raise SdmxParseError(msg) from exc
