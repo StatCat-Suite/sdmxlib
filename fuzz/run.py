@@ -2,8 +2,8 @@
 
     PYTHONPATH=. uv run --group fuzz python fuzz/run.py TARGET CORPUS [libFuzzer flags]
 
-TARGET is a key of `tests.fuzz.targets.TARGETS`. CORPUS is a directory; when
-it is empty, the target's seed fixtures are copied in first. The remaining
+TARGET is a key of `tests.fuzz.targets.TARGETS`. CORPUS is a directory; the
+target's seed fixtures are copied into it first. The remaining
 arguments go to libFuzzer (`-max_total_time=600`, `-artifact_prefix=...`).
 
 Atheris ships Linux x86_64 wheels only, so this runs in `.github/workflows/fuzz.yml`
@@ -24,14 +24,15 @@ with atheris.instrument_imports(include=["sdmxlib"]):
 
 
 def main() -> None:
-    """Seed the corpus if it is empty, then fuzz the target until libFuzzer stops."""
+    """Add the seeds to the corpus, then fuzz the target until libFuzzer stops."""
     target, corpus = sys.argv[1], Path(sys.argv[2])
     if target not in targets.TARGETS:
         sys.exit(f"unknown target {target!r}; one of {', '.join(targets.TARGETS)}")
+    # Every run adds the seeds, so a corpus restored from the cache still
+    # holds the current ones; libFuzzer drops an input that adds no coverage.
     corpus.mkdir(parents=True, exist_ok=True)
-    if not any(corpus.iterdir()):
-        for seed in targets.seeds(target):
-            shutil.copy(seed, corpus / f"seed-{seed.parent.name}-{seed.name}")
+    for seed in targets.seeds(target):
+        shutil.copy(seed, corpus / f"seed-{seed.parent.name}-{seed.name}")
 
     def one_input(data: bytes) -> None:
         targets.check(target, data)
