@@ -346,6 +346,13 @@ A path is read in place on every query; bytes are loaded once.
 `reg.scan_json(source)` does the same for an SDMX-JSON data message, either
 version.
 
+A file or message that cannot be read raises `sl.SdmxParseError`, as
+`sl.parse` does for a structure message; a value that does not fit its
+component's type, such as text where the DSD declares a number, raises a
+`ValueError` naming `.validate()`. Both are raised when the data is read:
+on the scan for bytes and SDMX-JSON, and on the query that reads the row for
+a path. A REST `obs()` response raises the same two when it is fetched.
+
 ---
 
 ## Filtering by code

@@ -31,18 +31,17 @@ from pathlib import Path
 
 import polars as pl
 
+from sdmxlib._read_errors import SCANS, reading_csv, type_mismatch
 from sdmxlib.local.data_store import DuckDBDataStore, column_types
 from sdmxlib.local.object_store import sql_literal
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure
+from sdmxlib.model.errors import SdmxParseError
 from sdmxlib.model.ref import Ref
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.query.observations import ObsQuery
 from sdmxlib.session import completed
-
-#: The catalog every scan's relation lives in — see the module docstring.
-SCANS = "sdmx_scans"
 
 
 def scan_csv_into(
@@ -65,16 +64,42 @@ def scan_csv_into(
         with tempfile.TemporaryDirectory(prefix="sdmxlib-scan-") as tmp:
             path = Path(tmp) / "data.csv"
             path.write_bytes(source)
-            plane.connection.execute(
-                f"CREATE TABLE {relation} AS SELECT * FROM read_csv(?, types=?, header=true)", [str(path), types]
-            )
+            with reading_csv(structure=dsd.id):
+                plane.connection.execute(
+                    f"CREATE TABLE {relation} AS SELECT * FROM read_csv(?, types=?, header=true)", [str(path), types]
+                )
     else:
         literal_types = ", ".join(f"{sql_literal(c)}: {sql_literal(t)}" for c, t in types.items())
         path_literal = sql_literal(str(Path(source).resolve()))
-        plane.connection.execute(
-            f"CREATE VIEW {relation} AS SELECT * FROM read_csv({path_literal}, types={{{literal_types}}}, header=true)"
-        )
+        # DuckDB reads the header when the view is made, and the rows when a
+        # query runs; the query terminals convert what those raise.
+        with reading_csv(structure=dsd.id):
+            read = f"read_csv({path_literal}, types={{{literal_types}}}, header=true)"
+            plane.connection.execute(f"CREATE VIEW {relation} AS SELECT * FROM {read}")
+    _require_columns(plane, relation, binding)
     return plane.obs(binding, dsd=dsd)
+
+
+def _require_columns(plane: DuckDBDataStore, relation: str, binding: DataflowBinding) -> None:
+    """Refuse a file without a column the binding reads, before a query finds out.
+
+    A forced column that is absent already fails the read. A measure the DSD
+    leaves untyped is not forced (`column_types`), so without this a file
+    lacking it would scan and then fail every query on a binder error.
+
+    Raises:
+        SdmxParseError: If a dimension, measure or attribute column is absent.
+    """
+    present = {row[0] for row in plane.connection.execute(f"DESCRIBE {relation}").fetchall()}
+    wanted = [
+        *binding.dimension_column_map.values(),
+        *binding.measure_column_map.values(),
+        *binding.attribute_column_map.values(),
+    ]
+    missing = [column for column in wanted if column not in present]
+    if missing:
+        msg = f"the SDMX-CSV data has no {', '.join(missing)} column, which its structure declares"
+        raise SdmxParseError(msg)
 
 
 def scan_frame_into(
@@ -95,11 +120,14 @@ def scan_frame_into(
         A query over the rows, typed from `dsd` as any is.
     """
     binding, relation = _new_relation(plane, dsd, dataflow)
-    typed = frame.with_columns(
-        pl.col(column).cast(_POLARS_TYPE[duckdb_type])
-        for column, duckdb_type in column_types(binding, dsd).items()
-        if column in frame.columns
-    )
+    try:
+        typed = frame.with_columns(
+            pl.col(column).cast(_POLARS_TYPE[duckdb_type])
+            for column, duckdb_type in column_types(binding, dsd).items()
+            if column in frame.columns
+        )
+    except pl.exceptions.PolarsError as exc:
+        raise type_mismatch(dsd.id, exc) from exc
     name = relation.rpartition(".")[2]
     completed(plane.connection).register(name, typed.to_arrow())
     try:

@@ -22,6 +22,7 @@ from typing import Final
 
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure
+from sdmxlib.model.errors import SdmxParseError
 from sdmxlib.model.provision import ProvisionAgreement
 from sdmxlib.model.ref import Ref
 from sdmxlib.model.registry import SupportsGet
@@ -94,17 +95,20 @@ def _peek_structure(source: str | Path | bytes) -> tuple[str | None, str | None]
     ``STRUCTURE`` column at all — its ``DATAFLOW`` implies the kind — so the
     first element is None there and the caller treats it as a dataflow.
     """
-    if isinstance(source, (str, Path)):
-        with Path(source).open(newline="", encoding="utf-8") as f:
-            head = f.read(4096)
-    else:
-        head = source[:4096].decode("utf-8", errors="replace")
-    reader = csv.reader(io.StringIO(head))
     try:
+        if isinstance(source, (str, Path)):
+            with Path(source).open(newline="", encoding="utf-8") as f:
+                head = f.read(4096)
+        else:
+            head = source[:4096].decode("utf-8", errors="replace")
+        reader = csv.reader(io.StringIO(head))
         header = next(reader)
         first_row = next(reader)
     except StopIteration:
         return None, None
+    except (csv.Error, UnicodeDecodeError) as exc:
+        msg = f"the SDMX-CSV header could not be read: {exc}"
+        raise SdmxParseError(msg) from exc
 
     def value(column: str) -> str | None:
         if column not in header:

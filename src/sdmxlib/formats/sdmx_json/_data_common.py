@@ -11,6 +11,7 @@ deltas.
 
 import calendar
 import re
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from typing import Literal, NamedTuple, TypedDict
 
@@ -931,7 +932,7 @@ def decode_observations(
     # don't see a silently truncated frame.
     if dim_decl.series or attr_decl.series:
         msg = "SDMX-JSON series layout is not supported by the reader yet — only flat layout"
-        raise NotImplementedError(msg)
+        raise SdmxParseError(msg)
 
     ds_dim_ids = [d.id for d in ds_dims]
     obs_dim_ids = [d.id for d in obs_dims]
@@ -939,7 +940,7 @@ def decode_observations(
     obs_attr_ids = [a.id for a in obs_attrs]
 
     # dataSet-level values are scalar (every dim has exactly one value).
-    ds_dim_const = [_value_label(d.values[0]) for d in ds_dims]
+    ds_dim_const = [_value_label(_value_at(d.values, 0)) for d in ds_dims]
     ds_attr_const = _decode_dataset_attrs(ds_attrs, dataset_block.attributes)
 
     obs_dim_values = [[_value_label(v) for v in d.values] for d in obs_dims]
@@ -954,10 +955,10 @@ def decode_observations(
                 f"Observation key {key!r} has {len(positions)} positions but "
                 f"the structure declares {len(obs_dim_ids)} observation dimensions"
             )
-            raise ValueError(msg)
+            raise SdmxParseError(msg)
         row: list[object] = list(ds_dim_const)
         for col_idx, pos in enumerate(positions):
-            row.append(obs_dim_values[col_idx][int(pos)])
+            row.append(_value_at(obs_dim_values[col_idx], _wire_position(pos, what="observation key position")))
 
         # First slot is the measure; remaining slots are attribute positions
         # into their respective code lists (or None for unset).
@@ -969,7 +970,8 @@ def decode_observations(
             if raw is None:
                 row.append(None)
             else:
-                row.append(obs_attr_values[col_idx][_wire_position(raw, what="observation attribute position")])
+                position = _wire_position(raw, what="observation attribute position")
+                row.append(_value_at(obs_attr_values[col_idx], position))
         rows.append(row)
     return (
         [*ds_dim_ids, *obs_dim_ids],
@@ -990,9 +992,23 @@ def _wire_position(raw: object, *, what: str) -> int:
     """
     if isinstance(raw, str):
         return to_int(raw, what=what)
-    if isinstance(raw, (int, float)) and not isinstance(raw, bool):
+    if isinstance(raw, int) and not isinstance(raw, bool):
+        return raw
+    if isinstance(raw, float) and raw.is_integer():
         return int(raw)
     msg = f"{what} must be a position into the declaration's values, got {raw!r}"
+    raise SdmxParseError(msg)
+
+
+def _value_at[V](values: Sequence[V], position: int) -> V:
+    """The declaration's value at a wire `position`, or `SdmxParseError` when there is none.
+
+    A position comes out of the payload, so one past the declaration's end, or
+    negative, is a malformed message rather than Python's ``IndexError``.
+    """
+    if 0 <= position < len(values):
+        return values[position]
+    msg = f"position {position} is outside the declaration's {len(values)} values"
     raise SdmxParseError(msg)
 
 
@@ -1042,10 +1058,17 @@ def rows_to_lazyframe(
     Empty inputs yield an empty frame with the declared column set.
     """
     columns = [*dim_ids, measure_id, *attr_ids]
+    if len(set(columns)) != len(columns):
+        repeated = sorted({c for c in columns if columns.count(c) > 1})
+        msg = f"the structure declares {', '.join(repeated)} more than once"
+        raise SdmxParseError(msg)
     if not rows:
         return pl.LazyFrame({c: [] for c in columns})
     data: dict[str, list[object]] = {c: [] for c in columns}
     for row in rows:
         for col, val in zip(columns, row, strict=True):
             data[col].append(val)
-    return pl.LazyFrame(data)
+    # Not strict: a measure of JSON numbers `1` and `-2.25` is a Float64
+    # column, which the strict default refuses as an Int64 meeting a float.
+    # Text among numbers makes a String column, which the DSD's types check.
+    return pl.LazyFrame([pl.Series(c, data[c], strict=False) for c in columns])

@@ -9,6 +9,7 @@ from typing import Literal, Never, Self, Unpack, cast, overload
 
 import attrs
 
+from sdmxlib._read_errors import reading_csv
 from sdmxlib._singleflight import SingleFlight
 from sdmxlib.api.client import NOT_MODIFIED, HttpxAuthOption, HttpxOptions, HttpxTransportOptions, SdmxClient
 from sdmxlib.api.providers import ProviderInfo
@@ -1140,13 +1141,16 @@ class RestRegistry:
                 csv_path = Path(tmp) / "data.csv"
                 self._client.stream_data_at(request.path, request.params, to=csv_path)
                 schema, _, name = root.binding.table_location.partition(".")
-                DuckDBDataStore.from_registry(self._query_store()).ingest_csv(
-                    schema=schema,
-                    table=name,
-                    path=csv_path,
-                    types=column_types(root.binding, root.dsd),
-                    lake_alias=root.binding.database_role,
-                )
+                # A provider's response is read here, in full, so what DuckDB
+                # cannot read is reported as the response's fault (GH-247).
+                with reading_csv(structure=root.dsd.id):
+                    DuckDBDataStore.from_registry(self._query_store()).ingest_csv(
+                        schema=schema,
+                        table=name,
+                        path=csv_path,
+                        types=column_types(root.binding, root.dsd),
+                        lake_alias=root.binding.database_role,
+                    )
             self._fetched_data[table] = key
 
     def scan_csv(self, source: str | Path | bytes) -> ObsQuery:
@@ -1163,6 +1167,11 @@ class RestRegistry:
 
         Raises:
             ValueError: If the ``DATAFLOW`` column is absent or unparseable.
+            SdmxParseError: If the bytes are not readable SDMX-CSV, or lack a
+                column the structure declares. For a path, a row DuckDB cannot
+                read raises it when a query reads that row.
+            ValueError: If a value does not fit its component's type, when the
+                file is read; for a path, when a query reads the value.
 
         Example:
             with sl.RestRegistry(sl.Provider.ECB) as reg:
@@ -1215,8 +1224,9 @@ class RestRegistry:
             An `ObsQuery` over the message's observations.
 
         Raises:
-            ValueError: If the message is not an SDMX-JSON data message, or
-                names no dataflow.
+            SdmxParseError: If the message is not a readable SDMX-JSON data message.
+            ValueError: If it names no dataflow, or holds a value that does not
+                fit its component's type.
         """
         frame, urn = read_observations(source)
 

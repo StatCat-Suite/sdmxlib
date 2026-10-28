@@ -2886,6 +2886,11 @@ class LocalRegistry(BundleRegistry):
                 cannot resolve; or if it names a data structure rather than a
                 dataflow or provision agreement — an observation query is over
                 a dataflow, and a structure alone does not say which.
+            SdmxParseError: If the bytes are not readable SDMX-CSV, or lack a
+                column the structure declares. For a path, a row DuckDB cannot
+                read raises it when a query reads that row.
+            ValueError: If a value does not fit its component's type, when the
+                file is read; for a path, when a query reads the value.
         """
         structure, flow = _resolve_structure(source, self)
         if flow is None:
@@ -2912,8 +2917,9 @@ class LocalRegistry(BundleRegistry):
             An `ObsQuery` over the message's observations.
 
         Raises:
-            ValueError: If the message is not an SDMX-JSON data message, names
-                no dataflow, or names one this registry does not hold.
+            SdmxParseError: If the message is not a readable SDMX-JSON data message.
+            ValueError: If it names no dataflow, names one this registry does
+                not hold, or holds a value that does not fit its component's type.
         """
         frame, urn = read_observations(source)
         dsd, flow = resolve_flow(urn, self.get)
