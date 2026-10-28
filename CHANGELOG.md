@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.76.1] - 2026-10-28
+
+### Documentation
+
+- **design**: Keep the EGM review of the catalog plan beside it (GH-136)
+- Add SECURITY.md, CONTRIBUTING.md and CODE_OF_CONDUCT.md (GH-219)
+- Say how changes are reviewed in CONTRIBUTING.md (GH-220)
+
 ## [0.76.0] - 2026-10-28
 
 ### Breaking Changes
