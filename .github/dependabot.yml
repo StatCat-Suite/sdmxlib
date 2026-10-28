@@ -1,0 +1,17 @@
+# Keep the workflows' pinned actions current: Dependabot reads the version in
+# each `# vX.Y.Z` comment and moves the SHA with it. Python dependencies get
+# no version-update PRs: uv.lock is gitignored and pyproject.toml carries
+# deliberate floors and checker upper bounds. Their security alerts come from
+# the dependency graph, and `just audit` checks the local lock (GH-220).
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]

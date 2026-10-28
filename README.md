@@ -4,6 +4,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/sdmxlib)](https://pypi.org/project/sdmxlib/)
 [![License](https://img.shields.io/pypi/l/sdmxlib)](LICENSE)
 [![Docs](https://github.com/StatCat-Suite/sdmxlib/actions/workflows/docs.yml/badge.svg)](https://statcat-suite.github.io/sdmxlib/)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/StatCat-Suite/sdmxlib/badge)](https://scorecard.dev/viewer/?uri=github.com/StatCat-Suite/sdmxlib)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 

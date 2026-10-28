@@ -107,9 +107,33 @@ check-indexes:
 generate-allowed-children:
     uv run python tools/generate_allowed_children.py
 
+# Lint the GitHub workflows with zizmor (GH-220): unpinned actions, over-broad
+# permissions, template injection. Offline, so it fits the inner loop; the
+# hosted `zizmor` workflow adds the online audits.
+[group('dev')]
+lint-workflows:
+    uv run zizmor --offline .
+
 # Lint + typecheck (inner dev loop)
 [group('dev')]
-check: lint checkfmt check-docstrings check-prose check-any check-indexes typecheck
+check: lint checkfmt check-docstrings check-prose check-any check-indexes lint-workflows typecheck
+
+# Advisories `just audit` skips, each as `--ignore-vuln ID` with its reason.
+# None today.
+AUDIT_IGNORES := ""
+
+# Check the locked dependencies against known vulnerabilities (GH-220).
+#
+# Reads the local uv.lock, which is gitignored, so it audits the environment
+# this machine runs. Needs the network for the advisory database.
+[group('test')]
+audit:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    requirements=$(mktemp)
+    trap 'rm -f "$requirements"' EXIT
+    uv export --frozen --format requirements-txt --no-emit-workspace --quiet > "$requirements"
+    uv run pip-audit -r "$requirements" --require-hashes --disable-pip --progress-spinner off {{AUDIT_IGNORES}}
 
 # Format code
 [group('dev')]
@@ -228,7 +252,7 @@ ci-fast: check test test-docs test-integration docs-build
 # the machine that holds the bundle, nothing anywhere else. The object-store
 # tier is in it because only a real store's HTTP API shows a remote read break.
 [group('test')]
-ci: ci-fast bench-bundle-assertions test-stores
+ci: ci-fast audit bench-bundle-assertions test-stores
 
 # Run the property-based tests with 20x the examples (local hunting; #215)
 [group('test')]

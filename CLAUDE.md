@@ -307,9 +307,14 @@ runs on `SDMXLIB_BENCH_THREADS` threads (default 4). It is in the gate because #
 errors. The measurements stay opt-in as
 `just bench-bundle`.
 
-**`just ci` is the gate, and it runs locally.** Hosted CI runs no tests — only
-`.github/workflows/docs.yml`, which publishes the docs to GitHub Pages. So
-nothing merges on a green hosted run; it merges on a green `just ci`.
+**`just ci` is the gate, and it runs locally.** Hosted CI runs no tests.
+`.github/workflows/docs.yml` publishes the docs to GitHub Pages, and the
+security checks report to the Security tab without blocking a merge (GH-220):
+`zizmor.yml` lints the workflows, `scorecard.yml` scores the repository, and
+GitHub runs CodeQL, secret scanning and Dependabot from the repository
+settings. So nothing merges on a green hosted run; it merges on a green
+`just ci`, which also runs `just audit` (pip-audit over the local lock) and,
+through `just check`, `just lint-workflows` (zizmor, offline).
 
 Running the gate locally is a hosting decision, and test design ignores
 compute cost: Hypothesis explores at full width (the `ci` profile differs from
