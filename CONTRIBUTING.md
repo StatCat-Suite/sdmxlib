@@ -32,6 +32,13 @@ Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 [CLAUDE.md](CLAUDE.md) holds the full set of project rules: architecture,
 testing, typing and SQL style.
 
+### How changes are reviewed
+
+sdmxlib has one maintainer and is written with AI assistance (Claude Code). A
+change is reviewed by the maintainer and by Claude, and merges only after the
+local `just ci` passes. GitHub's `check` job, which runs `just check`, must
+also pass before a pull request can merge. No second person approves changes.
+
 ______________________
 
 ## Comment contribuer
@@ -72,3 +79,11 @@ Toute personne qui participe suit le [Code de conduite](CODE_OF_CONDUCT.md#code-
 
 [CLAUDE.md](CLAUDE.md) réunit l'ensemble des règles du projet : architecture,
 tests, typage et style SQL. Il est rédigé en anglais.
+
+### Revue des modifications
+
+sdmxlib a un seul responsable et est rédigé avec l'aide de l'IA (Claude Code).
+Une modification est revue par le responsable et par Claude, et n'est intégrée
+qu'une fois que `just ci` réussit localement. La tâche `check` de GitHub, qui
+exécute `just check`, doit aussi réussir avant qu'une demande de tirage puisse
+être intégrée. Aucune deuxième personne n'approuve les modifications.
