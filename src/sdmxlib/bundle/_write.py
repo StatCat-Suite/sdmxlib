@@ -234,15 +234,24 @@ def _ducklake_versions(conn: duckdb.DuckDBPyConnection) -> tuple[str | None, str
     return extension, spec
 
 
-def artefact_entries(reg: BundleRegistry) -> tuple[ArtefactEntry, ...]:
+def artefact_entries(reg: BundleRegistry, cut_from: Mapping[str, str] | None = None) -> tuple[ArtefactEntry, ...]:
     """Every maintainable artefact in the store but the bindings, by URN, each fingerprinted.
 
     Read one at a time and dropped, so memory holds one artefact: on the
     census bundle the largest, a 499,138-node hierarchy, sets the peak.
+    `cut_from` gives a partial's `ArtefactEntry.cut_from`, by URN.
+
+    Raises:
+        ManifestError: If a `cut_from` URN names no partial in the store.
     """
     rows = reg.connection.execute(
         "SELECT urn, is_final, is_partial FROM sdmx.artefact WHERE artefact_type <> 'DataflowBinding' ORDER BY urn"
     ).fetchall()
+    cuts = dict(cut_from or {})
+    unknown = sorted(set(cuts) - {urn for urn, _, partial in rows if partial})
+    if unknown:
+        msg = f"cut_from names {', '.join(unknown)}, which the store holds as no partial artefact"
+        raise ManifestError(msg)
     entries: list[ArtefactEntry] = []
     for urn, final, partial in rows:
         artefact = reg.get(SdmxUrn.parse(urn), eager=True)
@@ -255,6 +264,7 @@ def artefact_entries(reg: BundleRegistry) -> tuple[ArtefactEntry, ...]:
                 stability="semantic" if final else "legacy",
                 partial=partial,
                 fingerprint=artefact_fingerprint(artefact),
+                cut_from=cuts.get(urn),
             )
         )
     return tuple(entries)
@@ -352,6 +362,7 @@ def write_manifest(
     lifecycle: Lifecycle = "live",
     expire_snapshots: bool = False,
     availability: bool = True,
+    cut_from: Mapping[str, str] | None = None,
 ) -> Manifest:
     """Publish the publication at `path`, which `LocalRegistry.build` started: write its manifest.
 
@@ -396,14 +407,19 @@ def write_manifest(
             to an earlier state is lost.
         availability: Whether to store each binding's availability. The
             coded columns are checked either way.
+        cut_from: For each partial artefact the producer cut, by URN, the
+            artefact fingerprint of the full one it was cut from, recorded as
+            its `ArtefactEntry.cut_from`. `check_bundle(at="publish",
+            structures=...)` checks each against the full artefact.
 
     Returns:
         The manifest written.
 
     Raises:
         ManifestError: If the publication is already published, was not
-            started by `LocalRegistry.build`, a builder still holds it open, or
-            a coded column holds a value that is not one of its codes.
+            started by `LocalRegistry.build`, a builder still holds it open, a
+            coded column holds a value that is not one of its codes, or a
+            `cut_from` URN names no partial artefact in the store.
     """
     root = Path(path)
     data = root / DATA_PATH
@@ -420,7 +436,7 @@ def write_manifest(
             raise ManifestError(msg)
         previous = meta_value(reg.connection, "previous_token")
         schema_version = get_schema_version(reg.connection) or ""
-        artefacts = artefact_entries(reg)
+        artefacts = artefact_entries(reg, cut_from)
         referenced: list[str] = []
         lake = (root / "lake.ducklake").exists()
         if lake:

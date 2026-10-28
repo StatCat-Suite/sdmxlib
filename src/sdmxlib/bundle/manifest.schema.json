@@ -245,7 +245,7 @@
     },
     "ArtefactEntry": {
       "title": "ArtefactEntry",
-      "description": "One maintainable artefact in the store.\n\nAttributes:\n    urn: Its URN, at its pinned version.\n    stability: ``semantic`` for a final semantic version (three numeric\n        parts, no extension, major at least 1), which SDMX 3.0 holds\n        immutable; ``legacy`` for any other.\n    partial: Whether it is a partial item scheme, a subset of the full one.\n    fingerprint: The SHA-256 of its canonical text, lowercase hex.",
+      "description": "One maintainable artefact in the store.\n\nAttributes:\n    urn: Its URN, at its pinned version.\n    stability: ``semantic`` for a final semantic version (three numeric\n        parts, no extension, major at least 1), which SDMX 3.0 holds\n        immutable; ``legacy`` for any other.\n    partial: Whether it is a partial item scheme, a subset of the full one.\n    fingerprint: The SHA-256 of its canonical text, lowercase hex.\n    cut_from: For a partial, the fingerprint of the full artefact it was\n        cut from, which a catalog compares with the full one's entry\n        where that is published; absent for a full artefact, and for a\n        partial whose producer did not record it.",
       "type": "object",
       "properties": {
         "urn": {
@@ -262,6 +262,17 @@
         },
         "fingerprint": {
           "type": "string"
+        },
+        "cut_from": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
