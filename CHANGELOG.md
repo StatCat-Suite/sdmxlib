@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.77.0] - 2026-10-28
+
+### Breaking Changes
+
+- Data reads raise SdmxParseError and one type ValueError (GH-247): `scan_json`, `scan_csv` and a REST `obs()` / `data()` response raise `SdmxParseError` for data that cannot be read and the "does not fit its component's type" `ValueError` for a value that does not fit, in place of msgspec, DuckDB, polars and `csv` exceptions. See [Upgrading](docs/upgrading.md#data-reads-raise-sdmxparseerror-and-one-type-valueerror)
+
+### Bug Fixes
+
+- A `resolvePeriod` or `epochPeriod` outside its enumeration raises `SdmxParseError` naming the attribute, in the SDMX-ML 3.0 and 3.1 and SDMX-JSON readers; it escaped `sl.parse` as a bare `ValueError` (GH-241)
+- An SDMX-JSON data message whose measure mixes integers and decimals (`1` and `-2.25`) reads as one `Float64` column; it raised a polars `TypeError` (GH-247)
+- A scanned SDMX-CSV file without a column its structure declares is refused when scanned; with an untyped measure missing, every query on it failed on a binder error (GH-247)
+
+### Testing
+
+- Fuzz the readers with Atheris, weekly and on pull requests that change one: the five behind `sl.parse` (GH-241) and the SDMX-JSON and SDMX-CSV data readers (GH-247). Saved crash inputs replay in `just ci`, and tests pin the SDMX-ML readers' refusal of external entities and entity expansion
+
 ## [0.76.2] - 2026-10-28
 
 ### Miscellaneous
