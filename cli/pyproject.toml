@@ -3,7 +3,7 @@ name = "sdmxlib-cli"
 # Locked to sdmxlib's version and released with it (GH-67): the release steps
 # bump both and the pin below, and a test asserts the three agree, so the
 # command can never be installed against an sdmxlib it was not tested with.
-version = "0.75.0"
+version = "0.76.0"
 description = "sdmxlib from the command line: check SDMX bundles"
 readme = "README.md"
 license = "Apache-2.0"
@@ -22,7 +22,7 @@ classifiers = [
 # A standalone install, so sdmxlib itself never depends on typer:
 # `uv tool install sdmxlib-cli` gives an `sdmxlib` command.
 dependencies = [
-    "sdmxlib==0.75.0",
+    "sdmxlib==0.76.0",
     # Pre-1.0, so capped at the minor.
     "typer>=0.27.3,<0.28",
 ]
