@@ -41,12 +41,23 @@ def test_check_accepts_a_parse_error() -> None:
 
 
 @pytest.mark.parametrize("target", sorted(targets.TARGETS))
-def test_every_seed_reads(target: str) -> None:
-    """A seed that does not read would start the fuzzer outside the reader."""
+def test_every_seed_reads_to_something(target: str) -> None:
+    """A seed that reads to an empty message starts the fuzzer outside the reader.
+
+    `sl.parse` returns an empty message for JSON that is not SDMX-JSON, so a
+    seed that only fails to raise proves nothing; it must yield an artefact or
+    a metadata set.
+    """
+    read, _ = targets.TARGETS[target]
     for seed in targets.seeds(target):
-        sl.parse(seed.read_bytes(), strict=False)
+        message = read(seed.read_bytes())
+        if isinstance(message, sl.StructureMessage):
+            assert list(message.all_artefacts()), seed
+        else:
+            assert isinstance(message, sl.MetadataMessage)
+            assert message.metadata_sets, seed
 
 
 def test_the_seed_counts() -> None:
     counts = {target: len(targets.seeds(target)) for target in targets.TARGETS}
-    assert counts == {"ml21": 6, "ml30": 12, "ml31": 12, "json": 31, "detect": 3}
+    assert counts == {"ml21": 6, "ml30": 12, "ml31": 12, "json": 9, "detect": 3}

@@ -57,8 +57,9 @@ TARGETS: dict[str, tuple[Callable[[bytes], object], tuple[str, ...]]] = {
     "json": (
         _parse("json"),
         (
-            "tests/fixtures/canonical/*.json",
-            "tests/golden/render/structure-2.0.json",
+            "tests/fixtures/sdmx_json/*.json",
+            "tests/fixtures/sdmx_metadata/*.json",
+            "tests/integration/fmr/12.4.2/*-shape/back/AG-json*.json",
             "tests/golden/render/metadata-2.0.json",
         ),
     ),
@@ -67,7 +68,7 @@ TARGETS: dict[str, tuple[Callable[[bytes], object], tuple[str, ...]]] = {
         (
             "tests/fixtures/sdmx_ml21/minimal.xml",
             "tests/fixtures/sdmx_ml30/minimal.xml",
-            "tests/fixtures/canonical/Codelist.json",
+            "tests/fixtures/sdmx_json/minimal.json",
         ),
     ),
 }
