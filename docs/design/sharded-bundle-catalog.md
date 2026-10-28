@@ -1,6 +1,6 @@
 # Sharded bundle catalog: design
 
-Status: fourth revision. sdmxlib's part is built and released in 0.73.0: M0, M2, M4, M5 and M7, the name overlays and the format specification, with M3 shelved (§16). The audit of 2026-10-25 found sdmxlib pieces the later milestones depend on and no milestone listed: reading tier 3 from object storage (GH-180), store-neutral remote verification (GH-181), pulling by tier with any copy tool (GH-182), the fingerprint comparison §9.2 runs (GH-183), the derived tables of §7.1 (GH-184) and the block cache (GH-185). statcatlib's and sdmxlib-rest's parts, M6 and M8 to M13, are in progress. Audience: implementers working on sdmxlib, statcatlib and sdmxlib-rest. Written against sdmxlib 0.72.1 and DuckDB 2.0.0; spike results and the decisions they settled are in §16 (M1) and §17. The work is the [Sharded bundle catalog](https://github.com/StatCat-Suite/sdmxlib/milestone/9) milestone, and GH-136 is the cross-repo plan.
+Status: fifth revision. sdmxlib's part is built: M0, M2, M4, M5 and M7, the name overlays and the format specification, released in 0.73.0, with M3 shelved (§16); then reading tier 3 from object storage (GH-180), store-neutral remote verification (GH-181), pulling by tier with any copy tool (GH-182), the fingerprint comparison §9.2 runs (GH-183) and the derived tables of §7.1 (GH-184), released in 0.75.0. The block cache (GH-185) waits on a measurement, and a fetched bundle's closure misses its incoming references (GH-221). The fifth revision settles four contradictions the review of the implementation plan found: the CDN revalidates on a short TTL (§7.4), each partial records the full artefact it was cut from (§4.2, §6.4), the index builder reads every manifest (§6.6), and an interrupted release leaves the staged index current (§11.2). statcatlib's and sdmxlib-rest's parts, M6 and M8 to M13, are in progress. Audience: implementers working on sdmxlib, statcatlib and sdmxlib-rest. Written against sdmxlib 0.75.0 and DuckDB 2.0.0; spike results and the decisions they settled are in §16 (M1) and §17. The work is the [Sharded bundle catalog](https://github.com/StatCat-Suite/sdmxlib/milestone/9) milestone, and GH-136 is the cross-repo plan.
 
 This document specifies how a dissemination catalog of many SDMX products is published as a set of bundles, indexed, routed to serving pods, verified, cached and migrated. It builds on two published formats and changes both:
 
@@ -96,7 +96,7 @@ A bundle groups dataflows that are **published together** and **share a lifecycl
 | closure | members sharing a DSD or codelists vendor them once; grouping removes duplicated labels |
 | attach and readiness | members are pinned, pulled and evicted together |
 
-The practical ceiling is tier-1 size: the bundle's catalog and labels must pull inside the readiness budget (§7.1). Examples: a census profile split into dataflows by geography level, or a family of tables derived from one DSD and released together, is one bundle; two census vintages are two bundles because one is final and one is live; CODR tables default to one per table because release days differ table by table, with subject-level grouping where tables always release together (open question 9).
+The practical ceiling is tier-1 size: the bundle's catalog and labels must pull inside the readiness budget (§7.1). Examples: a census profile split into dataflows by geography level, or a family of tables derived from one DSD and released together, is one bundle; two census vintages are two bundles because one is final and one is live; CODR tables default to one per table because release days differ table by table, with subject-level grouping where tables always release together (open question 6).
 
 ### 4.1 Layout
 
@@ -156,6 +156,7 @@ bundles/<bundle_id>/
 | `stability` | required | `"semantic"` (three-part version without extension; SDMX 3.0 guarantees immutability) or `"legacy"`. |
 | `partial` | required | `true` for a partial codelist or scheme vendored as a subset (§8). |
 | `fingerprint` | required | Artefact fingerprint (§4.4). |
+| `cut_from` | optional | For a partial, the artefact fingerprint of the full artefact it was cut from; absent for a full artefact. Added in manifest 2.1, a minor version a 2.0 reader ignores. The index builder compares it with the structures bundle's entry for the same URN (§6.4 items 4 and 10), so the partial's codes never need to be in the manifest. |
 
 `extensions.<name>` sections SHOULD carry their own `format_version`.
 
@@ -187,6 +188,8 @@ MD5 is a fixed standard. Each term is below 2^62, so a HUGEINT sum does not over
 **Artefact fingerprint.** SHA-256 of the artefact's canonical model text, `sdmxlib.bundle.canonical_json` at `CANONICAL_FORM` 1 (GH-126; msgspec cannot encode the attrs model, and the overlay digest works only because overlays are msgspec structs). The text is compact key-sorted JSON: every attrs object carries `"$class"` (its Python class) and every init field, `null` included; `maintainer` is the agency id; a `Ref` is its URN alone, never followed; an enum is its member name; a datetime is UTC with microseconds and `Z`; lists keep their order and sets sort by canonical text; a non-finite float, a naive datetime and any undefined type are refused. Golden texts cover all 30 artefact classes, and a walk asserts every field of every object reaches the text. The model carries fields SDMX-JSON cannot (the 28 declared gaps), so the wire format is unsuitable here; `docs/bundle.md` §9 states the form for other implementations.
 
 **Structural fingerprint of a dataflow.** The artefact fingerprints of the dataflow's closure, sorted by URN, joined with `\n`, SHA-256. The closure is: outgoing references from the dataflow and its DSD (concept schemes, codelists as vendored including partials, hierarchies), **plus the artefacts that reference the dataflow or DSD** (constraints, provision agreements, hierarchy associations), plus those artefacts' own outgoing references. Constraints and associations point at the dataflow rather than the reverse, so an outgoing-only walk would miss a constraint change that alters what is served.
+
+The fingerprint covers the closure the store holds, so the producer has to fetch the incoming references too. From an SDMX REST registry that is `references=all` on the dataflow and `references=parents` on its DSD over the 3.0 API; SDMX 2.1 has no hierarchy association, and FMR 12.4.2's 2.1 API returns none. `fetch_bundle` asks for `references=descendants` today, so its bundles hold none of the incoming artefacts (GH-221).
 
 **Bundle fingerprint** (`content_fingerprint`). SHA-256 of `artefacts:` then each artefact fingerprint in URN order, `bindings:` then `<dataflow urn>\t<table fingerprint>` in dataflow order, joined with `\n`.
 
@@ -303,13 +306,13 @@ results/<key>                            result store; written by pods and the p
 | `location`, `data_path` | required | Resolved URIs. |
 | `manifest_sha256`, `manifest_size` | required | Of `bundle.manifest.json`. |
 | `bytes`, `pull_bytes` | required | Sum of `files[].size`; sum for tier 1 and 2. |
-| `dataflows` | required | `{urn, observations, structural_version, fingerprint, stability}` per binding. |
+| `dataflows` | required | `{urn, observations, structural_version, fingerprint, structure_fingerprint, stability}` per binding: the binding's table fingerprint and the dataflow's structural fingerprint, as the manifest's `BindingCount` names them. The result-store key reads both (§7.4). |
 | `artefacts` | required | Count. The URN list is in `catalog/structures/`. |
 | `kind` | required | `"product"` or `"structures"` (§8). |
 | `datasets`, `search` | optional | From the statcat section. |
 | `lifecycle` | required | `"final"` or `"live"`; set by the publish job from statcatlib. |
 | `state` | required | `"staged"`, `"serving"`, `"draining"`, `"retired"` (§11.3). |
-| `pool` | required | Serving pool (§7.4). |
+| `pool` | required | Serving pool (§7.5). |
 | `pinned` | required | Attach before ready. |
 
 `catalog/structures/<token>.json`: `{"urns": {"<urn>": {"bundle_id", "token"}}, "versions": {"<agency>:<id>": ["2.0", "2.1", ...]}}`. Only full artefacts are listed; a product request resolves its own closure inside its bundle, and the builder reads partial URNs from manifests for invariant 4 without publishing them. `latest`, `~` and unversioned requests resolve through `versions`, then `urns`.
@@ -321,13 +324,13 @@ results/<key>                            result store; written by pods and the p
 1. One home per dataflow per `schema_version` among `serving` entries. During a rollout (§9.2) a dataflow has two serving homes at two schema versions; both share a `bundle_id`, which is what the ingress hashes on, so routing is unaffected.
 2. `manifest_sha256` matches the bytes fetched.
 3. Every `schema_version` present appears in `schema_versions`; every entry's `canonical_form` is one the builder knows.
-4. Full artefacts agree: equal fingerprints wherever one URN appears in more than one entry. Partials are subsets of the full artefact (ids and parents) in the structures bundle.
+4. Full artefacts agree: equal fingerprints wherever one URN appears as a full artefact in more than one entry. Every partial's `cut_from` equals the fingerprint of the full artefact at its URN in the `serving` or `staged` structures entry. The partial is a subset of that artefact (ids and parents) because the producer cut it from it; `check_bundle(at="publish")` checks the subset, where both artefacts are at hand.
 5. Final means final: a republish of a `final` `bundle_id` carries an equal `content_fingerprint`, or the entry is first set `live`.
 6. Chain continuity on `previous_token`.
 7. State pairs: `draining` has a `serving` sibling; `staged` has no `serving` entry with the same token.
 8. Known pools; `pinned` entries are `serving` or `staged`.
 9. Every full artefact has exactly one `kind: structures` home among `serving` entries (§8 allows several structures bundles per agency).
-10. Publish order: a product publication whose partials gained codes is refused `serving` until the structures publication holding those codes is `serving`.
+10. Publish order: a product publication is refused `serving` until, for each of its partials, the structures entry whose fingerprint equals the partial's `cut_from` is `serving`. An edit to a full artefact at an unchanged URN therefore holds back every product cut from the old one until that product is republished from the new one.
 
 ### 6.5 Multi-vintage products
 
@@ -335,7 +338,9 @@ Census 2021 and 2026 are two bundles with distinct DSDs and one product; `produc
 
 ### 6.6 Build
 
-Input is statcatlib's serving list `(bundle_id, token, manifest_sha256, lifecycle, pool, pinned, state, kind)`. The builder fetches manifests in parallel, skipping those whose `manifest_sha256` it parsed for the previous index, enforces §6.4, writes the index and structures documents under a new token, and leaves `current` to the release step (§11.2). A scan of blob storage only reports orphans.
+Input is statcatlib's serving list `(bundle_id, token, manifest_sha256, lifecycle, pool, pinned, state, kind)`. The builder fetches and parses the manifest of every entry in parallel, on every build, enforces §6.4, writes the index and structures documents under a new token, and leaves `current` to the release step (§11.2). A scan of blob storage only reports orphans.
+
+The invariants read each entry's artefacts and partials, which the index does not carry, so a build that skipped unchanged manifests would need a cache of them. The cost of reading every manifest is unmeasured: Phase 4 of the implementation plan times a 7,000-entry build, and a baked builder summary is added only if that measurement shows the cost (`docs/design/caching.md`).
 
 ---
 
@@ -421,13 +426,15 @@ Rules: the map holds `serving` entries for this pool at this schema; a dataflow 
 |---|---|
 | per-pod structural cache | `(bundle token, urn)` |
 | result store | `sha256(canonical_form, structural fingerprint of the dataflow, table fingerprint of the binding, applied-overlay digests, hook ids, render version, canonical query, format, lang)` |
-| CDN | the result-store key as ETag; `Cache-Control: immutable`; no invalidation |
+| CDN | the public URL; the result-store key as ETag; `Cache-Control: public, max-age=60, stale-while-revalidate=30`, revalidated by `If-None-Match` |
 
 **Render version.** The bytes depend on the code that writes them. sdmxlib carries a `RENDER_VERSION` per data format, bumped by the rule that any change to a writer's golden files bumps it; sdmxlib-rest carries its own for the envelope it adds. Both enter the key, so a writer fix produces new keys and old entries age out. Because the key names the serving code, pre-materialised results are produced by the serving code (§11.2 step 3), never by the publish job. Built in GH-132 as `sdmxlib.formats.render.RENDER_VERSION`, one version per written format, structures and metadata included, each the first 16 hex of its golden file's sha256 (`tests/golden/render/`), so the bump rule is enforced by a test rather than remembered.
 
-**Delivery.** The CDN's origin is sdmxlib-rest. On a hit in `results/`, the pod streams the body from blob storage to the CDN under the public URL with `Cache-Control: immutable`; the client never sees a storage URL, there is no cross-origin redirect, no CORS on the storage account, and no SAS lifetime to cache. The cost is one pass of the bytes through a pod per CDN miss, which the CDN's long TTL bounds. The earlier redirect-to-SAS pattern is retired.
+**Delivery.** The CDN's origin is sdmxlib-rest. On a hit in `results/`, the pod streams the body from blob storage to the CDN under the public URL; the client never sees a storage URL, there is no cross-origin redirect, no CORS on the storage account, and no SAS lifetime to cache. The earlier redirect-to-SAS pattern is retired.
 
-Keys are per binding, so a delta to one dataflow invalidates that dataflow's results only. The bundle token identifies the publication and is never a cache key.
+**Freshness.** An SDMX REST URL names a query, and the same URL answers differently after a release, a delta or a rollback, so the CDN MUST NOT cache it as immutable. Every response under a public URL carries `Cache-Control: public, max-age=60, stale-while-revalidate=30` and the result-store key as its ETag. When the TTL expires the CDN revalidates with `If-None-Match`; the pod computes the key from the current index and answers `304 Not Modified` when it matches, without reading `results/`, so an unchanged result costs the origin one key computation and no bytes. A release, delta or rollback reaches the CDN within `max-age` plus `stale-while-revalidate` after the `catalog/current` write, 90 s at these values, and never before it. A 404 or 503 carries the same two directives and no ETag, so a dataflow first released at 08:30 is visible at the CDN by 08:31:30. Both values are deployment settings; the release-visibility goal is measured against these.
+
+Keys are per binding, so a delta to one dataflow changes that dataflow's keys only: its next revalidation fetches new bytes, and every other dataflow's revalidation answers 304. The bundle token identifies the publication and is never a cache key.
 
 ### 7.5 Pools and replication
 
@@ -454,7 +461,7 @@ Each product bundle vendors its structural closure, and one **structures bundle*
 
 - **Partial codelists in product bundles.** A product bundle MUST vendor a codelist or scheme as the partial artefact (`isPartial="true"`, `partial: true`) holding the codes its content constraints use **plus their ancestors**, closed under parent. Any hierarchy the bundle holds MAY place only codes the partial holds. For a CODR table this is the member list CODR stores per table.
 - **Structures bundles** (`kind: structures`) hold the full artefacts, have no bindings, live in the `base` pool unpinned (so they never gate readiness and attach lazily on the first full-artefact request), and answer `/structure` requests through `catalog/structures/`. They are the source the catalog-level search index (§12) is built from and the reference the builder checks partials against (§6.4 item 4). An agency MAY split them by change rate so one edit does not re-ship everything: for example `structures-geo` (the full geography, large and slow-moving), `structures-classifications` (NAICS, NOC, SGC), `structures-concepts` (concept schemes, small and frequently edited). Invariant 9 requires one home per full artefact, however the split is drawn.
-- **Publish order.** In a release, structures publications are `serving` before any product publication whose partials depend on them (§6.4 item 10; §11.2).
+- **Publish order.** In a release, structures publications are `serving` before any product publication whose partials were cut from them (§6.4 item 10; §11.2). Each partial records the fingerprint of the full artefact it was cut from (`cut_from`, §4.2), which is how the builder knows the dependency without reading codes.
 - **First structure request.** Unpinned structures bundles attach on the first full-artefact request, so the first `/structure` request for a large one (the full geography) waits for its tier-1 pull, labels included. Pools that serve structure endpoints MAY pin the large structures bundles to move that pull before readiness.
 - Product bundles and the structures bundle are published, verified and served by the same mechanism; the index marks the kind.
 
@@ -530,6 +537,8 @@ An index is restorable only while every data file its publications reference exi
 2. The builder writes an index and structures document with the new publications `staged` and the current ones `serving`, and flips `current` to it. Pods pull pinned staged bundles to disk without attaching. Routing does not see staged entries; the embargo holds (§10.1).
 3. A pre-materialisation job, running the **pods' image** so render versions match, opens each staged publication from its own files, computes the release set (full-table downloads per language, the slices the front end requests on load) and writes it to `results/` under the new keys. It runs in a job, never in a serving pod, so nothing embargoed is attached in a pod.
 4. At release time the builder writes an index with the new publications `serving` and the superseded `draining`, structures entries ordered first by invariant 10, and flips `current` with one ETag-conditional put.
+
+A release interrupted after step 2 and before step 4 leaves `current` on the staged index. That index routes every request as the one before it did, because routing does not see staged entries, so nothing new is visible and nothing old is lost; the release resumes at step 3 or 4.
 5. The next index moves `draining` to `retired` after a fixed delay.
 
 ### 11.3 States
@@ -600,12 +609,14 @@ Each product bundle carries per-language LanceDB tables over its own datasets, c
 37. Deleted token directory with HNS → account-level replication with retention longer than index retention. §10.
 38. `token` reads as an auth token in server code → consider `publication` in a later major. Cosmetic.
 39. Raw `sql()` in a shared engine reads any attached bundle by alias, embargoed ones included → no `sql()` on `BundleRegistry`; staged bundles pulled, never attached. §4.3, §7.3.
-40. An outgoing-only closure misses constraints and hierarchy associations, which reference the dataflow → closure includes incoming references. §4.4.
+40. An outgoing-only closure misses constraints and hierarchy associations, which reference the dataflow → closure includes incoming references, and the producer fetches them (GH-221). §4.4.
 41. A small delta stays inlined, and the flush produces a delete file → explicit rewrite after flush. §4.5.
 42. The publish job pre-materialising results must know the pods' render version → pre-materialisation runs the pods' image as a release step. §7.4, §11.2.
 43. A cached 302 to a SAS URL expires under the client; cross-origin redirects need CORS → sdmxlib-rest streams results to the CDN. §7.4.
 44. One structures bundle per agency re-ships the full geography on every concept edit → split by change rate; unpinned; publish order invariant. §8, §6.4.
 45. msgspec cannot encode the attrs model → canonical model encoder in M4. §4.4.
+46. `Cache-Control: immutable` on an SDMX REST URL keeps pre-release bytes at the CDN after the release, a delta or a rollback → short TTL, the result-store key as ETag, `304` on revalidation. §7.4.
+47. An index builder that checks partials needs their codes, and the census geography partial has 579k → each partial records the fingerprint it was cut from (`cut_from`); the subset is checked at publish. §4.2, §6.4.
 
 ---
 
