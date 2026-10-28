@@ -517,6 +517,19 @@ bench-concurrency:
 bench-concurrency-update:
     uv run python bench/concurrency/bench_concurrency.py --update
 
+# Tier-3 reads of a publication's data files in Azurite, per DuckDB cache
+# setting (GH-185); uploads every data file, so not in `just ci`
+#
+# Measure tier-3 requests and bytes per cache setting
+[group('bench')]
+bench-tier3 PUBLICATION:
+    uv run python -m bench.tier3.bench_tier3 --publication {{ PUBLICATION }}
+
+# Overwrite bench/tier3/baselines.json with current numbers
+[group('bench')]
+bench-tier3-update PUBLICATION:
+    uv run python -m bench.tier3.bench_tier3 --publication {{ PUBLICATION }} --update
+
 # ── Release ───────────────────────────────────────────────────────────────────
 
 # Step 1 — Preview next version and unreleased changelog (no files changed)
