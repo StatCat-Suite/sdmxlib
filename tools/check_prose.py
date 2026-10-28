@@ -38,7 +38,7 @@ import sys
 from pathlib import Path
 
 #: Markdown read for both checks: a directory is read recursively.
-MARKDOWN = ("docs", "README.md", "CLAUDE.md", "cli/README.md")
+MARKDOWN = ("docs", "README.md", "CLAUDE.md", "cli/README.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md")
 #: Trees and files whose lines are read for the phrase check.
 CODE = ("src", "cli/src", "tests", "tools", "bench", "justfile", "pyproject.toml", "ruff.toml", "pyrefly.toml")
 #: The user docs, read for bare issue references; the design docs are left out.

@@ -133,3 +133,10 @@ Issues are tracked on [GitHub](https://github.com/StatCat-Suite/sdmxlib/issues).
 The project started on GitLab, so a bare `#492` in code, comments or docs means
 an issue in the [GitLab tracker](https://gitlab.com/pinax-suite/sdmxlib/-/issues),
 which stays readable as an archive. GitHub issues are written `GH-12`.
+
+## Contributing
+
+[CONTRIBUTING.md](CONTRIBUTING.md) says how to propose a change, and everyone
+taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md). Report a
+security issue privately, as [SECURITY.md](SECURITY.md) describes, and never
+in a public issue.
