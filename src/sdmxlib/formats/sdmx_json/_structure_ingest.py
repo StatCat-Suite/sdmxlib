@@ -1533,7 +1533,7 @@ def _date_map_kwargs(m: DateMapJson) -> _DateMapKwargs:
     return {
         "id": m.id,
         "component_maps": tuple((c.source, c.target) for c in m.mapped_components),
-        "resolve_period": ResolvePeriod(m.resolve_period) if m.resolve_period else None,
+        "resolve_period": to_enum(ResolvePeriod, m.resolve_period, what="resolvePeriod") if m.resolve_period else None,
         "frequency_dimension": m.frequency_dimension,
         "mapped_frequencies": tuple(m.mapped_frequencies or []),
         "target_frequency_id": m.target_frequency_id,
@@ -1566,7 +1566,7 @@ def from_structure_map(sm: StructureMapJson, maintainer: Agency) -> StructureMap
             EpochMap(
                 **_date_map_kwargs(m),
                 base_period=m.base_period,
-                epoch_period=EpochPeriod(m.epoch_period or ASSUMED_EPOCH_PERIOD),
+                epoch_period=to_enum(EpochPeriod, m.epoch_period or ASSUMED_EPOCH_PERIOD, what="epochPeriod"),
             )
             for m in sm.epoch_maps or []
         ),

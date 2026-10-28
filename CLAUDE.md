@@ -319,6 +319,12 @@ no hosted job blocks a merge:
   the tag, waits for the maintainer to approve the `pypi` environment, uploads
   with trusted publishing and attestations, and attaches the files and their
   Sigstore signatures to the release. No PyPI token is stored.
+- `.github/workflows/fuzz.yml` fuzzes the readers behind `sl.parse` with
+  Atheris, weekly and on pull requests that change a reader (GH-241). The
+  targets are in `tests/fuzz/targets.py`; a crash input it finds is saved
+  under `tests/fuzz/crashes/<target>/` with its fix, and
+  `tests/unit/test_fuzz_crashes.py` replays it. Atheris installs on Linux
+  x86_64 only, so fuzzing itself never runs locally.
 - The security checks report to the Security tab (GH-220): `zizmor.yml` lints
   the workflows, `scorecard.yml` scores the repository, and GitHub runs
   CodeQL, secret scanning and Dependabot from the repository settings.

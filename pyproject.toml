@@ -171,6 +171,12 @@ dev = [
   # dependency and must not become one: sdmxlib has no web framework.
   "fastapi>=0.115",
 ]
+# The fuzzer (GH-241), installed only by .github/workflows/fuzz.yml. Atheris
+# ships Linux x86_64 wheels only, so the marker keeps a macOS or ARM sync from
+# trying to build it; crash inputs replay without it (test_fuzz_crashes.py).
+fuzz = [
+  "atheris>=3.1.0,<3.2; sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
 # Optional: third-party SDMX libraries for the competitive benchmarks
 # (tests/bench/test_compete.py, and `just bench-compete` — bench/compete/).
 # Install via `uv sync --group bench-compete`.

@@ -16,7 +16,7 @@ from datetime import datetime
 from lxml import etree
 from typing_extensions import TypedDict
 
-from sdmxlib.formats._coerce import to_datetime
+from sdmxlib.formats._coerce import to_datetime, to_enum
 from sdmxlib.model.errors import ReadGap, SdmxParseError, ValidationError
 from sdmxlib.model.header import ActionType, Header, MetadataHeader, Party, Sender
 from sdmxlib.model.istring import InternationalString
@@ -168,7 +168,7 @@ def _metadata_header(root: etree._Element, el: etree._Element, *, com: str) -> M
         metadata_provider=None
         if provider is None
         else Ref[MetadataProvider].unresolved(MetadataProvider.parse_urn(provider.strip())),
-        data_set_action=None if action is None else ActionType(action.strip()),
+        data_set_action=None if action is None else to_enum(ActionType, action.strip(), what="Header/DataSetAction"),
         data_set_ids=tuple((each.text or "").strip() for each in el.findall(f"{{{mes}}}DataSetID")),
         extracted=None if extracted is None else to_datetime(extracted.strip(), what="Header/Extracted"),
     )

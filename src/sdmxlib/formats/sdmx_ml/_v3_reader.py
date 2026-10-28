@@ -33,7 +33,7 @@ from lxml import etree
 from typing_extensions import TypedDict
 
 from sdmxlib.formats._attachment import match_dimension_case
-from sdmxlib.formats._coerce import to_date, to_int
+from sdmxlib.formats._coerce import to_date, to_enum, to_int
 from sdmxlib.formats._positions import check_positions
 from sdmxlib.formats._refuse import build_each_xml
 from sdmxlib.formats.sdmx_ml._closed_world import required
@@ -718,7 +718,7 @@ class V3Reader:
             "frequency_dimension": el.findtext("str:FrequencyDimension", namespaces=self._ns),
             "mapped_frequencies": tuple(self._texts(el, "MappedFrequencies")),
             "target_frequency_id": el.findtext("str:TargetFrequencyID", namespaces=self._ns),
-            "resolve_period": ResolvePeriod(resolve) if resolve else None,
+            "resolve_period": to_enum(ResolvePeriod, resolve, what="resolvePeriod") if resolve else None,
         }
 
     def _read_structure_map_parts(self, el: etree._Element) -> _StructureMapParts:
@@ -728,7 +728,7 @@ class V3Reader:
                 EpochMap(
                     **self._date_map_fields(em_el),
                     base_period=required(em_el, "basePeriod"),
-                    epoch_period=EpochPeriod(em_el.get("epochPeriod", "day")),
+                    epoch_period=to_enum(EpochPeriod, em_el.get("epochPeriod", "day"), what="epochPeriod"),
                 )
                 for em_el in el.findall("str:EpochMap", namespaces=self._ns)
             ),

@@ -22,7 +22,7 @@ default:
 lint:
     #!/usr/bin/env bash
     set -uo pipefail
-    out=$(uv run ruff check src cli tests bench 2>&1)
+    out=$(uv run ruff check src cli tests bench fuzz 2>&1)
     status=$?
     echo "$out"
     if [[ $status -ne 0 ]]; then exit $status; fi
@@ -46,7 +46,7 @@ typecheck:
 
 [group('dev')]
 checkfmt:
-    uv run ruff format --check src cli tests bench
+    uv run ruff format --check src cli tests bench fuzz
 
 # Docstrings stay pure Google style — no RST roles, no NumPy sections (#374).
 #
@@ -138,8 +138,8 @@ audit:
 # Format code
 [group('dev')]
 fmt:
-    uv run ruff format src cli tests bench
-    uv run ruff check --fix src cli tests bench
+    uv run ruff format src cli tests bench fuzz
+    uv run ruff check --fix src cli tests bench fuzz
 
 # ── Test ──────────────────────────────────────────────────────────────────────
 
