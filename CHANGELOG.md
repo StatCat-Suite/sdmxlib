@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.76.0] - 2026-10-28
+
+### Breaking Changes
+
+- **bundle**: A lake table's layout is DuckLake's (GH-205)
+- **storage**: A MetadataSet's reported attributes read back in the order written (GH-197)
+- **query**: Order observations by codelist position (GH-213)
+- **bundle**: Leave sibling dataflows out of a dataflow's structural closure (GH-228)
+
+### Bug Fixes
+
+- **bundle**: A publication holds only its own availability; correct the bundle docs (GH-203)
+
+### Documentation
+
+- **bundle**: Store schema 2.51, final compaction without a sort, and the per-partition ordered stream (GH-205)
+- **query**: Say how the observation order follows the stored codelist (GH-213)
+- Re-measure the ordered reads and record the order change as breaking (GH-213)
+- **design**: Settle the CDN, partial and index contradictions in the catalog spec (GH-136)
+- **design**: Add the sharded bundle catalog implementation plan (GH-136)
+
+### Features
+
+- **model**: A partial codelist from a code set, with its ancestors (GH-12)
+- **api**: Fetch what refers to an artefact with resolve="all" and "parents" (GH-221)
+- **bundle**: Record each partial's cut_from and check it against its full artefact (GH-224)
+- **bundle**: Build a bundle from a registry and observation sources (GH-223)
+
+### Performance
+
+- **builders**: Answer availability from stored values when a selection covers them (GH-210)
+- **query**: Join no codelist for a key column an explicit order already sorts (GH-213)
+- **bench**: Measure tier-3 reads per DuckDB cache setting; build no cache (GH-185)
+
+### Testing
+
+- **bench**: Time the observation reads against the census bundle (GH-205)
+- **bench**: Time every kind of observation read inside the largest partition (StatCat-Suite/cpt-builder#27)
+- **bench**: Record the Hilbert layout's reads beside written order (StatCat-Suite/cpt-builder#27)
+- **bench**: Time availability calls in the observation read matrix (GH-211)
+- **bench**: Record the census availability timings; drop an assertion that cannot fail (GH-211)
+
 ## [0.75.0] - 2026-10-26
 
 ### Breaking Changes
