@@ -5,7 +5,7 @@ one unit, once per release: each publication is a directory of its own.
 statcatlib writes bundles, sdmxlib-rest serves them, and sdmxlib reads,
 checks, copies and fetches them. This page is the contract between them.
 
-It describes **manifest format 2.0** and **overlay format 1.2**. sdmxlib's
+It describes **manifest format 2.1** and **overlay format 1.2**. sdmxlib's
 code is the reference implementation (`sdmxlib.bundle`,
 `LocalRegistry.bundle`), and the two JSON Schemas ship with it:
 `sdmxlib.bundle.manifest_schema()` and `sdmxlib.bundle.overlay_schema()`.
@@ -69,7 +69,7 @@ two spaces, but a reader MUST NOT depend on the layout.
 
 | field | presence | meaning |
 | --- | --- | --- |
-| `format_version` | required | The manifest format, `major.minor`: `"2.0"` for this page. |
+| `format_version` | required | The manifest format, `major.minor`: `"2.1"` for this page. |
 | `bundle_id` | required | The producer's stable name for the bundle, kept across rebuilds. It names *which* bundle, never which publication. |
 | `token` | required | A UUIDv7 minted when the publication's build started, and the name of its directory (§3). |
 | `previous_token` | required | The `token` of the publication this one extends, or `null` for a bundle's first. |
@@ -136,6 +136,7 @@ file:
 | `stability` | required | `"semantic"` for a final semantic version (three numeric parts, no extension, major at least 1), which SDMX 3.0 holds immutable; `"legacy"` for any other. |
 | `partial` | required | `true` for a partial item scheme, a subset of the full one. |
 | `fingerprint` | required | The artefact fingerprint (§9): the SHA-256 of its canonical text, lowercase hex. |
+| `cut_from` | optional | For a partial, the artefact fingerprint of the full artefact the producer cut it from (`write_manifest(cut_from=...)`). A catalog compares it with the full artefact's entry where that is published, so the partial's items never need to be in the manifest. Absent for a full artefact, and for a partial whose producer did not record it. Added in 2.1. |
 
 ### `Provenance`
 
@@ -561,6 +562,7 @@ not only the first:
 | `references` | every reference in the store names an artefact or an item in the store | yes | yes | no | continues |
 | `fingerprints` | every artefact, binding and content fingerprint, recomputed, is the manifest's (§9) | yes | with `fingerprints=True` | no | continues |
 | `availability` | every coded column holds codes of its enumeration or `NULL`, and the stored availability is the data's: each dimension's values and the observation count, rescanned (§4) | yes | no | no | continues |
+| `partials` | every partial whose entry records `cut_from` has a full artefact at its URN in the `structures=` publication with that fingerprint, and the partial's items, each under the same parent, are among the full artefact's; a codelist's, concept scheme's and category scheme's items are compared, another scheme's fingerprint alone | with `structures=` | with `structures=` | no | continues |
 
 A store file that cannot be read, a damaged `meta.duckdb` or `lake.ducklake`,
 is a finding under the check that tried to read it, and ends the run.

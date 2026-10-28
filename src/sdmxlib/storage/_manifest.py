@@ -35,8 +35,9 @@ UNLISTED = frozenset({MANIFEST_NAME, f"{MANIFEST_NAME}.tmp", SIGNATURE_NAME})
 
 #: The format this build writes. A reader takes any ``2.x``: a minor version
 #: only adds fields, which a reader that predates them ignores. 2.0 moved a
-#: publication into a token directory beside a shared ``data/`` (GH-123).
-FORMAT_VERSION = "2.0"
+#: publication into a token directory beside a shared ``data/`` (GH-123); 2.1
+#: adds `ArtefactEntry.cut_from` (GH-224).
+FORMAT_VERSION = "2.1"
 
 #: The digests every listed file records, each lowercase hex: sha256 anchors
 #: integrity, and each of the others is the one some object store keeps of a
@@ -277,7 +278,7 @@ class BindingCount(msgspec.Struct, frozen=True, kw_only=True):
     structure_fingerprint: str
 
 
-class ArtefactEntry(msgspec.Struct, frozen=True, kw_only=True):
+class ArtefactEntry(msgspec.Struct, frozen=True, kw_only=True, omit_defaults=True):
     """One maintainable artefact in the store.
 
     Attributes:
@@ -287,12 +288,17 @@ class ArtefactEntry(msgspec.Struct, frozen=True, kw_only=True):
             immutable; ``legacy`` for any other.
         partial: Whether it is a partial item scheme, a subset of the full one.
         fingerprint: The SHA-256 of its canonical text, lowercase hex.
+        cut_from: For a partial, the fingerprint of the full artefact it was
+            cut from, which a catalog compares with the full one's entry
+            where that is published; absent for a full artefact, and for a
+            partial whose producer did not record it.
     """
 
     urn: str
     stability: Literal["semantic", "legacy"]
     partial: bool
     fingerprint: str
+    cut_from: str | None = None
 
 
 class Provenance(msgspec.Struct, frozen=True, kw_only=True):

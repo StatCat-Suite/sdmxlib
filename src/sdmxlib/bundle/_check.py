@@ -33,6 +33,7 @@ from sdmxlib.local.engine import BundleEngine
 from sdmxlib.local.object_store import sizes
 from sdmxlib.local.registry import BundleRegistry, LocalRegistry
 from sdmxlib.model.binding import DataflowBinding
+from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.storage._manifest import (
     MANIFEST_NAME,
     UNLISTED,
@@ -89,6 +90,7 @@ def check_bundle(
     lookup: Lookup | None = None,
     fingerprints: bool = False,
     expect: Manifest | str | Path | None = None,
+    structures: str | Path | None = None,
     extensions: Mapping[str, Check] | None = None,
 ) -> Report:
     """Check a published bundle against its manifest and against itself, as profile `at` asks.
@@ -106,6 +108,7 @@ def check_bundle(
     | fingerprints: recomputed, equal to the manifest's | yes | with `fingerprints` | no |
     | availability: coded columns hold codes; stored availability is the data's | yes | no | no |
     | expect: fingerprints equal to an earlier manifest's | with `expect` | with `expect` | with `expect` |
+    | partials: `cut_from` and the items match the full artefact | with `structures` | with `structures` | no |
     | extensions | yes | yes | yes, told the profile |
 
     ``data/`` is shared by publications, so only its listed entries are
@@ -139,6 +142,13 @@ def check_bundle(
             finding under ``expect``. Read from the manifests alone, so at
             ``publish``, where the fingerprints are also recomputed, a clean
             run says the store's content is the earlier one's.
+        structures: A publication holding the full artefacts this bundle's
+            partials were cut from, a structures bundle say. Each partial
+            whose manifest entry records `cut_from` must have a full artefact
+            at its URN there with that fingerprint, and the partial's items,
+            with their parents, must be among that artefact's. A codelist's,
+            concept scheme's and category scheme's items are compared; for
+            another scheme, the fingerprint alone.
         extensions: More checks, by name, for parts of the bundle other
             packages own (statcatlib's search index, say).
 
@@ -146,10 +156,10 @@ def check_bundle(
         What was checked and what was found.
 
     Raises:
-        ValueError: If `lookup`, `fingerprints` or `remote` is given at a
-            profile that does not use it.
+        ValueError: If `lookup`, `fingerprints`, `remote` or `structures` is
+            given at a profile that does not use it.
     """
-    _refuse_unused(at, lookup=lookup, fingerprints=fingerprints, remote=remote)
+    _refuse_unused(at, lookup=lookup, fingerprints=fingerprints, remote=remote, structures=structures)
     root = Path(path)
     checked: list[str] = ["manifest"]
     try:
@@ -184,6 +194,7 @@ def check_bundle(
             at,
             sized_remotely=remote is not None and lookup is None,
             fingerprints=fingerprints,
+            structures=None if structures is None else Path(structures),
             extensions=extensions or {},
         )
         for name, step in steps:
@@ -199,8 +210,13 @@ def check_bundle(
     return Report(root, at, tuple(checked), tuple(findings))
 
 
-def _refuse_unused(at: Profile, *, lookup: Lookup | None, fingerprints: bool, remote: str | None) -> None:
+def _refuse_unused(
+    at: Profile, *, lookup: Lookup | None, fingerprints: bool, remote: str | None, structures: str | Path | None
+) -> None:
     """Raise for an argument the profile `at` does not use."""
+    if structures is not None and at == "open":
+        msg = "structures= compares partials with their full artefacts; at='open' reads no artefact"
+        raise ValueError(msg)
     if remote is not None and at == "publish":
         msg = "remote= reads a received bundle's data files where they are stored; at='publish' hashes them locally"
         raise ValueError(msg)
@@ -222,6 +238,7 @@ def _steps(
     *,
     sized_remotely: bool,
     fingerprints: bool,
+    structures: Path | None,
     extensions: Mapping[str, Check],
 ) -> list[tuple[str, Callable[[], Iterable[Finding]]]]:
     """The checks that read the store, by name, in the order profile `at` runs them."""
@@ -236,6 +253,8 @@ def _steps(
         steps.append(("fingerprints", partial(_fingerprints, root, manifest, reg)))
     if at == "publish":
         steps.append(("availability", partial(_availability, manifest, reg)))
+    if structures is not None:
+        steps.append(("partials", partial(_partials, manifest, reg, structures)))
     return steps + [(name, partial(check, root, manifest, reg, at)) for name, check in extensions.items()]
 
 
@@ -391,6 +410,53 @@ def _fingerprints(root: Path, manifest: Manifest, opened: BundleRegistry) -> lis
             )
         )
     return findings
+
+
+#: Each item scheme's items and their parents, by class. A category's
+#: identity is its path.
+_ITEMS = {
+    "Codelist": "SELECT code_id, parent_id FROM sdmx.code WHERE codelist_urn = $urn",
+    "ConceptScheme": "SELECT concept_id, parent_id FROM sdmx.concept WHERE scheme_urn = $urn",
+    "CategoryScheme": "SELECT path, parent_path FROM sdmx.category WHERE scheme_urn = $urn",
+}
+
+
+def _partials(manifest: Manifest, reg: BundleRegistry, structures: Path) -> list[Finding]:
+    """Each partial recording `cut_from` that the full artefact in `structures` does not bear out."""
+    cut = [a for a in manifest.artefacts if a.partial and a.cut_from is not None]
+    if not cut:
+        return []
+    try:
+        full = {a.urn: a.fingerprint for a in read_manifest(structures).artefacts if not a.partial}
+    except ManifestError as exc:
+        return [Finding("partials", str(structures), f"the structures publication cannot be read: {exc}")]
+    findings: list[Finding] = []
+    with LocalRegistry.bundle(structures) as source:
+        for entry in cut:
+            fingerprint = full.get(entry.urn)
+            if fingerprint is None:
+                findings.append(Finding("partials", entry.urn, f"{structures} holds no full artefact at this URN"))
+            elif fingerprint != entry.cut_from:
+                detail = f"cut from {entry.cut_from}, and the full artefact in {structures} is {fingerprint}"
+                findings.append(Finding("partials", entry.urn, detail))
+            else:
+                findings += _subset(entry.urn, reg, source)
+    return findings
+
+
+def _subset(urn: str, partial_in: BundleRegistry, full_in: BundleRegistry) -> list[Finding]:
+    """The first item of the partial `urn` that the full artefact lacks, or places under another parent."""
+    query = _ITEMS.get(SdmxUrn.parse(urn).artefact_class)
+    if query is None:
+        return []
+    full = dict(full_in.connection.execute(query, {"urn": urn}).fetchall())
+    for found, under in sorted(partial_in.connection.execute(query, {"urn": urn}).fetchall()):
+        if found not in full:
+            return [Finding("partials", urn, f"{found} is not in the full artefact")]
+        if full[found] != under:
+            detail = f"{found} is under {under} here and under {full[found]} in the full artefact"
+            return [Finding("partials", urn, detail)]
+    return []
 
 
 def _availability(manifest: Manifest, reg: BundleRegistry) -> list[Finding]:
