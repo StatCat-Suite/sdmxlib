@@ -63,7 +63,11 @@ jobs:
         with:
           name: dist
           path: dist/
+      # skip-existing lets a re-run finish a release that stopped partway: a
+      # file PyPI already holds is skipped instead of failing the upload.
       - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          skip-existing: true
 
   sign:
     needs: publish

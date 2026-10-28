@@ -731,7 +731,11 @@ release-5-pypi:
         exit 1
     fi
     echo "Approve the pypi environment: $(gh run view "${RUN}" --json url --jq .url)"
-    gh run watch "${RUN}" --exit-status
+    if ! gh run watch "${RUN}" --exit-status; then
+        echo "error: the release run failed; fix the cause, then gh run rerun ${RUN} --failed" >&2
+        echo "       and run this step again (files already on PyPI are skipped)" >&2
+        exit 1
+    fi
     for PACKAGE in sdmxlib sdmxlib-cli; do
         if ! curl -fsS "https://pypi.org/pypi/${PACKAGE}/${VER#v}/json" >/dev/null; then
             echo "error: PyPI has no ${PACKAGE} ${VER#v}" >&2
