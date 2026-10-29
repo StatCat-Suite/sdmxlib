@@ -23,7 +23,7 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 Reading observations raises two exceptions
 ([GH-247](https://github.com/StatCat-Suite/sdmxlib/issues/247)), from
-`reg.scan_csv`, `reg.scan_json` and a REST `obs()` / `data()` response:
+`reg.scan_csv`, `reg.scan_json` and a REST `obs()` response:
 
 - **`sl.SdmxParseError`** for data that cannot be read: truncated or
   malformed SDMX-JSON, a CSV row DuckDB cannot split or decode, a file

@@ -12,7 +12,7 @@ Two failures, two exceptions:
    while the file is read or when a query casts its result.
 
 DuckDB parses every SDMX-CSV file sdmxlib reads, `scan_csv` and a REST
-`obs()` / `data()` response alike. Where sdmxlib runs the read itself
+`obs()` response alike. Where sdmxlib runs the read itself
 (`reading_csv`), any DuckDB failure of that statement is about the file. A
 scanned path is a view that DuckDB reads when a query runs, so the query
 terminals convert too (`csv_errors`, `converting`), and there only an error

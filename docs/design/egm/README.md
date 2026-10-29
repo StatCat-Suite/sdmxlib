@@ -27,3 +27,11 @@ What came of it:
   and GH-228, with the tier-3 measurement (GH-185).
 
 The reports are kept as written, so their findings describe the first draft.
+
+## Drift report on the EGM contracts
+
+[`2026-10-28_DRIFT_REPORT.md`](2026-10-28_DRIFT_REPORT.md) compares the 23
+`EGM.md` contracts the EGM bootstrap wrote with the code, before their first
+commit. Six reviewers found about 110 differences; the contracts were
+corrected from them, and four findings that point at the code were filed as
+GH-262, GH-263, GH-264 and GH-265.
