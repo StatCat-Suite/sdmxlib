@@ -48,6 +48,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 import sdmxlib as sl
+from sdmxlib._duckdb import first
 from sdmxlib.model.annotations import Annotation
 from sdmxlib.model.codelist import Code, Codelist
 from sdmxlib.model.organisation import Agency
@@ -113,11 +114,11 @@ def test_the_relation_does_not_outlive_the_block(reg: sl.LocalRegistry) -> None:
     values = [f"u{i}" for i in range(_REGISTER_ABOVE + 1)]
     with value_match(cur, values) as (fragment, _):
         name = fragment.removeprefix("IN (SELECT v FROM ").removesuffix(")")
-        counted = cur.execute(f"SELECT count(*) FROM {name}").fetchone()
+        counted = first(cur.execute(f"SELECT count(*) FROM {name}"))
         assert counted is not None
         assert counted[0] == len(values)
     with pytest.raises(Exception, match=name):
-        cur.execute(f"SELECT count(*) FROM {name}").fetchone()
+        first(cur.execute(f"SELECT count(*) FROM {name}"))
 
 
 def test_the_column_type_is_not_forced_to_text(reg: sl.LocalRegistry) -> None:
@@ -127,7 +128,7 @@ def test_the_column_type_is_not_forced_to_text(reg: sl.LocalRegistry) -> None:
     cur = reg._read_cursor()
     with value_match(cur, list(range(_REGISTER_ABOVE + 5))) as (fragment, _):
         name = fragment.removeprefix("IN (SELECT v FROM ").removesuffix(")")
-        typed = cur.execute(f"SELECT typeof(v) FROM {name} LIMIT 1").fetchone()
+        typed = first(cur.execute(f"SELECT typeof(v) FROM {name} LIMIT 1"))
         assert typed is not None
         kind = str(typed[0])
     assert "INT" in kind.upper()

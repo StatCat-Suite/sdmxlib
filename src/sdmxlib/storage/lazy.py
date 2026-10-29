@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, ClassVar, Final, Self
 
 import duckdb
 
-from sdmxlib._duckdb import count
+from sdmxlib._duckdb import count, first
 from sdmxlib.model._tree import refuse_bare_id
 from sdmxlib.model.annotations import Annotations
 from sdmxlib.model.codelist import (
@@ -298,7 +298,7 @@ class LazyCodelist:
             "SELECT 1 FROM sdmx.code WHERE codelist_urn = ? AND code_id = ?",
             [self._urn, key],
         )
-        return row.fetchone() is not None
+        return first(row) is not None
 
     def ref_to(self, code_id: str) -> Ref[Code]:
         """Build a resolved `Ref` to a code in this codelist — see `Codelist.ref_to`.
@@ -384,13 +384,11 @@ class LazyCodelist:
 
     def depth_of(self, code_id: str) -> int:
         """Depth of ``code_id`` in the codelist hierarchy (root = 0)."""
-        row = (
-            _cur(self._conn)
-            .execute(
+        row = first(
+            _cur(self._conn).execute(
                 "SELECT depth FROM sdmx.code WHERE codelist_urn = ? AND code_id = ?",
                 [self._urn, code_id],
             )
-            .fetchone()
         )
         if row is None:
             msg = f"Code {code_id!r} not found in codelist {self._urn!r}"
@@ -959,7 +957,7 @@ class LazyHierarchy:
             "SELECT 1 FROM sdmx.hierarchy_node WHERE hierarchy_urn = ? AND path = ?",
             [self._urn, key],
         )
-        return row.fetchone() is not None
+        return first(row) is not None
 
     def __getitem__(self, key: str | int) -> HierarchicalCode:
         """One placement, by path or by position. See `Hierarchy.__getitem__`."""
@@ -991,14 +989,12 @@ class LazyHierarchy:
             return
         # One row whatever the tree holds: the lookup's cost is constant, and
         # a guard counting rows fetched can say exactly what it adds.
-        row = (
-            _cur(self._conn)
-            .execute(
+        row = first(
+            _cur(self._conn).execute(
                 "SELECT list(path ORDER BY path) FROM sdmx.hierarchy_node "
                 "WHERE hierarchy_urn = ? AND (path = ? OR node_id = ?)",
                 [self._urn, key, key],
             )
-            .fetchone()
         )
         found: object = row[0] if row is not None else None
         paths = [str(p) for p in found] if isinstance(found, list) else []
@@ -1089,13 +1085,11 @@ class LazyHierarchy:
     def depth_of(self, path: str) -> int:
         """Depth of *path* in the hierarchy (root = 0)."""
         self._refuse_bare_id(path)
-        row = (
-            _cur(self._conn)
-            .execute(
+        row = first(
+            _cur(self._conn).execute(
                 "SELECT depth FROM sdmx.hierarchy_node WHERE hierarchy_urn = ? AND path = ?",
                 [self._urn, path],
             )
-            .fetchone()
         )
         if row is None:
             msg = f"{path!r} is not a path in hierarchy {self._urn!r}"

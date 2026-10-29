@@ -18,6 +18,8 @@ import attrs
 import duckdb
 from attrs import field, frozen
 
+from sdmxlib._duckdb import first
+
 #: The DuckDB extension that reads each URI scheme. ``file`` needs none: it is
 #: the local filesystem by URI, for a mounted store or a test.
 EXTENSIONS: Mapping[str, str | None] = {
@@ -231,7 +233,7 @@ def sizes(conn: duckdb.DuckDBPyConnection, files: list[str]) -> dict[str, int | 
     found: dict[str, int | None] = {}
     for file in files:
         try:
-            row = conn.execute("SELECT size FROM read_blob(?)", [file]).fetchone()
+            row = first(conn.execute("SELECT size FROM read_blob(?)", [file]))
         except duckdb.HTTPException as exc:
             if getattr(exc, "status_code", None) != 404:
                 raise

@@ -26,6 +26,7 @@ from pathlib import Path
 import duckdb
 from attrs import field, frozen
 
+from sdmxlib._duckdb import first
 from sdmxlib.bundle import Manifest, Producer, write_manifest
 from sdmxlib.local.registry import LocalRegistry
 from sdmxlib.model.annotations import Annotation
@@ -38,7 +39,6 @@ from sdmxlib.model.hierarchy import HierarchicalCode, Hierarchy, HierarchyAssoci
 from sdmxlib.model.ref import Ref, SupportsUrn
 from sdmxlib.model.representation import Facet
 from sdmxlib.model.urn import SdmxUrn
-from sdmxlib.session import completed
 from sdmxlib.storage._synthetic import distinct_periods, observations_from, observations_sql
 
 __all__ = ["Dim", "HierarchyShape", "Shape", "profile_bundle", "synthetic_bundle"]
@@ -213,7 +213,7 @@ def synthetic_bundle(path: str | Path, shape: Shape, *, seed: int = 0) -> Manife
     artefacts, dsd, flow = _structures(shape, draws, _Draws(seed, "hierarchies"))
     with LocalRegistry.build(root) as bundle:
         bundle.add_all(artefacts)
-        rows = completed(bundle.connection).sql(_observations_sql(shape, space, draws))
+        rows = bundle.connection.sql(_observations_sql(shape, space, draws))
         bundle.write_observations(schema=_SCHEMA, table=_TABLE, source=rows)
         bundle.add(DataflowBinding.from_dsd(dsd, dataflow=Ref.to(flow), schema=_SCHEMA, table=_TABLE))
         publication = bundle.publication
@@ -489,18 +489,22 @@ def profile_bundle(path: str | Path, flow: SdmxUrn[Dataflow]) -> Shape:
             if not isinstance(representation, Ref):
                 continue
             urn = str(representation.urn)
-            row = conn.execute(
-                "SELECT count(*), coalesce(max(depth), 0) + 1 FROM sdmx.code WHERE codelist_urn = ?", [urn]
-            ).fetchone()
-            fan = conn.execute(
-                """
+            row = first(
+                conn.execute(
+                    "SELECT count(*), coalesce(max(depth), 0) + 1 FROM sdmx.code WHERE codelist_urn = ?", [urn]
+                )
+            )
+            fan = first(
+                conn.execute(
+                    """
                 SELECT coalesce(min(n), 2), coalesce(max(n), 10) FROM (
                     SELECT count(*) AS n FROM sdmx.code
                     WHERE codelist_urn = ? AND parent_id IS NOT NULL GROUP BY parent_id
                 )
                 """,
-                [urn],
-            ).fetchone()
+                    [urn],
+                )
+            )
             if row is None or fan is None or row[0] == 0:
                 continue
             codelists.append(urn)
@@ -510,14 +514,16 @@ def profile_bundle(path: str | Path, flow: SdmxUrn[Dataflow]) -> Shape:
             "SELECT DISTINCT unnest(map_keys(name)) FROM sdmx.code WHERE list_contains(?, codelist_urn) ORDER BY 1",
             [codelists],
         ).fetchall()
-        annotated = conn.execute(
-            """
+        annotated = first(
+            conn.execute(
+                """
             SELECT count(DISTINCT a.owner_urn) / greatest(count(DISTINCT c.code_urn), 1)
             FROM sdmx.code c LEFT JOIN sdmx.annotation a ON a.owner_urn = c.code_urn
             WHERE list_contains(?, c.codelist_urn)
             """,
-            [codelists],
-        ).fetchone()
+                [codelists],
+            )
+        )
         observations = reg.obs(flow).count()
         reg._data_plane()
         time_id = dsd.time_dimension.id if dsd.time_dimension is not None else None
@@ -554,8 +560,9 @@ def _profile_hierarchies(
     ).fetchall()
     shapes: list[HierarchyShape] = []
     for (hierarchy,) in linked:
-        row = conn.execute(
-            """
+        row = first(
+            conn.execute(
+                """
             WITH nodes AS (SELECT code_urn, parent_path, depth FROM sdmx.hierarchy_node WHERE hierarchy_urn = $h),
             children AS (SELECT count(*) AS n FROM nodes WHERE parent_path IS NOT NULL GROUP BY parent_path)
             SELECT
@@ -568,8 +575,9 @@ def _profile_hierarchies(
                 (SELECT coalesce(min(n), 2) FROM children),
                 (SELECT coalesce(max(n), 10) FROM children)
             """,
-            {"h": hierarchy, "cl": codelist},
-        ).fetchone()
+                {"h": hierarchy, "cl": codelist},
+            )
+        )
         if row is None or row[0] == 0:
             continue
         placed, nodes, distinct, non_root, depth, least, most = row

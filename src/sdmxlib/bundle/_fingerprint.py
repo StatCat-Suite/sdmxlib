@@ -28,6 +28,7 @@ from collections.abc import Iterable, Mapping
 
 import duckdb
 
+from sdmxlib._duckdb import first
 from sdmxlib.bundle._canonical import canonical_json
 from sdmxlib.model._items import owner_classes, scheme_urn_of
 from sdmxlib.model.binding import DataflowBinding
@@ -52,7 +53,7 @@ def table_fingerprint(conn: duckdb.DuckDBPyConnection, binding: DataflowBinding)
         The fingerprint.
     """
     relation = ".".join(_quoted(part) for part in (binding.database_role, *binding.table_location.split(".")))
-    row = conn.execute(_TABLE.format(relation=relation)).fetchone()
+    row = first(conn.execute(_TABLE.format(relation=relation)))
     if row is None:
         msg = f"the fingerprint of {relation} returned no row"
         raise RuntimeError(msg)

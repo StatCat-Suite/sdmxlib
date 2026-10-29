@@ -19,6 +19,7 @@ from typing import Final, NamedTuple, Protocol
 import duckdb
 import pyarrow as pa
 
+from sdmxlib._duckdb import first
 from sdmxlib._time import to_storage
 from sdmxlib.model._items import owner_classes, scheme_urn_of
 from sdmxlib.model._tree import tree_rows
@@ -72,7 +73,6 @@ from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.model.valuelist import ValueList
 from sdmxlib.model.version import is_final
 from sdmxlib.model.version import sort_key as version_sort_key
-from sdmxlib.session import completed
 from sdmxlib.storage._kinds import CLASS_TO_NAME as _CLASS_TO_NAME
 from sdmxlib.storage.resolve import level_urn, part_owner
 from sdmxlib.storage.schema import ENUMERATION_FORMAT_COLUMN_NAMES, FACET_COLUMN_NAMES, TO_TEXT_FORMAT_COLUMN_NAMES
@@ -162,12 +162,12 @@ def _execute_bulk_insert(
     columns = list(zip(*rows, strict=True))
     arrays = [_to_arrow_array(list(col)) for col in columns]
     arrow_table = pa.Table.from_arrays(arrays, names=list(cols))
-    completed(conn).register("__sdmx_bulk_insert", arrow_table)
+    conn.register("__sdmx_bulk_insert", arrow_table)
     try:
         col_str = ", ".join(cols)
         conn.execute(f"INSERT INTO {table} ({col_str}) SELECT * FROM __sdmx_bulk_insert")
     finally:
-        completed(conn).unregister("__sdmx_bulk_insert")
+        conn.unregister("__sdmx_bulk_insert")
 
 
 # ── Spine + text + annotations helpers ──────────────────────────────────
@@ -194,10 +194,12 @@ def _put_spine(
     last-write-wins; the warning surfaces the case to the caller.
     """
     if source_registry is not None:
-        existing = conn.execute(
-            "SELECT source_registry FROM artefact WHERE urn = ?",
-            [urn],
-        ).fetchone()
+        existing = first(
+            conn.execute(
+                "SELECT source_registry FROM artefact WHERE urn = ?",
+                [urn],
+            )
+        )
         if existing is not None and existing[0] is not None and existing[0] != source_registry:
             warnings.warn(
                 (
@@ -801,7 +803,7 @@ def _delete_artefact_cascade(conn: duckdb.DuckDBPyConnection, urn: str, artefact
     `test_the_cascade_precondition_holds_for_every_writer` asserts the
     ordering rather than trusting this paragraph.
     """
-    if conn.execute("SELECT 1 FROM artefact WHERE urn = ? LIMIT 1", [urn]).fetchone() is None:
+    if first(conn.execute("SELECT 1 FROM artefact WHERE urn = ? LIMIT 1", [urn])) is None:
         return
     p = [urn]
     for statement in _CASCADE.get(artefact_type, ()):
@@ -2882,14 +2884,16 @@ def drop_artefact(conn: duckdb.DuckDBPyConnection, urn: str) -> bool:
     # Unlike a writer, this has only a URN — the type comes off the spine.
     # One extra SELECT on a single-artefact operation, against the ~34
     # no-op DELETEs an undispatched cascade would run (#144).
-    row = conn.execute("SELECT artefact_type FROM artefact WHERE urn = ?", [urn]).fetchone()
+    row = first(conn.execute("SELECT artefact_type FROM artefact WHERE urn = ?", [urn]))
     if row is None:
         return False
     _delete_artefact_cascade(conn, urn, str(row[0]))
-    result = conn.execute(
-        "DELETE FROM artefact WHERE urn = ? RETURNING urn",
-        [urn],
-    ).fetchone()
+    result = first(
+        conn.execute(
+            "DELETE FROM artefact WHERE urn = ? RETURNING urn",
+            [urn],
+        )
+    )
     return result is not None
 
 

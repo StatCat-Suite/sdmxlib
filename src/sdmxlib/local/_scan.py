@@ -41,7 +41,6 @@ from sdmxlib.model.errors import SdmxParseError
 from sdmxlib.model.ref import Ref
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.query.observations import ObsQuery
-from sdmxlib.session import completed
 
 
 def scan_csv_into(
@@ -129,11 +128,11 @@ def scan_frame_into(
     except pl.exceptions.PolarsError as exc:
         raise type_mismatch(dsd.id, exc) from exc
     name = relation.rpartition(".")[2]
-    completed(plane.connection).register(name, typed.to_arrow())
+    plane.connection.register(name, typed.to_arrow())
     try:
         plane.connection.execute(f"CREATE TABLE {relation} AS SELECT * FROM {name}")
     finally:
-        completed(plane.connection).unregister(name)
+        plane.connection.unregister(name)
     return plane.obs(binding, dsd=dsd)
 
 
