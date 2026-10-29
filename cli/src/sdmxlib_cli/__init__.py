@@ -25,6 +25,7 @@ from sdmxlib.bundle import (
 )
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.urn import SdmxUrn
+from sdmxlib.model.version import compliance
 
 
 class At(StrEnum):
@@ -89,15 +90,32 @@ def _source(text: str) -> ProviderInfo | str:
 
 
 def _flow(text: str) -> SdmxUrn[Dataflow]:
-    """A dataflow as ``AGENCY:ID(VERSION)``, ``AGENCY:ID`` (latest), or a full URN."""
-    if text.startswith("urn:"):
-        return Dataflow.parse_urn(text)
-    agency, _, rest = text.partition(":")
-    flow_id, _, version = rest.partition("(")
-    if not agency or not flow_id:
-        msg = f"{text!r} is not AGENCY:ID(VERSION), AGENCY:ID or a dataflow URN"
+    """A dataflow as ``AGENCY:ID(VERSION)``, ``AGENCY:ID`` (latest), or a full URN.
+
+    Raises:
+        typer.BadParameter: Naming the accepted forms, for text that is none
+            of them: a malformed URN, agency or id, or a version that is
+            neither ``latest`` nor an SDMX version.
+    """
+    forms = "AGENCY:ID(VERSION), AGENCY:ID or a dataflow URN"
+    try:
+        if text.startswith("urn:"):
+            urn = Dataflow.parse_urn(text)
+        else:
+            agency, _, rest = text.partition(":")
+            flow_id, _, version = rest.partition("(")
+            if not agency or not flow_id:
+                msg = f"{text!r} is not {forms}"
+                raise typer.BadParameter(msg)
+            version = version.removesuffix(")") or "latest"
+            urn = Dataflow.urn_for(agency=agency, id=flow_id, version=version)
+    except sl.SdmxParseError as exc:
+        msg = f"{text!r} is not {forms}: {exc}"
+        raise typer.BadParameter(msg) from exc
+    if urn.version != "latest" and not compliance(urn.version):
+        msg = f"{text!r} is not {forms}: {urn.version!r} is neither latest nor an SDMX version"
         raise typer.BadParameter(msg)
-    return Dataflow.urn_for(agency=agency, id=flow_id, version=version.rstrip(")") or "latest")
+    return urn
 
 
 @bundle.command("fetch")

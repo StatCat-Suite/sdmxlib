@@ -41,11 +41,11 @@ behaviour behind each command; `tests/unit/test_cli.py` tests the wrapping.
 
 - Commands hold no logic of their own beyond argument parsing and printing;
   behaviour changes belong in `sdmxlib.bundle`.
-- A `SOURCE` that is neither a provider name nor a URL, and a bad tier, raise
-  `typer.BadParameter` naming the accepted forms. `_flow` raises
-  `BadParameter` only for an empty agency or id; a malformed URN or short form
-  falls through to the library's `SdmxParseError`, and a malformed version
-  such as `ECB:X(bad v)` is accepted as a URN (GH-265).
+- A bad `SOURCE`, `FLOW` or tier raises `typer.BadParameter` naming the
+  accepted forms, so the CLI prints usage rather than a traceback. `_flow`
+  converts the library's `SdmxParseError` (a malformed URN, agency or id) and
+  refuses a version that is neither `latest` nor an SDMX version
+  (`model.version.compliance`), in either form (GH-265).
 - `bundle files` accepts either a publication directory or a
   `bundle.manifest.json` staged elsewhere (its parent is used). Its listing
   leaves the manifest out and `--manifest` prints the manifest's path alone,

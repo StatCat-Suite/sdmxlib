@@ -157,6 +157,25 @@ def test_a_flow_is_read_short_or_as_a_urn(text: str, urn: str) -> None:
     assert str(_flow(text)) == urn
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        "urn:junk",
+        "EC B:X",
+        "ECB:X(bad v)",
+        "ECB:X(1.0)junk",
+        "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=ECB:X(bad v)",
+        ":X",
+        "ECB:",
+    ],
+)
+def test_a_malformed_flow_is_a_usage_error_naming_the_forms(text: str) -> None:
+    """GH-265: the library's parse errors and an invalid version become
+    typer's `BadParameter`, so the CLI prints usage rather than a traceback."""
+    with pytest.raises(typer.BadParameter, match=r"is not AGENCY:ID\(VERSION\), AGENCY:ID or a dataflow URN"):
+        _flow(text)
+
+
 def test_a_source_is_a_provider_by_name_or_a_url() -> None:
     assert _source("ecb") is sl.Provider.ECB
     assert _source("https://example.test/rest") == "https://example.test/rest"
