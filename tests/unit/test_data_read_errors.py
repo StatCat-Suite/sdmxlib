@@ -155,14 +155,14 @@ def test_a_scanned_path_raises_the_type_error_when_queried(
         _drain(obs, terminal)
 
 
-@pytest.mark.parametrize("terminal", ["frame", "stream", "count"])
-def test_a_scanned_path_raises_a_parse_error_when_queried(
-    typed: sl.LocalRegistry, tmp_path: Path, terminal: str
+def test_a_scanned_path_with_a_row_duckdb_cannot_split_is_refused_as_it_is_scanned(
+    typed: sl.LocalRegistry, tmp_path: Path
 ) -> None:
+    """The scan reads the file once to refuse a delete row (GH-284), so a row
+    with too many columns fails then, as a parse error, not at the first query."""
     text = _rows(*_MANY) + "dataflow,AGENCY:DF(1.0.0),I,CA,2021,1,EXTRA,MORE\n"
-    obs = typed.scan_csv(_path(tmp_path, text.encode()))
     with pytest.raises(sl.SdmxParseError, match="could not be read"):
-        _drain(obs, terminal)
+        typed.scan_csv(_path(tmp_path, text.encode()))
 
 
 def test_a_good_scanned_path_reads(typed: sl.LocalRegistry, tmp_path: Path) -> None:
