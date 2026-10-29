@@ -123,7 +123,7 @@ def test_one_question_asked_by_many_threads_fetches_once(monkeypatch) -> None:
     fetches: list[object] = []
     lock = threading.Lock()
 
-    def _fetch_into(_store, plan, _client, *, projection=None, record=None) -> tuple[()]:
+    def _fetch_into(_store, plan, _client, *, projection=None, projected_paths=frozenset(), record=None) -> tuple[()]:
         with lock:
             fetches.append(plan)
         return ()
@@ -140,7 +140,7 @@ def test_different_questions_each_fetch(monkeypatch) -> None:
     fetches: list[object] = []
     lock = threading.Lock()
 
-    def _fetch_into(_store, plan, _client, *, projection=None, record=None) -> tuple[()]:
+    def _fetch_into(_store, plan, _client, *, projection=None, projected_paths=frozenset(), record=None) -> tuple[()]:
         with lock:
             fetches.append(plan)
         return ()
@@ -168,7 +168,7 @@ def test_the_fetch_cache_is_bounded(monkeypatch) -> None:
     """
     fetches: list[object] = []
 
-    def _fetch_into(_store, plan, _client, *, projection=None, record=None) -> tuple[()]:
+    def _fetch_into(_store, plan, _client, *, projection=None, projected_paths=frozenset(), record=None) -> tuple[()]:
         fetches.append(plan)
         return ()
 

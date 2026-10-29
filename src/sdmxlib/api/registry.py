@@ -31,7 +31,7 @@ from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.ref import Ref, SupportsUrn, artefact_urn, target_urn
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.model.validation import SdmxConformanceError
-from sdmxlib.query._closure import closure, detail_for, reached_columns
+from sdmxlib.query._closure import closure, detail_for, reached_columns, references_for
 from sdmxlib.query._common import canonical_key
 from sdmxlib.query._execute import fetch_into
 from sdmxlib.query._expr import AnyPred, Cols, Compare, RowKind
@@ -283,8 +283,9 @@ class RestRegistry:
         #: threads build two `:memory:` stores, one of which is leaked still
         #: open with a thread's fetched artefacts inside it.
         self._store_lock = threading.Lock()
-        #: Plans already fetched for, keyed by `canonical_key`. Bounded and
-        #: single-flight — see `_singleflight.SingleFlight`.
+        #: Plans already fetched for, keyed by `canonical_key` with the
+        #: `detail=` and `references=` the fetch asked for (`_fetch_for`).
+        #: Bounded and single-flight — see `_singleflight.SingleFlight`.
         self._fetched = SingleFlight(fetch_cache_size)
         #: Table -> the question whose rows it currently holds. See
         #: `_fetch_data_for` for why one table serves one question at a time,
@@ -695,7 +696,12 @@ class RestRegistry:
                     self._query_store_owned = LocalRegistry(":memory:").open()
         return self._query_store_owned
 
-    def _fetch_for[R: "RowKind"](self, plan: Plan[R], projection: frozenset[tuple[str, str]] | None = None) -> None:
+    def _fetch_for[R: "RowKind"](
+        self,
+        plan: Plan[R],
+        projection: frozenset[tuple[str, str]] | None = None,
+        projected_paths: frozenset[tuple[str, ...]] = frozenset(),
+    ) -> None:
         """Fetch what `plan` needs, once per distinct question.
 
         Keyed on `canonical_key` rather than on the plan object: two plans that
@@ -714,19 +720,26 @@ class RestRegistry:
         `select(id).ids()` fetches stubs, then `collect()` on the same plan
         finds the key present, skips the fetch, and resolves artefacts whose
         items were never retrieved — a codelist with zero codes and no error.
+
+        **So is the depth the projection reaches** (GH-271). A `Select` that
+        reads `dataflow.dsd.id` needs `references=children`, and its plan alone
+        asks for `none`. Keyed on the derived `references=` value, as `detail=`
+        is: keyed on the plan alone, a `collect()` that fetched with `none`
+        would satisfy the projection, which would then read null.
         """
         store = self._query_store()
         key = canonical_key(plan)
         detail = _detail_of(plan, projection)
+        references = references_for(plan.root.__table__, closure(plan) | projected_paths)
         scope = str(key)
         # `full` subsumes `allstubs`: everything a stub carries is in a full
         # artefact, so a narrow ask after a wide fetch is pure waste. The
         # reverse does not hold, which is what the key is for.
-        if detail != "full" and (key, "full") in self._fetched:
+        if detail != "full" and (key, "full", references) in self._fetched:
             return
         self._fetched.run(
-            (key, detail),
-            lambda: self._fetch_and_scope(store, plan, projection, scope),
+            (key, detail, references),
+            lambda: self._fetch_and_scope(store, plan, projection, projected_paths, scope),
         )
 
     def _fetch_and_scope[R: "RowKind"](
@@ -734,6 +747,7 @@ class RestRegistry:
         store: LocalRegistry,
         plan: Plan[R],
         projection: frozenset[tuple[str, str]] | None,
+        projected_paths: frozenset[tuple[str, ...]],
         scope: str,
     ) -> None:
         """Fetch, recording which artefacts came back under `scope` (§5.13).
@@ -757,7 +771,9 @@ class RestRegistry:
         with store.session() as session:
             session.execute("DELETE FROM sdmx.fetch_scope WHERE fetch_key = ?", [scope])
             urns: list[str] = []
-            fetch_into(store, plan, self._client, projection=projection, record=urns.append)
+            fetch_into(
+                store, plan, self._client, projection=projection, projected_paths=projected_paths, record=urns.append
+            )
             for urn in urns:
                 session.execute(
                     "INSERT OR IGNORE INTO sdmx.fetch_scope (fetch_key, urn) VALUES (?, ?)",
@@ -1093,13 +1109,16 @@ class RestRegistry:
         return flow, dsd
 
     def _fetch_data_for[R: "RowKind"](
-        self, plan: Plan[R], _projection: frozenset[tuple[str, str]] | None = None
+        self,
+        plan: Plan[R],
+        _projection: frozenset[tuple[str, str]] | None = None,
+        _projected_paths: frozenset[tuple[str, ...]] = frozenset(),
     ) -> None:
         """Fetch the slice this plan needs, and replace the table with it.
 
-        The projection is accepted and ignored: `detail=` is a *structure*
-        parameter, and a data request has no equivalent — SDMX-CSV returns the
-        columns the key selects either way.
+        The projection and its paths are accepted and ignored: `detail=` and
+        `references=` are *structure* parameters, and a data request has no
+        equivalent — SDMX-CSV returns the columns the key selects either way.
 
         **One table per dataflow, holding one question's rows.** A second,
         different query overwrites it — and evicts the first from `_fetched`,

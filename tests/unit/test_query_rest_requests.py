@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import pytest
 
+from sdmxlib.query._compile import projection_paths
 from sdmxlib.query._expr import Cols, Pred, RowKind
 from sdmxlib.query._plan import Plan, scanned
 from sdmxlib.query._pushdown import SDMX_REST, plan_program
@@ -233,3 +234,27 @@ def test_the_membership_reference_defeats_a_stub_even_for_a_projection() -> None
     )
     _inner, outer = requests_for(program, projection=[("artefact", "resource_id")])
     assert outer.detail == "full"
+
+
+def test_projected_paths_join_the_root_scan_only() -> None:
+    """GH-271: a `Select`'s paths are over the root scan's rows, which
+    `plan_program` emits last, after any §9.1 sub-scan."""
+    plain = plan_program(Plan(root=scanned(q.dataflow), predicates=(q.dataflow.agency == "ESTAT",)), SDMX_REST)
+    assert requests_for(plain)[0].references == "none"
+    one_edge = projection_paths([("d", q.dataflow.dsd.id)])
+    (projected,) = requests_for(plain, projected_paths=one_edge)
+    assert projected.references == "children"
+
+    rewritten = plan_program(
+        Plan(
+            root=scanned(q.dataflow),
+            predicates=(q.dataflow.agency == "ESTAT", q.dataflow.dsd.agency == "ESTAT"),
+        ),
+        SDMX_REST,
+    )
+    baseline = requests_for(rewritten)
+    two_edges = projection_paths([("c", q.dataflow.dsd.dimensions.concept.id.list())])
+    with_paths = requests_for(rewritten, projected_paths=two_edges)
+    assert len(with_paths) == len(baseline) == 2
+    assert with_paths[0] == baseline[0], "the sub-scan is not what the projection reads"
+    assert with_paths[1].references == "descendants"

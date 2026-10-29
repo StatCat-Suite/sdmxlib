@@ -1417,6 +1417,17 @@ def _columns_of(item: AnyCol | AnyAgg) -> tuple[AnyCol, ...]:
     return _leaf_columns(item)
 
 
+def projection_paths(items: Sequence[tuple[str, AnyCol | AnyAgg]]) -> frozenset[tuple[str, ...]]:
+    """Every path a projection reads, absolute from the scan root.
+
+    What a fetch must reach for a `Select` to answer (GH-271): the plan's
+    closure covers its predicates and order, and a projected column across an
+    edge is in neither, so without these the fetch leaves out the relation the
+    column sits on and the projection reads null.
+    """
+    return frozenset(tuple(column.path) for _, item in items for column in _columns_of(item))
+
+
 def _prefixes(table: str, columns: Iterable[AnyCol], into: list[tuple[str, ...]]) -> None:
     """Append each column's pre-fan-out prefix, keeping the list unique."""
     for column in columns:

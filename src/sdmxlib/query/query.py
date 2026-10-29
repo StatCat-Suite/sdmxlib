@@ -44,6 +44,7 @@ from sdmxlib.query._compile import (
     compile_page,
     compile_projection,
     compile_select,
+    projection_paths,
     refuse_to_many_projection,
     spelled,
 )
@@ -553,8 +554,8 @@ class Query[R: RowKind, A = object]:
     #: `eq=False`, so it is wiring rather than part of the question: two
     #: queries that mean the same thing must key the same whether or not one
     #: of them has to fetch first.
-    _prepare: Callable[[Plan[R], frozenset[tuple[str, str]] | None], None] | None = attrs.field(
-        default=None, eq=False, repr=False, alias="prepare"
+    _prepare: Callable[[Plan[R], frozenset[tuple[str, str]] | None, frozenset[tuple[str, ...]]], None] | None = (
+        attrs.field(default=None, eq=False, repr=False, alias="prepare")
     )
     #: How to name this query's database when refusing a cross-source splice
     #: (§5.9). The registry's uri; `None` when built without one. `eq=False`
@@ -636,7 +637,11 @@ class Query[R: RowKind, A = object]:
         """The window start."""
         return self.plan.offset_n
 
-    def _cursor(self, projection: frozenset[tuple[str, str]] | None = None) -> duckdb.DuckDBPyConnection:
+    def _cursor(
+        self,
+        projection: frozenset[tuple[str, str]] | None = None,
+        projected_paths: frozenset[tuple[str, ...]] = frozenset(),
+    ) -> duckdb.DuckDBPyConnection:
         """The connection to run on, after any fetch the backend owes.
 
         Every statement this class runs goes through here, which is the point:
@@ -650,9 +655,13 @@ class Query[R: RowKind, A = object]:
         with zero codes and no error. Every terminal here passes `None`; only
         `Select`, which *is* the projected query, knows it needs nothing beyond
         the columns it names.
+
+        `projected_paths` are the paths that projection reads, from
+        `projection_paths`: the fetch must reach them, and the plan's closure
+        does not carry them (GH-271).
         """
         if self._prepare is not None:
-            self._prepare(self.plan, projection)
+            self._prepare(self.plan, projection, projected_paths)
         return cursor_for(self._conn)
 
     @property
@@ -2392,7 +2401,7 @@ class Select[R: RowKind, A = object]:
                 would add nothing. See `_labelled`.
         """
         compiled = self.to_sql()
-        cursor = self._query._cursor(self._query._projection_columns(self.items))
+        cursor = self._query._cursor(self._query._projection_columns(self.items), projection_paths(self.items))
         # component id -> the name it was projected under, so an aliased column
         # is typed and labelled under the alias.
         aliases = {item.projected_name: name for name, item in self.items if isinstance(item, AnyCol)}
@@ -2490,7 +2499,9 @@ class Select[R: RowKind, A = object]:
         # A cursor of its own, not the shared handle: two concurrent streams
         # on one connection would overwrite each other's row buffer (#75), and
         # the reader holds this one until it is exhausted or closed.
-        cursor = own_handle(self._query._cursor(self._query._projection_columns(self.items)))
+        cursor = own_handle(
+            self._query._cursor(self._query._projection_columns(self.items), projection_paths(self.items))
+        )
         return self._query._converting(
             completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
         )
@@ -2569,7 +2580,7 @@ def build[R: RowKind, A](
     *,
     predicates: Sequence[Pred[R]] = (),
     default_order: Sequence[OrderKey] = (),
-    prepare: Callable[[Plan[R], frozenset[tuple[str, str]] | None], None] | None = None,
+    prepare: Callable[[Plan[R], frozenset[tuple[str, str]] | None, frozenset[tuple[str, ...]]], None] | None = None,
     source: object = None,
     source_label: str | None = None,
 ) -> Query[R, A]:
