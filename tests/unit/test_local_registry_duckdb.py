@@ -453,6 +453,26 @@ def test_dsd_code_map():
         assert cm["FREQ"]["A"] == "Annual"
 
 
+#: A `lang` that rewrote the old statement and left it valid: interpolated, it
+#: closed the map subscript, put a constant in the label and commented out the
+#: rest of the line (GH-262). Bound, it is a language no code has a name in.
+_HOSTILE_LANG = "zz'], 'INJECTED') AS label --"
+
+
+def test_a_lang_is_bound_as_a_value_in_every_code_map() -> None:
+    with LocalRegistry(":memory:") as local:
+        local.add(_make_cl())
+        cl_urn = Codelist.urn_for(agency="SDMX", id="CL_FREQ", version="1.0")
+        dim = Dimension(id="FREQ", concept=concept_ref("FREQ"), representation=Ref[Codelist].unresolved(cl_urn))
+        local.add(DataStructure(id="DSD_TEST", maintainer="SDMX", version="1.0", name=_NAME, dimensions=[dim]))
+        dsd_urn = DataStructure.urn_for(agency="SDMX", id="DSD_TEST", version="1.0")
+        ids = {"A": "A", "Q": "Q", "M": "M"}
+
+        assert present(local.get(cl_urn)).code_map(lang=_HOSTILE_LANG) == ids
+        assert local.code_map(cl_urn, lang=_HOSTILE_LANG) == ids
+        assert local.dsd_code_map(dsd_urn, lang=_HOSTILE_LANG) == {"FREQ": ids}
+
+
 # ── Roots and children ───────────────────────────────────────────────────────
 
 

@@ -49,9 +49,8 @@ Each `bench/` tool has a `README.md`.
 - A reader refuses what it cannot read with `SdmxParseError` (a
   `ValueError`); a value that does not fit its component's type is the one
   "does not fit its component's type" `ValueError`.
-- SQL binds every value as a parameter, and only validated identifiers are
-  interpolated, with one known exception: `code_map` and `code_map_for_dsd`
-  put the caller's `lang` into the SQL text (GH-262).
+- SQL binds every value as a parameter; only validated identifiers are
+  interpolated.
 - Every stored timestamp is naive UTC (`_time.py`).
 - `sdmxlib-cli`'s version and its `sdmxlib==` pin equal sdmxlib's version.
 - Every type named in a public signature, and every exception a public
