@@ -13,10 +13,20 @@ import polars as pl
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.bundle import ArtefactEntry, Producer, build_bundle, check_bundle, read_manifest, write_manifest
+from sdmxlib.bundle import (
+    ArtefactEntry,
+    Producer,
+    build_bundle,
+    check_bundle,
+    fold_overlays,
+    read_manifest,
+    write_manifest,
+)
 from sdmxlib.model.codelist import CascadeSelection
 from sdmxlib.model.constraint import ConstraintAttachment, CubeRegion, KeyValue, RegionValue
 from tests.support.factories import code_ref, concept_ref
+from tests.unit.test_annotation_overlays import _entry as _overlay_entry
+from tests.unit.test_annotation_overlays import _overlay
 
 pytestmark = pytest.mark.unit
 
@@ -208,3 +218,20 @@ def test_a_path_that_is_not_empty_is_refused(tmp_path: Path) -> None:
     (tmp_path / "p" / "x").write_text("x")
     with pytest.raises(FileExistsError, match="not empty"):
         _build(_source(tmp_path / "s"), tmp_path / "p", ["A1"])
+
+
+def test_folding_an_overlay_keeps_each_partials_cut_from(tmp_path: Path) -> None:
+    """GH-272: a fold republishes the store, and a partial's record of the
+    full artefact it was cut from must survive it, or the partials check has
+    nothing to compare against."""
+    source = _source(tmp_path / "s")
+    publication = _build(source, tmp_path / "p", ["A1", "A2", "B3"])
+    cut_from = _entry(publication, GEO_URN).cut_from
+    assert cut_from == _entry(source, GEO_URN).fingerprint
+
+    folded = fold_overlays(publication, [_overlay(_overlay_entry("T:CL", "set", "ORDER", "folded"))])
+
+    after = publication.parent / folded.token
+    assert _entry(after, GEO_URN).cut_from == cut_from
+    report = check_bundle(after, at="publish", structures=source)
+    assert report.ok, "\n".join(map(str, report.findings))
