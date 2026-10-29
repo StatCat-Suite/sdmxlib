@@ -1,10 +1,10 @@
 # Sharded bundle catalog: design
 
-Status: fifth revision. sdmxlib's part is built: M0, M2, M4, M5 and M7, the name overlays and the format specification, released in 0.73.0, with M3 shelved (§16); then reading tier 3 from object storage (GH-180), store-neutral remote verification (GH-181), pulling by tier with any copy tool (GH-182), the fingerprint comparison §9.2 runs (GH-183) and the derived tables of §7.1 (GH-184), released in 0.75.0. The tier-3 measurement (GH-185) found no cache to build (§7.1), and a fetched bundle's closure holds its incoming references (GH-221). The fifth revision settles four contradictions the review of the implementation plan found: the CDN revalidates on a short TTL (§7.4), each partial records the full artefact it was cut from (§4.2, §6.4), the index builder reads every manifest (§6.6), and an interrupted release leaves the staged index current (§11.2). statcatlib's and sdmxlib-rest's parts, M6 and M8 to M13, are in progress. Audience: implementers working on sdmxlib, statcatlib and sdmxlib-rest. Written against sdmxlib 0.75.0 and DuckDB 2.0.0; spike results and the decisions they settled are in §16 (M1) and §17. The work is the [Sharded bundle catalog](https://github.com/StatCat-Suite/sdmxlib/milestone/9) milestone, and GH-136 is the cross-repo plan.
+Status: fifth revision. sdmxlib's part is built: M0, M2, M4, M5 and M7, the name overlays and the format specification, released in 0.73.0, with M3 shelved (§16); then reading tier 3 from object storage (GH-180), store-neutral remote verification (GH-181), pulling by tier with any copy tool (GH-182), the fingerprint comparison §9.2 runs (GH-183) and the derived tables of §7.1 (GH-184), released in 0.75.0; then sdmxlib's part of Phase 1 of the implementation plan, the incoming references of a fetched closure (GH-221), `build_bundle` with its partials (GH-223), `cut_from` and manifest 2.1 (GH-224) and sibling dataflows left out of each other's structural fingerprints (GH-228), and the tier-3 measurement (GH-185), which found no cache to build (§7.1), released in 0.76.0. The fifth revision settles four contradictions the review of the implementation plan found: the CDN revalidates on a short TTL (§7.4), each partial records the full artefact it was cut from (§4.2, §6.4), the index builder reads every manifest (§6.6), and an interrupted release leaves the staged index current (§11.2). statcatlib's and sdmxlib-rest's parts, M6 and M8 to M13, are in progress. Audience: implementers working on sdmxlib, statcatlib and sdmxlib-rest. Written against sdmxlib 0.77.0 and DuckDB 2.0.0; spike results and the decisions they settled are in §16 (M1) and §17. The work is the [Sharded bundle catalog](https://github.com/StatCat-Suite/sdmxlib/milestone/9) milestone, and GH-136 is the cross-repo plan.
 
-This document specifies how a dissemination catalog of many SDMX products is published as a set of bundles, indexed, routed to serving pods, verified, cached and migrated. It builds on two published formats and changes both:
+This document specifies how a dissemination catalog of many SDMX products is published as a set of bundles, indexed, routed to serving pods, verified, cached and migrated. It builds on two published formats and changes both. The sdmxlib format's page already carries the changes built so far, as manifest 2.1 and overlay 1.2:
 
-- sdmxlib bundle format, manifest 1.1 and overlay 1.0: https://statcat-suite.github.io/sdmxlib/bundle/
+- sdmxlib bundle format, manifest 2.1 and overlay 1.2: https://statcat-suite.github.io/sdmxlib/bundle/
 - statcatlib bundle format, statcat section 2: https://statcat-suite.github.io/statcatlib/bundle-format/
 
 MUST, MUST NOT, SHOULD and MAY carry their RFC 2119 meanings. A *producer* writes a bundle or an index; a *reader* opens one; a *server* is a reader that answers SDMX REST requests; the *publish job* is the workflow that produces publications.
@@ -83,7 +83,7 @@ Blob storage is the hand-off. The publish job and the GC job write `bundles/` an
 
 ## 4. Bundle format changes (manifest 2.0)
 
-The layout change (`data_path`, `root`, `tier`) is a major version. A 1.x reader refuses a 2.0 manifest by the existing rule. The store schema was to bump in the same release with the labels split; the split was shelved (§4.1), and 0.73.0 kept store schema 2.48. 0.75.0 moves it to 2.51: stored availability (GH-194), the binding's layout columns dropped for DuckLake's catalog (GH-205), and a reported attribute's order (GH-197). Readers and producers roll out together as one pinned image set (§9).
+The layout change (`data_path`, `root`, `tier`) is a major version. A 1.x reader refuses a 2.0 manifest by the existing rule. The store schema was to bump in the same release with the labels split; the split was shelved (§4.1), and 0.73.0 kept store schema 2.48. 0.75.0 moved it to 2.49 for stored availability (GH-194). 0.76.0 moved it to 2.51: the binding's layout columns dropped for DuckLake's catalog (GH-205), and a reported attribute's order (GH-197). Readers and producers roll out together as one pinned image set (§9).
 
 ### 4.0 Bundle granularity
 
@@ -153,7 +153,7 @@ bundles/<bundle_id>/
 | field | presence | meaning |
 |---|---|---|
 | `urn` | required | The pinned URN. |
-| `stability` | required | `"semantic"` (three-part version without extension; SDMX 3.0 guarantees immutability) or `"legacy"`. |
+| `stability` | required | `"semantic"` (a three-part version with no extension and a major version of at least 1, as `model/version.py`'s `is_final` reads it; SDMX 3.0 guarantees its immutability) or `"legacy"` (any other version, `0.1.0` included). |
 | `partial` | required | `true` for a partial codelist or scheme vendored as a subset (§8). |
 | `fingerprint` | required | Artefact fingerprint (§4.4). |
 | `cut_from` | optional | For a partial, the artefact fingerprint of the full artefact it was cut from; absent for a full artefact. Added in manifest 2.1, a minor version a 2.0 reader ignores. The index builder compares it with the structures bundle's entry for the same URN (§6.4 items 4 and 10), so the partial's codes never need to be in the manifest. |
@@ -178,18 +178,18 @@ Three levels. Each is tagged by `canonical_form`, the version of the text it has
 
 ```sql
 SELECT
-  sum((md5_number_lower(to_json(t)) % 4611686018427387904)::HUGEINT)::VARCHAR
+  coalesce(sum((md5_number_lower(to_json(t)) % 4611686018427387904)::HUGEINT), 0)::VARCHAR
     || ':' || count(*)::VARCHAR
 FROM lake.<schema>.<table> AS t;
 ```
 
-MD5 is a fixed standard. Each term is below 2^62, so a HUGEINT sum does not overflow below 2^66 rows. Swapping two values between rows changes two row digests; duplicate rows add their digest twice.
+An empty table fingerprints as `0:0`. MD5 is a fixed standard. Each term is below 2^62, so a HUGEINT sum does not overflow below 2^66 rows. Swapping two values between rows changes two row digests; duplicate rows add their digest twice.
 
 **Artefact fingerprint.** SHA-256 of the artefact's canonical model text, `sdmxlib.bundle.canonical_json` at `CANONICAL_FORM` 1 (GH-126; msgspec cannot encode the attrs model, and the overlay digest works only because overlays are msgspec structs). The text is compact key-sorted JSON: every attrs object carries `"$class"` (its Python class) and every init field, `null` included; `maintainer` is the agency id; a `Ref` is its URN alone, never followed; an enum is its member name; a datetime is UTC with microseconds and `Z`; lists keep their order and sets sort by canonical text; a non-finite float, a naive datetime and any undefined type are refused. Golden texts cover all 30 artefact classes, and a walk asserts every field of every object reaches the text. The model carries fields SDMX-JSON cannot (the 28 declared gaps), so the wire format is unsuitable here; `docs/bundle.md` §9 states the form for other implementations.
 
 **Structural fingerprint of a dataflow.** The artefact fingerprints of the dataflow's closure, sorted by URN, joined with `\n`, SHA-256. The closure is: outgoing references from the dataflow and its DSD (concept schemes, codelists as vendored including partials, hierarchies), **plus the artefacts other than a dataflow that reference the dataflow or DSD** (constraints, provision agreements, hierarchy associations), plus those artefacts' own outgoing references. Another dataflow of the same DSD references it too and is left out, so an edit to one dataflow leaves its siblings' fingerprints and cached results (GH-228). Constraints and associations point at the dataflow rather than the reverse, so an outgoing-only walk would miss a constraint change that alters what is served.
 
-The fingerprint covers the closure the store holds, so the producer has to fetch the incoming references too. From an SDMX REST registry that is `references=all` on the dataflow and `references=parents` on its DSD over the 3.0 API; SDMX 2.1 has no hierarchy association, and FMR 12.4.2's 2.1 API returns none. `fetch_bundle` asks for `references=descendants` today, so its bundles hold none of the incoming artefacts (GH-221).
+The fingerprint covers the closure the store holds, so the producer has to fetch the incoming references too. From an SDMX REST registry that is `references=all` on the dataflow and `references=parents` on its DSD over the 3.0 API; SDMX 2.1 has no hierarchy association, and FMR 12.4.2's 2.1 API returns none. `build_bundle`, which `fetch_bundle` calls, asks a `RestRegistry` for each dataflow with `resolve="all"` and its DSD with `resolve="parents"`, so its bundles hold the incoming artefacts (GH-221).
 
 **Bundle fingerprint** (`content_fingerprint`). SHA-256 of `artefacts:` then each artefact fingerprint in URN order, `bindings:` then `<dataflow urn>\t<table fingerprint>` in dataflow order, joined with `\n`.
 
@@ -223,6 +223,7 @@ check_bundle(path, at: Literal["publish", "receive", "open"], ...)
 | references (SQL, §4.8) | yes | yes | no |
 | fingerprint recompute | yes | optional | no |
 | availability: coded columns hold codes, stored availability is the data's | yes | no | no |
+| partials: each `cut_from` equals the full artefact's fingerprint, and the partial's codes and parents are in it | with `structures=` | with `structures=` | refused |
 | extensions (statcat) | yes | yes | section only |
 
 The orphan dry run is gone from the `lake` check; orphans are defined over the union of manifests and belong to GC (§11.4).
@@ -231,7 +232,7 @@ The orphan dry run is gone from the `lake` check; orphans are defined over the u
 
 After a successful receive-time check a reader MAY write `<pod-local>/verified/<bundle_id>/<token>` recording the manifest SHA-256. A later open at the same token with the same manifest SHA-256 runs the `open` profile; with no stamp, or a stamp for another manifest digest, the reader runs the `receive` profile first.
 
-Built in GH-130 as `check_on_open(path, stamps=dir)`: the stamp is `<stamps>/<bundle_id>/<token>`, JSON holding the manifest sha256, the checks that ran and the time, written by a rename once `receive` finds nothing. At `receive`, `data/` is checked by local size, or with `lookup=` by size and a digest the store keeps through `verify_remote`; the lake and the bindings still read the data where the registry reads it. `fingerprints=True` opts `receive` into the recompute. Extensions take the profile as a fourth argument.
+Built in GH-130 as `check_on_open(path, stamps=dir)`: the stamp is `<stamps>/<bundle_id>/<token>`, JSON holding the manifest sha256, the checks that ran and the time, written by a rename once `receive` finds nothing. At `receive`, `data/` is checked by local size, or with `lookup=` by size and a digest the store keeps through `verify_remote`; the lake and the bindings still read the data where the registry reads it. `check_bundle(at="receive", fingerprints=True)` opts into the recompute; `check_on_open` takes no `fingerprints=`, so a server's receive check never recomputes. Extensions take the profile as a fourth argument.
 
 ### 4.8 `references` as SQL
 
@@ -388,7 +389,7 @@ Derived tables were to be materialised at publish into `data_path` as tier 3: la
 
 A pod runs one DuckDB engine and attaches every bundle it serves into it, so one buffer pool and one thread pool are shared and `memory_limit` means one thing. sdmxlib assumed one bundle per connection (`search_path = 'sdmx'`, `sdmx.*` qualification, a fixed `lake` alias) until GH-133. The change that supports many bundles per engine without qualifying every table:
 
-- **Per-cursor `search_path`.** Each bundle attaches its DuckDB files under per-bundle aliases (`<bundle_id>__<token short>__meta`, `__lake`; a `__labels` alias went with the shelved split, §7.1). A request's cursor sets `search_path` to the bundle's `meta` catalog, so the existing `sdmx.<table>` spellings resolve as `<schema>.<table>` inside those catalogs. sdmxlib already runs each request on a per-thread cursor; the router sets the path before handing it over.
+- **Per-cursor `search_path`.** Each bundle attaches its DuckDB files under per-bundle aliases (`<bundle_id>__<token>__meta`, `__lake`, where each character an alias cannot hold becomes `_` in the `bundle_id` and is dropped from the whole token; a `__labels` alias went with the shelved split, §7.1). A request's cursor sets `search_path` to the bundle's `meta` catalog, so the existing `sdmx.<table>` spellings resolve as `<schema>.<table>` inside those catalogs. sdmxlib already runs each request on a per-thread cursor; the router sets the path before handing it over.
 - **Role-to-alias map.** `DataflowBinding.database_role` names a role, which it keeps; the registry maps the role to the physical alias at attach time, so the stored binding stays `"lake"` and the SQL uses the per-bundle alias.
 - **Caches keyed by bundle token** (resolve cache, label maps, parsed DSDs).
 
@@ -461,7 +462,8 @@ The catalog is a network of addressable, immutable objects routed by key. Servin
 
 Each product bundle vendors its structural closure, and one **structures bundle** per agency vendors every full codelist, concept scheme, category scheme and hierarchy. Decisions:
 
-- **Partial codelists in product bundles.** A product bundle MUST vendor a codelist or scheme as the partial artefact (`isPartial="true"`, `partial: true`) holding the codes its content constraints use **plus their ancestors**, closed under parent. For a CODR table this is the member list CODR stores per table. SDMX has no partial hierarchy, so a codelist that a hierarchy in the bundle places is vendored full, and the hierarchy whole; `build_bundle` applies this rule (GH-223).
+- **Partial codelists in product bundles.** A product bundle MUST vendor a codelist as the partial artefact (`isPartial="true"`, `partial: true`) holding the codes the product uses **plus their ancestors**, closed under parent. For a CODR table this is the member list CODR stores per table. `build_bundle(partials=True)` applies the rule (GH-223, `bundle/_build.py`). It cuts `Codelist`s only; concept and category schemes stay full. A partial keeps the codes the observations hold in the columns the codelist enumerates, the codes the dataflows' allowed constraints name (a cascading selection adds the descendants it selects), and the codes another kept artefact references, each with its ancestors (`Codelist.partial`). A codelist stays full when a Hierarchy in the bundle places its codes (SDMX has no partial hierarchy, so the hierarchy stays whole and its codes with it), when it has extensions, when a component it enumerates has no column in the written observations, when a dataflow it serves has no observations, and when the cut would keep every code. `fetch_bundle` builds with `partials=False`.
+- **Overlays on a partial.** `fold_overlays` writes the folded publication's manifest without each partial's `cut_from` (GH-272), so a product with partials folded through it loses the record that §6.4 items 4 and 10 compare and `check_bundle(structures=)` checks.
 - **Structures bundles** (`kind: structures`) hold the full artefacts, have no bindings, live in the `base` pool unpinned (so they never gate readiness and attach lazily on the first full-artefact request), and answer `/structure` requests through `catalog/structures/`. They are the source the catalog-level search index (§12) is built from and the reference the builder checks partials against (§6.4 item 4). An agency MAY split them by change rate so one edit does not re-ship everything: for example `structures-geo` (the full geography, large and slow-moving), `structures-classifications` (NAICS, NOC, SGC), `structures-concepts` (concept schemes, small and frequently edited). Invariant 9 requires one home per full artefact, however the split is drawn.
 - **Publish order.** In a release, structures publications are `serving` before any product publication whose partials were cut from them (§6.4 item 10; §11.2). Each partial records the fingerprint of the full artefact it was cut from (`cut_from`, §4.2), which is how the builder knows the dependency without reading codes.
 - **First structure request.** Unpinned structures bundles attach on the first full-artefact request, so the first `/structure` request for a large one (the full geography) waits for its tier-1 pull, labels included. Pools that serve structure endpoints MAY pin the large structures bundles to move that pull before readiness.
@@ -667,7 +669,7 @@ Order follows risk removed per unit of work. Synthetic bundles and `profile_bund
 
 **M5. sdmxlib: effective token and check profiles.** Applied-overlay digest; per-type hook ids; `null` scope; `check_bundle(at=...)`; anti-joins generated from `_edges.py`; receive stamp; tier-3 verification by size and `Content-MD5`. Test: findings identical to the loading check across the corpus; `references` under 1 s on the census bundle. Built in GH-129, GH-130 and GH-131; `references` takes 0.15 s on the census bundle.
 
-**M6. statcatlib: partials, structures bundle, local fixes.** Partial vendoring closed under parents; the structures bundle kind; `statcat._meta` check (statcatlib#39); refuse unknown `index_version`; token-named search tables. Test: a CODR-shaped product closure under 10 MB; a partial lacking an ancestor is refused at build.
+**M6. statcatlib: partials, structures bundle, local fixes.** Partial vendoring closed under parents, which sdmxlib's `build_bundle` does (GH-223, §8), for statcatlib's ingest to call; the structures bundle kind; `statcat._meta` check (statcatlib#39); refuse unknown `index_version`; token-named search tables. Test: a CODR-shaped product closure under 10 MB; a partial lacking an ancestor is refused at build.
 
 **M7. sdmxlib: shared engine.** Per-cursor `search_path`; role-to-alias map; token-keyed caches. Test: 200 synthetic bundles attached in one engine; queries against each return that bundle's rows; the `lake` alias collision test passes with two bundles. Built in GH-133, with the 200-bundle test in `tests/unit/test_bundle_engine.py`; the token-keyed caches stay per registry (§7.2, GH-160).
 
