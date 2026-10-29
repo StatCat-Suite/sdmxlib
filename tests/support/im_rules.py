@@ -110,7 +110,6 @@ def _sequence(rule: str) -> Warned:
 _DATA_SET = "a data set's conformance to its DSD is the data plane's: #459"
 _VTL = "the VTL schemes are not modelled: #467"
 _CROSS = "relates an artefact to one it references; nothing checks that across artefacts: #487"
-_MAPS = "structure map rules are not checked: #483"
 _USAGE = "`usage` is an `AttributeUsage`, whose only members are MANDATORY and OPTIONAL"
 
 RULES: tuple[Rule, ...] = (
@@ -647,7 +646,14 @@ RULES: tuple[Rule, ...] = (
         111,
         "The StructureMap can either map a source and target DataStructureDefinition or a source and target "
         "Dataflow, it cannot mix source and target types.",
-        NotChecked(_MAPS),
+        Warned(
+            (
+                Check(
+                    "_check_structure_map_kinds",
+                    "tests/unit/test_structure_map_rules.py::test_a_map_of_a_structure_to_a_structure_usage_warns",
+                ),
+            )
+        ),
     ),
     Rule(
         "IM-9.1.2.1-2",
@@ -655,21 +661,40 @@ RULES: tuple[Rule, ...] = (
         112,
         "If a ComponentMap has more than 1 source or target, a RepresentationMap must be used to describe how the "
         "values map",
-        NotChecked(_MAPS),
+        Warned(
+            (
+                Check(
+                    "_check_component_map_representation",
+                    "tests/unit/test_structure_map_rules.py::test_a_many_to_one_component_map_without_a_representation_map_warns",
+                ),
+            )
+        ),
     ),
     Rule(
         "IM-9.1.4.2-1",
         "9.1.4.2",
         114,
         "The frequency to convert the input date into. Mutually exclusive with freqDimension.",
-        NotChecked(_MAPS),
+        _v(
+            (
+                "_check_date_map_frequency",
+                "tests/unit/test_structure_map_rules.py::test_a_date_map_names_one_frequency_source[both]",
+            )
+        ),
     ),
     Rule(
         "IM-10.1.2.1-1",
         "10.1.2.1",
         117,
         "the RepresentationMapping sourceValues and targetValues must match the order.",
-        NotChecked(_MAPS),
+        Warned(
+            (
+                Check(
+                    "_check_mapping_arity",
+                    "tests/unit/test_structure_map_rules.py::test_a_mapping_of_the_wrong_arity_warns[too-few-sources]",
+                ),
+            )
+        ),
     ),
     Rule(
         "IM-11.1-1",
@@ -919,6 +944,7 @@ NON_IM_CHECKS: dict[str, str] = {
     "_validate_organisation_unit_scheme": "dispatch",
     "_validate_dsd": "dispatch",
     "_validate_metadata_structure": "dispatch",
+    "_validate_structure_map": "dispatch",
     "_validate_data_constraint": "dispatch, and a selection's values-or-time-range choice, a format rule (#433)",
     "_validate_attachment_constraint": "dispatch",
 }

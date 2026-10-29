@@ -132,6 +132,11 @@ hierarchical roll-ups.
   it emits one `ImRuleWarning` per artefact carrying every broken advisory.
   It is skipped when attrs validators are disabled. When several classes in the MRO register
   checks, only the first one's checks run.
+- A `StructureMap` refuses a date map naming both a frequency dimension and
+  a target frequency, or neither (IM §9.1.4.2, the XSDs' required choice). It
+  warns on a structure-to-usage map and on a many-valued component map with
+  no representation map (§9.1.2.1); a `RepresentationMap` warns on a mapping
+  whose value counts do not match its sources and targets (§10.1.2.1) (GH-26).
 - The model imports nothing from `sdmxlib.formats` and holds no XML, JSON
   or HTTP code. Its artefacts do no I/O; `rollup.AncestorMap` is the one
   class that queries DuckDB. Public signatures carry `Any` in five places:

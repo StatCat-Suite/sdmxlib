@@ -42,6 +42,10 @@ def test_check_accepts_a_parse_error() -> None:
     targets.check("detect", b"not sdmx")
 
 
+# pysdmx's write-back of the shape fixture (`3.1-shape/back.xml`) drops a
+# representation map's codelist endpoints and keeps its two-valued mappings,
+# which IM §10.1.2.1 warns on (GH-26). A seed that warns still reads.
+@pytest.mark.filterwarnings("ignore::sdmxlib.ImRuleWarning")
 @pytest.mark.parametrize("target", sorted(targets.TARGETS))
 def test_every_seed_reads_to_something(target: str) -> None:
     """A seed that reads to an empty message starts the fuzzer outside the reader.

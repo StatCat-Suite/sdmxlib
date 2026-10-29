@@ -74,6 +74,8 @@ from sdmxlib.model.link import Link
 from sdmxlib.model.mapping import (
     CategorySchemeMap,
     ConceptSchemeMap,
+    DatePatternMap,
+    EpochMap,
     MapDataType,
     OrganisationSchemeMap,
     RepresentationMap,
@@ -1266,6 +1268,36 @@ def _check_empty_keys_in_ml(dc: DataConstraint, version: str, issues: list[Valid
     )
 
 
+def _validate_structure_map(sm: StructureMap, prefix: str, issues: list[ValidationIssue]) -> None:
+    _validate_maintainable(sm, prefix, issues)
+    _check_date_map_frequency(sm, prefix, issues)
+
+
+def _check_date_map_frequency(sm: StructureMap, prefix: str, issues: list[ValidationIssue]) -> None:
+    """A date map names a frequency dimension or a target frequency, one of them (IM §9.1.4.2).
+
+    The IM calls `targetFrequencyId` "Mutually exclusive with freqDimension".
+    The 3.0 and 3.1 XSDs make the two a required choice (`DateMapType`), with
+    `MappedFrequencies` inside the frequency-dimension branch, and SDMX-JSON a
+    `oneOf`: a map with both, or neither, has no valid document.
+    """
+    date_maps: list[tuple[str, EpochMap | DatePatternMap]] = [
+        *((f"{prefix}.epoch_maps[{m.id}]", m) for m in sm.epoch_maps),
+        *((f"{prefix}.date_pattern_maps[{m.id}]", m) for m in sm.date_pattern_maps),
+    ]
+    for path, date_map in date_maps:
+        dimension, target = date_map.frequency_dimension, date_map.target_frequency_id
+        if dimension is not None and target is not None:
+            message = "names a frequency dimension and a target frequency, which the IM makes mutually exclusive"
+            issues.append(ValidationIssue(path=path, message=message))
+        elif dimension is None and target is None:
+            message = "names neither a frequency dimension nor a target frequency, and every SDMX format requires one"
+            issues.append(ValidationIssue(path=path, message=message))
+        elif dimension is None and date_map.mapped_frequencies:
+            message = "maps frequencies without a frequency dimension; mapped frequencies go with one"
+            issues.append(ValidationIssue(path=f"{path}.mapped_frequencies", message=message))
+
+
 # Order matters: subclass checks come before MaintainableArtefact fallback.
 _DISPATCH: tuple[tuple[type, Any], ...] = (
     (Codelist, _validate_codelist),
@@ -1281,6 +1313,7 @@ _DISPATCH: tuple[tuple[type, Any], ...] = (
     (MetadataProviderScheme, _validate_maintainable),
     (DataConsumerScheme, _validate_data_consumer_scheme),
     (OrganisationUnitScheme, _validate_organisation_unit_scheme),
+    (StructureMap, _validate_structure_map),
 )
 
 
@@ -1384,6 +1417,70 @@ def _check_constraint_choice(dc: DataConstraint, prefix: str, issues: list[Valid
         issues.append(ValidationIssue(path=prefix, message=message))
 
 
+#: A structure map's source and target kinds: a structure, or a structure usage.
+_STRUCTURE_KIND = {
+    "DataStructure": "structure",
+    "MetadataStructure": "structure",
+    "Dataflow": "structure usage",
+    "Metadataflow": "structure usage",
+}
+
+
+def _check_structure_map_kinds(sm: StructureMap, prefix: str, issues: list[ValidationIssue]) -> None:
+    """A structure map maps two structures or two structure usages, not one of each (IM §9.1.2.1).
+
+    The XSDs type both ends `StructureOrUsageReferenceType`, so every format
+    carries a mixed pair.
+    """
+    if sm.source is None or sm.target is None:
+        return
+    source = _STRUCTURE_KIND.get(sm.source.urn.artefact_class)
+    target = _STRUCTURE_KIND.get(sm.target.urn.artefact_class)
+    if source is not None and target is not None and source != target:
+        message = f"maps a {source} to a {target}; the IM maps two structures or two structure usages"
+        issues.append(ValidationIssue(path=prefix, message=message))
+
+
+def _check_component_map_representation(sm: StructureMap, prefix: str, issues: list[ValidationIssue]) -> None:
+    """A component map with more than one source or target names a representation map (IM §9.1.2.1).
+
+    `ComponentMapType` makes `RepresentationMap` optional in every case.
+    """
+    for i, component_map in enumerate(sm.maps):
+        many = len(component_map.sources) > 1 or len(component_map.targets) > 1
+        if many and component_map.representation_map is None:
+            message = (
+                f"maps {len(component_map.sources)} sources to {len(component_map.targets)} targets with no "
+                "representation map; the IM requires one to say how the values map"
+            )
+            issues.append(ValidationIssue(path=f"{prefix}.maps[{i}]", message=message))
+
+
+def _advise_structure_map(sm: StructureMap, prefix: str, issues: list[ValidationIssue]) -> None:
+    _check_structure_map_kinds(sm, prefix, issues)
+    _check_component_map_representation(sm, prefix, issues)
+
+
+def _check_mapping_arity(rm: RepresentationMap, prefix: str, issues: list[ValidationIssue]) -> None:
+    """A mapping gives one source value per source, and one target value per target when it gives any (IM §10.1.2.1).
+
+    "The RepresentationMapping sourceValues and targetValues must match the
+    order" of the map's sources and targets. `ValueMappingType` bounds neither
+    count, and its `TargetValue` is optional.
+    """
+    for i, mapping in enumerate(rm.mappings):
+        wrong_sources = rm.sources and len(mapping.sources) != len(rm.sources)
+        wrong_targets = rm.targets and mapping.targets and len(mapping.targets) != len(rm.targets)
+        if wrong_sources or wrong_targets:
+            message = (
+                f"maps {len(mapping.sources)} source and {len(mapping.targets)} target values, and the map has "
+                f"{len(rm.sources)} sources and {len(rm.targets)} targets; the values match them in order"
+            )
+            issues.append(ValidationIssue(path=f"{prefix}.mappings[{i}]", message=message))
+
+
+register_advisory(StructureMap, _advise_structure_map)
+register_advisory(RepresentationMap, _check_mapping_arity)
 register_advisory(DataStructure, _advise_dsd)
 register_advisory(ConceptScheme, _advise_concept_scheme)
 register_advisory(MetadataStructure, _advise_metadata_structure)

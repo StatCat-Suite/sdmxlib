@@ -23,7 +23,12 @@ from tests.support.pysdmx_differences import RULES, Kind
 from tests.support.pysdmx_oracle import CASES, FORMAT, PYSDMX_VERSION, case_dir, every_difference
 from tests.support.xsd import compile_structure_schema
 
-pytestmark = pytest.mark.integration
+# pysdmx keeps one source and one target per representation map
+# (`pysdmx_differences`, "RepresentationMap.(sources|targets) (length)"), so
+# reading its write-back of a two-sided map warns on the mappings' arity, IM
+# §10.1.2.1 (GH-26). The oracle classifies the difference; the warning is its
+# expected symptom.
+pytestmark = [pytest.mark.integration, pytest.mark.filterwarnings("ignore::sdmxlib.ImRuleWarning")]
 
 # `bench/` is outside what mutmut copies into `mutants/`; imported as
 # `test_sweep.py` does, so a mutation run skips this file rather than aborting.
