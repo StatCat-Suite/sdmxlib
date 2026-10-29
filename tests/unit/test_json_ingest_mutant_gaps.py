@@ -1,7 +1,7 @@
 """What mutation found the SDMX-JSON structure reader's tests could not see (#458).
 
 The triage of the rest — equivalent, and why — is in
-`docs/design/mutation-evidence.md`.
+`docs/design/evidence/mutation-runs.md`.
 
 Most of these share one cause, the one installment 4 found for the 2.1
 reader: the fixtures state everything. SDMX-JSON carries each text twice, a

@@ -1,7 +1,7 @@
 """What mutation found the SDMX-ML 3.x reader's tests could not see (#458).
 
 The triage of the rest — equivalent, and why — is in
-`docs/design/mutation-evidence.md`.
+`docs/design/evidence/mutation-runs.md`.
 
 The reader took 2.1's shapes inside a 3.x document: a ``<Ref>`` child where
 3.x has text, a draft's ``@dimensionRef``, the unified ``OrganisationSchemes``

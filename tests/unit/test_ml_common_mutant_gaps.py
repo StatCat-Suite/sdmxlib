@@ -2,7 +2,7 @@
 
 `formats/sdmx_ml/_common.py` holds what the 2.1 and 3.x readers and writers
 share. The triage of the rest — equivalent, and why — is in
-`docs/design/mutation-evidence.md`.
+`docs/design/evidence/mutation-runs.md`.
 
 Two causes account for most of these. A refusal was tested by its type and
 not its message, so a message naming the wrong element, or nothing, passed.

@@ -2010,8 +2010,8 @@ class BundleRegistry(SessionFactory):
            assigned: every `Ref` built here is bound to the memo (#492).
 
         Idempotent: already-resolved Refs are skipped. ``memo`` and ``walked``
-        may be passed in to share state across artefacts (used by `get_all`
-        and `to_registry`).
+        may be passed in to share state across artefacts (`get_all`'s batch
+        path does).
         """
         if memo is None:
             # A memo over a zero-sized cache: per-call only, nothing promoted.

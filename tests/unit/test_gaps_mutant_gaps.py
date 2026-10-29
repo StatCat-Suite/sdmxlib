@@ -2,7 +2,7 @@
 
 Each test here kills mutants that survived the whole unit suite. They are
 grouped by what was missing rather than by function, and the triage of the
-rest — equivalent, and why — is in `docs/design/mutation-evidence.md`.
+rest — equivalent, and why — is in `docs/design/evidence/mutation-runs.md`.
 
 Two shapes recur. A predicate exercised only where it *fires* on its first
 candidate: `test_field_coverage`'s maximal hierarchy puts a version on its

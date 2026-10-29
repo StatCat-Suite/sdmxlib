@@ -5,8 +5,8 @@ if it were wrong. This project runs the second because the first was already
 high and told us nothing we could act on — `rest.py` sat at 100 % line coverage
 while the empty-`IN ()` defect (#256) lived in it.
 
-`just mutate` runs the configured scope. It is **not** in `just ci`: budget an
-hour or more for it — the "about eleven minutes" the #213 pilot cost was
+`just mutate` runs the configured scope. It is **not** in `just ci`: budget
+hours for it — the "about eleven minutes" the #213 pilot cost was
 measured against a suite roughly a third of today's size, and the scope has
 since grown from six modules to ten. While working, use `just mutate-area` (one
 module against one narrow set of tests) or `just mutate-module`; the full run
@@ -15,7 +15,8 @@ is for establishing a baseline.
 ## Scope, and why it is small
 
 `[tool.mutmut]`'s `only_mutate` in `pyproject.toml` restricts mutation to ten
-modules, 3,212 statements (`just mutate-scope` prints the split). Mutants run
+modules, 3,383 statements on 2026-10-28 (`just mutate-scope`, which runs
+`tools/mutate_scope.py`, prints the split). Mutants run
 2–4× the statement count, so a whole-`src/` run is a five-figure mutant count
 that would never finish.
 
@@ -31,12 +32,32 @@ that would never finish.
   work moved. `accessors.py`, `query.py` and `_pushdown.py` are deliberately
   left out, pending their own decision (the reasoning is beside `only_mutate`).
 
+## The runner
+
+`just mutate` runs `tools/mutmut_forksafe.py run --max-children 8`, a
+drop-in for `mutmut` on mutmut 3.8 or later. `[tool.mutmut]` sets
+`process_isolation = "forkserver"`, which keeps pytest out of the forking
+parent (#314), and `forkserver_warmup = "none"`, so nothing is imported
+before a mutant is chosen and code that runs at import is mutated too
+(#458). The wrapper refuses to run without the fork server. It also
+preloads the native extensions and credits import-time hits to every test
+that reaches the module (`CreditingRunner`, #458), where mutmut alone
+credits them to whichever test ran first.
+
+`just mutate-area MODULE TESTS...` (`tools/mutate_area.py`) narrows
+`only_mutate` and the test selection to one module and one set of test
+files, runs the same wrapper, and restores the config. Its score answers
+"does this test file pin this code"; it is not a module-wide score.
+`just mutate-module PREFIX` runs one module or function from the configured
+scope.
+
 ## The three buckets
 
 A surviving mutant is not automatically a gap. Every survivor belongs in
 exactly one bucket, and the bucket assignment is the artifact — not the score.
-#218 rejected score-driven test writing explicitly, and this file exists so the
-same triage is not redone from scratch on the next run.
+#218 rejected score-driven test writing explicitly, and the record in
+[evidence/mutation-runs.md](evidence/mutation-runs.md) exists so the same
+triage is not redone from scratch on the next run.
 
 **Real gap.** The mutant changes behaviour a caller could observe and no test
 noticed. Fix by extending an existing property where possible, adding an
@@ -44,8 +65,8 @@ example only when the case genuinely is one.
 
 **Equivalent.** The mutant cannot change observable behaviour — most often
 message prose, the order of two independent checks, or a branch whose two arms
-compute the same thing. These are recorded below so the next run does not
-re-triage them.
+compute the same thing. These are recorded beside the run that found them, so
+the next run does not re-triage them.
 
 **Won't fix.** Observable but not worth pinning: behaviour under conditions the
 library does not support, or a test that would encode an implementation detail
@@ -53,11 +74,15 @@ we intend to keep free. Record the reason, because "not worth it" ages.
 
 ## Recording an equivalent
 
-Add a row to the table for the module. Identify the mutant by the name mutmut
+Add a row to the module's table in
+[evidence/mutation-runs.md](evidence/mutation-runs.md); the `collections.py`
+record is
+[there](evidence/mutation-runs.md#modelcollectionspy-triaged-253-run-of-2026-08).
+Identify the mutant by the name mutmut
 prints (`sdmxlib.model.validation.x_validate_references__mutmut_4`), because
 that is what `just mutate-show` takes. The name is mutmut's mangling, not a
 typo: a module-level function `f` becomes `x_f` (so a private `_f` becomes
-`x__f`), and a method becomes `xǁClassǁmethod`. The tables below abbreviate to
+`x__f`), and a method becomes `xǁClassǁmethod`. The tables abbreviate to
 the function and mutant number. Give the reason in terms of *why no
 observable behaviour changes* — "it only changes the message text" is a reason;
 "looks fine" is not.
@@ -103,69 +128,9 @@ It does now:
 `tests/` for imports of repo directories outside the copied set. It costs
 milliseconds and runs in `just ci`.
 
-## `model/collections.py` — triaged #253, run of 2026-08
+## Where the run records live
 
-**179 mutants: 145 killed, 27 survived, 3 timeout, 3 segfault, 1 no-tests.**
-
-The 27 is *exactly* the count the #213 pilot reported. Months of test work landed in between and killed none of them. That
-is the calibration #253 asked for on how much four aggregate properties pin —
-and the answer is that they pin aggregate claims. Every survivor was in a
-*lookup*, a *sort*, a *projection* or a *message*: places where the question is
-"which one did you get back", not "is the result a subset".
-
-After #253 the count is **15**: twelve killed, and every survivor below is
-recorded as equivalent or won't-fix with its reason.
-
-### Real gaps — closed
-
-Tests in `tests/unit/test_collections_mutant_gaps.py`.
-
-| mutant | what it changed |
-| --- | --- |
-| `_lookup_ref__mutmut_5` | `ref.id is None` → `is not None` — inverts every wildcard at once |
-| `_lookup_ref__mutmut_12` | version `==` → `!=` — returns a real artefact of the wrong version |
-| `_lookup_str__mutmut_1` | `and` → `or` on versioned-key detection |
-| `_lookup_str__mutmut_32`, `_34` | `_by_id.get(key, [])` default dropped — a miss on a bare id raises `TypeError` instead of returning `None` |
-| `_lookup_str__mutmut_19`, `_20` | the malformed-key message replaced by `None` — `KeyError(None)` tells the caller nothing |
-| `sort_by__mutmut_5`, `_8` | `reverse=descending` dropped — `descending=True` becomes a silent no-op |
-| `to_dict__mutmut_8` | `key(item)` → `key(None)` — every key identical, dict collapses to one entry |
-| `ItemList.__hash__mutmut_1` | see *was blocked* below — gone since #290 removed the method |
-| `ItemList.__repr____mutmut_13` | dropped the ids from the repr entirely |
-
-### Equivalent — recorded, do not re-triage
-
-| mutant | why no observable behaviour changes |
-| --- | --- |
-| `_lookup_str__mutmut_27` | `_by_agency_id.get(key, [])` → `.get(key, None)`. This branch falls straight to `return matches[0] if matches else None`, and `None` is falsy exactly as `[]` is. |
-| `_lookup_str__mutmut_29` | Same line, default omitted entirely. Same reasoning. |
-
-### Won't fix — recorded, with the reason
-
-| mutant | reason |
-| --- | --- |
-| `_lookup_str__mutmut_10`, `_11`, `_13` | `split("(", 1)` → `split("(")` / `rsplit` / `split("(", 2)`. These differ only for a key containing **two or more** `(`. No SDMX id can produce one (`A-Za-z0-9_@$-`), so it is reachable only by hand-writing a malformed key, where every spelling ends in an exception. Pinning it would test the shape of a failure nobody can trigger. |
-| `_lookup_str__mutmut_40`, `_lookup_ref__mutmut_18` | The separator in `', '.join(qualified)`. The ambiguity messages *are* pinned — two tests assert the colliding artefacts appear — but the punctuation between them is not. Killing these needs an exact-string assertion, which freezes formatting nobody has decided on. |
-| eight of the nine `__repr__` mutants | Same rule: `repr` *content* is asserted, `repr` *format* is not. Measured, not assumed — a content assertion (class name plus every id present) killed exactly **one** of the nine. The other eight only move punctuation: the quoting of each id, the separator, the brackets. Killing them needs an exact-string assertion, which is a golden test for debugging output. |
-
-### Was blocked on a defect — fixed (#290)
-
-| mutant | note |
-| --- | --- |
-| `ItemList.__hash__mutmut_1` | `hash(self._items)` → `hash(None)`. Unkillable in the ordinary way at the time, because **no test could call `hash` on a populated `ItemList`** — `_items` held attrs `@define` items, which were unhashable, so it raised. The class advertised hashability it could not deliver. Filed as **#290** and since fixed: `ItemList.__hash__ = None` (and the same on `ArtefactList`), so the declaration is the refusal and there is no method left to mutate. Since #492 the items are `@frozen(unsafe_hash=False)` — equal by value, still deliberately unhashable, keyed by `urn` — so the collection stays only as hashable as its contents. Pinned by `test_the_collections_are_honestly_unhashable` in `tests/unit/test_collections_mutant_gaps.py`. |
-
-## `model/validation.py` — untriaged
-
-The full-scope run does not finish in a usable time. Observed while it ran:
-**1000+ mutants, 129 survivors and 75 timeouts after roughly 25 minutes**, with
-739 still unchecked and the timeout count climbing.
-
-That is itself the reportable result #253 anticipated. The timeouts are the
-signal: mutating `validation.py` frequently produces a run that does not
-terminate promptly, so the cost per mutant is unbounded rather than merely
-high. Before triaging this module, decide whether it belongs in the mutation
-scope at all — and if it does, it needs its own bounded run
-(`just mutate-area` or `just mutate-module` against it, with a mutmut timeout
-configured) rather than sharing a scope with modules that complete in minutes.
-
-The 123-survivor figure from #213 is not confirmed or refuted here. It should
-not be repeated as fact until a run completes.
+Each run's counts, triage and equivalent / won't-fix tables are in
+[evidence/mutation-runs.md](evidence/mutation-runs.md): the #218 property
+comparison, installments 1–12 (#324, #458), the `model/collections.py` triage
+(#253) and the untriaged `model/validation.py` run.
