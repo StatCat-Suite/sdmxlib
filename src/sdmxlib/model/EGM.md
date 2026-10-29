@@ -69,7 +69,8 @@ hierarchical roll-ups.
   (`errors.py`), plus the `SdmxParseError` subclasses `SdmxConformanceError`
   and `LossyReadError` (`validation.py`): errors, diagnostics and warnings.
 - `StructureMessage` and `MetadataMessage` (`message.py`): message containers
-  holding `ArtefactList`s.
+  holding `ArtefactList`s. Each records the read's losses in `lost`;
+  `StructureMessage` also records `refused` and `assumed`.
 - Other artefact classes: `Codelist`/`Code` (`codelist.py`),
   `ConceptScheme`/`Concept` (`concept.py`), `Dataflow` (`dataflow.py`),
   `CategoryScheme`/`Categorisation` (`category.py`), `DataConstraint`

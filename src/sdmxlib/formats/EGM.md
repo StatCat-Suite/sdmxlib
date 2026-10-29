@@ -17,7 +17,10 @@ target format cannot carry.
   `MetadataMessage`.
 - `parse(data, *, version, registry, strict, lossless)` (`__init__.py`):
   parses bytes, detecting the version and message kind. A `ValidationError`
-  raised outside any per-artefact refusal becomes an `SdmxParseError`.
+  raised outside any per-artefact refusal becomes an `SdmxParseError`. With
+  `lossless=True` it raises `LossyReadError` for a `StructureMessage` with
+  `lost` or `assumed` entries, and for a `MetadataMessage` with `lost`
+  entries.
 - `serialize(msg, *, version="2.1", pretty_print=False, validate=True)`
   (`__init__.py`): writes bytes, picking the writer from the message type.
   For a `StructureMessage` it raises `ValueError` for an unknown version, then

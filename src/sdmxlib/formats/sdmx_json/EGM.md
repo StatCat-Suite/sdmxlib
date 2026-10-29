@@ -23,7 +23,9 @@ serialisers in `structure_values.py`.
 - `read(data) -> MetadataMessage` and `write(msg, *, pretty_print=False) ->
   bytes` (`metadata.py`): metadata messages, through `MetadataMessageJson`,
   `MetadataSetJson` and `ReportedAttributeJson`. `write` stamps `$schema`
-  with `METADATA_SCHEMA_URL`, the 2.1 metadata schema URL.
+  with `METADATA_SCHEMA_URL`, the 2.1 metadata schema URL. `read` records in
+  `MetadataMessage.lost` a `meta` it cannot build and each metadata set's
+  keys no struct declares (`_losses.undeclared`, walked eagerly).
 - `read_observations(source) -> (pl.DataFrame, dataflow_urn | None)`
   (`data.py`): reads a data message of either version through the `_Envelope`
   Struct. `data_v1.py` and `data_v2.py` each provide `write_sdmx_json_data`
