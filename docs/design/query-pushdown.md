@@ -23,12 +23,11 @@ designed the second backend and the machinery that decides what it runs.
 >
 > Two parts are not built. §6's program printout: `Query.explain()` prints the
 > SQL and binds, plus one line saying rows are fetched first when the query
-> runs over REST; it does not list the requests. §11's projection-driven
-> prefetch: `references=` comes from the paths the plan's predicates, order
-> and residual steps reach, and a projection feeds only `detail=`. So a REST
-> query that projects across a path (`select(d=q.dataflow.dsd.id)`) is
-> fetched with `references=none` and answers null for that column, with no
-> error (GH-271). The same machinery also serves observations — `ObsQuery`
+> runs over REST; it does not list the requests. §11's typed prefetch: a
+> `Select`'s paths join the root scan's closure, so `references=` reaches what
+> the projection reads (GH-271), but it names a depth (`children`,
+> `descendants`), never a type, and `Capability.prefetch` is read only by
+> tests. The same machinery also serves observations — `ObsQuery`
 > over REST, with a data capability keyed by component role
 > (`data-plane-pushdown.md`).
 >
@@ -201,7 +200,7 @@ class Capability:
 ```
 
 `prefetch` and its reader, `Capability.can_project`, are declared and
-tested, and nothing in the planner or the executor reads them (§11, GH-271).
+tested, and nothing in the planner or the executor reads them (§11).
 `__attrs_post_init__` refuses a `total` capability that also lists `pushes`,
 where the list would never be read.
 
@@ -240,7 +239,7 @@ artefacts come back alone. The first draft concluded it therefore belongs to
 the resolver. §11 shows it is the *only* way a crossed path yields values, so
 it is a planner decision. As built, `_closure.references_for` derives it per
 scan from the paths the query's predicates, order and residual steps reach
-(§13); the projection's paths are not among them (GH-271).
+(§13), and on the root scan from the paths a `Select` reads (GH-271).
 
 ## 5. The refusal rule
 
@@ -533,9 +532,8 @@ The first draft concluded from this that `select()` / `group_by()` are
 **unavailable** on a REST root. §11 measured it and that is wrong — artefacts
 to rows is an ordinary local projection, and the columns a crossed path needs
 can arrive in the *same request* via `references=`. Projection is available
-and computed locally. As built it decides only `detail=`: a projection of
-root columns is served, and one across a path answers null because nothing
-adds its prefixes to `references=` (§11, GH-271).
+and computed locally. It decides `detail=`, and its paths join the root
+scan's closure, so `references=` reaches what it reads (§11, GH-271).
 
 ### Unchanged by REST
 
@@ -577,13 +575,12 @@ dataflows and the 81 DSDs they reference
 *filter on the joined side*, which is what the §9.1 rewrite does, but it can
 bring the joined side back.
 
-### Projection decides the fetch (designed, not built)
+### Projection decides the fetch
 
-**As built** (GH-271): `_rest.request_for` takes `references=` from
-`closure(plan) | residual_paths`, which are the paths the plan's predicates,
-order and residual steps reach. A projection's paths live on the `Select`, and
-`Query._projection_columns` hands the executor only root columns, for
-`detail=`; a crossed column makes it return `None`, which asks for `full`. So
+**As built** (GH-271): a `Select` hands the fetch the paths its items read
+(`_compile.projection_paths`, through `Query._cursor` and the registry's
+`prepare` hook), and `requests_for` adds them to the root scan's closure, the
+last push `plan_program` emits. So
 
 ```python
 rest.query(q.dataflow).filter(q.dataflow.agency == "ECB").select(
@@ -591,11 +588,13 @@ rest.query(q.dataflow).filter(q.dataflow.agency == "ECB").select(
 )
 ```
 
-is fetched with `references=none`, the DSDs never arrive, and `d` is null in
-every row, with no error. A `LocalRegistry` answers the same query correctly.
-`Capability.prefetch` and `can_project` exist and are read only by tests.
+is fetched with `references=children` and answers as a `LocalRegistry` does.
+The fetch cache key carries the derived `references=` as well as `detail=`,
+so a row terminal's `references=none` fetch of the same plan never satisfies
+a projection that needs the edge. `references=` names a depth; the typed
+prefetch below, which names the types the projection reaches, is not built.
 
-**The intended fix** is the design below. `select(q.dataflow.id,
+**The design.** `select(q.dataflow.id,
 q.dataflow.dsd.id)` needs a value from across an edge. It cannot push, since
 the server computes nothing, and it needs no per-row resolution: one request
 with `references=datastructure` returns everything the projection names, and
@@ -610,7 +609,7 @@ request: the set of path prefixes its columns name joins the closure that
 **§13 widens this.** A *filter* evaluated locally also needs the joined
 values, and for a backend that computes nothing, every filter is evaluated
 locally. So the fetch must close over every path the query reaches, projected
-or filtered. The filter half is built; the projection half is GH-271.
+or filtered. Both halves are built, by depth (GH-271 built the projection's).
 
 ### The planner's choice
 
@@ -632,7 +631,8 @@ residual into a §9.1 sub-scan whenever that sub-scan is bounded on its own
 residual on the outer scan, whose closure then asks for `references=children`
 or `descendants` (§13). The design's split, rewrite for filters and prefetch
 for projections, needs no cost model, because it follows from what each
-needs; building the prefetch half is GH-271.
+needs. Projections take the closure route by depth (GH-271); a typed
+prefetch is not built.
 
 ### The prefetch needs its own bound
 
@@ -645,14 +645,16 @@ one artefact, bounded by every rule in §5, and returns 29.8 MB
 `children` or `descendants` by the deepest crossing among the closure's
 paths, and never names a type. The design is narrower: a capability declares
 which prefixes it can prefetch (`Capability.prefetch`), and the planner asks
-for the types the projection names and nothing else. That is part of the
-GH-271 fix and is not built.
+for the types the projection names and nothing else. That part is not built:
+GH-271 joined the projection's paths to the closure, which picks a depth.
 
 ### Implication for the staging
 
 The design gave step 4 the prefetch: `Select`'s prefixes become `references=`
 types, as a field on `Capability` and a decision in the planner, with no new
-node and no second plan. The field landed; the decision did not (GH-271).
+node and no second plan. The field landed; the planner does not read it, and
+the projection's paths reach `references=` through the closure instead
+(GH-271).
 
 ### `detail=` follows the same rule, with one extra constraint (#318)
 
@@ -716,8 +718,8 @@ particular fetch is enough.
 
 A short fetch fails silently. `references=datastructure` returns the DSDs,
 which is all `select(q.dataflow.id, q.dataflow.dsd.id)` needs — §11 measured
-the response. (As built that projection is fetched with `references=none` and
-answers null, GH-271.) The DSDs' fetch does **not** return the concept schemes
+the response. (As built that projection is fetched with `references=children`,
+GH-271.) The DSDs' fetch does **not** return the concept schemes
 they reference, so
 
 ```python
@@ -744,8 +746,8 @@ backend will not issue. As built nothing reaches that refusal:
 `_closure.references_for` answers `none` for no crossing, `children` for one
 and `descendants` for two or more, so every closure has a value.
 `references=all` is never issued — §11 measured 29.8 MB for one codelist.
-The closure covers the plan's predicates, order and residual steps; a
-projection's paths are outside it (GH-271).
+The closure covers the plan's predicates, order and residual steps, and on
+the root scan a `Select`'s paths (GH-271).
 
 ### The §9.1 rewrite keeps the closure small
 
@@ -772,8 +774,8 @@ Less than §7 implied. Built as listed:
    *`_rest.request_for` / `requests_for`.*
 2. A `references=` value per `Push`, derived from the paths the query's
    predicates, order and residual steps evaluate on that scan's rows — the
-   closure above. A projection contributes root columns to `detail=` and
-   nothing to `references=` (GH-271). *`_closure.py` (`references_for`, and
+   closure above. A projection contributes its columns to `detail=` and its
+   paths to the root scan's `references=` (GH-271). *`_closure.py` (`references_for`, and
    `detail_for` for §11's `detail=`).*
 3. Fetch, parse, materialise into a scratch registry. *`_execute.fetch_into`;
    the store is `RestRegistry`'s `store`, or an in-memory one it owns.*
@@ -791,10 +793,9 @@ the same SQL, over stores populated differently.
 - **Does `Select` push at all?** Answered in §11 and half built. It does not
   push. Projection is *available* and computed locally, and in the design it
   decides the request: the prefixes its columns name join the closure that
-  `references=` comes from. As built it decides only `detail=`, so a
-  projection across a path answers null over REST (GH-271).
-  `Capability.prefetch` and `can_project` declare the capability and are read
-  only by tests.
+  `references=` comes from, which is built, by depth (GH-271).
+  `Capability.prefetch` and `can_project` declare a typed prefetch and are
+  read only by tests.
 - **Federation.** Still open. `FederatedRegistry` routes by agency across
   registries (it has no `query()` of its own), and
   agency is also the bounding constraint of §5 and, per §12, the natural

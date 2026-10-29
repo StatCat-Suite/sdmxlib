@@ -39,7 +39,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from sdmxlib.model.ref import Ref
-    from sdmxlib.query._expr import Pred
+    from sdmxlib.query._expr import Agg, Col, Pred
     from sdmxlib.query.accessors import DataflowRow
 
 pytestmark = pytest.mark.unit
@@ -306,5 +306,55 @@ def test_projection_and_aggregation_work_over_rest(service: FakeRestService) -> 
         assert base.group_by(q.dataflow.agency).len().collect().to_dicts() == [{"agency": "ESTAT", "len": 3}]
         assert [call[-1] for call in service.calls] == ["none", "none"], "no references either way"
         assert len(service.calls) == 2, "allstubs for the two projections, full for the aggregate"
+    finally:
+        rest.close()
+
+
+# ── a projection reaches what it reads (GH-271) ──────────────────────────
+
+
+def _projected(
+    registry: sl.RestRegistry | sl.LocalRegistry, **items: Col[DataflowRow] | Agg[DataflowRow]
+) -> list[dict[str, object]]:
+    query = registry.query(q.dataflow).filter(q.dataflow.agency == "ESTAT")
+    frame = query.select(f=q.dataflow.id, **items).collect()
+    return sorted(frame.to_dicts(), key=lambda row: str(row["f"]))
+
+
+def test_a_projection_across_an_edge_answers_what_a_complete_store_does(
+    reference: sl.LocalRegistry, service: FakeRestService
+) -> None:
+    """The plan filters only on the dataflow, so its closure alone asks for
+    `references=none`; the projection reads `dsd.id`, and the fetch must reach
+    it or every row reads null."""
+    rest = _rest_with(service)
+    try:
+        assert _projected(rest, d=q.dataflow.dsd.id) == _projected(reference, d=q.dataflow.dsd.id)
+        assert [call[-1] for call in service.calls] == ["children"]
+    finally:
+        rest.close()
+
+
+def test_a_projection_after_a_plain_fetch_of_the_plan_fetches_again(service: FakeRestService) -> None:
+    """The fetch key carries `references=`: a row terminal's `none` fetch of the
+    same plan must not satisfy a projection that needs the edge."""
+    rest = _rest_with(service)
+    try:
+        plain = rest.query(q.dataflow).filter(q.dataflow.agency == "ESTAT")
+        assert sorted(plain.ids()) == ["FLOW_A", "FLOW_B", "FLOW_C"]
+        rows = _projected(rest, d=q.dataflow.dsd.id)
+        assert [row["d"] for row in rows] == ["WITH_AREA", "WITH_AREA", "NO_AREA"]
+        assert [call[-1] for call in service.calls] == ["none", "children"]
+    finally:
+        rest.close()
+
+
+def test_a_projection_two_edges_out_asks_for_descendants(reference: sl.LocalRegistry, service: FakeRestService) -> None:
+    """`dsd.dimensions.concept` crosses dataflow → DSD → concept scheme."""
+    concepts = q.dataflow.dsd.dimensions.concept.id.list()
+    rest = _rest_with(service)
+    try:
+        assert _projected(rest, c=concepts) == _projected(reference, c=concepts)
+        assert [call[-1] for call in service.calls] == ["descendants"]
     finally:
         rest.close()

@@ -523,11 +523,9 @@ fetch one relation short returns nothing and raises no error. `references=`
 comes from there (`query/_rest.py`).
 
 The closure is derived from the plan: its predicates, its order and any residual
-steps. A projection's paths live on the `Select` and feed only `detail=`, so a
-REST query that projects across a hop — `select(f=q.dataflow.id,
-d=q.dataflow.dsd.id)` — is fetched without the hop's target and answers null
-for that column, with no error. That is a defect, open as GH-271; a
-`LocalRegistry` answers the same query correctly.
+steps, and on the root scan the paths a `Select` reads. So a REST query that
+projects across a hop — `select(f=q.dataflow.id, d=q.dataflow.dsd.id)` — is
+fetched with the hop's target and answers as a `LocalRegistry` does (GH-271).
 
 ### Refusing an unbounded fetch
 

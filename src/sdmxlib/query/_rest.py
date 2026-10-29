@@ -218,6 +218,7 @@ def requests_for_derived[R: RowKind](push: Push[R]) -> tuple[Request, ...]:
 def requests_for[R: RowKind](
     program: Program[R],
     projection: Iterable[tuple[str, str]] | None = None,
+    projected_paths: Iterable[tuple[str, ...]] = (),
 ) -> tuple[Request, ...]:
     """Every request a program issues, in order.
 
@@ -225,6 +226,10 @@ def requests_for[R: RowKind](
     execution order the type already states — "work left to us, over the rows
     the previous step returned". So a push's `references=` covers its own
     predicates *and* the local work that will run against what it returns.
+
+    `projected_paths` are the paths a `Select` reads (`projection_paths`), and
+    they join the last push: `plan_program` emits any sub-scans first and the
+    root scan last, and the projection is over the root scan's rows (GH-271).
 
     The length of the result is the round-trip cost, and it is a property of
     the plan rather than of the data (§5). A program whose length grew with
@@ -258,6 +263,7 @@ def requests_for[R: RowKind](
             paths.add(tuple(reference.path))
             columns.add((reference.table, reference.column))
     if pending is not None:
+        paths |= set(projected_paths)
         requests.extend(_requests_for_push(pending, paths, columns, projection))
     return tuple(requests)
 

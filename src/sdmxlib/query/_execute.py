@@ -114,6 +114,7 @@ def fetch_into[R: RowKind](
     capability: Capability = SDMX_REST,
     *,
     projection: frozenset[tuple[str, str]] | None = None,
+    projected_paths: frozenset[tuple[str, ...]] = frozenset(),
     record: Callable[[str], None] | None = None,
 ) -> tuple[Request, ...]:
     """Fetch everything `plan` needs and write it into `store`.
@@ -137,12 +138,14 @@ def fetch_into[R: RowKind](
     what lets a request ask for `detail=allstubs` (§5.14). `None` means the
     caller wants *artefacts*, so the fetch must be `full`: a stub carries no
     items, and resolving against one yields a hollow artefact and no error.
+    `projected_paths` are the paths that projection reads across edges, which
+    `references=` must reach (GH-271).
 
     Raises:
         PushdownError: If the plan cannot be served within the bound — raised
             by the planner before anything is fetched.
     """
-    requests = requests_for(plan_program(plan, capability), projection)
+    requests = requests_for(plan_program(plan, capability), projection, projected_paths)
     for request in requests:
         for artefact in artefacts_in(fetch(source, request)):
             # `SupportsUrn` narrows rather than a `try`/`except TypeError`

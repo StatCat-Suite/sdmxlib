@@ -181,11 +181,9 @@ any session issuing more than one query. The REST backend suits the first
 query against a live registry, before the caller knows whether they want the
 whole catalogue.
 
-*Note, October 2026: projection is available over REST for columns on the
-root. A projection across a path (`select(d=q.dataflow.dsd.id)`) is fetched
-with `references=none` and answers null, because the fetch is derived from the
-plan's predicates and order and the projection feeds only `detail=` (GH-271;
-§11).*
+*Note, October 2026: a projection across a path (`select(d=q.dataflow.dsd.id)`)
+is fetched with the `references=` depth its paths need, since GH-271; until
+then it was fetched with `references=none` and answered null (§11).*
 
 ## REST response sizes (§11)
 

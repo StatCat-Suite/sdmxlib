@@ -133,6 +133,9 @@ pushdown planning, fetch-then-materialise execution, observation queries
 - `_cursor()` calls the `_prepare` hook first, so every terminal on a
   REST-backed query, `columns` included, performs its HTTP fetch before the
   SQL runs.
+  The hook takes the plan, the projection's root columns (for `detail=`) and
+  the paths a `Select` reads (`projection_paths`), which `requests_for` adds
+  to the root scan's closure so `references=` reaches them (GH-271).
 - `Query.columns` and `RawSql.columns` run `DESCRIBE`.
 - `schema._tables()` reads the DuckDB catalog once and caches it with
   `functools.cache`. `_accessor_roots` and `_accessor_names` are cached the
