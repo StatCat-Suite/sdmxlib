@@ -762,7 +762,14 @@ RULES: tuple[Rule, ...] = (
         127,
         "the value in ComponentValue.value and MemberValue.value must be consistent with the Representation "
         "declared for the Component",
-        NotChecked(_CROSS),
+        Warned(
+            (
+                Check(
+                    "_check_constraint_values",
+                    "tests/unit/test_constraint_values.py::test_a_key_value_its_codelist_lacks_warns[CC_data_structures]",
+                ),
+            )
+        ),
     ),
     Rule(
         "IM-12.3.3.2-1",
