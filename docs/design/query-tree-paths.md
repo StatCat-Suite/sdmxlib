@@ -17,15 +17,30 @@ another library, it was run against that library too.
 The four are not four relationships. They are **two, read from both ends** —
 which is how every edge in this language works:
 
+```python
+Edge(                                   # direct
+    "parent",                           # name: the forward hop
+    "code",                             # source
+    ("codelist_urn", "parent_id"),      # column
+    "code",                             # target
+    ("codelist_urn", "code_id"),        # target_column
+    inverse="children",
+    optional=True,
+),
+Edge(                                   # closure (membership)
+    "ancestors",
+    "code",
+    ("codelist_urn", "ancestor_ids"),
+    "code",
+    ("codelist_urn", "code_id"),
+    inverse="descendants",
+    optional=True,
+    member_of=1,                        # ancestor_ids is a list of code_ids
+),
 ```
-direct                forward='parent'      inverse='children'
-                      on (('codelist_urn', 'codelist_urn'), ('parent_id', 'code_id'))
 
-closure (membership)  forward='ancestors'   inverse='descendants'
-                      on (('codelist_urn', 'codelist_urn'), ('ancestor_ids', 'code_id'))
-```
-
-(That is `q.code`'s pair, from `src/sdmxlib/query/_edges.py`. `q.concept` is
+(That is `q.code`'s pair, from `src/sdmxlib/query/_edges.py`; the comments name
+the `Edge` fields. `q.concept` is
 the same shape scoped by `scheme_urn`; the three nested trees join on a path
 instead of an id — §6.)
 
@@ -80,11 +95,16 @@ reg.query(q.code).select(code=q.code.id, anc=q.code.ancestors.id.list())
 | `ancestors` | to-many | `? = ANY(ancestor_ids)` for an equality on the key, else correlated `EXISTS` (§5) | only via `.list()` / `.count()` |
 | `descendants` | to-many | correlated `EXISTS` | only via `.list()` / `.count()` |
 
-Cardinality is **derived**, never declared — from key constraints, with one
-exception. A membership match is to-many in *both* directions however unique
-the target key is: `(codelist_urn, code_id)` is unique, so key constraints
-alone would call `code -> ancestors` to-one, and be wrong. That is the single
-cardinality fact read off the declaration, and
+At runtime a hop's cardinality comes from its **direction**: a forward hop is
+to-one, an inverse hop is to-many, and a membership hop (`member_of` set) is
+to-many both ways (`Hop.to_many` in `_joins.py`). Key constraints check that
+rule against the schema rather than feeding it: `test_query_edges.py` asserts
+that every non-membership forward hop reaches a unique target column
+(`test_forward_direction_is_to_one`) and that every exposed inverse leaves from
+a non-unique one (`test_reverse_direction_is_to_many`). A membership match is
+the exception key constraints cannot see: `(codelist_urn, code_id)` is unique,
+so they alone would call `code -> ancestors` to-one, and be wrong. That is the
+single cardinality fact read off the declaration, and
 `test_a_membership_edge_is_to_many_in_both_directions` asserts both halves that
 keep it honest. Which accessors may declare which names is guarded by
 `test_a_tree_accessor_declares_the_relationships_its_bake_supports`:
@@ -166,7 +186,8 @@ q.code.parent.parent.id     # -> one join, not two
 
 Resolution walks the path from the query's root rather than matching the edge
 by name, because a forward name is not unique on its own — `codelist` is
-declared on `code`, `dsd_component` *and* `concept`, all reaching
+declared on `code`, `dsd_component`, `concept`, `representation_map_source`,
+`representation_map_target` and `metadata_attribute`, all reaching
 `artefact.urn`. A first implementation matched by name, declined when ambiguous,
 and so trimmed trees and nothing else: it passed every tree test while doing
 nothing for the common case.

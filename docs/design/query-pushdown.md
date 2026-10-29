@@ -6,8 +6,9 @@ language** — was therefore asserted rather than demonstrated, and it is the
 claim that overturned `query-composition.md`'s no-IR decision. This document
 designed the second backend and the machinery that decides what it runs.
 
-> **Status: built.** All four steps of §7 have landed, and §13's executor
-> with them. Where each piece lives:
+> **Status: built, apart from the two parts named below the table.** All four
+> steps of §7 have landed, and §13's executor with them. Where each piece
+> lives:
 >
 > | section | what | where |
 > | --- | --- | --- |
@@ -20,14 +21,20 @@ designed the second backend and the machinery that decides what it runs.
 > | §13 | fetch, materialise, run the original query | `src/sdmxlib/query/_execute.py`, `RestRegistry.query` |
 > | §10 | the survey, pinned per shape | `tests/unit/test_query_rest_survey.py` |
 >
-> One part is not built: §6's program printout. `Query.explain()` prints the
+> Two parts are not built. §6's program printout: `Query.explain()` prints the
 > SQL and binds, plus one line saying rows are fetched first when the query
-> runs over REST; it does not yet list the requests. The same machinery also
-> serves observations — `ObsQuery` over REST, with a data capability keyed by
-> component role (`data-plane-pushdown.md`).
+> runs over REST; it does not list the requests. §11's projection-driven
+> prefetch: `references=` comes from the paths the plan's predicates, order
+> and residual steps reach, and a projection feeds only `detail=`. So a REST
+> query that projects across a path (`select(d=q.dataflow.dsd.id)`) is
+> fetched with `references=none` and answers null for that column, with no
+> error (GH-271). The same machinery also serves observations — `ObsQuery`
+> over REST, with a data capability keyed by component role
+> (`data-plane-pushdown.md`).
 >
 > The text below keeps the design argument as it was made, with notes where
-> building it changed the answer.
+> building it changed the answer. The measurements behind §10, §11 and §12
+> are in [evidence/query-pushdown.md](evidence/query-pushdown.md).
 
 It differs from the plan-node proposal in `query-language.md` (*Pushdown*)
 in one place, argued in §2: **there is no IR to build.** `Query[R]` already
@@ -47,11 +54,14 @@ DuckDB     1 GET  all of it, one statement
 FMR REST   1 GET  /structure/datastructure/ESTAT?references=children
            2 LOCAL  urns ← rows where concept.id == "REF_AREA"
            3 GET  /structure/dataflow/ESTAT
-           4 LOCAL  filter structure_urn ∈ urns; then limit 10
+           4 LOCAL  filter dsd_urn ∈ urns; then limit 10
 ```
 
 The REST program does more than push the agency and do the rest locally. Step 2 turns a path predicate into a set, which step 4 applies as a
-membership — the rewrite argued in §9.1. Reading the program top to bottom is
+membership — the rewrite argued in §9.1. As built, the executor issues the
+two GETs, writes what they return into one store, and runs the original
+query there (§13); the LOCAL steps record why those two fetches are enough,
+and nothing evaluates them one by one. Reading the program top to bottom is
 also the argument for why the output is a sequence rather than a
 `(pushed, residual)` pair: for DuckDB it always has length one, so the pair
 looks sufficient until the REST rewrite needs two calls.
@@ -115,8 +125,8 @@ for us, so it could look like a reason for an IR.
 
 The rewrite consumes a `Plan` and produces *`Plan`s* — a scan of `dsd` filtered by
 `components.concept.id`, and a scan of `dataflow` filtered by membership. Both
-are expressible in the fields §3 already lists, the second because
-`Session.value_set` makes a set an ordinary relation. A transformation that is
+are expressible in the fields §3 already lists, the second because `is_in`
+over a single-column sub-query is a set membership (§7). A transformation that is
 closed over the existing type is evidence *for* that type.
 
 The test to re-apply if this changes: a transformation whose output cannot be
@@ -176,17 +186,24 @@ class Capability:
     #: `name` under `unaccented` is a different shape from one under
     #: `casefold`, because a backend that accepts the predicate but folds
     #: differently is wrong rather than slow (§9.3).
-    pushes: Mapping[tuple[str, ...], frozenset[PredicateShape]]
+    pushes: Mapping[tuple[str, ...], frozenset[PredicateShape]] = attrs.field(factory=dict)
     #: Whether ORDER BY / LIMIT / OFFSET survive a push.
     orders: bool = True
     slices: bool = True
     #: Which roots have an endpoint at all (§10).
     scans: frozenset[str] = frozenset()
     #: Per root, the constraints that make a scan *bounded* — see §5, §10.
-    bounding: Mapping[str, frozenset[PredicateShape]] = {}
+    #: A root absent from the map is unbounded; present with an empty set,
+    #: any pushed constraint bounds it.
+    bounding: Mapping[str, frozenset[PredicateShape]] = attrs.field(factory=dict)
     #: Prefixes the backend can bring back with a row (`references=`, §11).
     prefetch: frozenset[tuple[str, ...]] = frozenset()
 ```
+
+`prefetch` and its reader, `Capability.can_project`, are declared and
+tested, and nothing in the planner or the executor reads them (§11, GH-271).
+`__attrs_post_init__` refuses a `total` capability that also lists `pushes`,
+where the list would never be read.
 
 A prefix is the declared edge *route*, not the attribute spelling:
 `q.dataflow.dsd` is `("dataflow", "dsd")`, because `dsd` crosses the dataflow
@@ -221,7 +238,9 @@ agency/id/version lookups.
 `references=` changes what comes back *with* each artefact and leaves which
 artefacts come back alone. The first draft concluded it therefore belongs to
 the resolver. §11 shows it is the *only* way a crossed path yields values, so
-it is a planner decision about projection.
+it is a planner decision. As built, `_closure.references_for` derives it per
+scan from the paths the query's predicates, order and residual steps reach
+(§13); the projection's paths are not among them (GH-271).
 
 ## 5. The refusal rule
 
@@ -321,7 +340,7 @@ Backend  fmr (SDMX REST)
   2 LOCAL  urns ← dsd.components.concept.id == "REF_AREA"
   3 GET    /structure/dataflow/ESTAT
            bounded — agency pushed
-  4 LOCAL  structure_urn ∈ urns (2), limit 10
+  4 LOCAL  dsd_urn ∈ urns (2), limit 10
 ```
 
 A residual step names the predicate it evaluates locally, so the difference
@@ -358,7 +377,7 @@ landed**; the status is given per step.
    with local steps between — rather than `(pushed_request, residual)`. For
    DuckDB every program has length one, so the pair would look correct
    throughout steps 1–3 and fail at step 4, when the §9.1 rewrite needs two
-   calls stitched by `Session.value_set`.
+   calls and a membership between them.
 4. **The REST backend**, and the §9.1 rewrite with it. *Built — `_rebase.py`,
    `_closure.py`, `_rest.py`, `_execute.py`, `RestRegistry.query`.* The
    differential runs against `tests/support/fake_rest.py`, a fake service that
@@ -451,19 +470,22 @@ cannot filter dataflows by their DSD's concepts at all — but it can answer the
 question in **two requests**:
 
 1. fetch the DSDs whose components use `REF_AREA`,
-2. filter dataflows by `structure_urn ∈ {those urns}`.
+2. filter dataflows by `dsd_urn ∈ {those urns}`.
 
 That is a semi-join rewrite, and it is a *transformation* — the thing §2 argued
 we do not need, because DuckDB's planner does its own. DuckDB never needs this
 one, since it has joins. REST needs it to be useful for anything beyond
 agency/id/version lookups.
 
-The machinery already exists: `Session.value_set` registers a set as an Arrow
-relation at ~48 µs regardless of size (#271), *(That rate was duckdb with pandas absent; with pandas importable it is ~1-2 us — DuckDB retries `import pandas` per bound value when it is missing (#411). The shape holds either way. See `tests/unit/test_value_set.py`.)* which is exactly the second step
-of that rewrite. The planner was the missing piece.
+The first draft planned to run the second step through `Session.value_set`,
+which registers a set as an Arrow relation (#271). The executor does not
+need it: it fetches both scans into one store and reruns the original query,
+whose `EXISTS` DuckDB evaluates (§13). Nothing evaluates the membership
+itself; it states why the two fetches are enough.
 
 **Implication for step 2** (taken: `pushes` is keyed by prefix, and the
-rewrite is `_pushdown._rewrite` producing a `Membership` step).
+rewrite is `_pushdown._rewrite`, whose `Membership` rides on a
+`Residual(member_of=...)` step after the outer `Push`).
 `Capability.pushes` as first sketched —
 "which predicate shapes can you evaluate" — bakes in the atomicity. The
 capability must be consulted **per path prefix**, so a planner can ask "can you
@@ -510,8 +532,10 @@ aggregation) has nothing to push: no server computes `count(*)` for us.
 The first draft concluded from this that `select()` / `group_by()` are
 **unavailable** on a REST root. §11 measured it and that is wrong — artefacts
 to rows is an ordinary local projection, and the columns a crossed path needs
-arrive in the *same request* via `references=`. Projection is available, it is
-computed locally, and what it decides is the shape of the fetch. See §11.
+can arrive in the *same request* via `references=`. Projection is available
+and computed locally. As built it decides only `detail=`: a projection of
+root columns is served, and one across a path answers null because nothing
+adds its prefixes to `references=` (§11, GH-271).
 
 ### Unchanged by REST
 
@@ -523,166 +547,19 @@ the *planner and its declaration*, and none of them is a node type.
 
 ## 10. Survey: the value of a REST backend
 
-Before building an executor, a cheaper experiment was run: express the question shapes
-#276 inventoried across its 76 hand-written sites, declare SDMX REST's
-capability from the URL, and run the planner. No HTTP, no cassettes — the
-declaration and the planner are the whole apparatus.
-
-**The declaration is six lines.** `/structure/{resource}/{agency}/{id}/{version}`
-gives equality on agency, id and version; the resource is the accessor's own
-constraint rather than a predicate. `orders=False`, `slices=False`,
-`bounding={agency}`.
-
-Twenty-three shapes, four outcomes:
-
-| outcome | n | meaning |
-| --- | --- | --- |
-| `PUSHED` | 8 | one request, nothing left over |
-| `BOUNDED-LOCAL` | 2 | one request plus a local filter over a bounded set |
-| `REWRITE` | 1 | two requests via §9.1, no N+1 |
-| `REFUSED` | 12 | no endpoint, or an unbounded scan; raises and names the fix |
-
-**This table is the second reading; the first reported more shapes servable.**
-The survey originally reported 6 / 7 / 2 / 5 — 75 % servable — measured
-against a *prototype* planner written inside the test. When the rewrite search
-moved into `_pushdown.py` the prototype's mistake showed: it checked whether
-the **inner** scan of a rewrite was bounded and never the outer one. The real
-planner checks every scan, per §5, and eleven of twenty-three survive.
-
-The planner now applies the rule as written. What stopped being servable is
-every query with no agency on one of its scans, and those cannot be answered
-without fetching a registry. Some of the twelve refusals come from gaps in the
-capability model rather than from the query; the subsections below cover
-them.
-
-### The corrected planner and the headline query
-
-`dataflows whose DSD uses concept X` needs **two** agency filters, not one:
-
-```python
-reg.query(q.dataflow).filter(
-    q.dataflow.agency == "ESTAT",       # bounds the dataflow scan
-    q.dataflow.dsd.agency == "ESTAT",   # bounds the DSD scan
-    q.dataflow.dsd.dimensions.any(q.component.concept.id == "REF_AREA"),
-)
-```
-
-The earlier write-up said one, having checked only the inner scan. With one,
-the rewrite lifts the only predicate into the sub-scan and leaves the outer
-scan carrying *nothing* — `GET /dataflow` for every agency, then a local
-membership. §5's per-scan bound catches this, though it was drafted against
-an unbounded *inner* scan and here the outer one is unbounded. The check now fires on `residual or memberships` rather
-than on `residual` alone, because lifting every residual leaves the list
-empty and the old condition silently passed.
-
-### Two capability-model gaps, closed
-
-Seven of the twelve refusals are rooted at **item** relations — `q.code`,
-`q.component`, `q.concept`. Two things were missing, both now added:
-
-1. **Which roots are scannable** (`Capability.scans`). REST has no endpoint
-   for "all codes": items arrive inside their parent. Without this the planner
-   read `q.code` as a scan that merely happened to be unbounded and refused it
-   with *"add an agency"* — a fix that could not have worked, since there is
-   no code endpoint at any agency. A refusal naming an impossible fix sends the
-   caller to a dead end.
-2. **A per-root bound** (`bounding` keyed by root). One flat set could only
-   ever mean "agency on the root", and the bound is not always a filter on the
-   root: a codelist is bounded by its own agency, a *code* would be bounded by
-   its codelist's.
-
-`root_key` is what splits them, and the split is the resource list itself: a
-maintainable's `__constraint__` carries its artefact type, which *is* the
-`{resource}` in the URL. Item relations have no constraint and no resource.
-The scannable set is derived from the accessors, so a new artefact type gains
-an endpoint without anyone remembering to list it.
-
-**This changed the refusal message and left the count at twelve; the
-prediction that it would raise the count was wrong.** Serving an item-rooted query needs a third
-thing neither field supplies: scan the owner and *explode* its items into
-rows. That is a new step kind, not a declaration — and §11's prefetch is the
-same machinery seen from the other side, since `GET /codelist/ESTAT/CL_FREQ`
-already returns the codes.
-
-What the corpus does show is that these questions have a **REST-native
-spelling**, rooted at the owner:
-
-| the question | rooted at the item | rooted at the owner |
-| --- | --- | --- |
-| the codes of `CL_FREQ` | `q.code` — refused | `q.codelist` filtered by agency + id — one request |
-| the dimensions of a DSD | `q.component` — refused | `q.dsd` filtered by agency + id — one request |
-
-Both spellings fetch the same bytes. Only one of them is expressible today,
-and whether the other should be is the explode question above rather than a
-missing declaration.
-
-### The headline query: dataflows by concept
-
-`dataflows whose DSD uses concept REF_AREA` is #276's headline — the single
-most common question asked of an SDMX catalog, and the one with no expression
-today. Evaluated naively it is **N+1 requests**: fetch the agency's dataflows,
-then resolve each one's DSD. At 800 dataflows that is 801 round trips.
-
-The rewrite makes it **two**, independent of N. No tuning of "fetch and filter
-locally" reaches that.
-
-### The headline query needs the DSD's agency
-
-That query is `REFUSED` as written and `REWRITE` only when the DSD's agency is
-stated:
-
-```python
-reg.query(q.dataflow).filter(
-    q.dataflow.agency == "ESTAT",                     # bounds the dataflow scan
-    q.dataflow.dsd.agency == "ESTAT",                 # <- required for the rewrite
-    q.dataflow.dsd.dimensions.any(q.component.concept.id == "REF_AREA"),
-)
-```
-
-(With the dataflow's agency alone the query is admitted too, but not
-rewritten: it is one bounded scan, `/dataflow/ESTAT?references=descendants`,
-with the DSD predicate evaluated locally over what came back — §13's closure.
-With the DSD's agency alone it is refused, per the previous subsection.)
-
-The planner cannot supply the DSD's agency itself. **A dataflow's agency does not imply its
-DSD's agency** — cross-agency reuse of structures is normal SDMX — so
-borrowing the outer agency to bound the inner scan would be a guess, and a
-guess that silently returns too few rows when it is wrong. The planner refuses
-and names the fix. That has an ergonomic cost: over REST the headline query
-needs a filter DuckDB does not.
-
-### What the survey found in the code
-
-Writing the classifier surfaced a defect in `shapes_of` that the unit tests
-could not see. It flattened a `Quantified`'s parts into the outer shape set,
-mixing two frames of reference: the quantifier's path is relative to the scan
-root, its parts' paths to the fan-out. So
-`dataflow.dsd.dimensions.any(component.concept.id == "X")` presented
-`("concept",)` as if it were a path from the dataflow, and any prefix analysis
-over the set concluded the predicate spanned two unrelated relations. Fixed by
-nesting the parts under `PredicateShape.inner`, which is also what the
-docstring already claimed the design was. The survey found the defect before
-the executor existed.
-
-### Verdict
-
-Build it. The two gaps above are closed; they corrected seven misleading
-refusals and left the count of servable shapes unchanged.
-
-The rewrite serves few shapes, and the headline query is one of them. The
-refusal rule turns an invisible fetch-everything into a stated refusal. The
-declaration is small, so the machinery's work is the transformation. The
-corrected numbers change the ergonomics: a caller must state an agency on
-**every scan a query touches**, which the SDMX REST URL does not make obvious.
-`RestRegistry.query`'s docstring says so, and `PushdownError` names the column
-to add.
-
-Two things to settle first, answered in §11 and §12: whether `select()` /
-`group_by()` are *unavailable* on a REST root rather than residual (§9.4 —
-no, they are available), and whether `store` is simply the better answer for
-any session issuing more than one query. The REST backend suits the first
-query against a live registry, before the caller knows whether they want the
-whole catalogue.
+Before the executor was built, the question shapes #276 inventoried were run
+through `SDMX_REST`'s declaration and the planner, with no HTTP. Of 23
+shapes, 8 push whole, 2 push with a local filter over a bounded scan, 1 needs
+the §9.1 rewrite, and 12 are refused with a message naming the fix.
+`tests/unit/test_query_rest_survey.py` pins each verdict. Seven of the
+refusals are item-rooted (`q.code`, `q.component`, `q.concept`): REST has no
+endpoint for items, so `Capability.scans` refuses them and points at the
+owner, which answers the same question in one request. Over REST a caller
+states an agency on **every scan a query touches**; the headline query,
+dataflows whose DSD uses a concept, needs both `q.dataflow.agency` and
+`q.dataflow.dsd.agency`, because a dataflow's agency does not imply its DSD's.
+The survey, its first reading and the defects it found are in
+[evidence/query-pushdown.md](evidence/query-pushdown.md#survey-the-value-of-a-rest-backend-10).
 
 ## 11. Projection, and REST's `references=` join
 
@@ -693,41 +570,52 @@ and REST has a capability §9 did not account for.
 
 ### `references=<type>` is a server-side join
 
-`references=` accepts a structure *type*, not only `none` / `descendants`. So
-one request returns the dataflows **and** the structures they reference:
+`references=` accepts a structure *type*, not only `none` / `descendants`. One
+request, `/dataflow/ECB?references=datastructure`, returns ECB's 102
+dataflows and the 81 DSDs they reference
+([sizes](evidence/query-pushdown.md#rest-response-sizes-11)). REST cannot
+*filter on the joined side*, which is what the §9.1 rewrite does, but it can
+bring the joined side back.
 
-| request | bytes | artefacts |
-| --- | --- | --- |
-| `/dataflow/ECB?detail=full` | 38.6 KB | 102 dataflows |
-| `/dataflow/ECB?detail=referencepartial&references=datastructure` | 2.15 MB | 102 dataflows + 81 DSDs |
+### Projection decides the fetch (designed, not built)
 
-That is the join, done by the server, in **one** request. §9.1 said REST
-cannot join and built the two-scan rewrite around that. REST cannot *filter on
-the joined side* — which is what the rewrite does — but it can bring
-the joined side back.
+**As built** (GH-271): `_rest.request_for` takes `references=` from
+`closure(plan) | residual_paths`, which are the paths the plan's predicates,
+order and residual steps reach. A projection's paths live on the `Select`, and
+`Query._projection_columns` hands the executor only root columns, for
+`detail=`; a crossed column makes it return `None`, which asks for `full`. So
 
-### Projection decides the fetch
+```python
+rest.query(q.dataflow).filter(q.dataflow.agency == "ECB").select(
+    f=q.dataflow.id, d=q.dataflow.dsd.id
+)
+```
 
-`select(q.dataflow.id, q.dataflow.dsd.id)` needs a value from across an edge.
-It cannot push, since the server computes nothing, and it needs no per-row
-resolution: one request with `references=datastructure`
-returns everything the projection names, and turning 102 dataflows plus 81
-DSDs into rows is ordinary local work. `group_by(q.dataflow.dsd.id)` with a
-`count()` is the same: the data is present, the aggregate is ours to compute.
+is fetched with `references=none`, the DSDs never arrive, and `d` is null in
+every row, with no error. A `LocalRegistry` answers the same query correctly.
+`Capability.prefetch` and `can_project` exist and are read only by tests.
 
-**So `Select` does not need a plan of its own.** What it needs is to contribute
-to the request: the set of path prefixes its columns name is exactly the set
-of `references=` types the fetch must ask for. Projection drives prefetch.
+**The intended fix** is the design below. `select(q.dataflow.id,
+q.dataflow.dsd.id)` needs a value from across an edge. It cannot push, since
+the server computes nothing, and it needs no per-row resolution: one request
+with `references=datastructure` returns everything the projection names, and
+turning 102 dataflows plus 81 DSDs into rows is ordinary local work.
+`group_by(q.dataflow.dsd.id)` with a `count()` is the same: the data is
+present, the aggregate is ours to compute.
+
+So `Select` needs no plan of its own. What it needs is to contribute to the
+request: the set of path prefixes its columns name joins the closure that
+`references=` is computed from. Projection drives prefetch.
 
 **§13 widens this.** A *filter* evaluated locally also needs the joined
 values, and for a backend that computes nothing, every filter is evaluated
-locally. So the fetch must close
-over every path the query reaches, not only the ones it projects. Stated as
-"projection drives prefetch", this section was true and too narrow.
+locally. So the fetch must close over every path the query reaches, projected
+or filtered. The filter half is built; the projection half is GH-271.
 
 ### The planner's choice
 
-For `filter(q.dataflow.dsd.id == "X")` there are now two admissible programs:
+For `filter(q.dataflow.dsd.id == "X")` two programs are admissible in
+principle:
 
 1. **Rewrite** (§9.1): `GET /datastructure/ECB/X` + `GET /dataflow/ECB` — two
    requests, both small, because the inner scan is *narrowed by the filter*.
@@ -736,32 +624,35 @@ For `filter(q.dataflow.dsd.id == "X")` there are now two admissible programs:
 
 Neither dominates. The rewrite wins when the inner predicate narrows hard —
 one DSD instead of 81. Prefetch wins when the query needs the joined values
-anyway, which a *projection* always does and a *filter* never does. A first
-implementation can pick the rewrite for filters and prefetch for projections
-without a cost model, because that split follows from what each needs rather
-than from a guess about sizes.
+anyway, which a *projection* always does and a *filter* never does.
+
+**As built**, `plan_program` has no prefetch branch. `_lift_residuals` turns a
+residual into a §9.1 sub-scan whenever that sub-scan is bounded on its own
+(here, when `q.dataflow.dsd.agency` is stated), and otherwise leaves it as a
+residual on the outer scan, whose closure then asks for `references=children`
+or `descendants` (§13). The design's split, rewrite for filters and prefetch
+for projections, needs no cost model, because it follows from what each
+needs; building the prefetch half is GH-271.
 
 ### The prefetch needs its own bound
 
-The bound in §5 is about which rows come back. Prefetch is about how much
-comes back *per row*, and it is unbounded in a way that a scan-level rule does
-not see:
+The bound in §5 is about which rows come back. A prefetch is about how much
+comes back *per row*: `/codelist/ECB/CL_CURRENCY/latest?references=all` is
+one artefact, bounded by every rule in §5, and returns 29.8 MB
+([measured](evidence/query-pushdown.md#referencesall-on-one-artefact)).
 
-```
-/codelist/ECB/CL_CURRENCY/latest?references=all   →  29.8 MB, 143,146 codes
-```
-
-That is **one artefact**, fully bounded by every rule in §5, returning 30 MB
-because `all` followed every edge it could. So a capability declares which
-prefixes it can prefetch, and the planner never issues `references=all`; it
-asks for the types the projection names and nothing else.
+**As built**, `_closure.references_for` never issues `all`. It returns `none`,
+`children` or `descendants` by the deepest crossing among the closure's
+paths, and never names a type. The design is narrower: a capability declares
+which prefixes it can prefetch (`Capability.prefetch`), and the planner asks
+for the types the projection names and nothing else. That is part of the
+GH-271 fix and is not built.
 
 ### Implication for the staging
 
-Step 4 gains a piece and loses one. It gains prefetch — `Select`'s prefixes
-become `references=` types — and the `Select` open question is answered rather
-than deferred. It loses nothing structurally: prefetch is a field on
-`Capability` and a decision in the planner, not a new node or a second plan.
+The design gave step 4 the prefetch: `Select`'s prefixes become `references=`
+types, as a field on `Capability` and a decision in the planner, with no new
+node and no second plan. The field landed; the decision did not (GH-271).
 
 ### `detail=` follows the same rule, with one extra constraint (#318)
 
@@ -770,17 +661,10 @@ of each artefact. Both are derived from the closure and both fail silently
 in the same way, so they are computed together — but `detail` has a constraint
 `references` does not.
 
-**What a stub omits, measured.** `codelist/ECB?detail=allstubs` returns 244
-codelists; comparing field-by-field against a full response for the 109 present
-in both, exactly two things differ: `codes` and `description`. `id`, `agency`,
-`version` and `name` are all present. A third field, `maintainer`, also
-differed and is *not* attributed to `detail` — the full response was
-`references=all`, which pulled the AgencyScheme and resolved the agency's
-name. Attributing it here would have made every query needing an agency name
-ask for `full` on the strength of a confounded comparison.
-
-The saving is worth having: 88 KB for the whole catalogue as stubs, against
-69 KB for `CL_CURRENCY` alone at full detail.
+**A stub omits `codes` and `description`** and keeps `id`, `agency`,
+`version` and `name`, measured against ECB's codelists; the whole catalogue as
+stubs is 88 KB against 69 KB for `CL_CURRENCY` alone at full detail
+([measured](evidence/query-pushdown.md#what-a-stub-omits-318)).
 
 **Only a projection may ask for a stub.** A row terminal resolves rows to
 artefacts out of the store, and a stub-populated store answers `collect()`
@@ -798,84 +682,15 @@ URLs the planner emitted.
 
 ## 12. Materialise or query through, with numbers
 
-This question has a measured answer. Measured against the recorded ECB responses on this machine.
-
-**These numbers are the second set.** The first, taken before !307, showed
-8.4 ms per artefact and a break-even of about three queries — and the profile
-behind them turned out to be measuring a defect: a cascade of ~36 `DELETE`s
-run per artefact whatever its type, plus DuckDB's per-parameter pandas probe
-riding along on each one (#317). Fixing that moved the figure by 3× and moved
-the conclusion with it. The stale version is not preserved here; what follows
-measures the fixed writer.
-
-### The cost model
-
-| payload | MB | artefacts | items inside | parse | store | ms/artefact |
-| --- | --- | --- | --- | --- | --- | --- |
-| `/dataflow/ECB` + its 81 DSDs | 2.2 | 183 | 2,391 | 0.06 s | 0.47 s | 2.6 |
-| one DSD, `references=all` | 0.5 | 22 | 2,525 | 0.01 s | 0.06 s | 2.9 |
-| `CL_CURRENCY`, `references=all` | 29.8 | 142 | 144,564 | 0.74 s | 1.21 s | 8.5 |
-
-Roughly **2.6 ms per artefact plus a few µs per contained item**. Parsing runs
-at ~35 MB/s and never dominates.
-
-The first measurement reported this as *flat per artefact and independent of
-size*, which was true only because the per-artefact cost was then large enough
-to hide everything else. With it 3× smaller the per-item term is visible:
-`CL_CURRENCY` costs 8.5 ms per artefact because 142 artefacts carry 144,564
-codes between them, not because those artefacts are individually expensive.
-Both terms matter now; payload size in bytes does not drive the cost.
-
-### A bounded query and a materialisation fetch the same bytes
-
-§5 forces the
-scan to be bounded by agency, and an agency's structures are exactly the
-natural materialisation unit — `GET /dataflow/ECB?references=datastructure` is
-both "the request my query needs" and "ECB's catalogue". So the extra cost of
-materialising is only the store; the download is already paid.
-
-So the comparison is:
-
-- **query through** — pay one round trip *and a re-parse* on every query.
-- **materialise** — pay the store once, then pay nothing again, including in
-  later sessions if the DuckDB file persists.
-
-ECB's whole dataflow catalogue now stores in **0.47 s** against a round trip
-of ~0.5 s. The break-even is **about one query**.
-
-### The rule of thumb
-
-> **Materialise. Query through only for a single lookup you will not follow
-> up.**
-
-- One artefact by agency + id + version, wanted once: query through — 22
-  artefacts, 0.06 s, nothing to reuse. Even here the margin is thin.
-- Anything else, including the second question about the same agency:
-  materialise, per agency. You have already downloaded it.
-- A large codelist is not a reason to query through: 143,000 codes cost 1.2 s.
-- The real ceiling is **many artefacts**: at 2.6 ms each, 5,000 is ~13 s.
-  That argues for materialising per agency rather than a whole registry — not
-  for querying through.
-
-The first pass predicted that "at ~1 ms per artefact the rule would collapse
-to *materialise, always*". At 2.6 ms the rule is already close to that.
-
-### The two remaining costs
-
-Two costs survived #317, and both have a known cause:
-
-- ~~**Re-add still runs the full cascade**~~ — ~7 ms per artefact against 2.6
-  for a fresh write. **Done (#144, #145):** `_delete_artefact_cascade` in
-  `storage/writers.py` dispatches on the artefact type, and the per-kind table
-  set is derived in a test rather than enumerated twice
-  (`test_the_cascade_covers_every_table_each_writer_writes`,
-  `tests/unit/test_cascade_dispatch.py`).
-- **~3,400 pandas probes remained** (as measured then; not re-measured here) on a fresh write, from ordinary bound
-  parameters — ~12 on the spine insert, 2 per extension row, at two probes
-  each. Removing them means batching *across* artefacts, which is an `add_all`
-  API change rather than a writer fix. Installing pandas also removes them
-  and is worth ~17 %; not done, because pandas is a heavy dependency outside
-  the baseline deps.
+**Materialise. Query through only for a single lookup you will not follow
+up.** Storing an artefact costs about 2.6 ms plus a few µs per contained item,
+so ECB's dataflow catalogue (183 artefacts) stores in 0.47 s against a round
+trip of about 0.5 s, and the break-even is about one query. A bounded REST
+query and a per-agency materialisation fetch the same bytes, because §5
+bounds the scan by agency. `RestRegistry(store=...)` keeps what it fetches for
+the life of that store. The cost model and its first, defective reading
+(#317) are in
+[evidence/query-pushdown.md](evidence/query-pushdown.md#materialise-or-query-through-with-numbers-12).
 
 ## 13. The executor is a fetch planner
 
@@ -899,9 +714,11 @@ particular fetch is enough.
 
 ### The fetch closes over every path the query touches
 
-A short fetch fails silently. `references=datastructure` returns the DSDs, so
-`select(q.dataflow.id, q.dataflow.dsd.id)` works — §11 measured exactly that.
-It does **not** return the concept schemes those DSDs reference, so
+A short fetch fails silently. `references=datastructure` returns the DSDs,
+which is all `select(q.dataflow.id, q.dataflow.dsd.id)` needs — §11 measured
+the response. (As built that projection is fetched with `references=none` and
+answers null, GH-271.) The DSDs' fetch does **not** return the concept schemes
+they reference, so
 
 ```python
 q.dataflow.dsd.dimensions.any(q.component.concept.id == "REF_AREA")
@@ -922,9 +739,13 @@ error. Measured on the recorded responses:
 > empty table and answers *nothing*, the failure this design exists to
 > prevent.
 
-A query is therefore refused not only when its scan is unbounded, but when the
-`references=` depth needed to close it is one the backend will not issue.
-`references=all` is never that answer — §11 measured 29.8 MB for one codelist.
+The design also refuses a query whose closure needs a `references=` depth the
+backend will not issue. As built nothing reaches that refusal:
+`_closure.references_for` answers `none` for no crossing, `children` for one
+and `descendants` for two or more, so every closure has a value.
+`references=all` is never issued — §11 measured 29.8 MB for one codelist.
+The closure covers the plan's predicates, order and residual steps; a
+projection's paths are outside it (GH-271).
 
 ### The §9.1 rewrite keeps the closure small
 
@@ -949,9 +770,11 @@ Less than §7 implied. Built as listed:
 1. `Push` → a URL. The pushed predicates are equality on agency / id /
    version by construction, so this is assembly, not compilation.
    *`_rest.request_for` / `requests_for`.*
-2. A `references=` value per `Push`, derived from the paths the query
-   evaluates on that scan's rows — the closure above. *`_closure.py`
-   (`references_for`, and `detail_for` for §11's `detail=`).*
+2. A `references=` value per `Push`, derived from the paths the query's
+   predicates, order and residual steps evaluate on that scan's rows — the
+   closure above. A projection contributes root columns to `detail=` and
+   nothing to `references=` (GH-271). *`_closure.py` (`references_for`, and
+   `detail_for` for §11's `detail=`).*
 3. Fetch, parse, materialise into a scratch registry. *`_execute.fetch_into`;
    the store is `RestRegistry`'s `store`, or an in-memory one it owns.*
 4. Run the original `Query` against it. *`RestRegistry.query` returns the
@@ -965,11 +788,13 @@ the same SQL, over stores populated differently.
 
 ## 14. Open
 
-- ~~**Does `Select` push at all?**~~ **Answered in §11.** It does not push. Projection is *available*, computed
-  locally, and what it decides is the request: the prefixes its columns name
-  are the `references=` types to ask for. `Select` needs no plan of its own —
-  it needs to contribute its prefixes to the fetch. `Capability.prefetch` and
-  `can_project` carry that.
+- **Does `Select` push at all?** Answered in §11 and half built. It does not
+  push. Projection is *available* and computed locally, and in the design it
+  decides the request: the prefixes its columns name join the closure that
+  `references=` comes from. As built it decides only `detail=`, so a
+  projection across a path answers null over REST (GH-271).
+  `Capability.prefetch` and `can_project` declare the capability and are read
+  only by tests.
 - **Federation.** Still open. `FederatedRegistry` routes by agency across
   registries (it has no `query()` of its own), and
   agency is also the bounding constraint of §5 and, per §12, the natural
@@ -982,4 +807,5 @@ the same SQL, over stores populated differently.
 - ~~**The writer's 8 ms per artefact**~~ — done in #317 / !307: 8.4 ms to
   2.6 ms, and §12's rule moved with it. The two remaining costs (the re-add
   cascade, and batching across artefacts to retire the last pandas probes) are
-  named at the end of §12.
+  named at the end of §12's
+  [evidence](evidence/query-pushdown.md#the-two-remaining-costs).

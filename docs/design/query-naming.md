@@ -110,10 +110,23 @@ Three, and only one lacks spec precedent:
 class name, and `set` had a second problem: as a hop it reads as an imperative
 ("set the id") before it reads as a noun.
 
-`set` also broke a convention worth stating on its own: **every to-one hop names
+`set` also broke a convention worth stating on its own: **a to-one hop names
 its target class** — `code.codelist`, `component.dsd`, `component.concept`,
-`hcode.hierarchy`, `hcode.level`, `metadataflow.msd`. `set` was the only one
-that shortened.
+`hcode.hierarchy`, `hcode.level`, `metadataflow.msd`. The exceptions have one of
+two reasons, and the deviations table lists each:
+
+- **The IM names the role.** A map's `source` and `target` and a hierarchy
+  association's `linked_object` and `context_object` are the IM's own role
+  names (`+linkedObject`, `+contextObject`), and the role says more than the
+  class: both ends of a structure map are DSDs.
+- **The qualifier is dropped.** `cube_region.constraint` (a `DataConstraint`),
+  `key_value.region` (a `CubeRegion`), `hierarchy_applicability.association`
+  (a `HierarchyAssociation`) and `item_map.scheme_map` (whichever scheme map
+  holds the item map) keep only the head noun. Each row has one owner of that
+  kind, so the short name names one thing.
+
+`set` dropped its qualifier too, and was reverted because as a hop it reads as
+an imperative.
 
 ## Physical names are not API
 
@@ -124,9 +137,9 @@ touch writers and readers for no gain. Likewise `spine`, the identity-split hop
 
 ## Deviations, in full
 
-`sl.q` has 48 accessors. 42 are the exact IM class name in snake case
-(`component` for the abstract `Component`, `annotation_url` for
-`AnnotationURL` among them). The deviations, roots and hops together:
+`sl.q` has 48 accessors. 39 are the exact IM class name in snake case
+(`component` for the abstract `Component` among them; `reported_attribute` is
+the 2.1 name, above). The deviations, roots and hops together:
 
 | name | stands for | why |
 | --- | --- | --- |
@@ -137,6 +150,13 @@ touch writers and readers for no gain. Likewise `spine`, the identity-split hop
 | `.structure` | Metadataflow *or* MetadataProvisionAgreement | genuinely polymorphic |
 | `metadata_target` | `Target` (3.0) | prefixed; bare `target` is generic |
 | `hierarchy_applicability` | — | a derived view (which hierarchy applies to a component in a dataflow), not an IM class; named for the relationship it computes |
+| `group` | `GroupDimensionDescriptor` | the SDMX-ML element name (`<str:Group>`) |
+| `key_value` | `MemberSelection` / `MemberValue` | the SDMX-ML element name (`<str:KeyValue>`); one row per value |
+| `annotation_url`, `.urls` | the `Annotation`'s URLs | the SDMX-ML element name (`<com:AnnotationURL>`); the IM has no class of that name |
+| `.source`, `.target` | the scheme or structure a map maps from and to | IM role names, on `concept_scheme_map`, `category_scheme_map`, `organisation_scheme_map` and `structure_map` |
+| `.linked_object`, `.context_object` | the artefact a hierarchy association links, and its context | IM role names (`+linkedObject`, `+contextObject`) |
+| `.targets` | `TargetIdentifiableObject` | the metadata set's targets, named for the role |
+| `.constraint`, `.region`, `.association`, `.scheme_map` | `DataConstraint`, `CubeRegion`, `HierarchyAssociation`, an item scheme map | qualifier dropped; one owner of that kind per row |
 | `spine` | the identity split | internal plumbing, not public API |
 | `parent`, `children`, `ancestors`, `descendants`, `described_by` | — | relationships, not things |
 

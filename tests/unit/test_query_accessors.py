@@ -282,7 +282,7 @@ def test_every_is_the_universal() -> None:
 
 def test_independent_and_same_child_are_different_predicates() -> None:
     """Two dot-through predicates versus one `.any()` with two — verified in
-    `query-language-evidence.md` to return different rows."""
+    `docs/design/evidence/query-language.md` to return different rows."""
     independent = (q.dsd.components.concept.id == "REF_AREA") & (q.dsd.components.codelist.id == "CL_GEO")
     same_child = q.dsd.components.any(
         q.component.concept.id == "REF_AREA",

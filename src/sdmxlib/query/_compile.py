@@ -17,7 +17,7 @@ Compilation is organised by **scope**: the outer query is one, each correlated
 subquery is another. A scope collects every flat path its predicates need,
 builds *one* join plan for them, and compiles against it. Doing it per-leaf
 instead would defeat shared-prefix deduplication, which the benchmark in
-`query-language-evidence.md` made a requirement rather than an optimisation.
+`docs/design/evidence/query-language.md` made a requirement rather than an optimisation.
 
 Values are always bound, never interpolated. Identifiers come from the edge
 graph, which `tests/unit/test_query_edges.py` validates against the live

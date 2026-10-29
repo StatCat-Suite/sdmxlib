@@ -14,12 +14,12 @@ and then compiling, and reaches a dataflow's observations through
 > **construct by construct**, and
 > [`query-language-cookbook.md`](query-language-cookbook.md) **applies** it to
 > the questions consumers were hand-writing SQL for.
-> [`query-language-evidence.md`](query-language-evidence.md) carries what was
+> [`evidence/query-language.md`](evidence/query-language.md) carries what was
 > **run** while the design was argued — peer surveys, schema measurements,
 > benchmarks, the prototype log.
-> [`query-language-explorations.md`](query-language-explorations.md) carries
-> branches that were prototyped and **rejected**, kept because each failure is
-> why a live choice is right.
+> [`query-language-explorations.md`](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/design/query-language-explorations.md)
+> carries branches that were prototyped and **rejected**, kept because each
+> failure is why a live choice is right.
 >
 > Neighbours: [`query-composition.md`](query-composition.md) owns how clauses
 > compose *within* one relation (the refinement laws);
@@ -87,7 +87,8 @@ relation but not a predicate.
 ## 2. The rules
 
 Several rules were reached by correcting an earlier draft; the branches tried
-and rejected are in `query-language-explorations.md`.
+and rejected are in
+[`query-language-explorations.md`](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/design/query-language-explorations.md).
 
 ### 2.1 A path appears exactly where there is a decision
 
@@ -117,7 +118,7 @@ are `Temporal` columns, so as-of filtering is an ordinary comparison
 
 ### 2.2 Name the edge, not the table
 
-Both peer surveys in `query-language-evidence.md` agree: every peer names the
+Both peer surveys in `evidence/query-language.md` agree: every peer names the
 *edge* it joins along — SQLAlchemy via the relationship attribute, Django
 via the FK path, Cypher via the relationship type, GraphQL by making every hop a
 field. A prototype that joined by table and picked the first matching edge
@@ -184,12 +185,17 @@ positive cases failed to compile — a component query rejected its own path. So
 the typing requires it.
 
 A predicate built for one root and handed to another is refused by the checker
-(`Pred[CodelistRow]` is not a `Pred[ComponentRow]`). At runtime `filter` refuses
-a predicate over a different *table* — `filter() got a predicate about
-'artefact', but this query is rooted at 'dsd_component'`. Two maintainable roots
-share `sdmx.artefact`, so `reg.query(q.dataflow).filter(q.codelist.agency ==
-...)` is caught only statically; the column it names is the same one, so the
-answer is right, though the code names a root it does not mean.
+(`Pred[CodelistRow]` is not a `Pred[ComponentRow]`) and again at runtime. Each
+column records the root accessor it was reached from, its `origin`, and
+`filter` compares that origin's table and discriminator with the query's root
+(#510). Two maintainable roots share `sdmx.artefact` and differ by
+discriminator, so `reg.query(q.dataflow).filter(q.codelist.agency == "ESTAT")`
+raises `TypeError`: `filter() got a predicate built from q.codelist, but this
+query is over q.dataflow`, followed by the spelling from `q.dataflow`. An origin
+with no discriminator, `q.artefact`, fits any maintainable root, and so does a
+root with none (`reg.artefacts(T)`). A column reached by a declared hop
+(`q.dataflow.dsd.id`) is about the root's rows and passes
+(`query.py:_same_relation`, `Query.filter`).
 
 ### 2.6 Paths are deterministic path expressions
 
@@ -222,7 +228,10 @@ never emits a recursive CTE.
 That costs almost nothing, because the transitive closure is **baked at write
 time**: every tree relation stores `depth` and an `ancestor_ids` list, so
 `q.code.ancestors` / `q.code.descendants` are ordinary to-many edges matched by
-membership in a stored list — one containment test, not a recursion. The four
+membership in a stored list — one containment test, not a recursion.
+`q.code.descendants.id.list()` is an ordinary correlated list over stored
+columns, and `cl.narrower_transitive("EU")` is a named filter over the
+`ancestors` edge (`q.code.ancestors.id == "EU"`). The four
 tree edges (`parent`, `children`, `ancestors`, `descendants`) are the subject of
 [`query-tree-paths.md`](query-tree-paths.md) §5. The corollary is the property
 the compiler rests on: **every path is finite and compiles to a fixed join
@@ -250,6 +259,40 @@ This is SQLAlchemy Core's split — `Table` / `Column` independent of any mapped
 class — and it is why `sdmxlib.query` imports from the model but the model
 imports nothing from it.
 
+### 2.9 Every edge is named, and `.any()` is the quantifier
+
+Naming the first edge of a fan-out leaves a path vague when the predicate inside
+reaches further. In `q.dsd.dimensions.any(q.codelist.id == "CL_GEO")`,
+`dimensions` pins dsd → component, and the predicate is about a codelist, so the
+compiler would still have to choose a route from component to codelist: the hop
+with two routes and two answers (`['TRADE']` against `['CPI', 'TRADE']`,
+`evidence/query-language.md`, "Two routes to a codelist, with rows"). The rule is
+therefore to **name every edge**. Once every edge is named, the predicate inside
+`.any()` is rooted at the child — `q.component.codelist.id` — and `.any()`
+refuses a predicate built from any other relation with a `TypeError` (§3.4).
+
+That separates two jobs:
+
+> Naming every edge is what makes a path strict. `.any()` is the
+> **quantifier**.
+
+A parent-level `q.dsd.any(...)` has the quantifier and names no edge, which is
+why it was rejected
+([`query-language-explorations.md`](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/design/query-language-explorations.md),
+"A parent-level `.any()`"). Dot-through reaches the same strictness with no
+child accessor, because the path never leaves the parent's accessor:
+
+```python
+q.dsd.dimensions.codelist.id == "CL_GEO"          # the component's own representation
+q.dsd.dimensions.concept.codelist.id == "CL_GEO"  # the concept's default
+```
+
+Both are `Pred[DsdRow]`, and the two readings a bare inner predicate left
+ambiguous are two spellings. A dot-through comparison carries the existential
+quantifier itself. `.any(*preds)` is needed where several predicates must land
+on one child (§3.4), `.every(*preds)` for the universal (§3.5), and the
+fan-out's aggregates for projections (§6).
+
 ---
 
 ## 3. Edges, fan-outs, and how a path compiles
@@ -262,11 +305,14 @@ imports nothing from it.
 `back_populates`, Django's `related_name`), so the compiler keeps a single edge
 table and the two directions cannot drift.
 
-**Cardinality is derived, not declared.** Forward is to-one exactly when the
-target column is unique; backward is to-one exactly when the source column is.
-`tests/unit/test_query_edges.py` checks both, and optionality, against the live
-schema — because a mis-declared cardinality fails *silently*, multiplying or
-dropping rows, where a missing column fails loudly. The case that motivated it
+**Cardinality follows the direction, and the schema checks it.** A forward hop
+is to-one and an inverse hop to-many, except that a membership hop (an id
+matched inside a stored list, §2.7) is to-many both ways (`Hop.to_many` in
+`_joins.py`). `tests/unit/test_query_edges.py` checks that rule, and
+optionality, against the live schema's key constraints: every forward hop must
+reach a unique column, and every exposed inverse leave a non-unique one —
+because a mis-declared cardinality fails *silently*, multiplying or dropping
+rows, where a missing column fails loudly. The case that motivated it
 is in [`query-language-examples.md`](query-language-examples.md) §5: "each
 component with its dataflow" was written as a to-one path in seven design
 examples, and three real rows showed it duplicating one component and dropping
@@ -289,7 +335,7 @@ two paths off one root, `dimensions.concept.id` and `dimensions.codelist.id`,
 produce one join to `dsd_component`, not two. That deduplication is a
 requirement rather than an optimisation — the hostile review measured
 correlated-subquery cost as linear in the number of fan-out columns
-(`query-language-evidence.md`, "Cost of correlated subqueries per fan-out
+(`evidence/query-language.md`, "Cost of correlated subqueries per fan-out
 column").
 
 ### 3.3 To-many hops compile to a correlated subquery
@@ -345,8 +391,11 @@ reg.query(q.dsd).filter(
 ```
 
 `.any(*preds)` takes child-rooted predicates (`Pred[ComponentRow]`, which is
-what `q.component.*` produces); a parent-rooted one is a type error (and, today,
-a database binder error at runtime rather than a refusal naming the fix). The child
+what `q.component.*` produces); a parent-rooted one is a type error, and at
+runtime `.any()` raises `TypeError` before any SQL runs, naming the child
+relation and telling the caller to write the predicate from its accessor (#511).
+`.every()` and the fan-out's `list` / `unique` / `count(where=)` apply the same
+check. The child
 accessor adds nothing when a fan-out holds one predicate and marks the grouping
 when it holds several. polars makes the same distinction with
 `pl.element()` bound by `.list.eval()`; ours differs only in being typed.
@@ -473,6 +522,13 @@ reach, counting **crossings** into other artefacts rather than hops, because a
 fetch one relation short returns nothing and raises no error. `references=`
 comes from there (`query/_rest.py`).
 
+The closure is derived from the plan: its predicates, its order and any residual
+steps. A projection's paths live on the `Select` and feed only `detail=`, so a
+REST query that projects across a hop — `select(f=q.dataflow.id,
+d=q.dataflow.dsd.id)` — is fetched without the hop's target and answers null
+for that column, with no error. That is a defect, open as GH-271; a
+`LocalRegistry` answers the same query correctly.
+
 ### Refusing an unbounded fetch
 
 The costly failure of partial pushdown is a filter REST cannot evaluate over an
@@ -524,15 +580,19 @@ where the structure plane is a weak one. See
 | `preview(n)` | a bounded head, for a REPL |
 | `page(n)` | a `Page` of urns plus a cursor |
 
-`explain()`, `to_sql()` and `columns` run nothing. Every terminal leaves the
-query unchanged: a plan is a value, refined and run as often as wanted.
+`explain()` and `to_sql()` run nothing, and neither does `Select.columns`,
+which a projection knows from its own items. `Query.columns` asks the database:
+it runs `DESCRIBE` over the compiled SQL, which plans without reading rows, and
+over REST it fetches first, because the statement is described against the
+materialised store. Every terminal leaves the query unchanged: a plan is a
+value, refined and run as often as wanted.
 
 ### No implicit execution, anywhere
 
 polars refuses `len(lf)`, `iter(lf)`, `lf[0]` and `bool(lf)` deliberately; the
 old DSLs implemented all four, and each ran a query without saying so. `for c in
 cl.codes` inside a loop over codelists is the N+1 shape measured at 12x in
-`query-language-evidence.md` ("Fan-out and N+1"). So a `Query` has no
+`evidence/query-language.md` ("Fan-out and N+1"). So a `Query` has no
 `__iter__`, `__len__` or `__contains__`, and each raises naming the terminal to
 use instead. The middle position — keep the dunders where a receiver bounds the
 scope (`cl.codes`) — does not hold, because bounded-per-receiver is exactly the
@@ -666,7 +726,7 @@ Every projected fan-out compiles to this form.
 Two `list()` calls over one child are two independent correlated subqueries, and
 DuckDB's `list()` has no defined order without `ORDER BY`. So `labels[i]` is not
 reliably the label of `codes[i]`, and the two diverge silently the moment either
-gains an order (measured in `query-language-evidence.md`, "`list()` alignment").
+gains an order (measured in `evidence/query-language.md`, "`list()` alignment").
 The fix builds alignment into the result: the fan-out's own
 `list()` takes several columns and returns **one list of structs**, in one
 subquery.
@@ -744,8 +804,9 @@ distinct *values* inside one fan-out — and both names are polars', where
 
 Everything `query-composition.md` guarantees holds unchanged: `filter` ANDs,
 `limit` takes the minimum, `offset` raises the floor, `order_by` replaces, and
-`filter` / `qualify` / `order_by` after a slice raise `SliceError` rather than
-silently running before the slice. The generated properties in
+`filter`, `qualify`, `order_by`, `intersect`, `difference`, `after`, `group_by`
+and `agg` after a slice raise `SliceError` rather than silently running before
+the slice (`group_by` and `agg` also refuse an ordered query, §6). The generated properties in
 `tests/unit/test_properties_query_laws.py` — monotonicity, idempotence, and
 *every ordering either commutes or is refused* — run over path predicates like
 any other.
@@ -952,7 +1013,7 @@ not a pattern.
 
 Any namespace named after a builtin has this hazard: a `str` property shadows the builtin inside the class body, so
 `def f(self, x: list[str])` annotates `list[<property>]`. The fix is
-`builtins.str` (`query-language-evidence.md`, "The `.str` namespace shadows the
+`builtins.str` (`evidence/query-language.md`, "The `.str` namespace shadows the
 builtin").
 
 ---
@@ -1066,8 +1127,9 @@ scope_to_agency(reg.query(q.codelist), q.codelist, "ESTAT")
 
 That extra parameter is the price, and annotating such a helper is harder:
 the shared maintainable accessor class is private, so `root` has no public type
-to name, and an unannotated helper is checked only at runtime — where a
-mismatched pair of maintainable roots shares a table and is not caught (§2.5). A `q.cols` on the query was
+to name, and an unannotated helper is checked only at runtime, where `filter`
+refuses a predicate from a mismatched root by its origin, including two
+maintainable roots that share a table (§2.5). A `q.cols` on the query was
 considered and not built — a second spelling for every column reference,
 drifting toward the bound-accessor model.
 
@@ -1081,7 +1143,7 @@ operations take `Query[R, A]`.
 ## 12. Risks carried
 
 The design was attacked deliberately once it looked settled
-(`query-language-evidence.md`, "Hostile-review measurements"). One objection
+(`evidence/query-language.md`, "Hostile-review measurements"). One objection
 changed the shape — the same-child conjunction, answered by `.any(*preds)`
 (§3.4). These risks remain open:
 
@@ -1115,9 +1177,10 @@ above. These remain open.
    `q.component.codelist.id != q.component.concept.codelist.id` are refused by
    the literal check, so "a component overriding its concept's representation"
    and "a code sharing its parent's label" have no spelling. Comparing two
-   aggregates (`count() > n_unique()`) is not refused cleanly either — it fails
-   at the database. Whether to admit a column operand, and with what null
-   semantics, is open; it meets item 4.
+   aggregates (`count() > n_unique()`), or an aggregate with a column, raises
+   `TypeError` naming the workaround: select both and compare them in polars
+   (#511). Whether to admit a column operand, and with what null semantics, is
+   open; it meets item 4.
 2. **Self-joins.** Two bindings of one relation at once (a DSD with two
    dimensions sharing a concept, answered here only via grouping). A
    higher-order binder — `dimensions.any(lambda a: a.dsd.dimensions.any(lambda
@@ -1131,9 +1194,10 @@ above. These remain open.
    and type-checked, and is not public: the column and edge factories are not
    exported, and `EDGES` is a closed table. Reverse edges (ours to theirs) are
    further off still.
-4. **Null-safe equality as an operator.** `IS DISTINCT FROM` is used internally
-   for `every`; callers comparing nullable values hit three-valued logic with no
-   opt-out beyond writing the `is_null()` arm themselves (§3.6).
+4. **Null-safe equality as an operator.** `every` negates its predicates with
+   `IS NOT TRUE` internally (§3.5); callers comparing nullable values hit
+   three-valued logic with no opt-out beyond writing the `is_null()` arm
+   themselves (§3.6).
 5. **Any-language label search.** `name["en"]` picks one language; "matches in
    any language", the natural behaviour for a search box, needs `map_values` and
    has no spelling; the rule that there is no default language makes it a
@@ -1172,7 +1236,7 @@ alternative is in the sections cited.
 | --- | --- |
 | named roots — `reg.dataflows()`, `reg.components()`, `reg.codes()` | `reg.query(q.dataflow)` — one entry, the accessor is the witness (§5) |
 | four accessors `sl.code` / `sl.artefact` / `sl.node` / `sl.meta`, `FrameQuery` | `sl.q.<relation>`, `Query`, `Select` |
-| form A — `join(edge)` then bare columns | paths in the reference (form B); A needs `aliased()` the moment two routes are live, and lets a helper's bare predicate silently mean another join — `query-language-explorations.md` |
+| form A — `join(edge)` then bare columns | paths in the reference (form B); A needs `aliased()` the moment two routes are live, and lets a helper's bare predicate silently mean another join — [`query-language-explorations.md`](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/design/query-language-explorations.md) |
 | `Many` with verbs only (`.any(lambda c: ...)`, HOAS binders) | dot-through plus `.any(*preds)` / `.every(*preds)` on `FanOut` (§3.4) |
 | a postfix universal `(pred).every()` | `FanOut.every(*preds)` (§3.5) |
 | `.hier` (`descendants_of`, `narrower_transitive` on a column) | the four tree edges, plus the lazy artefact's named verbs (§2.7) |
@@ -1182,11 +1246,12 @@ alternative is in the sections cited.
 | `.labelled(lang=)` on an observation query | `obs.frame(labels="en")` (§9) |
 | a `KeyedQuery` split | not built; `obs.text(...)` / `obs.num(...)` were built (#511) and give typed columns |
 | `cl.codes["CA"]` as lazy refinement | it looks up and returns the row (§5) |
-| public `sl.col` / `sl.edge` / `sl.Str` / `sl.CodeCols` for caller accessors | not public (§13, item 3) |
+| public `sl.col` / `sl.edge` / `sl.CodeCols` for caller accessors | the column and edge factories (`col`, `edge`, `many`) are not public, and no `CodeCols` exists (§13, item 3); the types a caller annotates with — `sl.Col`, `sl.Cols`, `sl.Str`, `sl.Num`, `sl.Untyped`, `sl.Pred`, `sl.RowKind` — are exported |
 | `FederatedCatalog.from_parts(...).query(...)` | `RestRegistry.query` with `store=`; federation is open (§13, item 10) |
 | `list()` of separate calls, aligned "incidentally" | `list(*columns)` returns structs (§6) |
 
 Rejected branches with their full arguments — bare and contextual paths, a
-parent-level `.any()`, the `Fan[R]` marker, a strict path with a bare inner
-predicate — are in
-[`query-language-explorations.md`](query-language-explorations.md).
+parent-level `.any()`, the `Fan[R]` marker, a postfix `.every()` — are in
+[`query-language-explorations.md`](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/design/query-language-explorations.md).
+The branch that was adopted, a strict path with a child-rooted inner
+predicate, is §2.9.

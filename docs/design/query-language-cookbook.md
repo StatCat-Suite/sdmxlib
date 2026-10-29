@@ -2,8 +2,8 @@
 
 Companion to [`query-language.md`](query-language.md) (the design),
 [`query-language-examples.md`](query-language-examples.md) (the surface,
-construct by construct), [`query-language-evidence.md`](query-language-evidence.md)
-(what was run) and [`query-language-explorations.md`](query-language-explorations.md)
+construct by construct), [`evidence/query-language.md`](evidence/query-language.md)
+(what was run) and [`query-language-explorations.md`](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/design/query-language-explorations.md)
 (branches rejected).
 
 This page answers one question: **can the query language express what consumers

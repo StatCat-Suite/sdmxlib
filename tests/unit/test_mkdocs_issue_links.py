@@ -85,7 +85,7 @@ def test_the_design_docs_are_where_the_links_land() -> None:
     item the archive lacks would fail here rather than 404 on the site.
     """
     targets: list[str] = []
-    for page in sorted((ROOT / "docs" / "design").glob("*.md")):
+    for page in sorted((ROOT / "docs" / "design").rglob("*.md")):
         targets += re.findall(
             r"\]\(" + re.escape(_REPO) + r"/blob/main/(history/gitlab/[a-z_]+/\d+\.md)\)",
             _link(page.read_text(encoding="utf-8")),

@@ -3,8 +3,8 @@
 Companion to [`query-language.md`](query-language.md) (the design — read it for
 the *why*), [`query-language-cookbook.md`](query-language-cookbook.md) (the
 same surface applied to real questions),
-[`query-language-evidence.md`](query-language-evidence.md) (what was run) and
-[`query-language-explorations.md`](query-language-explorations.md) (branches
+[`evidence/query-language.md`](evidence/query-language.md) (what was run) and
+[`query-language-explorations.md`](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/design/query-language-explorations.md) (branches
 rejected).
 
 This page explains what each construct *means* and what it costs; the cookbook
@@ -90,8 +90,10 @@ so mixing them is a type error and, at runtime, a refusal naming the fix:
 
 ```python
 reg.query(q.component).filter(q.codelist.id == "CL_AREA")    # refused
-# TypeError: filter() got a predicate about 'artefact', but this query is rooted
-# at 'dsd_component'. ... reach it by a declared hop (q.<root>.<hop>.resource_id).
+# TypeError: filter() got a predicate built from q.codelist, but this query is
+# over q.component. A predicate belongs to the relation it was built from: write
+# it from q.component (q.component.id), or reach the other relation by a
+# declared hop from q.component.
 ```
 
 The second and third lines above are two genuinely different questions — SDMX
@@ -287,6 +289,7 @@ SELECT s0.resource_id AS id,
        (SELECT count(*) FROM sdmx.dsd_component s2
          WHERE (s0.urn = s2.dsd_urn AND s2.component_type = ?)) AS n
 FROM sdmx.artefact s0 WHERE s0.artefact_type = ?
+ORDER BY s0.urn NULLS LAST
 ```
 
 **Nesting is the default** — it cannot multiply rows — and exploding is one
@@ -424,7 +427,7 @@ dataflow:
 
 ```python
 reg.query(q.component).select(component=q.component.id, flow=q.component.dsd.dataflows.id)  # refused
-# PathError: 'dsd.dataflows.spine' crosses a to-many edge, so it has no single value per row. ...
+# PathError: 'dsd.dataflows' crosses a to-many edge, so it has no single value per row. ...
 ```
 
 `sdmx.dataflow` has no unique constraint on `dsd_urn`, so a DSD backs many
@@ -676,10 +679,11 @@ qy.explain()        # str — the SQL and binds; runs nothing
 qy.to_sql()         # CompiledQuery(sql, params); runs nothing
 ```
 
-`collect()` builds domain objects only where a root has a builder — artefacts,
-codes, hierarchical codes, categories and the like. A root with none
-(`q.component`, `q.concept`, `q.annotation`) **refuses** `collect()` and names
-`.ids()`, `.frame()` and `.select()` instead.
+`collect()` builds domain objects only where a root has a builder: artefacts
+(every maintainable root), codes, hierarchical codes and reported attributes. A
+root with none (`q.component`, `q.concept`, `q.category`, `q.annotation`)
+**refuses** `collect()` and names `.ids()`, `.frame()` and `.select()`
+instead.
 
 ### `[]` and the removed dunders
 
@@ -707,7 +711,7 @@ sugar for `filter(id == ...)` — **not built**.
 dsd = rest.get(sl.DataStructure.urn_for(agency="ECB", id="DSD_PRICES"), resolve=True)
 
 dsd.dimensions                       # eager ItemList — in memory, no query
-dsd.dimensions["FREQ"].codelist()    # eager Ref resolution
+dsd.dimensions["FREQ"].codelist      # the Codelist — the Ref, followed eagerly
 dsd.dimensions["FREQ"].codes         # ItemList[Code] — materialised, on purpose (#398)
 dsd.dimensions["FREQ"].code_ids()    # list[str] — the cheap path
 ```
