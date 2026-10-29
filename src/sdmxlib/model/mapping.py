@@ -44,6 +44,7 @@ from typing import ClassVar
 from attrs import field, frozen
 
 from sdmxlib._time import as_utc
+from sdmxlib.model._invariants import enforce
 from sdmxlib.model._rules import id_type, maintained_by, named, version_type
 from sdmxlib.model.annotations import Annotations
 from sdmxlib.model.base import MaintainableArtefact
@@ -237,6 +238,10 @@ class RepresentationMap(MaintainableArtefact):
     #: SDMX 3.1 ``@isPartialLanguage``: some text is missing a language the
     #: rest carries (#422).
     is_partial_language: bool = False
+
+    def __attrs_post_init__(self) -> None:
+        # Its whole-artefact rules, now that it is whole (#492).
+        enforce(self)
 
     def translate(self, source_value: str) -> str | None:
         """Return the target value for a source value, or None if unmapped.
@@ -669,6 +674,10 @@ class StructureMap(MaintainableArtefact):
     #: SDMX 3.1 ``@isPartialLanguage``: some text is missing a language the
     #: rest carries (#422).
     is_partial_language: bool = False
+
+    def __attrs_post_init__(self) -> None:
+        # Its whole-artefact rules, now that it is whole (#492).
+        enforce(self)
 
 
 #: The scheme-map family: a maintainable that maps one scheme onto another.

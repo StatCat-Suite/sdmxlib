@@ -61,6 +61,7 @@ def test_the_registry_holds_every_class_with_rules():
         "MetadataProviderScheme",
         "MetadataStructure",
         "OrganisationUnitScheme",
+        "StructureMap",
     ]
 
 

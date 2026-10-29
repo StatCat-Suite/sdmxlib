@@ -19,6 +19,28 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## A date map names one frequency source
+
+An `EpochMap` or `DatePatternMap` names a frequency dimension or a target
+frequency, one of them
+([GH-26](https://github.com/StatCat-Suite/sdmxlib/issues/26)). The
+information model (SDMX 3.1 Section 2, §9.1.4.2) makes the two mutually
+exclusive, and the SDMX-ML 3.0 and 3.1 XSDs make them a required choice, as
+SDMX-JSON 2.0's `oneOf` does, so a map with both or neither had no valid
+document. The SDMX-ML 3.x writer used to keep `frequency_dimension` and drop
+`target_frequency_id` from a map with both.
+
+- Building a `StructureMap` holding a date map with both
+  `frequency_dimension` and `target_frequency_id`, or with neither, raises
+  `sl.ValidationError`. So does one with `mapped_frequencies` and no
+  `frequency_dimension`.
+- Three more structure-map rules the IM states warn with `sl.ImRuleWarning`
+  and build anyway, since every format carries them: a map from a structure
+  to a structure usage (§9.1.2.1), a component map with more than one source
+  or target and no representation map (§9.1.2.1), and a representation
+  mapping whose source values, or target values when it gives any, do not
+  match its map's sources and targets in number (§10.1.2.1).
+
 ## A metadata attribute is enumerated by a codelist only
 
 `MetadataAttribute.representation` is `Ref[Codelist] | Facet | None`
