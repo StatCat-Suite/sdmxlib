@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import csv
 import io
+from typing import cast
 
 import pyarrow as pa
 import pytest
 
 from sdmxlib.formats.sdmx_csv import write_sdmx_csv
+from sdmxlib.formats.sdmx_csv.writer import CsvAction
 from sdmxlib.local import LocalRegistry
 from sdmxlib.model.codelist import Code, Codelist
 from sdmxlib.model.collections import ItemList
@@ -145,6 +147,23 @@ def test_writer_action_and_structure_overrides():
     )
     _, rows = _read_csv_bytes(chunks)
     assert rows[0][:3] == ["datastructure", "TEST:DSD_TEST(1.0)", "R"]
+
+
+@pytest.mark.parametrize("action", ["I", "A", "R", "D"])
+def test_each_of_sdmx_csv_2_0s_actions_is_written(action: CsvAction) -> None:
+    batch = _make_batch([{"FREQ": "A", "REF_AREA": "CA", "OBS_VALUE": 1.0}])
+    _, rows = _read_csv_bytes(list(write_sdmx_csv([batch], _make_dsd(), structure_id="TEST:DF(1.0)", action=action)))
+    assert rows[0][2] == action
+
+
+@pytest.mark.parametrize("action", ["M", "X", "Information", ""])
+def test_an_action_sdmx_csv_2_0_lacks_is_refused(action: str) -> None:
+    """GH-284: any string was written, so `"M"` (2.1's Merge) or a typo made a
+    2.0 file no conformant reader accepts. The `cast` stands in for an
+    untyped caller."""
+    batch = _make_batch([{"FREQ": "A", "REF_AREA": "CA", "OBS_VALUE": 1.0}])
+    with pytest.raises(ValueError, match=r"ACTION must be one of I, A, R, D"):
+        list(write_sdmx_csv([batch], _make_dsd(), structure_id="TEST:DF(1.0)", action=cast("CsvAction", action)))
 
 
 def test_writer_renders_none_as_empty_string():

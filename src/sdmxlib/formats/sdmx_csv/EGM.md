@@ -14,8 +14,9 @@ is the registry's job (`scan_csv`). The package exports only
   action="I")` (`writer.py`): a generator yielding SDMX-CSV 2.0.0 byte chunks
   from Arrow batches. `structure_id` is an `AGENCY:ID(VERSION)` string or a
   `Dataflow`, `DataStructure` or `ProvisionAgreement`, from which both the id
-  and `structure` are derived. Raises `ValueError` when `structure` is not in
-  `STRUCTURE_KINDS`.
+  and `structure` are derived. `action` is a `CsvAction`, SDMX-CSV 2.0's
+  `I` (Information), `A`, `R` or `D`. Raises `ValueError` when `structure` is
+  not in `STRUCTURE_KINDS` or `action` not one of the four (GH-284).
 - `STRUCTURE_KINDS` (`reader.py`): the three `STRUCTURE` values SDMX-CSV
   allows, `"dataflow"`, `"datastructure"` and `"dataprovision"`.
 - `parse_dataflow_id(dataflow_id)` (`reader.py`): splits

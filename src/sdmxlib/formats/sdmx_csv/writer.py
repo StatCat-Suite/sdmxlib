@@ -15,8 +15,8 @@ where:
   "provisionagreement"). Defaults to ``"dataflow"``.
 - ``STRUCTURE_ID`` is ``AGENCY:ID(VERSION)``. The caller passes this
   in — typically derived from the bound dataflow's URN.
-- ``ACTION`` is one of ``I`` / ``R`` / ``A`` / ``D`` (Insert / Replace /
-  Append / Delete). Defaults to ``"I"``.
+- ``ACTION`` is one of ``I`` / ``A`` / ``R`` / ``D`` (Information / Append /
+  Replace / Delete). Defaults to ``"I"``.
 
 Dim/measure/attribute column ordering is taken from the DSD's
 column maps in their dict-insertion order, which matches the order in
@@ -42,6 +42,7 @@ Example:
 
 import io
 from collections.abc import Iterable, Iterator
+from typing import Literal, get_args
 
 import polars as pl
 import pyarrow as pa
@@ -52,6 +53,11 @@ from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.model.provision import ProvisionAgreement
 from sdmxlib.model.ref import short_urn
+
+#: SDMX-CSV 2.0's four actions: Information, Append, Replace, Delete
+#: (`sdmx-csv-field-guide.md` at v2.0.0). 2.1 deprecates ``I`` and ``A`` and
+#: adds ``M`` (Merge); this writer writes 2.0.
+type CsvAction = Literal["I", "A", "R", "D"]
 
 #: Artefact class -> the ``STRUCTURE`` value SDMX-CSV gives it, for the form of
 #: `write_sdmx_csv` that takes the artefact instead of a pre-formatted string.
@@ -68,7 +74,7 @@ def write_sdmx_csv(
     *,
     structure_id: str | Dataflow | DataStructure | ProvisionAgreement,
     structure: str = "dataflow",
-    action: str = "I",
+    action: CsvAction = "I",
 ) -> Iterator[bytes]:
     """Stream SDMX-CSV 2.0.0 bytes for a sequence of Arrow record batches.
 
@@ -92,9 +98,9 @@ def write_sdmx_csv(
             link relation, a different vocabulary, and a caller who followed it
             wrote a file no conformant reader accepts. Ignored when
             ``structure_id`` is an artefact.
-        action: Value emitted in the ``ACTION`` column. One of ``I``
-            (Insert), ``R`` (Replace), ``A`` (Append), ``D`` (Delete).
-            Defaults to ``"I"``.
+        action: Value emitted in the ``ACTION`` column, SDMX-CSV 2.0's
+            action for every row: ``I`` (Information, the default), ``A``
+            (Append), ``R`` (Replace) or ``D`` (Delete).
 
     Yields:
         UTF-8 bytes — header on the first chunk, data rows on every
@@ -103,13 +109,17 @@ def write_sdmx_csv(
 
     Raises:
         KeyError: If a batch is missing a component the structure declares.
-        ValueError: If ``structure`` is not one of SDMX-CSV's three kinds.
+        ValueError: If ``structure`` is not one of SDMX-CSV's three kinds,
+            or ``action`` not one of its four actions.
     """
     if not isinstance(structure_id, str):
         structure = _KIND_OF.get(type(structure_id), "dataflow")
         structure_id = short_urn(structure_id)
     if structure not in STRUCTURE_KINDS:
         msg = f"STRUCTURE must be one of {', '.join(STRUCTURE_KINDS)}, not {structure!r}"
+        raise ValueError(msg)
+    if action not in get_args(CsvAction.__value__):
+        msg = f"ACTION must be one of {', '.join(get_args(CsvAction.__value__))}, not {action!r}"
         raise ValueError(msg)
     # Component ids, in SDMX order, from the structure. This read the
     # *binding's* physical column names until an observation query began
