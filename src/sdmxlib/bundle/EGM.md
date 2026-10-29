@@ -49,7 +49,9 @@ publishes through `write_manifest(extensions=...)`.
   with `partials=False`.
 - `apply_overlays`, `fold_overlays`, `effective_token` and `read_overlay`
   (`_overlay.py`): display-annotation overlays. They are applied at read time
-  or folded into a new publication, and `effective_token` gives the token
+  or folded into a new publication, which keeps each partial's `cut_from`
+  and takes the `lifecycle` to publish with (GH-272), and `effective_token`
+  gives the token
   caches key on. `Overlay`, `OverlayEntry`, `OverlayAnnotation`,
   `OverlayText`, `OverlayError`, `Merge` and `MergeHook` are the overlay
   types; `applied`, `overlay_digest` and `OVERLAY_FORMAT` are exported with
