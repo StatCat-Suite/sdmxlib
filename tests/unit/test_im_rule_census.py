@@ -227,8 +227,8 @@ def test_a_new_check_is_neither_cited_nor_set_aside() -> None:
 def test_the_census_reads_the_checks_it_compares() -> None:
     # The partition above is only as good as this list: an empty or truncated
     # read would make it vacuous.
-    assert len(_checks()) == 77
-    assert len(_cited(RULES)) == 17
+    assert len(_checks()) == 78
+    assert len(_cited(RULES)) == 18
     assert len(NON_IM_CHECKS) == 60
 
 

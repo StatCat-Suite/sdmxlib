@@ -536,14 +536,22 @@ RULES: tuple[Rule, ...] = (
         98,
         "The MetadataAttribute can be specified as having multiple occurrences and/or specified as being "
         "mandatory (minOccurs=1 or more) or optional (minOccurs=0).",
-        NotChecked("an MSD attribute's occurrence bounds are not range-checked, as a DSD component's are: #485"),
+        _v(
+            (
+                "_check_metadata_attribute_occurs",
+                "tests/unit/test_metadata_attribute_codelist.py::test_occurrences_that_are_no_range_are_refused[max-below-min]",
+            )
+        ),
     ),
     Rule(
         "IM-7.3.4.1-2",
         "7.3.4.1",
         98,
         "If the Representation is enumerated, then is must use a Codelist.",
-        NotChecked("an MSD attribute may name a ValueList: #485"),
+        Structural(
+            "`MetadataAttribute.representation` is `Ref[Codelist] | Facet | None`; its converter and "
+            "`codelist_representation`, which the readers use, refuse a ValueList (GH-28)"
+        ),
     ),
     Rule(
         "IM-7.3.4.1-3",

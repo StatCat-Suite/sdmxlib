@@ -110,7 +110,7 @@ from sdmxlib.model.metadataset import (
     ReportedAttribute,
     ReportedAttributeValue,
 )
-from sdmxlib.model.metadatastructure import MetadataAttribute, MetadataStructure
+from sdmxlib.model.metadatastructure import MetadataAttribute, MetadataStructure, codelist_representation
 from sdmxlib.model.organisation import (
     Agency,
     AgencyScheme,
@@ -2319,7 +2319,7 @@ def _read_metadata_structure(conn: duckdb.DuckDBPyConnection, urn: str, meta: Sp
             MetadataAttribute,
             id=attr_id,
             concept=concept_ref,
-            representation=representation,
+            representation=codelist_representation(representation),
             enumeration_format=_build_enumeration_format(
                 text_type=enum_text_type,
                 min_length=enum_min_length,

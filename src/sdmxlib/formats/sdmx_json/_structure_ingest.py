@@ -150,7 +150,7 @@ from sdmxlib.model.mapping import (
 )
 from sdmxlib.model.metadata_provision import MetadataProvisionAgreement
 from sdmxlib.model.metadataflow import Metadataflow
-from sdmxlib.model.metadatastructure import MetadataAttribute, MetadataStructure
+from sdmxlib.model.metadatastructure import MetadataAttribute, MetadataStructure, codelist_representation
 from sdmxlib.model.organisation import (
     Agency,
     AgencyScheme,
@@ -1291,7 +1291,7 @@ def from_metadata_attribute(attr: MetadataAttributeJson, index: dict[str, object
     return MetadataAttribute(
         id=component_id_of(attr.id, concept, "metadataAttribute"),
         concept=concept,
-        representation=from_representation(attr.local_representation),
+        representation=codelist_representation(from_representation(attr.local_representation)),
         enumeration_format=from_enumeration_format(attr.local_representation),
         min_occurs=attr.min_occurs if attr.min_occurs is not None else 1,
         max_occurs=_max_occurs(attr.max_occurs),
