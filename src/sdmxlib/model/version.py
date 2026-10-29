@@ -246,6 +246,41 @@ _WILDCARD = re.compile(
 _WILDCARD_30_ONLY = re.compile(r"^(0|[1-9]\d*)\+\.(0|[1-9]\d*)\.(0|[1-9]\d*)\+$")
 
 
+#: A stable version a late-bound reference can bind to: up to three numeric
+#: parts, no pre-release. "Links to the latest stable version" (IM §5.3.2.2).
+_STABLE = re.compile(r"^(0|[1-9]\d*)(?:\.(0|[1-9]\d*))?(?:\.(0|[1-9]\d*))?$")
+
+
+def late_binds(reference: str, version: str) -> bool:
+    """Whether a late-bound reference version binds to an artefact at `version`.
+
+    The `+` marks the part from which later values bind: `2.0+.0` binds to
+    every 2.x.y from 2.0.0, "for example 2.0+.0 will resolve to the highest
+    version 2.x.y" (IM §5.3.2.2's footnote); `1.2.3+` to every 1.2.z from
+    1.2.3; `1+.0.0` to every version from 1.0.0. The parts before the `+` must
+    match. A version with fewer parts reads its missing ones as 0, so a 2.1
+    `1.0` is 1.0.0, and a pre-release never binds. A reference with no `+`
+    binds nothing here: an exact or omitted version is another question.
+
+    Args:
+        reference: The version a reference names, such as ``"1.0+.0"``.
+        version: An artefact's version.
+
+    Returns:
+        True when the reference late-binds and `version` is one it takes.
+    """
+    if not (_WILDCARD.match(reference) or _WILDCARD_30_ONLY.match(reference)):
+        return False
+    found = _STABLE.match(version)
+    if found is None:
+        return False
+    parts = reference.split(".")
+    bound = next(i for i, part in enumerate(parts) if part.endswith("+"))
+    floor = [int(part.rstrip("+")) for part in parts]
+    candidate = [int(group or 0) for group in found.groups()]
+    return candidate[:bound] == floor[:bound] and candidate[bound:] >= floor[bound:]
+
+
 def _referenceable(version: str, target: str) -> bool:
     rule, _label = _FORMATS[target]
     if rule == "2.1":
