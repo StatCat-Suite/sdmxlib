@@ -49,13 +49,11 @@ from sdmxlib.formats.sdmx_json._data_common import (
     StructureBlockJson,
     dataflow_annotations,
     dataflow_link,
-    dataflow_urn,
-    decode_observations,
     display_names,
     encode_batch,
     frequency_dimension_id,
+    read_data_sets,
     resolve_columns,
-    rows_to_lazyframe,
 )
 from sdmxlib.formats.sdmx_json._dto import ENCODER, _camel_rename, prepared_text
 from sdmxlib.model.dataflow import Dataflow
@@ -187,6 +185,9 @@ def write_sdmx_json_data(
 def read_observations(source: bytes | str | Path) -> tuple[pl.DataFrame, str | None]:
     """A data message's observations, and the URN of the dataflow it names.
 
+    Every data set is read; they must share columns and name at most one
+    dataflow, and none may be a ``Delete`` (`read_data_sets`).
+
     Args:
         source: The message's bytes, or a file path.
 
@@ -195,17 +196,15 @@ def read_observations(source: bytes | str | Path) -> tuple[pl.DataFrame, str | N
         ``rel="dataflow"`` link's URN, or `None` when the message has none.
 
     Raises:
-        SdmxParseError: If the document is not a recognisable data message of this version.
+        SdmxParseError: If the document is not a recognisable data message of this
+            version, or its data sets do not read as one frame.
     """
     payload = _load(source)
     if not payload.data_sets or payload.structure is None:
         msg = "Source does not look like a SDMX-JSON 1.0 data message — missing top-level dataSets / structure"
         raise SdmxParseError(msg)
-    dataset_block = payload.data_sets[0]
-    structure_block = payload.structure
-
-    dim_ids, attr_ids, rows = decode_observations(structure_block, dataset_block)
-    return rows_to_lazyframe(dim_ids, attr_ids, rows).collect(), dataflow_urn(dataset_block, structure_block)
+    structure = payload.structure
+    return read_data_sets([(data_set, structure) for data_set in payload.data_sets])
 
 
 class _DataMessageJson(msgspec.Struct, rename=_camel_rename):

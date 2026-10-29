@@ -27,9 +27,14 @@ serialisers in `structure_values.py`.
 - `read_observations(source) -> (pl.DataFrame, dataflow_urn | None)`
   (`data.py`): reads a data message of either version through the `_Envelope`
   Struct. `data_v1.py` and `data_v2.py` each provide `write_sdmx_json_data`
-  and `read_observations` for their version. Both readers read only
-  `data_sets[0]` (and 2.0 only `structures[0]`) and ignore further data sets,
-  a defect filed as GH-264.
+  and `read_observations` for their version. Both read every data set
+  through `read_data_sets` (`_data_common.py`); a 2.0 data set is decoded
+  against the structure its `structure` index names. The data sets read as
+  one frame when they decode to the same columns and name at most one
+  dataflow; a `Delete` data set, differing columns, two dataflows or a
+  structure index outside `data.structures` raise `SdmxParseError` (GH-264).
+  Each data set's `setID` and reporting and validity dates are not read
+  (GH-284).
 - `ENCODER`, `WireStruct`, `_camel_rename`/`_WIRE_NAMES`,
   `emit_istr`/`ingest_istr`, `emit_annotations`/`ingest_annotations`, `Link`,
   `Annotation`, `Meta` and `Sender` (`_dto.py`): the shared wire layer.
@@ -38,7 +43,7 @@ serialisers in `structure_values.py`.
 - `to_meta`, `from_meta`, `from_metadata_meta`, `MetaJson` and `PartyJson`
   (`_header.py`): convert a `Header` to and from the `meta` envelope.
   `from_meta` can return a `ReadGap`.
-- `ComponentTable`, `AnnotationPool`, `encode_batch`, `decode_observations`
+- `ComponentTable`, `AnnotationPool`, `encode_batch`, `decode_observations`, `read_data_sets`
   and `rows_to_lazyframe` (`_data_common.py`): code shared by the data
   messages.
 - `raw_sections`, `unread_sections`, `undeclared` and `assumed`

@@ -838,7 +838,7 @@ class LinkJson(msgspec.Struct):
 
 
 class StructureBlockJson(msgspec.Struct):
-    """A structures block — ``structure`` in 1.0, ``data.structures[0]`` in 2.0."""
+    """A structures block — ``structure`` in 1.0, one of ``data.structures`` in 2.0."""
 
     dimensions: ComponentLevelsJson = msgspec.field(default_factory=ComponentLevelsJson)
     attributes: ComponentLevelsJson = msgspec.field(default_factory=ComponentLevelsJson)
@@ -850,8 +850,12 @@ class DataSetBlockJson(msgspec.Struct):
 
     ``observations`` maps a colon-joined position key to an array whose first
     slot is the measure and whose remaining slots are attribute positions.
+    ``structure`` indexes 2.0's ``data.structures``; 1.0 has one structure and
+    no index. ``action`` says what a receiver does with the rows.
     """
 
+    structure: int = 0
+    action: str = "Information"
     attributes: list[object] = msgspec.field(default_factory=list)
     observations: dict[str, list[object]] = msgspec.field(default_factory=dict)
     links: list[LinkJson] = msgspec.field(default_factory=list)
@@ -867,6 +871,57 @@ def dataflow_urn(data_set: DataSetBlockJson, structure: StructureBlockJson) -> s
         if link.rel == "dataflow" and link.urn:
             return link.urn
     return None
+
+
+def read_data_sets(
+    data_sets: Sequence[tuple[DataSetBlockJson, StructureBlockJson]],
+) -> tuple[pl.DataFrame, str | None]:
+    """Every data set of a message as one frame, and the dataflow they name.
+
+    A message carries any number of data sets, each with its own structure and
+    action. They read as one frame when each decodes to the same columns and
+    they name at most one dataflow. A ``Delete`` data set is refused: its rows
+    say what to remove.
+
+    Args:
+        data_sets: Each data set with the structure block it follows, in
+            message order; at least one.
+
+    Returns:
+        One row per observation across the data sets, ``[*dim_ids,
+        OBS_VALUE, *attr_ids]``; and the ``rel="dataflow"`` link's URN, or
+        `None` when no data set names one.
+
+    Raises:
+        SdmxParseError: If a data set is a ``Delete``, if two decode to
+            different columns, or if they name different dataflows.
+    """
+    columns: tuple[list[str], list[str]] | None = None
+    rows: list[list[object]] = []
+    urns: set[str] = set()
+    for position, (data_set, structure) in enumerate(data_sets):
+        if data_set.action == "Delete":
+            msg = f"dataSets[{position}] is a Delete data set; its rows say what to remove, not what was observed"
+            raise SdmxParseError(msg)
+        dim_ids, attr_ids, set_rows = decode_observations(structure, data_set)
+        if columns is None:
+            columns = (dim_ids, attr_ids)
+        elif columns != (dim_ids, attr_ids):
+            msg = (
+                f"dataSets[{position}] has columns {[*dim_ids, *attr_ids]} where dataSets[0] has "
+                f"{[*columns[0], *columns[1]]}; data sets of different structures do not read as one frame"
+            )
+            raise SdmxParseError(msg)
+        rows.extend(set_rows)
+        if (urn := dataflow_urn(data_set, structure)) is not None:
+            urns.add(urn)
+    if columns is None:
+        msg = "the message has no data sets"
+        raise SdmxParseError(msg)
+    if len(urns) > 1:
+        msg = f"the data sets name {len(urns)} dataflows ({', '.join(sorted(urns))}); one message reads as one dataflow"
+        raise SdmxParseError(msg)
+    return rows_to_lazyframe(*columns, rows).collect(), next(iter(urns), None)
 
 
 def _value_label(value_entry: ValueEntryJson) -> str:
@@ -908,7 +963,7 @@ def decode_observations(
     Args:
         structure_block: ``{dimensions: {dataSet|series|observation},
             attributes: {dataSet|series|observation}}``. Same shape in
-            SDMX-JSON 1.0 (``structure``) and 2.0 (``data.structures[0]``).
+            SDMX-JSON 1.0 (``structure``) and 2.0 (one of ``data.structures``).
         dataset_block: One entry from ``dataSets[]`` — provides
             ``observations`` plus any dataSet-level ``attributes`` slot.
 
