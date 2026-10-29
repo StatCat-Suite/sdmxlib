@@ -31,7 +31,7 @@ import attrs
 import msgspec
 from attrs import AttrsInstance, field, frozen
 
-from sdmxlib.bundle._write import write_manifest
+from sdmxlib.bundle._write import Lifecycle, write_manifest
 from sdmxlib.local.registry import LocalRegistry
 from sdmxlib.model._refshape import item_fields
 from sdmxlib.model.annotations import Annotation
@@ -344,6 +344,7 @@ def fold_overlays(
     *,
     merge: Mapping[str, MergeHook] | None = None,
     audience: str | None = None,
+    lifecycle: Lifecycle = "live",
 ) -> Manifest:
     """Publish a new publication of a bundle with `overlays` written into its store.
 
@@ -354,11 +355,18 @@ def fold_overlays(
     the overlays are part of the bundle and need not be applied at serve time.
     Loads every artefact, so it is a build-time step.
 
+    A partial keeps the `cut_from` the earlier manifest records, so a
+    product bundle's partials can still be checked against the full
+    artefacts after a fold.
+
     Args:
         path: The published publication directory.
         overlays: Applied in order.
         merge: As `apply_overlays`.
         audience: As `apply_overlays`.
+        lifecycle: As `write_manifest`: ``final`` for a bundle whose
+            observations will not be appended to. The manifest does not
+            record it, so a fold states it again.
 
     Returns:
         The new manifest; its publication is ``<path>/../<token>/``.
@@ -380,6 +388,8 @@ def fold_overlays(
         product=dict(previous.product),
         extensions={k: dict(v) for k, v in previous.extensions.items()},
         provenance=previous.provenance,
+        lifecycle=lifecycle,
+        cut_from={entry.urn: entry.cut_from for entry in previous.artefacts if entry.cut_from is not None},
     )
 
 

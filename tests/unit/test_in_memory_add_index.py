@@ -86,6 +86,31 @@ def test_a_replacement_keeps_its_original_position() -> None:
     assert [cl.name["en"] for cl in reg.get_all(sl.Codelist)] == ["A-updated", "B", "C"]
 
 
+@pytest.mark.parametrize(
+    "first_geographic", [False, True], ids=["codelist-then-geographic", "geographic-then-codelist"]
+)
+def test_a_replacement_of_another_class_leaves_the_old_class(first_geographic: bool) -> None:
+    """A `GeographicCodelist` and a `Codelist` share one URN, so either can
+    replace the other; the replaced one must leave its class's `get_all`
+    (GH-263)."""
+
+    def geographic(name: str) -> sl.GeographicCodelist:
+        return sl.GeographicCodelist(id="CL", maintainer="AG", version="1.0", name={"en": name})
+
+    old, new = (
+        (geographic("old"), _codelist("CL", "new")) if first_geographic else (_codelist("CL", "old"), geographic("new"))
+    )
+    assert str(old.urn) == str(new.urn)
+    reg = InMemoryRegistry()
+    reg.add(old)
+    reg.add(new)
+
+    assert reg.get(new.urn) == new
+    assert reg.get_all(type(new)) == [new]
+    assert reg.get_all(type(old)) == []
+    assert len(reg) == 1
+
+
 def test_add_does_not_compare_the_artefact_against_everything_stored(monkeypatch: pytest.MonkeyPatch) -> None:
     """The complexity, as a count of the expensive operation.
 
