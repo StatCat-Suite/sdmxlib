@@ -102,7 +102,8 @@ from sdmxlib.model.provision import ProvisionAgreement
 from sdmxlib.model.ref import Ref, artefact_urn
 from sdmxlib.model.representation import DataType, Facet
 from sdmxlib.model.urn import SdmxUrn
-from sdmxlib.model.version import late_binds, unreferenceable, unwritable
+from sdmxlib.model.valuelist import ValueList
+from sdmxlib.model.version import late_binds, sort_key, unreferenceable, unwritable
 
 # Formal type patterns from SDMXCommonReferences.xsd. There are *three* id
 # types and the distinction is load-bearing — applying IDType everywhere let
@@ -1502,7 +1503,8 @@ def validate(msg: StructureMessage | MetadataMessage) -> None:
 
     It warns with one `ImRuleWarning` on an IM rule between artefacts that no
     wire schema can enforce: a dataflow bound to the latest minor version of
-    an evolving DSD with no dimension constraint (IM §5.3.2.1).
+    an evolving DSD with no dimension constraint (IM §5.3.2.1), and a data
+    constraint value its component's codelist does not hold (§12.3.3.1).
 
     Args:
         msg: A `StructureMessage`; a `MetadataMessage` holds no references to check.
@@ -1530,7 +1532,93 @@ def validate(msg: StructureMessage | MetadataMessage) -> None:
     validate_references(msg)
     advisories: list[ValidationIssue] = []
     _check_evolving_structure_constraints(msg, advisories)
+    _check_constraint_values(msg, advisories)
     advise(advisories)
+
+
+def _held_as[T](urn: SdmxUrn[object], held: Sequence[T]) -> list[T]:
+    """The artefacts of `held` that `urn` names.
+
+    Its version; the newest for *latest*; or each version a late-bound one takes.
+    """
+    same = [a for a in held if isinstance(a, MaintainableArtefact) and (a.agency_id, a.id) == (urn.agency, urn.id)]
+    if urn.is_latest:
+        newest = max(same, key=lambda a: sort_key(a.version), default=None)
+        return [] if newest is None else [newest]
+    return [a for a in same if a.version == urn.version or late_binds(urn.version, a.version)]
+
+
+def _constrained_structures(dc: DataConstraint, msg: StructureMessage) -> list[DataStructure]:
+    """The DSDs of the message `dc` applies to: named, or reached through a dataflow or provision agreement."""
+    attachment = dc.attachment
+    if attachment is None:
+        return []
+    flows = [f for ref in attachment.dataflows for f in _held_as(ref.urn, msg.dataflows)]
+    for ref in attachment.provision_agreements:
+        for agreement in _held_as(ref.urn, msg.provision_agreements):
+            if agreement.dataflow is not None:
+                flows.extend(_held_as(agreement.dataflow.urn, msg.dataflows))
+    structure_urns = [ref.urn for ref in attachment.data_structures]
+    structure_urns += [flow.structure.urn for flow in flows if flow.structure is not None]
+    found: dict[str, DataStructure] = {}
+    for urn in structure_urns:
+        for dsd in _held_as(urn, msg.data_structures):
+            found[str(dsd.urn)] = dsd
+    return list(found.values())
+
+
+def _enumerations(dsd: DataStructure, msg: StructureMessage) -> dict[str, tuple[str, frozenset[str]]]:
+    """Component id → (enumeration URN, its item ids), for each component the message holds the enumeration of.
+
+    A codelist with extensions is left out: the codes it inherits are its
+    extensions' to say.
+    """
+    held: Sequence[Codelist | ValueList] = [*msg.codelists, *msg.value_lists]
+    out: dict[str, tuple[str, frozenset[str]]] = {}
+    components = [*dsd.dimensions, *dsd.attributes, *dsd.measures]
+    for component in components:
+        representation = component.representation
+        if not isinstance(representation, Ref):
+            continue
+        for enumeration in _held_as(representation.urn, held):
+            if isinstance(enumeration, Codelist) and enumeration.extensions:
+                continue
+            out[component.id] = (str(enumeration.urn), frozenset(enumeration.code_ids()))
+    return out
+
+
+def _check_constraint_values(msg: StructureMessage, issues: list[ValidationIssue]) -> None:
+    """A cube region's values are items of the enumeration the DSD gives the component (IM §12.3.3.1).
+
+    "The value in ComponentValue.value and MemberValue.value must be
+    consistent with the Representation declared for the Component." A value
+    no schema can check: the representation is another artefact's. Checked
+    where the message holds the constraint's DSD and the component's codelist
+    or value list; a value set with `remove_prefix` holds values with the
+    codes' prefix removed and is not compared. A value against a text format
+    is not checked yet (GH-29).
+    """
+    for dc in msg.constraints:
+        for dsd in _constrained_structures(dc, msg):
+            enumerations = _enumerations(dsd, msg)
+            for r, region in enumerate(dc.regions):
+                selections: list[tuple[str, str, KeyValue | ComponentValueSet]] = [
+                    (f"keys[{kv.dimension_id}]", kv.dimension_id, kv) for kv in region.keys
+                ]
+                selections += [(f"components[{c.component_id}]", c.component_id, c) for c in region.components]
+                for where, component_id, selection in selections:
+                    if selection.remove_prefix or component_id not in enumerations:
+                        continue
+                    urn, items = enumerations[component_id]
+                    unknown = sorted(v.value for v in selection.values if v.value not in items)
+                    if unknown:
+                        message = (
+                            f"selects {', '.join(map(repr, unknown))}, which {urn} does not hold; {dsd.urn} "
+                            f"enumerates {component_id} with it"
+                        )
+                        issues.append(
+                            ValidationIssue(path=f"DataConstraint:{dc.id}.regions[{r}].{where}", message=message)
+                        )
 
 
 def _late_binds_minor(version: str) -> bool:
