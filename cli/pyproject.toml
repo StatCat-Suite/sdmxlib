@@ -41,5 +41,10 @@ Changelog     = "https://github.com/StatCat-Suite/sdmxlib/blob/main/CHANGELOG.md
 requires = ["uv_build>=0.13.0,<0.14.0"]
 build-backend = "uv_build"
 
+[tool.uv.build-backend]
+# The EGM.md contracts describe the source for developers; the wheel carries
+# the package alone. The sdist keeps them as part of the source.
+wheel-exclude = ["**/EGM.md"]
+
 [tool.uv.sources]
 sdmxlib = { workspace = true }

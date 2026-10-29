@@ -1,0 +1,13 @@
+# What EGM's bootstrap leaves without an EGM.md contract. .gitignore's
+# entries are skipped as well. The contracts cover src/, cli/, tools/ and
+# fuzz/; tests/ is excluded by EGM's own rules.
+
+# Each benchmark tool documents itself in a README.md beside it.
+bench/
+
+# Prose and records, not code: the docs site, the design archive, the
+# exported GitLab tracker, and the runnable examples the docs cite.
+docs/
+design/
+history/
+examples/
