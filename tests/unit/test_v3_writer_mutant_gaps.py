@@ -1,7 +1,7 @@
 """What mutation found the SDMX-ML 3.x writer's tests could not see (#458).
 
 The triage of the rest — equivalent, and why — is in
-`docs/design/mutation-evidence.md`.
+`docs/design/evidence/mutation-runs.md`.
 
 As with the 2.1 writer (installment 5), most of these are what only the
 document holds: the envelope, which no reader returns, and the metadata

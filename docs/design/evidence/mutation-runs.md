@@ -1,5 +1,11 @@
 # Mutation run results
 
+> Evidence record: mutation runs 2026-08 to 2026-10 (#218, #324, #458).
+> Installments 1–6 ran on mutmut 3.7 with the patched fork runner;
+> installments 7–12 on mutmut 3.8 with the forkserver, warm-up "none".
+> Statement and mutant counts are as of each run; the procedure is
+> [mutation-testing.md](../mutation-testing.md).
+
 `just mutate` produces a number. This file is what the numbers *mean*, because
 twice now a mutation score has been quoted here that measured something other
 than what it appeared to.
@@ -75,8 +81,13 @@ much as running them.
 #304 asked for `code_query.py`, `hierarchy_query.py` and `_query_common.py`
 (1,402 statements). #306 deleted all three. The work moved into `_expr.py`,
 `_compile.py`, `_joins.py` and `_common.py` — 1,332 statements, so the scope
-survived the migration nearly intact under different names, and those four are
-now in `only_mutate` (2,300 statements total).
+survived the migration nearly intact under different names, and those four
+joined `only_mutate`, bringing it to 2,300 statements at the time.
+
+On 2026-10-28 `just mutate-scope` (`tools/mutate_scope.py`) reports the same
+ten modules at **3,383 statements**: `validation.py` 1,045, `_expr.py` 1,002,
+`_compile.py` 642, `collections.py` 223, `_joins.py` 116, `representation.py`
+94, `_common.py` 77, `urn.py` 74, `expr.py` 56, `istring.py` 54.
 
 `accessors.py` (533), `query.py` (399) and `_pushdown.py` (221) are held back
 deliberately: the first is declarative surface, and the other two deserve their
@@ -965,8 +976,9 @@ moved**.
 Listed per #218's ruling that the triage is the artifact and the percentage
 is not:
 
-* **Full-scope wall-clock.** 2,300 statements against the whole unit suite has
-  not been timed since the scope changed. The old 923-statement figure (~4.5 h)
+* **Full-scope wall-clock.** The full scope (3,383 statements on 2026-10-28)
+  against the whole unit suite has not been timed since the query modules
+  joined it. The old 923-statement figure (~4.5 h)
   is void — it was dominated by the mis-booked timeouts of #303/#314, both now
   fixed. Do not quote it.
 * **Per-module baselines** for `_expr.py`, `_joins.py` and `_common.py`.
@@ -979,7 +991,7 @@ is not:
   `compile_page` (14), `compile_projection` (13), `_after_sql` (12) and
   `_Scope._agg_subquery` (11). The yield so far is a real defect or dead code
   per cluster, and a few missing tests.
-* **Every baseline above installment 3 predates the import-time credit.**
+* **The baselines of installments 1–2 predate the import-time credit.**
   `_compile.py` builds little at import, so its numbers likely stand, but none
   was re-run to check.
 * **Modules beyond #458's scope.** Every reader and writer #458 named is
@@ -998,3 +1010,78 @@ is not:
     *data* writers. A store write can still reach `gaps.py` through
     `LocalRegistry`, so the loss is small, not zero. It would be large for
     `storage/`.
+
+## `model/collections.py` — triaged #253, run of 2026-08
+
+**179 mutants: 145 killed, 27 survived, 3 timeout, 3 segfault, 1 no-tests.**
+
+The 27 is *exactly* the count the #213 pilot reported. Months of test work landed in between and killed none of them. That
+is the calibration #253 asked for on how much four aggregate properties pin —
+and the answer is that they pin aggregate claims. Every survivor was in a
+*lookup*, a *sort*, a *projection* or a *message*: places where the question is
+"which one did you get back", not "is the result a subset".
+
+After #253 the count is **15**: twelve killed, and every survivor below is
+recorded as equivalent or won't-fix with its reason.
+
+### Real gaps — closed
+
+Tests in `tests/unit/test_collections_mutant_gaps.py`.
+
+| mutant | what it changed |
+| --- | --- |
+| `_lookup_ref__mutmut_5` | `ref.id is None` → `is not None` — inverts every wildcard at once |
+| `_lookup_ref__mutmut_12` | version `==` → `!=` — returns a real artefact of the wrong version |
+| `_lookup_str__mutmut_1` | `and` → `or` on versioned-key detection |
+| `_lookup_str__mutmut_32`, `_34` | `_by_id.get(key, [])` default dropped — a miss on a bare id raises `TypeError` instead of returning `None` |
+| `_lookup_str__mutmut_19`, `_20` | the malformed-key message replaced by `None` — `KeyError(None)` tells the caller nothing |
+| `sort_by__mutmut_5`, `_8` | `reverse=descending` dropped — `descending=True` becomes a silent no-op |
+| `to_dict__mutmut_8` | `key(item)` → `key(None)` — every key identical, dict collapses to one entry |
+| `ItemList.__hash__mutmut_1` | see *was blocked* below — gone since #290 removed the method |
+| `ItemList.__repr____mutmut_13` | dropped the ids from the repr entirely |
+
+### Equivalent — recorded, do not re-triage
+
+| mutant | why no observable behaviour changes |
+| --- | --- |
+| `_lookup_str__mutmut_27` | `_by_agency_id.get(key, [])` → `.get(key, None)`. This branch falls straight to `return matches[0] if matches else None`, and `None` is falsy exactly as `[]` is. |
+| `_lookup_str__mutmut_29` | Same line, default omitted entirely. Same reasoning. |
+
+### Won't fix — recorded, with the reason
+
+| mutant | reason |
+| --- | --- |
+| `_lookup_str__mutmut_10`, `_11`, `_13` | `split("(", 1)` → `split("(")` / `rsplit` / `split("(", 2)`. These differ only for a key containing **two or more** `(`. No SDMX id can produce one (`A-Za-z0-9_@$-`), so it is reachable only by hand-writing a malformed key, where every spelling ends in an exception. Pinning it would test the shape of a failure nobody can trigger. |
+| `_lookup_str__mutmut_40`, `_lookup_ref__mutmut_18` | The separator in `', '.join(qualified)`. The ambiguity messages *are* pinned — two tests assert the colliding artefacts appear — but the punctuation between them is not. Killing these needs an exact-string assertion, which freezes formatting nobody has decided on. |
+| eight of the nine `__repr__` mutants | Same rule: `repr` *content* is asserted, `repr` *format* is not. Measured, not assumed — a content assertion (class name plus every id present) killed exactly **one** of the nine. The other eight only move punctuation: the quoting of each id, the separator, the brackets. Killing them needs an exact-string assertion, which is a golden test for debugging output. |
+
+### Was blocked on a defect — fixed (#290)
+
+| mutant | note |
+| --- | --- |
+| `ItemList.__hash__mutmut_1` | `hash(self._items)` → `hash(None)`. Unkillable in the ordinary way at the time, because **no test could call `hash` on a populated `ItemList`** — `_items` held attrs `@define` items, which were unhashable, so it raised. The class advertised hashability it could not deliver. Filed as **#290** and since fixed: `ItemList.__hash__ = None` (and the same on `ArtefactList`), so the declaration is the refusal and there is no method left to mutate. Since #492 the items are `@frozen(unsafe_hash=False)` — equal by value, still deliberately unhashable, keyed by `urn` — so the collection stays only as hashable as its contents. Pinned by `test_the_collections_are_honestly_unhashable` in `tests/unit/test_collections_mutant_gaps.py`. |
+
+## `model/validation.py` — untriaged, run of 2026-08
+
+The full-scope run does not finish in a usable time. Observed while it ran:
+**1000+ mutants, 129 survivors and 75 timeouts after roughly 25 minutes**, with
+739 still unchecked and the timeout count climbing.
+
+That is itself the reportable result #253 anticipated. The timeouts are the
+signal: mutating `validation.py` frequently produces a run that does not
+terminate promptly, so the cost per mutant is unbounded rather than merely
+high. Before triaging this module, decide whether it belongs in the mutation
+scope at all — and if it does, it needs its own bounded run
+(`just mutate-area` or `just mutate-module` against it, with a mutmut timeout
+configured) rather than sharing a scope with modules that complete in minutes.
+
+The 123-survivor figure from #213 is not confirmed or refuted here. It should
+not be repeated as fact until a run completes.
+
+The timeouts above were later shown to be mis-booked rather than
+non-termination. #303 found them to be children forked from a parent that had
+run the suite in-process, killed by `RLIMIT_CPU` and booked as timeouts: the
+same mutant in a fresh process takes 3 s and survives
+(`tools/mutate_area.py`). #314's fork-server runner removed that hang. The
+remedy for a module this size is `just mutate-area`, which narrows the test
+selection.

@@ -1,7 +1,7 @@
 """What mutation found the 2.1 writer's tests could not see (#458).
 
 The triage of the rest — equivalent, and why — is in
-`docs/design/mutation-evidence.md`.
+`docs/design/evidence/mutation-runs.md`.
 
 Most of these share one cause: a round-trip test reads back what the reader
 keeps, and the 2.1 reader keeps less than the writer writes. A component's

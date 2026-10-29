@@ -129,13 +129,14 @@ nav:
           - Phantom Generics & Witnesses: design/phantom-generics.md
       - Testing:
           - Mutation testing: design/mutation-testing.md
-          - What the mutation runs measured: design/mutation-evidence.md
       - Evidence:
           - The query-language design pass: design/evidence/query-language.md
           - Building the REST query backend: design/evidence/query-pushdown.md
           - Landing the Registry API: design/evidence/registry-landing.md
           - Retiring the data plane's SQL text: design/evidence/data-plane-query.md
           - Streaming a REST data fetch: design/evidence/data-plane-pushdown.md
+          - Typed msgspec serialisation: design/evidence/serialization.md
+          - What the mutation runs measured: design/evidence/mutation-runs.md
   - StatCat Suite: https://statcat-suite.github.io/
 
 # Links the tracker references the docs cite: `#N` / `!N` / `%N` to the GitLab

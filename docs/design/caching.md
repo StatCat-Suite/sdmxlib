@@ -20,12 +20,15 @@ showing the **computation** is expensive **and** reused — not a load test
 showing a slow **symptom**. If you cannot point at the line that is slow,
 you do not cache; you measure.
 
-### Case study — issue #155, "the 58-second label map"
+### Record: issue #155, "the 58-second label map"
+
+This case study records the #155 investigation as it stood at the time; the
+label cache it mentions has since been removed.
 
 Issue #155 reported `slpl.label()` taking ~58 s on first call and ~290 s
 across five concurrent users, attributing the cost to `code_map`'s SQL
-projection and proposing a per-codelist build lock plus the existing
-process-global label cache.
+projection and proposing a per-codelist build lock plus the process-global
+label cache that then existed.
 
 Measured against a real 2021 Census Profile bundle, **none of that attribution held**:
 
@@ -54,7 +57,7 @@ that matters.
 
 | | **A. Build-time baked** | **B. Physical layout** | **C. Runtime process-local** |
 |---|---|---|---|
-| Examples | `code.depth`, `code.ancestor_ids`; a future `code_label` table | indexes, clustering / sort order, narrow projection tables | `LazyCodelist.code_map` single-flight cache, the resolver's FIFO cache, `RestRegistry`'s fetch memo (`SingleFlight`) |
+| Examples | `code.depth`, `code.ancestor_ids`; a future `code_label` table | indexes, clustering / sort order, narrow projection tables | `RestRegistry`'s fetch memo (`SingleFlight`), the resolver's `_FIFOCache`, `LazyCodelist`'s per-language `code_map` memo |
 | Computed | once, when the bundle is written | once, at write time | lazily, per process, per worker |
 | Invalidation | none — rebuilt with the data | none | **required** (staleness, memory bound, thread-safety) |
 | Multiuser | shared by every worker, even non-Python consumers | shared by everyone | **cold on every new worker** |
@@ -65,7 +68,7 @@ that matters.
 **A**: denormalized transitive-closure
 results baked at write time so hierarchy reads are O(1) — no lock, no
 invalidation, no per-process warmup, shared by every reader. That is the
-pattern to generalize, *not* the module-global weakref dict.
+pattern to generalize.
 
 ## The decision hierarchy
 
@@ -88,8 +91,8 @@ and multiuser properties than the ones below it.
    worker reads it cheaply.
 4. **Only if it is intrinsically per-process and cannot be baked**
    (keyed on runtime parameters, a live `RestRegistry`, user input) →
-   use a runtime cache (**C**) — and route it through the **one** shared
-   mechanism below, never a fresh module global.
+   use a runtime cache (**C**) — and route it through `SingleFlight`, the
+   shared primitive below, never a fresh module global.
 
 ### Litmus shortcuts
 
@@ -108,28 +111,20 @@ When a runtime cache *is* the right answer, it must honour the model in
 
 > **Concurrent reads are safe and do not duplicate work.**
 
-Two requirements follow:
+The requirements that follow:
 
 1. **Single-flight, not just a lock.** The first arrival builds; concurrent
    arrivals for the same key await the *same* result rather than each
    rebuilding. A plain mutex serializes but still lets the second caller
    rebuild after the first releases unless the cache is re-checked under
    the lock (double-checked locking).
-2. **One mechanism, bound to a lifecycle.** Runtime caches should share a
-   single small primitive — bounded, invalidation tied to
-   registry/connection lifecycle and `MaintainableArtefact` version
-   identity — so there is one place that owns eviction and thread-safety.
-   Two exist, and new per-process caches should use or follow them rather
-   than re-derive locking:
-   - **`_FIFOCache` / `_CallScopedMemo`** (`local/registry.py`, see
-     [Performance §Layer 3](performance.md)) — caching a *value*: bounded by
-     weight, FIFO eviction so a hit never takes the lock, invalidated on
-     every `add` / `drop` / `replace`.
-   - **`_singleflight.SingleFlight`** — caching the fact that *work already
-     happened*: keyed once-only execution, bounded, lock-free on a hit, a
-     failure not remembered. `RestRegistry` routes its fetch memo through it
-     (#336), so two threads asking the same query fetch once. Only for
-     idempotent work: eviction repeats the work rather than corrupting it.
+2. **One mechanism, bound to a lifecycle.** A new runtime cache goes through
+   **`_singleflight.SingleFlight`** (`src/sdmxlib/EGM.md` states the rule):
+   `run(key, work)` runs `work` once per key while concurrent callers wait
+   on it, a bounded FIFO remembers completed keys, a hit takes no lock, and
+   a failure is not remembered, so waiters retry. Only idempotent work
+   belongs there, because eviction repeats the work. Its owner ties
+   `clear()` to a lifecycle (a registry's close, a store's mutation).
 3. **Bounded in a unit that corresponds to what you are bounding.** This
    requirement used to read "bounded (size or weakref)" and the resolver
    cache satisfied it — by entry count, while its entries ranged from
@@ -153,6 +148,28 @@ Two requirements follow:
    default**, so a number in the cache's own unit can be read as memory.
    #386 happened because that measurement was missing: the constant it
    corrects carried no comment and arrived in a bulk cleanup commit.
+
+### The runtime caches today
+
+`SingleFlight` arrived with #336, after most of the caches below, and only
+two of them go through it. The others predate the rule. The inventory,
+against requirements 1–3 and a lifecycle:
+
+| Cache | Where | Single-flight | Bound | Cleared by |
+| --- | --- | --- | --- | --- |
+| `RestRegistry._fetched` | `api/registry.py` | yes, `SingleFlight` | `fetch_cache_size` keys, FIFO | the registry instance; a data fetch that overwrites a dataflow's table evicts the earlier question |
+| `storage._parsed.parsed` (SQL text → parsed `Statement`) | `storage/_parsed.py` | yes, `SingleFlight` | `MAX_TEXTS` (256) texts | never; a module global, keyed on immutable SQL text |
+| `_FIFOCache` (the resolver cache) | `local/registry.py` | **no**: lock-free hits, locked inserts; two threads that miss one URN both read it | `resolve_cache_items` items, FIFO | every write (`add`, `drop`, a transaction) and `clear_resolve_cache()` |
+| `_CallScopedMemo` | `local/registry.py` | per call, so no sharing | none; lives for one call | end of the call, promoting into `_FIFOCache` |
+| `LazyCodelist._code_map_cache` | `storage/lazy.py` | double-checked lock, one lock per instance across all languages | languages asked for | the instance's lifetime |
+| `SchemaInspector`'s column, key-count and partition caches | `local/sql.py` | one lock per inspector | tables described | `invalidate` / `invalidate_all` on a lake write |
+| `SdmxClient._freshness` | `api/client.py` | locked writes, not single-flight | `freshness_size`, FIFO | `forget_freshness` |
+| `RestRegistry._settled` (`latest` → pinned) | `api/registry.py` | **no lock**; concurrent eviction may race, untested | 256, FIFO | `_forget` |
+| `RestRegistry._refused` | `api/registry.py` | no lock | **unbounded** | never |
+| `functools.cache` / `lru_cache` | `api/federated.py` (unbounded), `model/urn.py`, others | n/a; pure functions of immutable input | per site | never |
+
+New work goes through `SingleFlight` and does not copy the locking of
+`_FIFOCache` or `LazyCodelist`.
 
 Place the cache at the **source** of the cost (e.g. `code_map` /
 `LazyCodelist`), not at one call site, so every caller dedups and the
@@ -191,7 +208,11 @@ condition is *at least as complete as asked* — which a flag cannot express.
 Two things to check for any cache of *fetched* data:
 
 - [ ] Does the key identify something immutable? A pointer, a "current"
-      selector, or anything the authority can redefine is not a key.
+      selector, or anything the authority can redefine is not a key. The
+      one exception is a pointer the authority revalidates before every
+      use: `RestRegistry._settled` maps `latest` to the pinned URN it last
+      resolved to (#339), and is read only after a 304 or a freshness
+      window the provider granted confirms the pointer has not moved.
 - [ ] Can the same key be legitimately requested at different depths,
       details, or projections? If so the entry needs a **level**, compared
       with `>=`, not a flag. Store the deepest seen (`max` on write, so a
@@ -213,8 +234,8 @@ Before adding or extending a cache during optimization work:
       symptom) and can name the slow line.
 - [ ] Confirmed it is not fixable as layout (**B**) at build time.
 - [ ] Confirmed the input is genuinely per-process — otherwise bake (**A**).
-- [ ] If runtime (**C**): single-flight, bounded, invalidation tied to a
-      lifecycle, placed at the source, routed through the shared primitive.
+- [ ] If runtime (**C**): routed through `SingleFlight`, bounded,
+      invalidation tied to a lifecycle, placed at the source.
 - [ ] The bound is in a unit that **corresponds to what it bounds**, and if
       the values vary in size, it is a measured weight rather than a count
       (#386). The correspondence is written next to the default.
@@ -225,11 +246,10 @@ Before adding or extending a cache during optimization work:
 
 ## See also
 
-- [Performance](performance.md) — the resolver cache (the category-C
-  reference implementation).
+- [Performance](performance.md) — the resolver cache, how `get` uses it.
 - [Concurrency](concurrency.md) — the thread-safety model caches must
   respect.
 - `src/sdmxlib/storage/schema.py` — where baked columns like `depth` /
   `ancestor_ids` live.
-- Issue [#155](https://gitlab.com/pinax-suite/sdmxlib/-/issues/155) — the
+- Issue [#155](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/gitlab/issues/155.md) — the
   mis-attributed "58 s label map" that motivated this page.

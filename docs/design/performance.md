@@ -1,6 +1,8 @@
 # Performance: Bulk Reads & Resolver Cache
 
-How sdmxlib's `LocalRegistry` (DuckDB-backed local store) makes reads cheap.
+How sdmxlib's DuckDB-backed store makes reads cheap. The read path and the
+resolver cache live on `BundleRegistry` (`local/registry.py`), which
+`LocalRegistry` extends with writes.
 For *using* the cache, see the
 [Local Registry tutorial — §7 Resolver Cache](../local_registry_tutorial.md).
 This page is the architecture reference: why each layer exists, what it
@@ -11,6 +13,8 @@ The current shape was designed in response to three field bugs (issues
 together they take a workload that hung for minutes down to sub-second.
 
 ## The problem
+
+### Record: #72–#74, v0.20.1 to v0.27.2
 
 A real workload — listing every `MetadataSet` of a `Metadataflow`, where
 all 293 sets reference the same 30-attribute MSD — exposed the issue:
@@ -30,7 +34,7 @@ unmemoised resolver re-loads that parent once per child reference.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  LocalRegistry.get / get_all / to_registry                       │
+│  BundleRegistry.get / get_all                                    │
 │      │                                                           │
 │      ▼                                                           │
 │  ┌─────────────────────────────────────────────────────┐         │
@@ -40,7 +44,7 @@ unmemoised resolver re-loads that parent once per child reference.
 │      ▼                                                           │
 │  _resolve_refs                                                   │
 │      │  collect → batch-resolve by URN → next frontier           │  Layer 2
-│      │  item URNs grouped by parent scheme, loaded once          │  (#72)
+│      │  Code / HierarchicalCode by URN; other items by scheme    │  (#72, #378)
 │      ▼                                                           │
 │  readers._read_metadata_structure / _read_codelist_eager / ...   │
 │      │  one query per artefact subtree for annotations           │  Layer 1
@@ -50,16 +54,22 @@ unmemoised resolver re-loads that parent once per child reference.
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+`to_registry` uses Layer 1 and skips Layers 2 and 3: it reads every artefact eagerly
+into an `InMemoryRegistry` under that registry's binding, and each `Ref`
+finds its target there, so nothing is resolved during the load.
+
 ### Layer 1 — bulk subtree reads (#73)
 
 **File**: `src/sdmxlib/storage/readers.py`.
 
-The per-artefact readers (`_read_codelist_eager`, `_read_concept_scheme`,
-`_read_metadata_structure`, `_read_data_structure`, `_read_hierarchy`,
-`_read_category_scheme`, `_read_agency_scheme`,
-`_read_data_provider_scheme`) used to loop over items and call
-`_read_annotations(item_urn)` per item. A 331-concept ConceptScheme
-fired ~330+ SQL round-trips just for annotations.
+Sixteen per-artefact readers in `storage/readers.py` read their
+annotations in bulk, among them `_read_codelist_eager`,
+`_read_concept_scheme`, `_read_metadata_structure`, `_read_data_structure`,
+`_read_hierarchy`, `_read_category_scheme`, the five organisation-scheme
+readers, `_read_value_list`, `_read_data_constraint` and the map readers.
+Before #73 they looped over items and called `_read_annotations(item_urn)`
+per item, so a 331-concept ConceptScheme fired ~330+ SQL round-trips just
+for annotations.
 
 The fix is `_read_annotations_subtree(conn, artefact_urn)`, which reads
 through `storage/resolve.py`'s `annotation_rows`:
@@ -95,17 +105,20 @@ per item instead of a round-trip. At most two SQL calls cover the parent
 plus every code / concept / component / hierarchy node beneath it,
 regardless of item class.
 
-Same pattern is also applied to agency contacts inside
-`_read_agency_scheme` (the only other place items had a hidden
-per-item child query).
+The same pattern reads contacts: `_contacts_by_owner` fetches every
+contact of a scheme's items in one statement for the five readers whose
+items carry contacts (`_read_agency_scheme`, `_read_data_provider_scheme`,
+`_read_metadata_provider_scheme`, `_read_data_consumer_scheme`,
+`_read_organisation_unit_scheme`).
 
 After Layer 1, each artefact reader's SQL count is **O(1)** in item
 count, not O(items).
 
 ### Layer 2 — batched ref resolution (#72)
 
-**File**: `src/sdmxlib/local/registry.py`, methods `_resolve_refs`,
-`_collect_refs`, `_resolve_urns`, `_frontier`, `_load_parent_scheme`.
+**File**: `src/sdmxlib/local/registry.py`, `BundleRegistry` methods
+`_resolve_refs`, `_collect_refs`, `_pending_urns`, `_resolve_urns`,
+`_resolve_scheme_items`, `_frontier`, `_load_parent_scheme`.
 
 The old `_resolve_refs` walked the attrs graph depth-first with side
 effects: for every `Ref` it found, it fired SQL immediately to resolve
@@ -150,11 +163,15 @@ what to walk next.
 2. **Resolve** — `_resolve_urns` partitions the deduplicated URNs:
    - **Top-level URNs** (e.g. `MetadataStructure`, `Dataflow`): one
      `readers.get_artefact()` per distinct URN, no fan-out.
-   - **Item URNs** (`Code`, `Concept`): grouped by parent scheme URN
-     via `_parent_scheme_urn`. Each unique parent is loaded *once*
-     (`_load_parent_scheme` is memoised against the same memo), then
-     every requested item is looked up in the parent's `items` collection
-     by dict access.
+   - **Item URNs**: grouped by parent scheme URN via `_parent_scheme_urn`,
+     then served by `_resolve_scheme_items` along the cheapest of three
+     routes. A parent scheme already built in the memo serves its items
+     for free. Otherwise a `Code` or `HierarchicalCode` URN is read by URN,
+     one batched query per parent (`resolve.codes_by_urn`,
+     `resolve.hcodes_by_urn`, #378), and kept for this call only
+     (`set_local`). A `Concept`, or an item URN with `version="latest"`,
+     loads its parent scheme *once* (`_load_parent_scheme`, memoised
+     against the same memo) and looks each item up in it.
 3. **Follow** (`_frontier`) — no write: each owning `Ref` is already bound
    to the memo, so it resolves the moment the memo holds its target.
    Newly-resolved targets that haven't been walked yet enter the next
@@ -177,7 +194,7 @@ memo, so any shared parent was re-loaded N times.
 Layer 3 promotes the memo from per-call to per-registry, with two
 critical refinements: **bounded** and **per-call overlay**.
 
-#### Bounded in items, not entries (`_FIFOCache`)
+#### Bounded in items (`_FIFOCache`)
 
 ```python
 class _FIFOCache(dict[str, object]):
@@ -197,8 +214,12 @@ the 2021 Census Profile bundle the five largest artefacts total **~4.4 GB and oc
 healthy, and be holding 4.4 GB. `caching.md` requires a runtime cache to
 be bounded, and an entry count met that requirement in name only.
 
-The bound is now **items**, and the correspondence to memory is measured — `tracemalloc`, in one process so a one-time 4.4 MB
-warm-up is not charged to every artefact:
+The bound is now **items**, and the correspondence to memory is measured.
+
+##### Record: #386, bytes per item on the 2021 Census Profile bundle
+
+Measured with `tracemalloc`, in one process so a one-time 4.4 MB warm-up is
+not charged to every artefact:
 
 | artefact | items | retained | bytes/item |
 | --- | --- | --- | --- |
@@ -209,9 +230,9 @@ warm-up is not charged to every artefact:
 | `H_CP_GEO_HCCSS` | 28 | 0.07 MB | — |
 | `DF_CP_2021` (`Dataflow`) | 0 | 0.08 MB | — |
 
-Cost is linear in items *within* a class; the spread *across* classes is
-**2.9x**, not 10,000x. That is what makes an item count a fair weigher
-where an entry count was not.
+Cost is linear in items *within* a class, and the spread *across* classes is
+**2.9x**. That is what makes an item count a fair weigher where an entry
+count was not.
 
 **Default `resolve_cache_items=1_000_000`** — 0.7 GB of codes to 2.0 GB
 of nodes. It holds either of that bundle's two largest artefacts outright
@@ -363,12 +384,15 @@ The implementation maintains these:
   MaintainableArtefacts are versioned and effectively immutable), but
   has not been done; `caching.md` asks for a profile naming the cost
   first.
-- **LazyCodelist / LazyHierarchy.** These wrap the connection cursor
-  and do SQL on demand. They're returned directly by `get` without
-  going through `_resolve_refs`, so they bypass the cache entirely
-  (which is correct — they're cheap to construct, and the per-method
-  results they return are already memoised at the lazy level via
-  per-instance caches like `LazyCodelist.code_map`).
+- **A LazyCodelist / LazyHierarchy returned by `get`.** These hold the
+  connection and do SQL on demand. `get` returns one directly, without
+  `_resolve_refs` and without caching it; they are cheap to construct, and
+  `LazyCodelist.code_map` memoises its own results per instance. A facade
+  reached as a **Ref target** is different: a DSD's read resolves its
+  codelists as facades, and those enter the memo and are promoted into the
+  resolver cache like any other target. `_items_from_cached_scheme` then
+  declines to serve items from a cached facade, because its subscript
+  queries the store once per item (GH-150).
 
 ## Performance budget — what to expect
 
@@ -391,94 +415,28 @@ MSD=45ms), that's ~2s instead of ~15s.
 |---|---|
 | `src/sdmxlib/storage/readers.py` | Layer 1: `_read_annotations_subtree` and the per-artefact readers that consume it. |
 | `src/sdmxlib/storage/resolve.py` (`annotation_rows`) | Layer 1: the two annotation statements, by `owner_artefact_urn`. |
-| `src/sdmxlib/local/registry.py` (`_resolve_refs`, `_collect_refs`, `_resolve_urns`, `_frontier`, `_load_parent_scheme`, `_MemoResolver`) | Layer 2: collect / batch / transitive frontier; `Ref`s bound to the memo. |
-| `src/sdmxlib/local/registry.py` (`_FIFOCache`, `_CallScopedMemo`, `LocalRegistry._resolve_cache`) | Layer 3: bounded FIFO cache + per-call overlay + invalidation. |
+| `src/sdmxlib/local/registry.py` (`_resolve_refs`, `_collect_refs`, `_resolve_urns`, `_resolve_scheme_items`, `_frontier`, `_load_parent_scheme`, `_MemoResolver`) | Layer 2: collect / batch / transitive frontier; `Ref`s bound to the memo. |
+| `src/sdmxlib/storage/resolve.py` (`codes_by_urn`, `hcodes_by_urn`) | Layer 2: the by-URN item reads (#378). |
+| `src/sdmxlib/local/registry.py` (`_FIFOCache`, `_CallScopedMemo`, `BundleRegistry._resolve_cache`) | Layer 3: bounded FIFO cache + per-call overlay + invalidation. |
 | `tests/unit/test_storage_query_bounds.py` | Regression bounds. Every fix is guarded by a test asserting *count* of SQL round-trips, not wall-clock time — so future N+1 regressions fail in CI. |
 
-## Serialization: typed msgspec Structs (migrated from dict + orjson)
+## Serialization
 
-The SDMX-JSON layer now models the wire shape as typed `msgspec.Struct` DTOs
-used both directions — `to_*` converters (domain → DTO) encoded via a shared
-`msgspec.json.Encoder`, and typed `msgspec.convert` / `msgspec.json.decode`
-on read. This replaced the original hand-built `dict[str, Any]` + orjson
-design in **milestone #8**. orjson was removed as a dependency.
-
-**Validation is coupled to serialize again.** `serialize()` once took
-`validate=False` by default, on the reasoning that coupling cost the majority
-of JSON serialize time. That was reversed: #205 found five distinct ways to
-build a message the SDMX schema rejects, and the measured cost is 4–9% of
-serialisation, not a majority. `serialize(validate=True)` is now the default
-and runs `check_serialisable` first, raising one accumulated `ValidationError`
-before any bytes are produced; `validate=False` skips it deliberately. See the
-`serialize` docstring.
-
-**The switch to msgspec.** The original decision (below) settled on
-dict + orjson and explicitly deferred msgspec. It was revisited because the
-motivation was never purely raw speed:
-
-- **Typing.** `dict[str, Any]` is a viral `Any` hole through the whole
-  format layer; typed Structs give the checker a real shape both directions
-  and localise the untyped boundary to one `msgspec.json.decode` call.
-- **Design fit.** A Struct-shaped wire layer separate from the domain model
-  is the same split `pysdmx` uses (`from_model`), and it made the read side
-  a clean inverse of the write side.
-- **Footprint.** msgspec is a small, single-purpose Rust dependency — and it
-  *replaced* orjson rather than adding to it, so the dependency count didn't
-  grow.
-
-The original "1000 codes" measurement that informed the *first* decision —
-kept here as evidence, since it also quantifies the alternatives we rejected:
-
-| approach | time | vs the old dict path |
-|---|---|---|
-| hand-built dict + orjson (old) | 127 µs | — |
-| cattrs unstructure + orjson | 272 µs | 2.1× *slower* |
-| dataclass DTO + orjson-native | 292 µs | 2.3× *slower* |
-| **msgspec Struct + encode (now)** | **91 µs** | **1.4× faster** |
-
-So the chosen path (msgspec Structs) is also the *fastest* of the four — but
-the case for it was typing + design cleanliness, not the ~30% write win.
-cattrs and orjson's native-dataclass path remain measurably *slower* than a
-hand-written emit and were correctly rejected. Data-plane byte streaming was
-migrated separately (#183) and benchmarked flat-to-faster on the large case.
-
-### JSON serialisation after the migration, against pysdmx
-
-A profile of the migrated writer settled a question the table above left open.
-Both libraries have a domain-model → wire-Struct conversion (`to_*` for us,
-`from_model` for pysdmx) — the encode itself is only ~6% of serialize time in
-each; the conversion is ~90%+. The residual gap to pysdmx came from two
-things:
-
-1. **They are lossy, we are lossless.** pysdmx's model stores one best-match
-   `name: str`; its JSON emits only `name`. We model a full
-   `InternationalString` and emit `name` + the `names` lang-map (and
-   `text`/`texts` on annotations). Their `from_model` is `name=code.name` (a
-   pointer copy); our `to_*` must split every istring into `(best, full-map)`.
-   That is real work they skip by *discarding languages* — a price we choose to
-   pay for a lossless round-trip.
-
-2. **We had two msgspec knobs still on the table**, both fixed in the perf pass
-   that followed:
-   - `InternationalString.emit_pair()` — collapse the istring split
-     (`__bool__` + `as_dict` + `iter`/`next`) into one method with direct
-     backing-map access (~6%).
-   - **`gc=False` on the wire-Struct base (`WireStruct`)** — the big one
-     (~40% of build+encode). Wire DTOs are transient acyclic trees, so the
-     cyclic collector scanning millions of them is pure waste; refcounting
-     still frees them promptly. pysdmx doesn't use this.
-
-Net on the 3.8M-obs ESTAT HICP fixture (SDMX-JSON 2.1 serialize, median):
-**sdmxlib ~4.0 ms vs pysdmx ~4.6 ms — ~16% faster, while emitting every
-language pysdmx drops.** A `gc.is_tracked` guard test (`test_dto.py`) locks the
-`gc=False` invariant so a stray `msgspec.Struct` base can't silently re-track a
-DTO and undo it.
+The SDMX-JSON layer models the wire shape as typed `msgspec.Struct` DTOs
+used in both directions: `to_*` converters (domain → DTO) encoded through
+the shared `_dto.ENCODER`, and typed `msgspec.json.decode` on read
+([JSON and parsing](json-and-parsing.md) is the design). `serialize()`
+validates by default: `serialize(validate=True)` runs `check_serialisable`
+first and raises one accumulated `ValidationError` before any bytes are
+produced (#205); `validate=False` skips it. The measurements behind the
+msgspec choice and the comparison with pysdmx are in
+[evidence/serialization.md](evidence/serialization.md).
 
 ## See also
 
 - [Local Registry tutorial — §7 Resolver Cache](../local_registry_tutorial.md) — using the cache.
 - [Local Registry tutorial](../local_registry_tutorial.md) — the store, end to end.
-- Issues [#72](https://gitlab.com/pinax-suite/sdmxlib/-/issues/72),
-  [#73](https://gitlab.com/pinax-suite/sdmxlib/-/issues/73),
-  [#74](https://gitlab.com/pinax-suite/sdmxlib/-/issues/74) — original
+- Issues [#72](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/gitlab/issues/72.md),
+  [#73](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/gitlab/issues/73.md),
+  [#74](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/gitlab/issues/74.md) — original
   bug reports with profile data.

@@ -1,7 +1,7 @@
 """What mutation found the 2.1 reader's tests could not see (#458).
 
 The triage of the rest — equivalent, and why — is in
-`docs/design/mutation-evidence.md`.
+`docs/design/evidence/mutation-runs.md`.
 
 Most of these share one cause: `tests/support/maximal.py` is the fixture
 every reader is measured against, and wherever it holds a field's *default*,

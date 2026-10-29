@@ -1,7 +1,7 @@
 """What mutation found the SDMX-JSON writer's tests could not see (#458).
 
 The triage of the rest — equivalent, and why — is in
-`docs/design/mutation-evidence.md`.
+`docs/design/evidence/mutation-runs.md`.
 
 As with both SDMX-ML writers (installments 5 and 7), these are what only the
 document holds: the envelope, which no reader returns, its layout, and the

@@ -1,9 +1,10 @@
 # Concurrency
 
 How sdmxlib's registries behave under threaded access — what's safe, what
-isn't, and where the ceilings are. Both `LocalRegistry` (DuckDB-backed
-store) and `RestRegistry` (HTTP, with a store behind it) commit to the same
-contract; the second one arrived later and is covered in its own section
+isn't, and where the ceilings are. `BundleRegistry` (the read-only DuckDB
+store a published bundle opens as), `LocalRegistry` (which extends it with
+writes) and `RestRegistry` (HTTP, with a store behind it) commit to the same
+contract; `RestRegistry` arrived later and is covered in its own section
 below.
 
 The current shape was designed in response to issue #75: under any
@@ -16,39 +17,44 @@ without rediscovering the constraints.
 
 | Operation | Thread-safe? |
 |---|---|
-| `LocalRegistry.get`, `get_all`, `codelist`, `code_map`, `dsd_code_map`, `to_registry`, `__contains__`, `__len__`, `__repr__` | ✅ Yes |
-| `LocalRegistry.query(...)`, `obs(...)` and their terminals | ✅ Yes |
+| `BundleRegistry.get`, `get_all`, `codelist`, `code_map`, `dsd_code_map`, `to_registry`, `__contains__`, `__len__`, `__repr__` (inherited by `LocalRegistry`) | ✅ Yes |
+| `BundleRegistry.query(...)`, `obs(...)` and their terminals | ✅ Yes |
 | `LocalRegistry.add`, `drop`, `replace`, `add_all`, `ingest`, `write_observations` | ❌ No — single-threaded only |
 | Concurrent access to the **same** `LazyCodelist` / `LazyHierarchy` instance from multiple threads | ✅ Yes |
-| Sharing a `LocalRegistry` across multiple Python *processes* | ❌ No — one DuckDB connection per process |
+| Several Python *processes* opening one published bundle as a `BundleRegistry` | ✅ Yes — it opens its database `read_only` |
+| Sharing a writable `LocalRegistry` across Python *processes* | ❌ No — one DuckDB connection per process |
 | `RestRegistry.get`, `query`, `obs`, `download` | ✅ Yes |
 | `RestRegistry.load`, and writes to the `LocalRegistry` passed as `store=` | ❌ No — single-threaded only |
 
-`DataStore.query` / `query_stream` used to sit in this table. #329 removed
-them: the `DataStore` Protocol is write-side only, and observations are read
-through `obs()`, whose terminals run on the per-thread handles
-described below.
+The `DataStore` Protocol is write-side only (#329). Observations are read
+through `obs()`, whose terminals run on the per-thread handles described
+below.
 
 ## Read safety
 
 Each thread gets its own DuckDB cursor, lazily created on first read
-and reused for the thread's lifetime:
+and reused for the thread's lifetime (`BundleRegistry._read_cursor`,
+`local/registry.py`):
 
 ```python
 def _read_cursor(self) -> duckdb.DuckDBPyConnection:
-    cur = getattr(self._thread_local, "cur", None)
+    cur: duckdb.DuckDBPyConnection | None = getattr(self._thread_local, "cur", None)
     if cur is not None:
         return cur
     # (raises if the registry is not open)
-    cur = self._conn.cursor()
-    cur.execute("SET search_path = 'sdmx'")
+    cur = adopt(self._conn, use_sdmx(self._conn.cursor(), self._sdmx_catalog()))
     self._thread_local.cur = cur
     return cur
 ```
 
-DuckDB serialises `execute()` calls on a single connection, but each
-connection has one *default* cursor whose row buffer is overwritten by
-every `execute()`. The historical bug (#75) was two threads racing
+`use_sdmx` (`storage/schema.py`) runs `USE "<catalog>".sdmx`, because a
+DuckDB cursor inherits neither its parent's current database nor its search
+path. `adopt` (`session.py`) records the cursor as derived from the
+registry's connection, so a handle `cursor_for` later takes from it runs that
+connection's session hooks too.
+
+A DuckDB connection object holds one result buffer, overwritten by every
+`execute()` on it. The bug in #75 was two threads racing
 between `execute()` and `fetchone()` on that shared buffer — one
 thread's row data ended up in another thread's result.
 
@@ -61,24 +67,32 @@ pattern and avoids the per-call `conn.cursor()` cost.
 `LazyCodelist` / `LazyHierarchy`, the query language's `Query`, the
 storage resolve helpers and `rollup.AncestorMap` hold the long-lived
 connection (not a cursor) and obtain a per-thread cursor for every call
-through **one** shared function, `sdmxlib.session.cursor_for(conn)`. It
-backs onto a single `threading.local()` whose value is a
+through `sdmxlib.session.cursor_for(conn)`. It backs onto a
+`threading.local()` whose value is a
 `weakref.WeakKeyDictionary[Connection, Cursor]` — when a registry's
 connection becomes unreachable (close + GC), the dict entry vanishes
-automatically. Until #300 there were two such tables, one in
-`session.py` and one in `storage/lazy.py`, so one thread held two handles
-that shared no session state; `lazy.py` now imports `cursor_for`. No
-`SET search_path` on those handles: their SQL is `sdmx.`-qualified.
+automatically. A new handle runs the connection's session hooks; every
+store installs one that runs `use_sdmx` on it
+(`_install_default_session_hooks`), so the handle reads the store's
+catalog.
+
+A second per-thread table lives in `storage/_projections.py`
+(`_thread_cursor`), for the `code_map` projection and
+`readers.code_map_for_dsd`. It has the same shape, a `threading.local()`
+holding a `WeakKeyDictionary`, and builds its handles with `sdmx_cursor`,
+which runs `use_sdmx` directly instead of the session hooks. One thread
+therefore holds up to two hook-managed handles and one projection handle per
+store.
 
 ### Cursor lifecycle
 
 Invariants:
 
 - **One `_read_cursor` per (thread, registry)**, plus one `cursor_for`
-  handle per (thread, connection), both created lazily. N worker threads
-  on a single `LocalRegistry` → on the order of 2N cursors, fixed for the
-  threads' lifetime — not one per call.
-- **`LocalRegistry.close()` drops the threadlocal** so a subsequent
+  handle and one `_projections` handle per (thread, connection), all
+  created lazily. N worker threads on a single registry → up to about 3N
+  cursors, fixed for the threads' lifetime — not one per call.
+- **`close()` drops the registry's threadlocal** so a subsequent
   `open()` starts fresh — no stale cursors after reopen.
 - **`WeakKeyDictionary` keying for lazy facades** lets the cursor
   table self-clean when connections die, so there's no `id()` reuse
@@ -88,27 +102,30 @@ Invariants:
 
 For deployment context: on a typical FastAPI/uvicorn setup, the
 threadpool is long-lived (~40 stable workers parked between
-requests). A `LocalRegistry` ends up with ~40 threads' worth of cursors, stable for the
-process lifetime — no per-request cursor churn.
+requests). A registry ends up with ~40 threads' worth of cursors, stable for
+the process lifetime — no per-request cursor churn.
 
 Lifecycle tests live in `tests/unit/test_cursor_lifecycle.py`.
 
-### One connection runs one statement at a time
+### Parallelism on one connection
 
-DuckDB has a per-connection mutex that serialises most internals. A
-`LocalRegistry` backed by one DuckDB connection cannot run two SQL
-statements truly in parallel — the threads each have their own cursor
-(no corruption), but they take turns at the connection's lock. In
-practice this gives:
+Handles taken from one DuckDB connection run their statements
+concurrently: four parallel queries on four handles took 1.32x the time of
+one query (measured for #300 on DuckDB 1.5.3, recorded in `cursor_for`'s
+docstring). Per-thread handles therefore cost no SQL parallelism, and
+per-thread results are always **correct**.
 
-- Per-thread results that are always **correct**.
-- Throughput bounded by DuckDB's single-connection serialisation —
-  roughly flat past 4–8 workers in the benchmark for read-heavy mixes.
+End-to-end `get` throughput is still roughly flat with worker count. The
+pinned baseline in `bench/concurrency/baselines.json` (sdmxlib 0.50.0,
+workload `concurrent_get_mixed_{N}w`) reads 885 ops/s at 1 worker, 1,045 at
+4, 815 at 8 and 798 at 16. Which part of a `get` holds that plateau, the SQL
+or the Python that builds the artefact, has not been profiled, and the
+baseline predates DuckDB 2.0.
 
-For deployments that need to push past that ceiling, the answer is
-**multiple connections** (a connection pool, or one registry per worker
-process). That's an open architectural question; not currently provided
-by sdmxlib.
+`BundleEngine` (`local/engine.py`) attaches several published bundles into
+one DuckDB connection, and each `BundleRegistry` opened on it takes its own
+handle from that connection (`engine.cursor(prefix)`). Registries on one
+engine share its connection, its `threads` setting and its memory limit.
 
 ## Write safety — single-threaded
 
@@ -136,10 +153,11 @@ def add_safely(reg, artefact):
 Reads can still run concurrently with each other while a writer holds
 the lock — the lock only serialises *other writers*.
 
-## Resolver cache — FIFO, lock-free reads
+## Resolver cache — FIFO, lock-free reads, not single-flight
 
-`LocalRegistry(…, resolve_cache_items=…)` configures a bounded URN → resolved-target
-cache shared across calls, bounded in *items* rather than entries (#386). Its purpose is to amortise parent-scheme
+`resolve_cache_items=` on `BundleRegistry` and `LocalRegistry` configures a
+bounded URN → resolved-target cache shared across calls, bounded in *items*
+rather than entries (#386). Its purpose is to amortise parent-scheme
 reads — e.g. listing 293 MetadataSets that all reference the same MSD
 should load the MSD once, not 293 times. (See
 [Performance → Resolver Cache](performance.md).)
@@ -154,14 +172,18 @@ The cache is a plain `dict` subclass with FIFO eviction:
   these are off the hot path (cache-miss path only). The running weight
   #386 added is maintained under that same lock, so weighing changed the
   eviction rule and not the concurrency design.
+- **A miss is not single-flight.** Two threads that miss the same URN both
+  read it from the store, and the second insert replaces the first. The
+  cache predates `SingleFlight`; [caching](caching.md#the-runtime-caches-today)
+  lists it with the other caches that do not go through the primitive.
 - **Hit/miss counters are best-effort.** They use lockless `+=`, which
   races under contention. The numbers reported by
   `resolve_cache_info()` may slightly under-count. They remain a
   useful diagnostic, but should not be used as a load-bearing assertion.
 
-### FIFO eviction keeps reads lock-free
+### Record: LRU to FIFO in v0.27.x
 
-The previous implementation (v0.27.x) was an LRU — every read called
+The implementation in v0.27.x was an LRU — every read called
 `move_to_end()` on the underlying `OrderedDict`. That mutation on every
 hit is exactly what would force a lock around the hot path under
 concurrent access. We chose to give up LRU recency in exchange for
@@ -178,8 +200,8 @@ look fine in practice).
 
 `LocalRegistry(uri, resolve_cache_items=0)` disables caching entirely. Every
 Ref resolution does a full read. This is the escape hatch if a
-deployment ever hits unforeseen contention on cache mutation or
-suspects the cache itself of misbehaving. Matches pre-v0.27.2 behaviour.
+deployment hits contention on cache mutation or suspects the cache itself
+of misbehaving.
 
 ## Deployment patterns
 
@@ -227,9 +249,9 @@ on first read and reuses it, so concurrent requests don't corrupt each
 other's results and there's no per-request cursor churn.
 
 For multiple processes, run multiple uvicorn workers — each gets its
-own `LocalRegistry` and its own DuckDB connection. DuckDB's per-connection
-ceiling no longer bounds your total throughput; the OS schedules
-process-level parallelism for you.
+own registry and its own DuckDB connection, and the OS schedules
+process-level parallelism. A published bundle opens read-only, so every
+worker can open the same files.
 
 ### A LazyCodelist held across requests
 
@@ -240,37 +262,35 @@ in-memory cache keyed by URN, and methods called from any thread —
 each thread resolves to its own per-thread cursor via
 `session.cursor_for`'s `WeakKeyDictionary`-backed thread-local store.
 
-## DuckDB connection-level ceiling
+## Throughput ceiling
 
-Even with isolated per-thread cursors, DuckDB serialises most read
-internals at the connection level. Empirically (see `bench/`),
-single-connection throughput plateaus around 4–8 concurrent threads on
-typical hardware. Past that, more workers don't help and may hurt
-(lock contention overhead).
+One registry's `get` throughput stops rising at about 4 workers in
+`bench/concurrency/` (see [Parallelism on one
+connection](#parallelism-on-one-connection) for the numbers). Past that,
+throughput falls slightly.
 
-If your workload needs to push past that ceiling:
+If your workload needs more:
 
 1. **Multiple processes.** uvicorn `--workers N`, each with its own
-   `LocalRegistry`. Simplest answer; scales linearly until the database
-   file's OS-level read concurrency becomes the bottleneck (rare for
-   metadata-sized DBs).
-2. **Connection pool.** Not provided by sdmxlib today. If you have a
-   real workload that needs it, file an issue with the bench numbers.
+   registry and connection. This scales until the database files' OS-level
+   read concurrency becomes the bottleneck, which is rare for
+   metadata-sized stores.
+2. **Connection pool.** sdmxlib provides none. If you have a real workload
+   that needs one, file an issue with the bench numbers.
 
 ## Performance notes
 
 Thread-local cursor reuse means the per-call overhead is essentially
-a `getattr` lookup. Steady-state reads (after the first call per
-thread that pays the cursor-creation cost) measure within a few
-percent of the pre-v0.28.0 shared-cursor design — the `code_map`
-trivial-SELECT workload that was +25% slower in v0.28.0 under the
-per-call design is back within ~6% of baseline. Errors under
-concurrency remain at 0.
+a `getattr` lookup.
 
-The architectural ceiling (DuckDB's per-connection serialisation, see
-above) caps total concurrent read throughput regardless of cursor
-strategy — multiple `LocalRegistry` instances or a connection pool would
-be needed to push past it.
+### Record: v0.28.0 to v0.28.1 (#78, #80)
+
+The fix for #75 landed in v0.28.0 (#78) as a cursor per call; v0.28.1 (#80)
+switched to thread-local cursors. With that switch, steady-state reads
+(after the first call per thread that pays the cursor-creation cost)
+measured within a few percent of the pre-v0.28.0 shared-cursor design: the
+`code_map` trivial-SELECT workload that was +25% slower under the per-call
+design came back within ~6% of baseline, with 0 errors under concurrency.
 
 ## RestRegistry — the same contract, stated later (#336)
 
@@ -302,20 +322,22 @@ reads are safe and do not duplicate work** — which took four fixes:
    commented *"DuckDB always answers this"* raised. This was found by the
    tests written for (1)–(3), not by review.
 
-`SingleFlight` is the sibling of the resolver's `_FIFOCache`: that one caches
-a *value*, this one caches the fact that work already happened, which is what
-a fetch produces. Both meet the checklist in
-[caching](caching.md#the-thread-safety-contract-for-category-c); new keyed
-work should route through one of them rather than re-derive locking.
+`SingleFlight` caches the fact that work already happened, which is what a
+fetch produces; the resolver's `_FIFOCache` caches a *value* and is not
+single-flight. A new runtime cache goes through `SingleFlight`
+([caching](caching.md#the-thread-safety-contract-for-category-c)), and
+[the inventory there](caching.md#the-runtime-caches-today) lists which
+existing caches do.
 
 ## See also
 
 - [Performance & Caching](performance.md) — what the resolver cache is
   *for* (bulk reads, N+1 amortisation).
-- Issue [#75] — original bug report, k6 numbers, stack traces.
-- Issue [#78] — initial fix (per-call cursors).
-- Issue [#80] — switch to thread-local cursors (v0.28.1).
-
-[#75]: https://gitlab.com/pinax-suite/sdmxlib/-/work_items/75
-[#78]: https://gitlab.com/pinax-suite/sdmxlib/-/work_items/78
-[#80]: https://gitlab.com/pinax-suite/sdmxlib/-/work_items/80
+- Issue [#75](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/gitlab/issues/75.md) — original bug report, k6
+  numbers, stack traces.
+- Issue [#78](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/gitlab/issues/78.md) — initial fix (per-call
+  cursors).
+- Issue [#80](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/gitlab/issues/80.md) — switch to thread-local
+  cursors (v0.28.1).
+- Issue [#300](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/gitlab/issues/300.md) — `cursor_for` and the
+  session hooks, and the 1.32x measurement.

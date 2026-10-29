@@ -48,26 +48,43 @@ both writable and covariant is unsound. So:
   a `dict[str, JSON]`, so every heterogeneous assignment fights the union and
   the value must be born `JSON`-typed (viral).
 
-This reasoning drove the *original* SDMX-JSON writers, which built a
-heterogeneous `dict[str, Any]` incrementally and then dumped it — `Any` there
-was the honest gradual-typing escape at a *build* boundary, not laziness.
-**Milestone #8 superseded that**: the writers now build typed `msgspec.Struct`
-DTOs (a spec'd shape, checked both directions) encoded via the shared
-`_dto.ENCODER`. The structure surface has **no `dict[str, Any]` wire islands
-left** — even the awkward cases got typed: the codelist-extension /
-`memberValues` union (bare-string-or-object + `bool | "excluderoot"` cascade +
-the inclusive/exclusive xs:choice) is plain msgspec unions, no `dec_hook` (#186),
-and the `{observation:{}}` / `{dataflow:{}}` presence markers became an empty
-`EmptyObject` Struct. The only remaining build-boundary dict is the data-plane
-per-batch `{key: row}` map that msgspec encodes directly on the hot path.
+The SDMX-JSON writers therefore build typed `msgspec.Struct` DTOs (a
+spec'd shape, checked both directions) and encode them through the shared
+`_dto.ENCODER`. Every artefact is a Struct, including the awkward cases: the
+codelist-extension / `memberValues` union (bare-string-or-object +
+`bool | "excluderoot"` cascade + the inclusive/exclusive xs:choice) is plain
+msgspec unions with no `dec_hook` (#186), and the `{observation:{}}` /
+`{dataflow:{}}` presence markers are an empty `EmptyObject` Struct.
 
-The **read/parse** side was the last place an untyped decode survived, and it
-is now closed too. Every `msgspec.json.decode` in `src/` carries `type=`: the
-structure, metadata and data messages each decode their envelope into a Struct
-in one pass, so there is no `-> Any` to navigate and no per-section
-`msgspec.convert` fan-out (#200).
+The envelopes around those Structs are still dicts, built only to be
+encoded:
 
-Two conclusions from that work contradict the obvious answer:
+- The structure writer (`formats/sdmx_json/writer.py`) collects each section
+  as a list of Struct DTOs into a `dict[str, object]` `data`, adds the
+  per-kind map arrays from `_write_structure_set_maps`
+  (`dict[str, list[Any]]`), and encodes `{"meta": ..., "data": data}`.
+- The data writers (`data_v1.py`, `data_v2.py`) build the message header,
+  the dataset head and the closing structure block as dicts, encode each,
+  and splice the bytes around the streamed observations.
+- Each observation batch is a `{key: row}` map that msgspec encodes directly
+  on the hot path.
+
+Every `msgspec.json.decode` in `src/` carries `type=`. The structure,
+metadata and data readers decode their envelope into a Struct in one typed
+pass, so there is no `-> Any` to navigate and no per-section
+`msgspec.convert` fan-out (#200). The structure reader falls back when that
+pass fails (`_decode` in `reader.py`, #474): msgspec stops at the first entry
+missing a required field, so the reader then decodes each section's entries
+one at a time, records a `Refusal` for each entry that fails, and decodes the
+rest together into the same Struct.
+
+### Record: %8 and #200, the move to typed Structs
+
+The original SDMX-JSON writers built a heterogeneous `dict[str, Any]`
+incrementally and dumped it with orjson; `Any` there was the honest
+gradual-typing escape at a *build* boundary. %8 replaced that with the
+Struct DTOs above and removed orjson, and #200 typed the last untyped
+decode. Two conclusions from that work contradict the obvious answer:
 
 - **A `TypedDict` per section would have been a downgrade.** That was the
   original proposal (#176), made when the seam was `orjson.loads -> Any`. Once
@@ -123,9 +140,7 @@ this document is about.
 
 - **Structural metadata** → domain objects. Settled, correct.
 - **The parse boundary itself** → a typed Struct decode (`decode(type=…) →
-  construct`). It used to be a transient `loads → navigate → construct` tree
-  whose `Any` was defended as short-lived; there is no tree and no `Any` there
-  now (#200).
+  construct`), with no navigated tree and no `Any` (#200).
 - **The resolution `index`** (`URN → parsed-object`) is **not** JSON — it's a
   heterogeneous domain-object map, typed `dict[str, object]` (issue #169). A
   JSON type does not apply.

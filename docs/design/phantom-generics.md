@@ -172,3 +172,11 @@ through `Any`. `SdmxUrn.parse`, `parse_item` and `artefact_urn` all return
 > where the expectation is known, parse on the class (`Cls.parse_urn`) so the
 > witness supplies `T`.** Never use `Any` on the phantom to make it "flow" —
 > it flows into every overload that dispatches on it, too.
+
+`src/` has two sites that break this rule, both in the SDMX-ML reader
+(`formats/sdmx_ml/_common.py`). `ref_el_to_urn` returns `SdmxUrn[Any] | None`
+because its result feeds `Ref[T].unresolved` in `read_representation`, and a
+comment there cites #286 for it. The `_checked` helper inside `resolve_ref`
+takes `SdmxUrn[Any]` and hands it to `Ref.unresolved` under the `Ref[T]`
+that `resolve_ref`'s `cls` witness names. They are the only `SdmxUrn[Any]`
+annotations in `src/`; new code follows the heuristic.
