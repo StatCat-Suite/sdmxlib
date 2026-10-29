@@ -55,12 +55,12 @@ def code_map(
     """
     cur = _thread_cursor(conn)
     rows = cur.execute(
-        f"""
-        SELECT code_id, coalesce(name['{lang}'], code_id) AS label
+        """
+        SELECT code_id, coalesce(name[?], code_id) AS label
         FROM sdmx.code
         WHERE codelist_urn = ?
         ORDER BY position
         """,
-        [codelist_urn],
+        [lang, codelist_urn],
     ).fetchall()
     return {r[0]: r[1] for r in rows}

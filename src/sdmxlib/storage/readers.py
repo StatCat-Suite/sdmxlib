@@ -2846,15 +2846,15 @@ def code_map_for_dsd(
     """
     cur = _thread_cursor(conn)
     rows = cur.execute(
-        f"""
-        SELECT dc.component_id, c.code_id, coalesce(c.name['{lang}'], c.code_id) AS label
+        """
+        SELECT dc.component_id, c.code_id, coalesce(c.name[?], c.code_id) AS label
         FROM sdmx.dsd_component dc
         JOIN sdmx.code c ON dc.codelist_urn = c.codelist_urn
         WHERE dc.dsd_urn = ?
           AND dc.codelist_urn IS NOT NULL
         ORDER BY dc.component_id, c.position
         """,
-        [dsd_urn],
+        [lang, dsd_urn],
     ).fetchall()
 
     result: dict[str, dict[str, str]] = {}

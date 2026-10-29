@@ -87,13 +87,12 @@ of the store that publication ships (`_trim.py`).
   runs each statement. A semicolon inside a statement would break that split.
 - Every TIMESTAMP is stored as naive UTC, and readers tag it UTC again
   (`sdmxlib/_time.py`).
-- Values are bound as parameters (`?` or `$name`), with these exceptions.
-  `code_map` (`_projections.py`) and `code_map_for_dsd` (`readers.py`)
-  interpolate the caller's `lang` into the SQL text (GH-262).
-  `_trim.compact_for_publication` interpolates file paths and the storage
-  version into `ATTACH`. `use_sdmx`, `holds_rows`, `_trim._rebuild`,
-  `_delete_artefact_cascade`, `_columns` and `_synthetic` interpolate
-  identifiers and computed integers.
+- Values are bound as parameters (`?` or `$name`), a language included:
+  `code_map` and `code_map_for_dsd` read `name[?]` (GH-262). Interpolated
+  text comes from sdmxlib itself: `_trim.compact_for_publication` puts file
+  paths and the storage version into `ATTACH`, and `use_sdmx`, `holds_rows`,
+  `_trim._rebuild`, `_delete_artefact_cascade`, `_columns` and `_synthetic`
+  interpolate identifiers and computed integers.
 - Before a rewrite, a writer deletes the artefact's rows with deletes chosen by
   artefact type. When the artefact is not stored, the deletes are skipped.
 - Every eager build passes through `checked()`. `get` raises on a bad
