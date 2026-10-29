@@ -2,7 +2,7 @@
 
 from collections.abc import Iterable
 from datetime import datetime
-from typing import ClassVar, override
+from typing import ClassVar, TypeIs, override
 
 from attrs import evolve, field, frozen
 
@@ -14,15 +14,18 @@ from sdmxlib.model._rules import id_type, maintained_by, named, version_type
 from sdmxlib.model._tree import PathIndex, PathNavigation
 from sdmxlib.model.annotations import Annotations
 from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.codelist import Codelist
 from sdmxlib.model.collections import ItemList, to_itemlist
 from sdmxlib.model.concept import Concept
 from sdmxlib.model.datastructure import ConceptIdentityMixin, RepresentationMixin
+from sdmxlib.model.errors import ValidationError, ValidationIssue
 from sdmxlib.model.istring import InternationalString
 from sdmxlib.model.link import Link, to_links
 from sdmxlib.model.organisation import Agency, _to_agency, _to_annotations, _to_istring
 from sdmxlib.model.ref import Ref, refuse_urn_text
-from sdmxlib.model.representation import DataType, Facet, Representation, to_text_representation
+from sdmxlib.model.representation import DataType, Facet, Representation, to_text_format
 from sdmxlib.model.urn import ParsesUrn, SdmxUrn
+from sdmxlib.model.valuelist import ValueList
 
 
 def _to_concept_ref(v: Ref[Concept] | SdmxUrn[Concept] | None) -> Ref[Concept] | None:
@@ -167,6 +170,54 @@ class ReportStructure(ParsesUrn):
     uri: str | None = None
 
 
+def _value_list_refusal(urn: SdmxUrn[object]) -> ValidationError:
+    msg = f"an enumerated metadata attribute uses a Codelist (IM §7.3.4.1), and {urn} is a ValueList"
+    return ValidationError([ValidationIssue(path="MetadataAttribute.representation", message=msg)])
+
+
+def _names_codelist(ref: Ref[Codelist | ValueList]) -> TypeIs[Ref[Codelist]]:
+    return ref.urn.artefact_class != "ValueList"
+
+
+def codelist_representation(representation: Representation) -> Ref[Codelist] | Facet | None:
+    """A component representation as a metadata attribute's: a codelist or a text format.
+
+    For the readers, which build every component's representation one way.
+    "If the Representation is enumerated, then it must use a Codelist" (IM
+    §7.3.4.1); the 3.0 and 3.1 XSDs and the SDMX-JSON 2.0 schema all type the
+    enumeration a codelist reference.
+
+    Raises:
+        ValidationError: If `representation` refers to a `ValueList`.
+    """
+    if isinstance(representation, Ref) and not _names_codelist(representation):
+        raise _value_list_refusal(representation.urn)
+    return representation
+
+
+def to_codelist_representation(
+    v: Ref[Codelist] | SdmxUrn[Codelist] | Codelist | Facet | None,
+) -> Ref[Codelist] | Facet | None:
+    """Attrs converter for a metadata attribute's representation: a codelist or a text format.
+
+    The types refuse a value list; this refuses one an untyped caller passes.
+
+    Raises:
+        ValidationError: If `v` is, names or refers to a `ValueList`.
+    """
+    # A Ref or an artefact carries its URN; a URN is its own.
+    urn: object = getattr(v, "urn", v)
+    if isinstance(urn, SdmxUrn) and urn.artefact_class == "ValueList":
+        raise _value_list_refusal(urn)
+    if isinstance(v, SdmxUrn):
+        return Ref[Codelist].unresolved(v)
+    if isinstance(v, Codelist):
+        return Ref.to(v)
+    if isinstance(v, Facet):
+        return to_text_format(v)
+    return v
+
+
 @frozen(unsafe_hash=False)
 class MetadataAttribute(ConceptIdentityMixin, RepresentationMixin):
     """A structural component of a MetadataStructure.
@@ -193,7 +244,10 @@ class MetadataAttribute(ConceptIdentityMixin, RepresentationMixin):
 
     id: str = field(validator=id_type)
     concept: Ref[Concept] | None = field(default=None, converter=_to_concept_ref, validator=refuse_urn_text)
-    representation: Representation = field(default=None, converter=to_text_representation, validator=refuse_urn_text)
+    #: A codelist or a text format: a value list is refused (IM §7.3.4.1).
+    representation: Ref[Codelist] | Facet | None = field(
+        default=None, converter=to_codelist_representation, validator=refuse_urn_text
+    )
     #: Facets constraining the *codes* of an enumerated representation, as on a
     #: DSD component — see `Dimension.enumeration_format`.
     #: ``MetadataAttributeRepresentationType`` allows the pairing in every
@@ -209,6 +263,14 @@ class MetadataAttribute(ConceptIdentityMixin, RepresentationMixin):
     uri: str | None = None
     #: SDMX 3.x's ``<com:Link>`` elements, in order (#422). See `Link`.
     links: tuple[Link, ...] = field(factory=tuple, converter=to_links)
+
+    @override
+    def __attrs_post_init__(self) -> None:
+        """Take the concept's representation when none is given; refuse it if it is a value list."""
+        super().__attrs_post_init__()
+        representation = self.representation
+        if isinstance(representation, Ref) and representation.urn.artefact_class == "ValueList":
+            raise _value_list_refusal(representation.urn)
 
 
 @frozen(unsafe_hash=False)

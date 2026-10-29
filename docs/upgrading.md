@@ -19,6 +19,31 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## A metadata attribute is enumerated by a codelist only
+
+`MetadataAttribute.representation` is `Ref[Codelist] | Facet | None`
+([GH-28](https://github.com/StatCat-Suite/sdmxlib/issues/28)). The
+information model (SDMX 3.1 Section 2, §7.3.4.1) says an enumerated metadata
+attribute "must use a Codelist", and the SDMX-ML 3.0 and 3.1 XSDs and the
+SDMX-JSON 2.0 schema type its enumeration a codelist reference, so a
+metadata structure enumerated by a `ValueList` had no valid document in any
+format.
+
+- Building a `MetadataAttribute` whose representation is, or refers to, a
+  `ValueList` raises `sl.ValidationError`, and so does one that takes a
+  `ValueList` from its concept's core representation. A type checker
+  rejects the first.
+- A document whose metadata attribute names a value list is refused: the
+  reader records that `MetadataStructure` in `refused`, and `parse` raises
+  `SdmxConformanceError` unless called with `strict=False`.
+- A metadata attribute's occurrences are checked as a DSD component's are:
+  `min_occurs` at least 0, `max_occurs` at least 1 and at least
+  `min_occurs`, or `None` for unbounded. Building a `MetadataStructure`
+  outside that raises `sl.ValidationError`.
+
+Enumerate the attribute by a `Codelist` instead. A DSD component may still
+use a `ValueList`.
+
 ## Data reads raise `SdmxParseError` and one type `ValueError`
 
 Reading observations raises two exceptions

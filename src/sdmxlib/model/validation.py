@@ -1083,11 +1083,29 @@ def _check_node_levels(h: Hierarchy, prefix: str, issues: list[ValidationIssue])
         issues.append(ValidationIssue(path=f"{prefix}.codes[{h.path_of(node)}].level", message=message))
 
 
+def _check_metadata_attribute_occurs(attr: MetadataAttribute, path: str, issues: list[ValidationIssue]) -> None:
+    """A metadata attribute occurs a range of times: `minOccurs` at least 0, `maxOccurs` at least 1 and `minOccurs`.
+
+    IM §7.3.4.1: "mandatory (minOccurs=1 or more) or optional (minOccurs=0)";
+    the bounds a DSD component's occurrences meet (`_check_3x_components`).
+    """
+    low, high = attr.min_occurs, attr.max_occurs
+    if low < 0 or (high is not None and (high < 1 or high < low)):
+        issues.append(
+            ValidationIssue(
+                path=f"{path}.max_occurs",
+                message=f"occurs {low}..{'unbounded' if high is None else high} is not a range: "
+                "minOccurs is at least 0, maxOccurs at least 1 and at least minOccurs (IM §7.3.4.1)",
+            )
+        )
+
+
 def _validate_metadata_structure(msd: MetadataStructure, prefix: str, issues: list[ValidationIssue]) -> None:
     _validate_maintainable(msd, prefix, issues)
 
     def _walk(attr: MetadataAttribute, path: str) -> None:
         _check_component_concept(attr.concept, f"{path}.concept", issues)
+        _check_metadata_attribute_occurs(attr, path, issues)
         _check_enumeration_format(attr, path, issues)
         _no_sentinels(attr.enumeration_format, f"{path}.enumeration_format", issues)
         for child in attr.children:

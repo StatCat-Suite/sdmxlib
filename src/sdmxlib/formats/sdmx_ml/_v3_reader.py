@@ -84,7 +84,7 @@ from sdmxlib.model.mapping import (
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.metadata_provision import MetadataProvisionAgreement
 from sdmxlib.model.metadataflow import Metadataflow
-from sdmxlib.model.metadatastructure import MetadataAttribute, MetadataStructure
+from sdmxlib.model.metadatastructure import MetadataAttribute, MetadataStructure, codelist_representation
 from sdmxlib.model.organisation import (
     Agency,
     AgencyScheme,
@@ -1069,7 +1069,7 @@ class V3Reader:
             uri=attr_el.get("uri"),
             links=self._helpers.read_links(attr_el),
             concept=concept_ref,
-            representation=representation,
+            representation=codelist_representation(representation),
             enumeration_format=enumeration_format,
             # XSD default for both attributes is 1.
             min_occurs=self._helpers.read_int(attr_el, "minOccurs", default=1),

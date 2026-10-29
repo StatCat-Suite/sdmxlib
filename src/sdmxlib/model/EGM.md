@@ -63,7 +63,12 @@ hierarchical roll-ups.
   (`datastructure.py`): the DSD and its components.
 - `Facet`, `DataType`, `SentinelValue`, `to_representation` and
   `enumeration_ref` (`representation.py`): representations. A representation
-  is a `Ref[Codelist | ValueList]`, a `Facet`, or `None`.
+  is a `Ref[Codelist | ValueList]`, a `Facet`, or `None`. A
+  `MetadataAttribute`'s is narrower, `Ref[Codelist] | Facet | None` (IM
+  §7.3.4.1): `to_codelist_representation` and `codelist_representation`
+  (`metadatastructure.py`, the readers' entry) refuse a `ValueList`, and a
+  metadata attribute's occurrences are checked as a DSD component's are
+  (GH-28).
 - `SdmxParseError`, `Refusal`, `ReadGap`, `ReadAssumption`,
   `ValidationIssue`, `ValidationError`, `SdmxWarning` and `ImRuleWarning`
   (`errors.py`), plus the `SdmxParseError` subclasses `SdmxConformanceError`
