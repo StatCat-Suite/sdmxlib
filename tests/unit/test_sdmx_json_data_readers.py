@@ -13,6 +13,7 @@ from __future__ import annotations
 import math
 from datetime import UTC, datetime
 
+import msgspec
 import polars as pl
 import pyarrow as pa
 import pytest
@@ -320,3 +321,98 @@ def test_a_positional_slot_is_accepted_in_every_wire_spelling(slot: bytes) -> No
     blob = _V2_BAD_ATTR_SLOT.replace(b'["not", "a", "position"]', slot)
     frame = read_v2(blob)[0]
     assert frame["OBS_STATUS"].to_list() == ["A"]
+
+
+# ── a message of several data sets (GH-264) ──────────────────────────────────
+
+
+def _structure(dim_id: str, *codes: str) -> dict[str, object]:
+    return {"dimensions": {"observation": [{"id": dim_id, "values": [{"id": c} for c in codes]}]}, "attributes": {}}
+
+
+def _data_set(value: float, **fields: object) -> dict[str, object]:
+    return {"observations": {"0": [value]}, **fields}
+
+
+def _v2(structures: list[dict[str, object]], *data_sets: dict[str, object]) -> bytes:
+    return msgspec.json.encode({"data": {"structures": structures, "dataSets": list(data_sets)}})
+
+
+def _v1(structure: dict[str, object], *data_sets: dict[str, object]) -> bytes:
+    return msgspec.json.encode({"structure": structure, "dataSets": list(data_sets)})
+
+
+def _flow_link(flow_id: str) -> list[dict[str, str]]:
+    return [{"rel": "dataflow", "urn": f"urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:{flow_id}(1.0)"}]
+
+
+def test_every_data_set_of_a_message_is_read() -> None:
+    """Each version used to read `dataSets[0]` and drop the rest unsaid."""
+    freq = _structure("FREQ", "A")
+    assert read_v2(_v2([freq], _data_set(1.0), _data_set(2.0)))[0]["OBS_VALUE"].to_list() == [1.0, 2.0]
+    assert read_v1(_v1(freq, _data_set(1.0), _data_set(2.0)))[0]["OBS_VALUE"].to_list() == [1.0, 2.0]
+
+
+def test_a_data_set_is_decoded_against_the_structure_it_names() -> None:
+    """Position 0 is `A` in the first structure and `Q` in the second, so
+    reading `structures[0]` for every data set decodes the wrong code."""
+    message = _v2([_structure("FREQ", "A"), _structure("FREQ", "Q")], _data_set(1.0, structure=1))
+    assert read_v2(message)[0]["FREQ"].to_list() == ["Q"]
+
+
+def test_data_sets_naming_different_structures_of_one_shape_read_as_one_frame() -> None:
+    message = _v2(
+        [_structure("FREQ", "A"), _structure("FREQ", "Q")],
+        _data_set(1.0, structure=0),
+        _data_set(2.0, structure=1),
+    )
+    assert read_v2(message)[0].rows() == [("A", 1.0), ("Q", 2.0)]
+
+
+@pytest.mark.parametrize("action", ["Information", "Append", "Replace"])
+def test_a_data_set_that_adds_or_replaces_is_read(action: str) -> None:
+    frame = read_v2(_v2([_structure("FREQ", "A")], _data_set(1.0, action=action)))[0]
+    assert frame["OBS_VALUE"].to_list() == [1.0]
+
+
+def test_a_delete_data_set_is_refused() -> None:
+    """A Delete data set's rows say what to remove, so reading them as
+    observations would report deleted data as data."""
+    freq = _structure("FREQ", "A")
+    with pytest.raises(SdmxParseError, match=r"dataSets\[1\] is a Delete data set"):
+        read_v2(_v2([freq], _data_set(1.0), _data_set(2.0, action="Delete")))
+    with pytest.raises(SdmxParseError, match=r"dataSets\[0\] is a Delete data set"):
+        read_v1(_v1(freq, _data_set(1.0, action="Delete")))
+
+
+def test_data_sets_of_different_columns_are_refused() -> None:
+    message = _v2(
+        [_structure("FREQ", "A"), _structure("REF_AREA", "CA")],
+        _data_set(1.0, structure=0),
+        _data_set(2.0, structure=1),
+    )
+    with pytest.raises(
+        SdmxParseError, match=r"dataSets\[1\] has columns \['REF_AREA'\] where dataSets\[0\] has \['FREQ'\]"
+    ):
+        read_v2(message)
+
+
+def test_data_sets_naming_different_dataflows_are_refused() -> None:
+    message = _v2(
+        [_structure("FREQ", "A")],
+        _data_set(1.0, links=_flow_link("ONE")),
+        _data_set(2.0, links=_flow_link("TWO")),
+    )
+    with pytest.raises(SdmxParseError, match="the data sets name 2 dataflows"):
+        read_v2(message)
+
+
+def test_one_dataflow_named_by_some_data_sets_is_the_messages() -> None:
+    message = _v2([_structure("FREQ", "A")], _data_set(1.0, links=_flow_link("ONE")), _data_set(2.0))
+    assert read_v2(message)[1] == "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:ONE(1.0)"
+
+
+@pytest.mark.parametrize("index", [1, -1])
+def test_a_structure_index_outside_the_structures_is_refused(index: int) -> None:
+    with pytest.raises(SdmxParseError, match=f"dataSets\\[0\\] names structure {index}, and data.structures holds 1"):
+        read_v2(_v2([_structure("FREQ", "A")], _data_set(1.0, structure=index)))

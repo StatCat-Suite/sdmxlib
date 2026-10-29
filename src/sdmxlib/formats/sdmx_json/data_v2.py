@@ -63,13 +63,11 @@ from sdmxlib.formats.sdmx_json._data_common import (
     StructureBlockJson,
     dataflow_annotations,
     dataflow_link,
-    dataflow_urn,
-    decode_observations,
     display_names,
     encode_batch,
     frequency_dimension_id,
+    read_data_sets,
     resolve_columns,
-    rows_to_lazyframe,
 )
 from sdmxlib.formats.sdmx_json._dto import ENCODER, _camel_rename, prepared_text
 from sdmxlib.model.dataflow import Dataflow
@@ -212,6 +210,9 @@ def write_sdmx_json_data(
 def read_observations(source: bytes | str | Path) -> tuple[pl.DataFrame, str | None]:
     """A data message's observations, and the URN of the dataflow it names.
 
+    Every data set is read; they must share columns and name at most one
+    dataflow, and none may be a ``Delete`` (`read_data_sets`).
+
     Args:
         source: The message's bytes, or a file path.
 
@@ -220,17 +221,22 @@ def read_observations(source: bytes | str | Path) -> tuple[pl.DataFrame, str | N
         ``rel="dataflow"`` link's URN, or `None` when the message has none.
 
     Raises:
-        SdmxParseError: If the document is not a recognisable data message of this version.
+        SdmxParseError: If the document is not a recognisable data message of this
+            version, or its data sets do not read as one frame.
     """
     payload = _load(source).data
     if payload is None or not payload.data_sets or not payload.structures:
         msg = "Source does not look like a SDMX-JSON 2.0 data message — missing data.dataSets / data.structures"
         raise SdmxParseError(msg)
-    dataset_block = payload.data_sets[0]
-    structure_block = payload.structures[0]
-
-    dim_ids, attr_ids, rows = decode_observations(structure_block, dataset_block)
-    return rows_to_lazyframe(dim_ids, attr_ids, rows).collect(), dataflow_urn(dataset_block, structure_block)
+    structures = payload.structures
+    for position, data_set in enumerate(payload.data_sets):
+        if not 0 <= data_set.structure < len(structures):
+            msg = (
+                f"dataSets[{position}] names structure {data_set.structure}, "
+                f"and data.structures holds {len(structures)}"
+            )
+            raise SdmxParseError(msg)
+    return read_data_sets([(data_set, structures[data_set.structure]) for data_set in payload.data_sets])
 
 
 class _DataPayloadJson(msgspec.Struct, rename=_camel_rename):
