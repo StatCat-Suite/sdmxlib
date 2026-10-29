@@ -45,9 +45,9 @@ is the registry's job (`scan_csv`). The package exports only
 
 ## Side Effects
 
-- The reader helpers read only the first 4096 characters, so a first data
-  row longer than that is truncated. They open files as UTF-8 and decode
-  bytes with `errors="replace"`.
+- The reader helpers read the header and the first data row as CSV records,
+  whole, however long (GH-303), and nothing after them. They open files as
+  UTF-8 and decode bytes with `errors="replace"`.
 - The writer consumes its batch iterator lazily.
 
 ## Verification
