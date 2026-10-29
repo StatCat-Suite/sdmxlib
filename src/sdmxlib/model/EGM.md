@@ -106,7 +106,7 @@ hierarchical roll-ups.
   §5.3.2.1, GH-27), and on a data constraint value that is no item of the
   codelist or value list its DSD enumerates the component with (§12.3.3.1;
   a `remove_prefix` value set, a codelist with extensions and a text format
-  are not compared, GH-29).
+  are not compared; text formats are GH-297).
 - `sort_key`, `compliance`, `unwritable`, `is_final`, `unreferenceable` and
   `late_binds` (`version.py`): version ordering, which SDMX grammar (2.1 or
   3.x) accepts a version, and which versions a late-bound reference takes.

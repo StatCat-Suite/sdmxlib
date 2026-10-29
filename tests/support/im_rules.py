@@ -109,7 +109,6 @@ def _sequence(rule: str) -> Warned:
 
 _DATA_SET = "a data set's conformance to its DSD is the data plane's: #459"
 _VTL = "the VTL schemes are not modelled: #467"
-_CROSS = "relates an artefact to one it references; nothing checks that across artefacts: #487"
 _USAGE = "`usage` is an `AttributeUsage`, whose only members are MANDATORY and OPTIONAL"
 
 RULES: tuple[Rule, ...] = (
@@ -167,7 +166,9 @@ RULES: tuple[Rule, ...] = (
         "A “partial” ItemScheme cannot be maintained independently in its partial form i.e., it cannot contain "
         "Items that are not present in the full ItemScheme and the content of any one Item (e.g., names and "
         "descriptions) cannot deviate from the content in the full ItemScheme.",
-        NotChecked(f"needs the full scheme, which a message rarely carries; {_CROSS}"),
+        NotChecked(
+            "a partial scheme shares its full scheme's URN, so only a registry holding both can check it: GH-298"
+        ),
     ),
     Rule(
         "IM-3.5.3.1-2",
@@ -618,7 +619,10 @@ RULES: tuple[Rule, ...] = (
         102,
         "the content is a string value that must conform to the Representation specified for the "
         "MetadataAttribute in the MetadataStructureDefinition.",
-        NotChecked(_CROSS),
+        NotChecked(
+            "an uncoded value against its attribute's text format: pysdmx and sdmx1 check none, and the XSD regex "
+            "dialect and SDMX time periods are undecided: GH-297"
+        ),
     ),
     # 8 — Hierarchy
     Rule(
