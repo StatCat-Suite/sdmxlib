@@ -130,8 +130,9 @@ def parse(
     Content inside an artefact that the model has no field for yet — SDMX-ML
     2.1's `RepresentationMapping` in a component map — is a different case: the
     artefact is built without it and the loss recorded in
-    `StructureMessage.lost`. The read succeeds unless ``lossless=True``.
-    SDMX-ML only, so far; the SDMX-JSON reader does not report losses yet.
+    `StructureMessage.lost`. The read succeeds unless ``lossless=True``. A
+    metadata message records what it dropped in `MetadataMessage.lost`: a
+    header it cannot build, and SDMX-JSON keys it has no field for.
 
     Args:
         data: Raw bytes — JSON or XML.
@@ -145,7 +146,8 @@ def parse(
         lossless: When True, any loss, or any value the reader had to supply
             for required content the document omitted, raises
             `LossyReadError`. When False (the default), they are recorded in
-            `StructureMessage.lost` and `StructureMessage.assumed`.
+            `StructureMessage.lost` and `StructureMessage.assumed`, or
+            `MetadataMessage.lost`.
             For SDMX-JSON they are found when `lost` is first read, and the
             message holds the document's bytes until then. True finds them
             during the read instead, so the message keeps nothing extra.
@@ -198,6 +200,8 @@ def parse(
         # raises has interned nothing (#435).
         if registry is not None:
             registry.add_all(msg.all_artefacts())
+    elif lossless and msg.lost:
+        raise LossyReadError(msg)
     return msg
 
 

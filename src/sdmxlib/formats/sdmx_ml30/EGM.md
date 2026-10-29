@@ -40,9 +40,8 @@ messages, which carry MetadataSets.
 - The reader takes an attribute value from `md:Value`, `com:Text` or
   `com:StructuredText`. The writer emits only `md:Value` or `com:Text`, so a
   `com:StructuredText` value is written back as `com:Text`.
-- `metadata.read` discards the header's `ReadGap`, because `MetadataMessage`
-  has no `lost` field. A header it cannot build reads as `None` with no loss
-  recorded.
+- `metadata.read` reads a header it cannot build as `None` and records its
+  `ReadGap` in `MetadataMessage.lost` (GH-288).
 
 ## Side Effects
 

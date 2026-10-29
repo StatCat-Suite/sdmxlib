@@ -45,6 +45,7 @@ from sdmxlib.model.urn import SdmxUrn
 
 from ._dto import _DEFAULT_LANG, ENCODER, Link, WireStruct, _camel_rename, emit_istr
 from ._header import MetaJson, from_metadata_meta, to_meta
+from ._losses import undeclared
 from ._structure_dto import read_links, read_uri, uri_links
 
 METADATA_SCHEMA_URL = "https://json.sdmx.org/2.1/sdmx-json-metadata-schema.json"
@@ -251,12 +252,25 @@ def read(data: bytes) -> MetadataMessage:
 
     The caller is expected to have determined this is a metadata message —
     use the top-level ``sdmxlib.parse`` to auto-discriminate by ``$schema``.
+    The header's loss, and each metadata set's keys no struct declares, are
+    recorded in `MetadataMessage.lost`.
     """
     doc = msgspec.json.decode(data, type=MetadataMessageJson)
     dtos = (doc.data or MetadataDataJson()).metadata_sets
-    return MetadataMessage(
-        metadata_sets=ArtefactList([_from_metadata_set(ms) for ms in dtos]), header=from_metadata_meta(doc.meta)
-    )
+    sets = [_from_metadata_set(ms) for ms in dtos]
+    header, header_lost = from_metadata_meta(doc.meta)
+    lost = [] if header_lost is None else [header_lost]
+    for built, raw, dto in zip(sets, _raw_metadata_sets(data), dtos, strict=False):
+        lost.extend(undeclared(str(built.urn), raw, dto))
+    return MetadataMessage(metadata_sets=ArtefactList(sets), header=header, lost=lost)
+
+
+def _raw_metadata_sets(data: bytes) -> list[object]:
+    """The document's ``data.metadataSets``, decoded untyped, for `undeclared` to walk beside the structs."""
+    raw = msgspec.json.decode(data, type=object)
+    body = raw.get("data") if isinstance(raw, dict) else None
+    sets = body.get("metadataSets") if isinstance(body, dict) else None
+    return sets if isinstance(sets, list) else []
 
 
 def write(msg: MetadataMessage, *, pretty_print: bool = False) -> bytes:

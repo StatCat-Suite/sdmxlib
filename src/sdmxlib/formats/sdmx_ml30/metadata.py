@@ -363,5 +363,5 @@ def read(data: bytes) -> MetadataMessage:
     """Parse SDMX-ML 3.0 ``<mes:GenericMetadata>`` bytes into a MetadataMessage."""
     root = etree.fromstring(data)
     sets = [_read_metadata_set(el) for el in root.findall(_m("MetadataSet"))]
-    header, _ = read_metadata_header(root, com=COM)
-    return MetadataMessage(metadata_sets=ArtefactList(sets), header=header)
+    header, lost = read_metadata_header(root, com=COM)
+    return MetadataMessage(metadata_sets=ArtefactList(sets), header=header, lost=() if lost is None else (lost,))

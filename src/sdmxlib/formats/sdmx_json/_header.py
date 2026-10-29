@@ -111,14 +111,11 @@ def from_meta(meta: MetaJson | None) -> tuple[Header | None, ReadGap | None]:
     return header, None
 
 
-def from_metadata_meta(meta: MetaJson | None) -> MetadataHeader | None:
-    """`from_meta` for a reference-metadata message, whose four more fields SDMX-JSON has no place for.
-
-    A `MetadataMessage` records no losses, so one that cannot be built is None.
-    """
-    header, _ = from_meta(meta)
+def from_metadata_meta(meta: MetaJson | None) -> tuple[MetadataHeader | None, ReadGap | None]:
+    """`from_meta` for a reference-metadata message, whose four more fields SDMX-JSON has no place for."""
+    header, lost = from_meta(meta)
     if header is None:
-        return None
+        return None, lost
     return MetadataHeader(
         id=header.id,
         test=header.test,
@@ -126,7 +123,7 @@ def from_metadata_meta(meta: MetaJson | None) -> MetadataHeader | None:
         sender=header.sender,
         receivers=header.receivers,
         name=header.name,
-    )
+    ), None
 
 
 def _lost(reason: str) -> ReadGap:

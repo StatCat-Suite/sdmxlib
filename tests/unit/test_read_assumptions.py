@@ -186,7 +186,9 @@ def test_lossless_parse_raises_on_an_assumption() -> None:
         sl.parse(_with_an_assumption(), lossless=True)
     assert [a.construct for a in caught.value.assumed] == ["str:Hierarchy/@hasFormalLevels"]
     assert caught.value.lost == ()
-    assert caught.value.message.hierarchies, "what was read comes with the error"
+    read = caught.value.message
+    assert isinstance(read, sl.StructureMessage)
+    assert read.hierarchies, "what was read comes with the error"
 
 
 # ── no value worth assuming: the artefact is refused ──────────────────────

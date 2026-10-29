@@ -253,8 +253,8 @@ class LossyReadError(SdmxParseError):
     """Raised by ``parse(..., lossless=True)`` when the message is not exactly the document.
 
     The document is valid, but the model either has nowhere to put some of it
-    (`StructureMessage.lost`) or had to supply a value the document omitted
-    (`StructureMessage.assumed`). By default both are recorded and the read
+    (`StructureMessage.lost`, `MetadataMessage.lost`) or had to supply a value
+    the document omitted (`StructureMessage.assumed`). By default both are recorded and the read
     succeeds. A caller that would rather stop than continue on something other
     than what the document said, a pipeline that round-trips documents, asks
     for this instead.
@@ -267,11 +267,11 @@ class LossyReadError(SdmxParseError):
 
     lost: tuple[ReadGap, ...]
     assumed: tuple[ReadAssumption, ...]
-    message: StructureMessage
+    message: StructureMessage | MetadataMessage
 
-    def __init__(self, message: StructureMessage) -> None:
+    def __init__(self, message: StructureMessage | MetadataMessage) -> None:
         self.lost = message.lost
-        self.assumed = message.assumed
+        self.assumed = message.assumed if isinstance(message, StructureMessage) else ()
         self.message = message
         found: list[object] = [*self.lost, *self.assumed]
         n = len(found)

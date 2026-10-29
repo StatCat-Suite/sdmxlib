@@ -395,11 +395,25 @@ class MetadataMessage:
     metadata_sets: ArtefactList[MetadataSet] = field(factory=ArtefactList, converter=_to_artefact_list)
     #: The message's header (#480), read through `header` and set as ``header=``.
     _header: MetadataHeader | None = None
+    #: Content the reader dropped, read through `lost`. Private and not
+    #: compared, for `StructureMessage._lost`'s reasons.
+    _lost: tuple[ReadGap, ...] = field(factory=tuple, converter=tuple, eq=False)
 
     @property
     def header(self) -> MetadataHeader | None:
         """Who sent the message, to whom, when and what about; None when it has none."""
         return self._header
+
+    @property
+    def lost(self) -> tuple[ReadGap, ...]:
+        """What the reader dropped, per artefact and construct.
+
+        A header the reader cannot build is read as none and recorded here;
+        so are an SDMX-JSON metadata set's keys the reader has no field for.
+        Empty for a message built in code. ``parse(..., lossless=True)``
+        raises on a non-empty one.
+        """
+        return self._lost
 
     def all_artefacts(self) -> list[MaintainableArtefact]:
         """Flat list of every artefact in the message."""

@@ -170,9 +170,11 @@ def test_lossless_parse_raises_naming_the_loss_with_what_was_read() -> None:
     with pytest.raises(sl.LossyReadError, match="1 loss reading") as caught:
         sl.parse(_with_a_loss(), lossless=True, registry=reg)
     assert [gap.construct for gap in caught.value.lost] == [_A_LOSS]
-    assert caught.value.message.codelists
+    read = caught.value.message
+    assert isinstance(read, sl.StructureMessage)
+    assert read.codelists
     assert isinstance(caught.value, sl.SdmxParseError), "one except covers every failed read"
-    assert reg.get(sl.artefact_urn(caught.value.message.codelists[0])) is None, "nothing interned"
+    assert reg.get(sl.artefact_urn(read.codelists[0])) is None, "nothing interned"
 
 
 # ── artefacts built from nothing ──────────────────────────────────────────
