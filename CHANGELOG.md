@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.78.0] - 2026-10-29
+
+### Breaking Changes
+
+- **model**: Enumerate a metadata attribute by a codelist only and check its occurrences (GH-28)
+- **model**: Check the IM's structure map rules (GH-26)
+
+### Bug Fixes
+
+- **query**: Fetch what a REST projection reads across a path (GH-271)
+- **storage**: Bind lang as a parameter in code_map and code_map_for_dsd (GH-262)
+- **formats**: Read every data set of an SDMX-JSON data message (GH-264)
+- **cli**: Report a malformed flow as a usage error (GH-265)
+- **model**: A URN replaced by another class leaves the old class's get_all (GH-263)
+- **bundle**: Fold_overlays keeps each partial's cut_from (GH-272)
+- **formats**: Record metadata-message read losses and honour lossless for them (GH-288)
+- **api**: Guard RestRegistry's pointer map and refusal record against concurrent reads (GH-286)
+- **sweep**: Set schema defaults and 2.1's alias form aside as derivable (GH-36)
+- **model**: Warn on a late-bound flow of an evolving DSD with no dimension constraint (GH-27)
+- **model**: Warn on a constraint value its component's codelist does not hold (GH-29)
+- **model**: Check a metadata set against its metadataflow and MSD as a registry adds it (GH-29)
+- **local**: Refuse SDMX-CSV data holding a delete row (GH-284)
+- **formats**: Write only SDMX-CSV 2.0's four actions (GH-284)
+- **formats**: Read an SDMX-CSV header of any width when finding its structure (GH-303)
+
+### Documentation
+
+- Add EGM contracts for the package tree and their drift report
+- Move design/archive under history/ for one history root (GH-268)
+- Bring the query-language design docs up to date (GH-267)
+- Bring the data-plane and registry design docs up to date (GH-267)
+- Bring the runtime, parsing and mutation design docs up to date (GH-267)
+- Bring the sharded catalog spec and plan up to date (GH-267)
+- Replace CLAUDE.md's Key files table with the EGM index (GH-269)
+
+### Miscellaneous
+
+- **model**: Point GH-29's unchecked rules at their own issues (GH-29)
+
+### Refactoring
+
+- **storage**: Finish every read's own DuckDB result and delete completed() (GH-75)
+
 ## [0.77.0] - 2026-10-28
 
 ### Breaking Changes
