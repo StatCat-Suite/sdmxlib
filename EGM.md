@@ -31,7 +31,7 @@ design documents are under `docs/design/`.
 - fuzz: [`./fuzz/EGM.md`](./fuzz/EGM.md) - the Atheris runner for the fuzz
   targets in `tests/fuzz/targets.py`, run by `.github/workflows/fuzz.yml`.
 
-`tests/`, `bench/`, `docs/`, `design/`, `history/` and `examples/` carry no
+`tests/`, `bench/`, `docs/`, `history/` and `examples/` carry no
 contract: `.egmignore` lists all but `tests/`, which EGM's own rules exclude.
 Each `bench/` tool has a `README.md`.
 

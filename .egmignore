@@ -5,9 +5,9 @@
 # Each benchmark tool documents itself in a README.md beside it.
 bench/
 
-# Prose and records, not code: the docs site, the design archive, the
-# exported GitLab tracker, and the runnable examples the docs cite.
+# Prose and records, not code: the docs site, the history (the exported
+# GitLab tracker and the design archive), and the runnable examples the docs
+# cite.
 docs/
-design/
 history/
 examples/
