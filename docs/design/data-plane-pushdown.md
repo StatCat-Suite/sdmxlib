@@ -1,13 +1,15 @@
 # Pushing an observation query to SDMX REST
 
-`docs/design/registry-and-catalog.md` §6 makes `obs()` on
-`RestRegistry` the first step, because it is the one that could still show the
-unification is wrong. This document is that step's design. When it was
+The registry design's landing plan
+([evidence/registry-landing.md](evidence/registry-landing.md) §6) made `obs()`
+on `RestRegistry` the first step, because it is the one that could still show
+the unification is wrong. This document is that step's design. When it was
 written none of it existed: `Request.path` was hardcoded `f"structure/{…}"`,
 `Capability` / `Push` / the closure were all structural, and nothing mapped a
 `Pred[ObsRow]` onto a key.
 
-> **Status: built**, with one exception. `RestRegistry.obs(flow)`
+> **Status: built**, except the streaming rule of §4 (§5 step 6).
+> `RestRegistry.obs(flow)`
 > returns an `ObsQuery` whose terminals fetch `/data` first and then run the
 > original query locally:
 >
@@ -19,28 +21,30 @@ written none of it existed: `Request.path` was hardcoded `f"structure/{…}"`,
 >
 > | piece | where |
 > | --- | --- |
-> | role-keyed shapes; `SDMX_REST_DATA_21`, `SDMX_REST_DATA_30` | `query/_pushdown.py` |
+> | role-keyed shapes; `SDMX_REST_DATA_21`, `SDMX_REST_DATA_30` (declarations the tests check; the request is built by `data_request_for`) | `query/_pushdown.py` |
 > | `DataRequest`, and the lowering `data_request_for` | `query/_rest.py` |
 > | `ComponentRole` (`KEY_DIMENSION`, `TIME_DIMENSION`, `MEASURE`, `ATTRIBUTE`) | `model/datastructure.py` |
 > | `obs()`, `_fetch_data_for` | `api/registry.py` (`RestRegistry`) |
-> | the fetch, through a file DuckDB reads | `DuckDBDataStore.ingest_csv` |
+> | the fetch: the response to a temporary file, loaded whole into the query store | `SdmxClient.stream_data_at`, `DuckDBDataStore.ingest_csv` |
 >
 > **§5 step 4, the refusal, is applied (#515).** The data capabilities declare
 > the bound (`bounding={DATA_ROOT: frozenset()}` — any pushed constraint
-> bounds the scan), and `is_bounded` refuses a plan that pushes nothing
-> (`tests/unit/test_data_bounding.py`). `RestRegistry` lowers a data plan with
-> `data_request_for` directly, so it states the same rule on the request it
-> built: a residual with nothing pushed — no key slot, period or component,
-> the `/data/…/all` fetch — raises `PushdownError` before the request
-> (`DataRequest.narrows`, `_refuse_unbounded_fetch`). Until #515 it fetched the
+> bounds the scan), and `is_bounded` returns `False` for a plan that pushes
+> nothing (`tests/unit/test_data_bounding.py`). `RestRegistry` does not call
+> `is_bounded`: it lowers a data plan with `data_request_for` directly and
+> states the same rule on the request it built. A residual with nothing
+> pushed — no key slot, period or component, the `/data/…/all` fetch — makes
+> `_fetch_data_for` call `_refuse_unbounded_fetch`, which raises
+> `PushdownError` before the request (`DataRequest.narrows`). Until #515 it fetched the
 > whole flow and filtered locally. An unfiltered query is not refused.
 
-Three questions decide it; the third has two defensible answers.
+Three questions decide it: what the wire can hold, what `Capability` has to
+grow, and what bounds a data fetch. §4 records how streaming over REST works.
 
 ## 1. What the wire can hold
 
 The structural request surface is six fields and no predicate slot — that is
-§1.1 of the registry design, and it is why structural queries fetch and then
+§1.1 of the [registry design](registry-and-catalog.md), and it is why structural queries fetch and then
 evaluate. **The data surface is different, and materially richer.**
 
 The path (`SdmxClient._data_url` in `api/client.py`, written for the
@@ -122,14 +126,23 @@ than as a conditional: 2.1 declares key dimensions and time; 3.0 adds
 attributes. `FmrRegistry` and a 2.1-only provider then differ in *data*, which
 is the design `Capability` already has.
 
+*As built,* the two capabilities state the rule and the tests check them
+(`tests/unit/test_data_capability.py`, `test_data_bounding.py`); no production
+code reads them. `data_request_for` (`query/_rest.py`) lowers a plan itself
+and branches on the API version: a non-key component goes to `c[…]` only when
+the version is 3.0 and the component is an attribute.
+
 ## 3. What bounds a data fetch
 
-Registry design §5.2 settled this as **structural with an explicit opt-out** —
+Registry design §5.2 ([evidence/registry-landing.md](evidence/registry-landing.md))
+settled this as **structural with an explicit opt-out** —
 refuse unless at least one dimension is constrained, `allow_unbounded=True` to
 override — and rejected `/availability` as the mechanism, because
 `build_component_availability` returns which values exist, not a row count.
 
-**Amended by `registry-and-catalog.md` §5.12: there is no bare-scan bound.**
+**Amended by registry design §5.12
+([evidence/registry-landing.md](evidence/registry-landing.md)): there is no
+bare-scan bound.**
 The structural plane deliberately allows an unfiltered scan, because the rule
 is about the **visibility** of cost rather than its magnitude, and
 `obs(flow).frame()` is the visible kind — it says what it asks for.
@@ -144,7 +157,8 @@ narrow one: a residual over an unbounded data scan. *(Applied by
 `RestRegistry.obs` since #515 — see the status note at the top.)* What protects a caller at
 scale is the terminal they choose — `stream()` over `frame()`, and an
 **unordered** stream, since a sort materialises the whole result before the
-first batch leaves.
+first batch leaves. Over REST that holds only for the read out of the query
+store, after the fetch has loaded the whole slice into it (§4).
 
 **`bounding` is per root, and an observation root's identity is the binding.**
 `root_key(push.plan.root)` keys the requirement, and `Observations` is built
@@ -153,67 +167,23 @@ it must be stable across two `Observations` over the same dataflow, or a
 capability lookup misses and `is_bounded` returns `False` for everything.
 *(As built, every observation root keys as one constant, `DATA_ROOT`.)*
 
-## 4. Streaming over REST: two readings
+## 4. Streaming over REST
 
-**The question is whether `.stream()` streams when the backend is REST.**
+A REST-backed observation query fetches first and then runs locally.
+`_fetch_data_for` writes the `/data` response to a temporary file with
+`SdmxClient.stream_data_at`, and `DuckDBDataStore.ingest_csv` loads the whole
+file into a table in the query store; the original query then runs there.
+`stream()` bounds memory only for the read out of that store. With the default
+store, an in-memory DuckDB, the whole slice is in RAM before the first batch;
+with a file-backed `store=` it is on disk, after a full download.
+`Query.stream`'s docstring scopes its memory figures this way, and `explain()`
+says whether a query fetches. There is no wire-level streaming path, for a
+fully pushed query or any other.
 
-Two readings, both defensible, and they produce different libraries.
-
-### A. Fetch, materialise, then stream from DuckDB
-
-The structural design, applied unchanged: issue the request, write rows into the
-query store, run the original query, stream the result out of DuckDB.
-
-*For:* one code path with the local case; every terminal works identically; the
-`WHERE` that could not be pushed runs in SQL, so semantics are the compiler's
-everywhere.
-*Against:* peak memory is the whole slice, not `chunk_rows`. The measured claim
-in `Query.stream`'s docstring — 5 MB at 4M rows — is a property of DuckDB
-streaming a local table. Over REST the fetch materialises first, so
-`stream(chunk_rows=…)` becomes a chunking of an already-resident result, and
-the docstring's promise is false for this backend.
-
-### B. Stream the wire response through the parser
-
-`httpx2`'s streaming response into the SDMX-CSV reader, yielding batches as
-bytes arrive — which `client.stream_data_to` already does for the file case.
-
-*For:* actually bounded, which is what a caller reaching for `stream()` wants,
-and what a downstream SDMX REST service's `StreamingResponse` needs to be more than decorative.
-*Against:* only correct when the query is **fully pushed**. A residual `WHERE`
-cannot be applied to a stream without an evaluator — which the design does not
-have and §1.1 of the registry doc refuses on purpose.
-
-### Recommendation: B when fully pushed, A otherwise, and say which
-
-> **Outcome: neither, and the measurement is why.** A is what shipped — the
-> fetch always materialises — but through a file DuckDB reads itself rather
-> than through a `bytes` object, which is what made it bounded. Measured on 2M
-> rows: reading the body into polars was 0.30 s / 660 MB, scanning to Arrow IPC
-> and back 0.27 s / 608 MB, and letting DuckDB read the file 0.21 s / 307 MB.
->
-> So B's premise — that bounded memory needed a second, wire-level path — was
-> false. The eager/lazy split inside `scan_csv` was the whole story, and B
-> would have bought a duplicate SDMX-CSV reader for nothing. What survives is
-> the disclosure half: `explain()` says when a query fetches, and `stream()`'s
-> measured figures are scoped to the configurations that hold them.
-
-The two are not alternatives; they are the two halves of one rule already
-implicit in the pushdown machinery:
-
-> **A fully-pushed data query streams from the wire. A query with a residual
-> materialises first, and then streams from the store.**
-
-That is `Program`'s existing distinction — `Push` with no residual versus
-`Push` plus local work — surfacing as a memory property instead of only as a
-correctness one. It needs `stream()` to state which it did, because the
-difference is 5 MB against the whole slice and a caller cannot see it from the
-call site. An `explain()` line is the cheapest honest answer.
-
-**What this rules out:** silently choosing A while documenting B's memory
-figures. `Query.stream`'s docstring currently makes a measured promise that
-would be false for a REST-backed stream, and the fix is not to delete the
-measurement but to scope it.
+Reading the response through a file costs about half the peak memory of
+reading its body into polars. The two readings weighed, and the 2M-row
+measurements, are in
+[evidence/data-plane-pushdown.md](evidence/data-plane-pushdown.md).
 
 ## 5. What to build, in order
 
@@ -242,9 +212,9 @@ measurement but to scope it.
    the binding synthesised by `DataflowBinding.from_dsd`. *Shipped as
    written (through `DuckDBDataStore.from_registry(self._query_store())`).*
 6. **The streaming rule** of §4, with `explain()` saying which path a query
-   took. *Superseded by §4's outcome: `explain()` says whether a query
-   fetches, and `Query.stream`'s docstring scopes its memory figures by
-   configuration.*
+   took. *Not built: every REST data query materialises first (§4).
+   `explain()` says whether a query fetches, and `Query.stream`'s docstring
+   scopes its memory figures by configuration.*
 
 ## 6. What would falsify the unification
 
@@ -259,7 +229,7 @@ Stated up front so it is recognisable if it happens. The design is wrong if:
   is unavailable — the key is by position, so a wrong order silently queries
   the wrong slice rather than erroring;
 * **`stream()` cannot be made bounded in the fully-pushed case**, which would
-  mean the two worked examples in the registry design (`StreamingResponse`, and
+  mean the two worked examples in the [registry design](registry-and-catalog.md) (`StreamingResponse`, and
   a tool that works against a bundle *and* a provider) are asking for something
   the transport cannot give.
 
@@ -272,4 +242,7 @@ because it is a semantics question and the other two are engineering.
 > where the key's positional order differs between REST generations and the
 > library had it both ways at once, parsing keys it could not itself emit. It
 > was version-dependence rather than impossibility, so the design held. The
-> third resolved with room to spare — see §4's outcome.
+> third was not tested, because the wire-level stream was not built: a REST
+> query loads its whole slice into the query store, and `stream()` is bounded
+> after that only with a file-backed `store=` (§4). The `StreamingResponse`
+> facade in the registry design reads a bundle, where the stream is bounded.

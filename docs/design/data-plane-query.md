@@ -28,79 +28,26 @@ after options A and B were tried and refuted rather than reasoned about.
 
 ## 1. The text API this replaced
 
-*(Written when it was. The API described here was removed in #329.)*
+`DataStore.query` took `where`, `columns` and `order_by` as SQL text. Of the
+downstream call sites that passed them, the one measured site built them from
+user input (an SDMX REST service's `c[DIM]=op:value` and `sort=` parameters),
+so the premise that callers compose them from constants was false. A second
+consumer, an LLM agent, reimplemented the builder in its own code. Both had to
+bind values and resolve component ids themselves. #329 removed the text API;
+`reg.sql(text, **params)` is the escape hatch, and `obs()` is the ordinary
+path. The measurement and both bypass shapes are in
+[evidence/data-plane-query.md](evidence/data-plane-query.md) §1.
 
-`DataStore.query` took `where: list[str]`, `columns: list[str]` and
-`order_by: str`, and spliced all three into a statement as text.
-`ComponentFilter` takes *values* but its `to_where_clauses` returns
-*fragments*. #257 looked at this
-and chose to document rather than validate, on a stated premise: consumers are
-first-party and compose these from constants in application code.
+## 2. Why the text cannot be fenced
 
-#297 made measuring that premise a prerequisite, and the downstream consumers
-were available to read, so it was directly answerable.
-
-| | |
-| --- | --- |
-| call sites passing `where` / `order_by` / `columns` **to the library** | **1** |
-| of those, built from user input | **1** |
-
-The site is a downstream SDMX REST service's HTTP data route: `where` comes
-from `c[DIM]=op:value` query parameters, `order_by` from `sort=`. The premise
-was false.
-
-**That consumer had to build option C itself**, in application code: a fixed operator
-table, component ids resolved through `binding.dimension_column_map` with a 400
-on unknown, values bound as `?`, LIKE metacharacters escaped. It then
-*bypasses* the library entirely for anything needing projection or
-aggregation. Milestone %15's rule — every bypass is a specification — lands
-here.
-
-### A second consumer with its own query builder
-
-That measurement counts calls *into* `DataStore`. A second consumer, an LLM
-agent built on sdmxlib, makes none: it carries its own query builder with the
-same `where` / `columns` / `order_by` / `limit` parameters, rather than adopt
-the library's.
-
-So there are two bypass shapes, not one:
-
-* **use the API and work around it** — pass text in, and hand-write SQL for
-  everything the text cannot reach;
-* **replace the API** — reimplement the builder rather than adopt it.
-
-The second is the more damning, because nothing in the library's own surface
-records that it happened. A design that only fences or types `DataStore.query`
-would leave that consumer exactly where it is.
-
-**A consumer that builds queries from user-supplied filter values needs
-parameterised predicates.** An agent turning natural language into these calls
-makes every value user input by construction, and with text as the only
-interface on offer, its defence has to be an allow-list it writes itself.
-
-## 2. The fences built and removed for option B
-
-Both stronger fences were built, run against the suite, and removed. They were
-kept as tests in `tests/unit/test_data_plane_fence.py`, asserting the
-compositions that must keep working, until #329 removed the text API they
-guarded and the file with it (a35ab7b).
-
-**A table allow-list** — a fragment may name only the binding's own tables —
-breaks relation-valued filters, which read `sdmx.code` on purpose, and
-`Session.value_set`, whose whole job is splicing a caller's own table in by
-name.
-
-**A column allow-list**, which is what #297 proposed, rejects
-`columns=["a AS x"], order_by="x"`. A projected alias is a legitimate sort key
-and is a column of no table.
-
-Both failures say one thing: **composition across tables and expressions is the
-feature**, so no property of the text separates use from abuse. What shipped is
-the only check that survives — the assembled statement must be one statement,
-judged by DuckDB's own parser — and it closes statement injection and nothing
-else.
-
-That is the argument for C, which accepts no text at all.
+A table allow-list breaks relation-valued filters and `Session.value_set`; a
+column allow-list rejects a projected alias used as a sort key. Composition
+across tables and expressions is what callers use the text for, so no check on
+the text separates use from abuse. The one check that survives, a single
+statement judged by DuckDB's own parser, guards `reg.sql` and closes statement
+injection only. The observation root accepts no text. Both fences
+were built, run against the suite and removed; the record is in
+[evidence/data-plane-query.md](evidence/data-plane-query.md) §2.
 
 ## 3. What the vocabulary has to cover
 
@@ -124,11 +71,11 @@ The last column is what the structural language had when this was written;
 | GROUP BY | A B | hand-written | yes — `group_by` |
 | `sum` / `avg` / `min` / `max` | B | `f"{agg_func}(OBS_VALUE)"` | **no** — only `count`, `n_unique`, `list`. *As built: `sum`, `mean`, `min`, `max` (!337).* |
 | distinct count | B | `COUNT(DISTINCT REF_AREA)` | yes — `n_unique` |
-| `any_value(x ORDER BY y)` | A B | hand-written | no — ordered aggregate |
+| `any_value(x ORDER BY y)` | A B | hand-written | no — ordered aggregate. *As built: an ordered `list` — `c("x").sort_by(c("y")).list()`; no single-value `first` / `last` aggregate.* |
 | per-group top-N | A B | `ROW_NUMBER() OVER (PARTITION BY … ORDER BY …)` then `<= ?` | **yes** — `qualify` + `.over()`; the bound is `.le(n)` |
 | sort with `NULLS LAST` + tiebreak | B | `ORDER BY v DESC NULLS LAST, REF_AREA ASC` | yes — window ORDER BY emits NULLS LAST |
 | multi-column sort with direction | A | a sort-string parser | yes — `order_by` |
-| offset / limit | A B | hand-written | yes — `limit`, `offset`, `page` |
+| offset / limit | A B | hand-written | yes — `limit`, `offset`, `page`. *As built: `limit` and `offset`; the observation root refuses `page()` with `TypeError` (§6.2).* |
 | **derived value across a pivot** | B | `MAX(CASE WHEN d = ? …) AS a, … , a/b AS derived` | no — see §3.1. *Still no.* |
 | **join to a caller's relation** | B | `JOIN rollup r ON o.REF_AREA = r.REF_AREA` | no — see §3.2. *Still no.* |
 | `printf(DECIMALS, value)` | A | hand-written | no — presentation |
@@ -328,30 +275,12 @@ the series-attributes sidecar is a `LEFT JOIN … USING (…)` whose keys
 the root carries the pre-rendered join. The first is cleaner and is the only
 place the two planners would need to agree.
 
-> **And once it did, it was emitted unconditionally — #388.** A hop join is
-> planned from the paths a predicate names, so it exists only where it is
-> needed. A root join has no path, so nothing decided whether to emit it. On
-> the 2021 Census Profile bundle that made `count()` over 1.14 B observations **2598 ms against
-> 1 ms**, for a join the statement never selected from; narrowing the
-> projection did not help, because the join was not a projection decision.
->
-> DuckDB keeps it correctly: a `LEFT JOIN` is row-preserving, and so elidable,
-> only if the right side is unique on the join key, and a DuckLake table
-> declares no such constraint. We know what it does not, so `_Scope` prunes
-> the join when nothing in the statement reads a column on it. **Recorded, not
-> derived** — `_Scope._use` is the only writer of the used-table set and the
-> only way an alias reaches the SQL, so the set is complete by construction,
-> where a static pass over the clauses would have to enumerate them and could
-> fall behind a new one. The cost is an ordering obligation: the `FROM` is
-> rendered last, and a reference compiled after it raises rather than naming
-> an alias nothing joined.
->
-> **Declaring the key instead does not work.** Declaring
-> the key so DuckDB elides the join itself would also help queries that *do*
-> read a sidecar column and then aggregate. It does not: a `UNIQUE INDEX` on
-> the sidecar's key left the hash join in the plan and 2.6 s on the clock, and
-> a `PRIMARY KEY` is not even expressible — `ALT_GEO_CODE` is nullable on the
-> real bundle. Whatever closes the referenced case, it is not a constraint.
+`Join` has the USING form (!336), and the sidecar is emitted only when the
+statement reads a column on it: `_Scope._use` records every table a reference
+uses, and the `FROM` is rendered last, from that set (#388). A `LEFT JOIN` to a
+DuckLake table is not elided by DuckDB, which sees no unique key, and declaring
+one did not change the plan. The Census Profile measurements are in
+[evidence/data-plane-query.md](evidence/data-plane-query.md) §3.
 
 **A root's identity was read from its class**, which this survey missed and
 sizing step 4 found: sixteen sites read `type(root).__table__` and friends.
@@ -392,12 +321,12 @@ reason it works structurally rather than by special case.
 ## 6.2 `ids()` and `urns()` are absent, not raising
 
 > **Not built.** There is no `KeyedQuery`; `ObsQuery` is a plain
-> `Query[ObsRow]` and still carries both terminals. Today `urns()` (and
-> `collect()`, `page()`) raise `TypeError` — observations have no URN — and
-> `ids()` is not refused at all: it compiles against a `resource_id` column
-> the table does not have and fails in DuckDB with a binder error. That is the
-> lie this section argues against, and `observations.py` says so in its own
-> docstring.
+> `Query[ObsRow]` and still carries both terminals. `ids()`, `urns()`,
+> `page()` and `collect()` raise `TypeError` before any SQL is built, saying an
+> observation has no id and naming `.frame()`, `.select(obs.col(...))` and
+> `.stream()` (`ObsQuery._ROWS_NOT_ARTEFACTS`, #511). The terminals type-check
+> and always raise, which is the affordance this section argues should be
+> absent.
 
 An observation has no single id column, so those two terminals have nothing to
 return. The first instinct was to raise, following `Query`'s existing
@@ -448,8 +377,8 @@ differ in what they offer — `Str` has `contains`, `Num` has arithmetic.
 
 The first thought was `SchemaInspector`: it can `DESCRIBE` the table and knows
 the physical types. **The information model is the better source, and it is
-already modelled.** A component's `representation` is either a `Ref[Codelist]`
-— enumerated — or a `Facet` whose `type` is one of `DataType`'s 39 members,
+already modelled.** A component's `representation` is either a
+`Ref[Codelist | ValueList]` — enumerated — or a `Facet` whose `type` is one of `DataType`'s 39 members,
 which is precisely the "how is this encoded" question. Measured, on a DSD built
 three ways:
 
@@ -505,9 +434,11 @@ component id is itself a variable.
 1. ~~**Make the root's qualification a property of the plan**~~ — !335.
 2. ~~**A `USING` form for `Join`**~~ — !336.
 3. ~~**Numeric aggregates**~~ — `sum`, `mean`, `min`, `max`, !337. `mean`
-   rather than `avg`: the set is named for polars throughout. #327 keeps the
-   ordered aggregate and the question of whether the compiler should know
-   column types.
+   rather than `avg`: the set is named for polars throughout. #327 is closed.
+   The ordered aggregate is `Col.sort_by(key)` before `list()` or `unique()`,
+   rendered as `list(x ORDER BY key)`; column kinds reach the query as the
+   typed accessors `obs.text` / `obs.num` and as `obs.col`'s refusal of a
+   literal of the wrong kind (#511).
    ~~3.5~~ **Read a root's identity from the instance** — !338, found while
    sizing step 4.
 4. ~~**A binding-backed root**~~ — landed: `Observations` and `ObsQuery` in

@@ -16,25 +16,20 @@ top-N via `QUALIFY row_number() OVER (…)`, sorting, paging — is already
 compiled here. A second vocabulary would be a second set of null rules and a
 second set of bugs.
 
-## What this slice does and does not do
+## What this module covers
 
-Does: a root with the binding's table, its dimensions as the key, and
+A root with the binding's table, its dimensions as the key, and
 `obs["GEO"]` resolving a component id to its physical column — including one
 that lives on a series-attributes sidecar, which #332 added as a root join
 (`Sidecar` below).
 
-Does not, deliberately, and each has its own slice in the design doc:
+Typed columns: `obs["GEO"]` (or `obs.col("GEO")`) is the permissive `Col`;
+`obs.text(...)` and `obs.num(...)` give a typed column, checked against the
+DSD's representation (§6.3).
 
-* **Typed columns.** `obs["GEO"]` returns the permissive `Col`, on which
-  comparisons, ordering and every aggregate work. The DSD knows whether a
-  component is enumerated or carries a `DataType` facet (§6.3), and
-  `obs.num(...)` / `obs.text(...)` will use it — but nothing here needs to be
-  unpicked when they land.
-* **`ids()` / `urns()`.** They have nothing to return for an observation and
-  should be *absent* rather than raising (§6.2), which needs the
-  `Query`/`KeyedQuery` split. Until then they are present and will fail at the
-  database, which is the one lie this slice tells and the reason the split is
-  next.
+The artefact terminals have nothing to return for an observation:
+`ids()`, `urns()`, `page()` and the terminals that build artefacts raise
+`TypeError` before any SQL runs (§6.2, #511).
 """
 
 from collections.abc import Callable, Iterator, Mapping

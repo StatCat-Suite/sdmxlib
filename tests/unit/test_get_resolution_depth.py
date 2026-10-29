@@ -1,4 +1,4 @@
-"""What `resolve=` means on the wire (registry-and-catalog.md §6 step 4).
+"""What `resolve=` means on the wire (docs/design/evidence/registry-landing.md §6 step 4).
 
 `fetch()`, `resolve()`, `resolve(type)` and the `GetQuery` that carried them
 were four ways to say one thing: how far to follow references. They are now one
