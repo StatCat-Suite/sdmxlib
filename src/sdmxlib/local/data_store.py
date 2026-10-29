@@ -493,10 +493,6 @@ class DuckDBDataStore(SessionFactory):
         binding's column maps, and an unknown one raises with the valid ones
         listed — the check a downstream SDMX REST service hand-writes as a 400.
 
-        `where=` / `columns=` / `order_by=` on `query` remain, as the escape
-        hatch for what this cannot express (value formatting, PIVOT). They are
-        SQL text; this is not.
-
         Args:
             binding: The dataflow's binding.
             dsd: The dataflow's structure, for labelling. A store cannot
@@ -508,8 +504,6 @@ class DuckDBDataStore(SessionFactory):
             A `Query` over its observations, on this store's read cursor.
 
         Raises:
-            ValueError: If the binding has a series-attributes sidecar, which
-                this root does not join yet.
             KeyError: If the binding's `database_role` names a catalog this
                 store has not attached — see `_require_attached`.
         """
