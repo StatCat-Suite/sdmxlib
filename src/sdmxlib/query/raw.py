@@ -36,7 +36,7 @@ import attrs
 import duckdb
 import polars as pl
 
-from sdmxlib.session import completed, frame_of
+from sdmxlib.session import frame_of
 
 #: A `$name` placeholder. Matched only outside strings, comments and
 #: identifiers — see `_rewrite`.
@@ -283,7 +283,7 @@ class RawSql:
 
     def collect(self) -> pl.DataFrame:
         """Execute and return a `polars.DataFrame`. The only executing call."""
-        return frame_of(completed(self._conn).sql(self.sql, params=list(self.params)))
+        return frame_of(self._conn.sql(self.sql, params=list(self.params)))
 
     def explain(self) -> str:
         """The statement and its binds. Runs nothing."""

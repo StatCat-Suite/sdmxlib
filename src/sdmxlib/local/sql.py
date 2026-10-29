@@ -51,6 +51,7 @@ import threading
 import duckdb
 from attrs import frozen
 
+from sdmxlib._duckdb import first
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.session import cursor_for
 
@@ -196,10 +197,10 @@ class SchemaInspector:
                 return cached
             tuple_sql = ", ".join(keys)
             not_null = " AND ".join(f"{k} IS NOT NULL" for k in keys)
-            row = (
-                cursor_for(self._conn)
-                .execute(f"SELECT count(*), count(DISTINCT ({tuple_sql})) FROM {table} WHERE {not_null}")
-                .fetchone()
+            row = first(
+                cursor_for(self._conn).execute(
+                    f"SELECT count(*), count(DISTINCT ({tuple_sql})) FROM {table} WHERE {not_null}"
+                )
             )
             counts = (int(row[0]), int(row[1])) if row else (0, 0)
             self._key_counts_cache[cache_key] = counts

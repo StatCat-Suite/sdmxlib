@@ -28,6 +28,7 @@ from pathlib import Path
 
 import duckdb
 
+from sdmxlib._duckdb import first
 from sdmxlib.storage.schema import create_schema
 
 #: Tables whose keys a published store leaves out.
@@ -48,9 +49,9 @@ def _definitions() -> tuple[dict[str, str], dict[str, str], dict[str, tuple[str,
     full: dict[str, str] = {}
     keyless: dict[str, str] = {}
     for table in TRIMMED_TABLES:
-        (sql,) = conn.execute(
-            "SELECT sql FROM duckdb_tables() WHERE schema_name = 'sdmx' AND table_name = ?", [table]
-        ).fetchone() or ("",)
+        (sql,) = first(
+            conn.execute("SELECT sql FROM duckdb_tables() WHERE schema_name = 'sdmx' AND table_name = ?", [table])
+        ) or ("",)
         full[table] = str(sql)
         columns = conn.execute(
             """
@@ -113,9 +114,9 @@ def compact_for_publication(meta: Path) -> None:
         conn.execute(f"ATTACH '{meta}' AS src (READ_ONLY)")
         # Written at the storage version the store was written at, which a
         # producer may have chosen so that older readers open the bundle.
-        (tag,) = conn.execute(
-            "SELECT tags['storage_version'] FROM duckdb_databases() WHERE database_name = 'src'"
-        ).fetchone() or (None,)
+        (tag,) = first(
+            conn.execute("SELECT tags['storage_version'] FROM duckdb_databases() WHERE database_name = 'src'")
+        ) or (None,)
         storage = f" (STORAGE_VERSION '{str(tag).rstrip('+')}')" if tag else ""
         conn.execute(f"ATTACH '{mid}' AS mid{storage}")
         conn.execute("COPY FROM DATABASE src TO mid")
@@ -140,20 +141,24 @@ def restore(conn: duckdb.DuckDBPyConnection) -> None:
     """
     full = _definitions()[0]
     for table in TRIMMED_TABLES:
-        (keyed,) = conn.execute(
-            """
+        (keyed,) = first(
+            conn.execute(
+                """
             SELECT count(*) > 0 FROM duckdb_constraints()
             WHERE database_name = current_database() AND schema_name = 'sdmx'
               AND table_name = ? AND constraint_type = 'PRIMARY KEY'
             """,
-            [table],
-        ).fetchone() or (False,)
+                [table],
+            )
+        ) or (False,)
         if not keyed:
             _rebuild(conn, table, full[table])
     for name in TRIMMED_INDEXES:
-        (present,) = conn.execute(
-            "SELECT count(*) > 0 FROM duckdb_indexes() WHERE database_name = current_database() AND index_name = ?",
-            [name],
-        ).fetchone() or (False,)
+        (present,) = first(
+            conn.execute(
+                "SELECT count(*) > 0 FROM duckdb_indexes() WHERE database_name = current_database() AND index_name = ?",
+                [name],
+            )
+        ) or (False,)
         if not present:
             conn.execute(_definitions()[3][name])

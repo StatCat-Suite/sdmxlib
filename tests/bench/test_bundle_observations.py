@@ -53,7 +53,7 @@ import pytest
 
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.query._compile import CompiledQuery
-from sdmxlib.session import completed, cursor_for
+from sdmxlib.session import cursor_for
 from tests.bench import _bundle
 
 pytestmark = pytest.mark.bundle
@@ -178,7 +178,7 @@ def test_the_key_order_is_what_a_large_frame_pays_for(partitioned, observations,
     handle = cursor_for(data_plane_registry.connection)
 
     def run(compiled: CompiledQuery) -> Callable[[], object]:
-        return lambda: completed(handle).sql(compiled.sql, params=list(compiled.params)).to_arrow_table()
+        return lambda: handle.sql(compiled.sql, params=list(compiled.params)).to_arrow_table()
 
     ordered_s = _best(run(partitioned.select(*columns).to_sql()))
     unordered_s = _best(run(partitioned.order_by(None).select(*columns).to_sql()))

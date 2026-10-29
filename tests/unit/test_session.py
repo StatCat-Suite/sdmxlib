@@ -33,7 +33,6 @@ including closed ones. 23 tests failed with "Connection already closed".
 
 import ast
 import threading
-from collections import Counter
 from collections.abc import Callable
 from pathlib import Path
 
@@ -41,6 +40,7 @@ import duckdb
 import pytest
 
 import sdmxlib
+from sdmxlib._duckdb import first
 from sdmxlib.local import LocalRegistry
 from sdmxlib.model.codelist import Code, Codelist
 from sdmxlib.query.accessors import q
@@ -337,57 +337,56 @@ def test_open_sessions_does_not_count_another_store(reg) -> None:
             assert reg.open_sessions == 1
 
 
-# ── An unfinished result does not refuse the next relation (DuckDB 2.0) ────
+# ── Every read finishes its own result (DuckDB 2.0, GH-75) ────────────────
 
 
-def test_a_relation_runs_after_a_fetchone_left_its_result_open(reg) -> None:
-    """The pair that broke: `key_counts` ends in `fetchone()`, which never
-    finishes a result, and `Select.collect` then ran `sql()` on the same
-    thread's handle — refused with `ResourceInUseException` by DuckDB 2.0."""
-    cursor_for(reg.connection).execute("SELECT count(*) FROM sdmx.artefact").fetchone()
+def test_a_relation_runs_after_a_single_row_read(reg) -> None:
+    """The pair that broke: `key_counts` read one row, which `fetchone()` never
+    finishes, and `Select.collect` then ran `sql()` on the same thread's
+    handle. `first` finishes the result it reads."""
+    assert first(cursor_for(reg.connection).execute("SELECT count(*) FROM sdmx.artefact")) is not None
     assert reg.query(q.dataflow).select(q.dataflow.id).collect().height == 0
 
 
-#: Calls named `sql`, `query`, `register` or `unregister` in `src/` whose
-#: receiver is not a DuckDB handle, so `completed` has nothing to finish.
-_NOT_A_HANDLE = Counter(
-    {
-        ("api/registry.py", "self._query_store()", "query"): 1,  # the registry's path language
-        ("local/registry.py", "self", "query"): 3,  # likewise
-        ("formats/sdmx_json/_data_common.py", "pool", "register"): 1,  # the annotation pool
-        ("formats/sdmx_json/_data_common.py", "self._annotations", "register"): 2,  # likewise
-    }
-)
+def test_a_stranded_result_refuses_the_next_relation_call(reg) -> None:
+    """Nothing abandons a pending result any more: DuckDB 2.0 refuses the next
+    relation call on that handle, so a read that strands one fails where it
+    is next used, rather than losing a result still being read."""
+    cursor_for(reg.connection).execute("SELECT count(*) FROM sdmx.artefact").fetchone()
+    with pytest.raises(duckdb.Error, match="unfinished result"):
+        reg.query(q.dataflow).select(q.dataflow.id).collect()
+    cursor_for(reg.connection).complete()
 
 
-def test_every_relation_call_on_a_handle_goes_through_completed() -> None:
-    """A static inventory, because the failure is non-local: the `fetchone()`
-    that strands a result and the `sql()` it breaks live in unrelated modules,
-    and only the order calls arrive on one thread decides whether it shows.
+#: The DB-API reads that leave an `execute()` result unfinished, measured on
+#: DuckDB 2.0: `fetchall()`, `to_arrow_table()`, `to_arrow_reader()` and a
+#: write finish theirs.
+_STRANDING = frozenset({"fetchone", "fetchmany"})
 
-    Exact on both sides: a new unguarded call fails it, and so does an exempt
-    one that has gone, so the exemptions cannot outlive their reasons.
-    """
+
+def _stranding_reads(source: str) -> int:
+    """How many `.fetchone()` / `.fetchmany()` calls `source` makes."""
+    return sum(
+        isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in _STRANDING
+        for node in ast.walk(ast.parse(source))
+    )
+
+
+def test_no_read_in_src_strands_its_result() -> None:
+    """A static inventory, because the failure is non-local: the read that
+    strands a result and the relation call it breaks live in unrelated
+    modules, and only the order calls arrive on one thread decides whether it
+    shows. Exact: `_duckdb.first` holds the one `fetchone()` in `src/`."""
     root = Path(sdmxlib.__file__).parent
-    unguarded: Counter[tuple[str, str, str]] = Counter()
-    guarded = 0
-    for path in sorted(root.rglob("*.py")):
-        for node in ast.walk(ast.parse(path.read_text())):
-            if not (
-                isinstance(node, ast.Call)
-                and isinstance(node.func, ast.Attribute)
-                and node.func.attr in {"sql", "query", "register", "unregister"}
-            ):
-                continue
-            receiver = node.func.value
-            if (
-                isinstance(receiver, ast.Call)
-                and isinstance(receiver.func, ast.Name)
-                and receiver.func.id == "completed"
-            ):
-                guarded += 1
-                continue
-            unguarded[path.relative_to(root).as_posix(), ast.unparse(receiver), node.func.attr] += 1
-    assert unguarded == _NOT_A_HANDLE
-    # 18: the synthetic generator's observation SELECT joined in GH-69.
-    assert guarded == 18, "the guarded sites moved — recount, and check each still names a handle"
+    found = {
+        path.relative_to(root).as_posix(): n
+        for path in sorted(root.rglob("*.py"))
+        if (n := _stranding_reads(path.read_text()))
+    }
+    assert found == {"_duckdb.py": 1}, "read one row through `sdmxlib._duckdb.first`, which finishes the result"
+
+
+def test_the_inventory_sees_a_stranding_read() -> None:
+    """The sabotage test: the inventory starts at one, so show it counts."""
+    assert _stranding_reads("row = conn.execute('SELECT 1').fetchone()\nrows = cur.fetchmany(2)\n") == 2
+    assert _stranding_reads("rows = conn.execute('SELECT 1').fetchall()\n") == 0

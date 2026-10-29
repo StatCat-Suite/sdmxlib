@@ -16,7 +16,7 @@ import attrs
 import duckdb
 import polars as pl
 
-from sdmxlib.session import completed, cursor_for, frame_of
+from sdmxlib.session import cursor_for, frame_of
 from sdmxlib.sql import SqlRelation
 
 
@@ -105,7 +105,7 @@ class AncestorMap:
     def collect(self) -> pl.DataFrame:
         """Execute and return the mapping as a Polars frame."""
         sql, params = self.to_sql()
-        return frame_of(completed(cursor_for(self._conn)).sql(sql, params=params))
+        return frame_of(cursor_for(self._conn).sql(sql, params=params))
 
     def to_dict(self) -> dict[str, str]:
         """Execute and return ``{path: rollup_path}``.

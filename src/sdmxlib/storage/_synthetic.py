@@ -7,6 +7,7 @@ identifier a `DataflowBinding` validated, never caller text.
 
 import duckdb
 
+from sdmxlib._duckdb import first
 from sdmxlib.model.binding import DataflowBinding
 
 
@@ -42,5 +43,5 @@ def observations_from(template: str, *, multiplier: int, offset: int, space: int
 def distinct_periods(conn: duckdb.DuckDBPyConnection, binding: DataflowBinding, column: str) -> int:
     """About how many distinct values `column` holds in the binding's table (HyperLogLog)."""
     location = f"{binding.database_role}.{binding.table_location}"
-    row = conn.execute(f'SELECT approx_count_distinct("{column}") FROM {location}').fetchone()
+    row = first(conn.execute(f'SELECT approx_count_distinct("{column}") FROM {location}'))
     return int(row[0]) if row is not None else 0

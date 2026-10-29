@@ -16,6 +16,8 @@ Example:
 
 import duckdb
 
+from sdmxlib._duckdb import first
+
 #: 2.18 adds the `hierarchy_applicability` view (#372) — the scoped-beats-
 #: unscoped resolution rule, stated once in the DDL so the Python resolver,
 #: the path language and a downstream consumer all read the same answer.
@@ -1545,7 +1547,7 @@ def meta_value(conn: duckdb.DuckDBPyConnection, key: str) -> str | None:
     which `LocalRegistry.build` writes into a publication's store.
     """
     try:
-        row = conn.execute("SELECT value FROM sdmx._meta WHERE key = ?", [key]).fetchone()
+        row = first(conn.execute("SELECT value FROM sdmx._meta WHERE key = ?", [key]))
     except duckdb.CatalogException:
         return None
     return row[0] if row else None
@@ -1592,11 +1594,11 @@ def check_scan_integrity(conn: duckdb.DuckDBPyConnection) -> None:
     Raises:
         ScanIntegrityError: if the sentinel scan disagrees with the row count.
     """
-    total_row = conn.execute("SELECT count(*) FROM artefact").fetchone()
+    total_row = first(conn.execute("SELECT count(*) FROM artefact"))
     total = int(total_row[0]) if total_row else 0
     if not total:
         return
-    probed_row = conn.execute(_INTEGRITY_PROBE).fetchone()
+    probed_row = first(conn.execute(_INTEGRITY_PROBE))
     probed = int(probed_row[0]) if probed_row else 0
     if probed == total:
         return
@@ -1645,7 +1647,7 @@ def sdmx_catalog(conn: duckdb.DuckDBPyConnection) -> str:
     shared `BundleEngine` reads its own ``<prefix>__meta`` catalog, which its
     handle selected with `use_sdmx` (GH-133).
     """
-    (catalog,) = conn.execute("SELECT current_database()").fetchone() or ("memory",)
+    (catalog,) = first(conn.execute("SELECT current_database()")) or ("memory",)
     return str(catalog)
 
 
@@ -1670,7 +1672,7 @@ def sdmx_cursor(conn: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyConnection:
 
 def connection_is_read_only(conn: duckdb.DuckDBPyConnection) -> bool:
     """Whether this connection's current database was attached read-only."""
-    row = conn.execute("SELECT readonly FROM duckdb_databases() WHERE database_name = current_database()").fetchone()
+    row = first(conn.execute("SELECT readonly FROM duckdb_databases() WHERE database_name = current_database()"))
     return bool(row[0]) if row else False
 
 
@@ -1687,7 +1689,7 @@ def holds_rows(conn: duckdb.DuckDBPyConnection) -> bool:
         WHERE database_name = current_database() AND schema_name = 'sdmx' AND table_name <> '_meta'
         """
     ).fetchall()
-    return any(conn.execute(f'SELECT EXISTS (SELECT 1 FROM sdmx."{name}")').fetchone() == (True,) for (name,) in tables)
+    return any(first(conn.execute(f'SELECT EXISTS (SELECT 1 FROM sdmx."{name}")')) == (True,) for (name,) in tables)
 
 
 def migrate(conn: duckdb.DuckDBPyConnection) -> duckdb.DuckDBPyConnection:

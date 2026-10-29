@@ -46,7 +46,7 @@ from typing import ClassVar, Final, Literal, Self, cast, overload, override
 import attrs
 import duckdb
 
-from sdmxlib._duckdb import count
+from sdmxlib._duckdb import count, first
 from sdmxlib.data_store import WriteSource
 from sdmxlib.formats.gaps import TARGETS, describe, unrepresentable
 from sdmxlib.formats.sdmx_csv.reader import _resolve_structure
@@ -1926,10 +1926,12 @@ class BundleRegistry(SessionFactory):
         MetadataProvisionAgreement → Metadataflow) and walks its attribute tree.
         Empty if the structure is absent.
         """
-        set_row = cur.execute(
-            "SELECT structure_urn, structure_kind FROM metadata_set WHERE urn = ?",
-            [set_urn],
-        ).fetchone()
+        set_row = first(
+            cur.execute(
+                "SELECT structure_urn, structure_kind FROM metadata_set WHERE urn = ?",
+                [set_urn],
+            )
+        )
         if set_row is None:
             return {}
         structure_urn, structure_kind = set_row
@@ -2286,13 +2288,15 @@ class BundleRegistry(SessionFactory):
             return cached
         parent = readers.get_artefact(cur, parent_urn_str, eager=True, refused=self._refused)
         if parent is None and sample.version == "latest":
-            row = cur.execute(
-                """
+            row = first(
+                cur.execute(
+                    """
                 SELECT urn FROM artefact
                 WHERE artefact_type = ? AND agency_id = ? AND resource_id = ?
                 """,
-                [owner.__name__, sample.agency, sample.id],
-            ).fetchone()
+                    [owner.__name__, sample.agency, sample.id],
+                )
+            )
             if row:
                 parent = readers.get_artefact(cur, row[0], eager=True, refused=self._refused)
         if parent is not None:
@@ -2317,10 +2321,12 @@ class BundleRegistry(SessionFactory):
         """
         if isinstance(target, (SdmxUrn, Ref)):
             cur = self._read_cursor()
-            row = cur.execute(
-                "SELECT 1 FROM artefact WHERE urn = ?",
-                [str(target_urn(target))],
-            ).fetchone()
+            row = first(
+                cur.execute(
+                    "SELECT 1 FROM artefact WHERE urn = ?",
+                    [str(target_urn(target))],
+                )
+            )
             return row is not None
         return False
 
@@ -2733,20 +2739,22 @@ class LocalRegistry(BundleRegistry):
         issues: list[ValidationIssue] = []
         in_batch = {str(artefact_urn(artefact)) for artefact in batch}
         for rewrite in rewrites:
-            held = self._c.execute(
-                """
+            held = first(
+                self._c.execute(
+                    """
                 SELECT r.original_version
                 FROM artefact a LEFT JOIN version_rewrite r ON r.urn = a.urn
                 WHERE a.urn = ?
                 """,
-                [rewrite.urn],
-            ).fetchone()
+                    [rewrite.urn],
+                )
+            )
             if held is not None and held[0] != rewrite.original:
                 issues.append(collision(rewrite))
             # Only a reference to a version nothing here answers dangles: under
             # a mapping such as `{"1.0": "1.0.0"}` a held `1.0` stays, and so
             # do the references to it.
-            if self._c.execute("SELECT 1 FROM artefact WHERE urn = ?", [original_urn(rewrite)]).fetchone():
+            if first(self._c.execute("SELECT 1 FROM artefact WHERE urn = ?", [original_urn(rewrite)])):
                 continue
             old = SdmxUrn.parse(original_urn(rewrite))
             # A prefilter: `LIKE` treats `_` in an id as a wildcard, and the

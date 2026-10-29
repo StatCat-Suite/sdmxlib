@@ -35,6 +35,7 @@ from typing import Any, Literal, cast
 import duckdb
 from typing_extensions import TypedDict
 
+from sdmxlib._duckdb import first
 from sdmxlib._time import from_storage
 from sdmxlib.model._items import find_item, owner_classes, scheme_urn_of
 from sdmxlib.model.annotations import Annotations
@@ -322,10 +323,11 @@ def _read_spine(conn: duckdb.DuckDBPyConnection, urn: str) -> SpineRow | None:
     `$urn`, because DuckDB probes each bound value for pandas with a failed
     import (`project_duckdb_pandas_probe`).
     """
-    row = conn.execute(
-        parsed(
-            conn,
-            """
+    row = first(
+        conn.execute(
+            parsed(
+                conn,
+                """
         WITH own AS (
             SELECT list({'rel': rel, 'url': url, 'urn': urn, 'type': link_type, 'hreflang': hreflang}
                         ORDER BY position) AS links
@@ -339,9 +341,10 @@ def _read_spine(conn: duckdb.DuckDBPyConnection, urn: str) -> SpineRow | None:
                is_partial_language, own.links, items.n
         FROM artefact, own, items WHERE artefact.urn = $urn
         """,
-        ),
-        {"urn": urn},
-    ).fetchone()
+            ),
+            {"urn": urn},
+        )
+    )
     if row is None:
         return None
     return {
@@ -857,10 +860,11 @@ def _read_data_structure(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineR
     # One statement for both SDMX 3.0 additions (#422): a DSD without them,
     # which is every 2.1 one, should not pay a round trip each.
     # And what the DSD holds of itself (#422), in the same round trip.
-    msd_urn, usage_rows, dim_list_uri, attr_list_uri, measure_list_uri, evolving = conn.execute(
-        parsed(
-            conn,
-            """
+    msd_urn, usage_rows, dim_list_uri, attr_list_uri, measure_list_uri, evolving = first(
+        conn.execute(
+            parsed(
+                conn,
+                """
         SELECT
             (SELECT target_urn FROM artefact_ref WHERE source_urn = $urn AND role = 'metadata'),
             (SELECT list(
@@ -872,9 +876,10 @@ def _read_data_structure(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineR
             (SELECT measure_descriptor_uri FROM data_structure WHERE urn = $urn),
             (SELECT evolving_structure FROM data_structure WHERE urn = $urn)
         """,
-        ),
-        {"urn": urn},
-    ).fetchone() or (None, None, None, None, None, None)
+            ),
+            {"urn": urn},
+        )
+    ) or (None, None, None, None, None, None)
     usages = [
         MetadataAttributeUsage(
             id=attribute_id,
@@ -932,7 +937,7 @@ def _read_dataflow(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineRow) ->
     anns = _read_annotations(conn, urn)
     links = _links_of(conn, urn, meta)
 
-    row = conn.execute("SELECT dsd_urn, dimension_constraint FROM dataflow WHERE urn = ?", [urn]).fetchone()
+    row = first(conn.execute("SELECT dsd_urn, dimension_constraint FROM dataflow WHERE urn = ?", [urn]))
     structure_ref = None
     if row and row[0]:
         structure_ref = Ref[DataStructure].unresolved(DataStructure.parse_urn(row[0]))
@@ -1160,10 +1165,12 @@ def _read_hierarchy(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineRow) -
     # False for a hierarchy stored as True, while the lazy path (which does
     # read it) returned the truth. Found in the #214 audit by activating a
     # KNOWN_GAPS entry that had been dead.
-    formal_row = conn.execute(
-        "SELECT has_formal_levels FROM hierarchy_meta WHERE urn = ?",
-        [urn],
-    ).fetchone()
+    formal_row = first(
+        conn.execute(
+            "SELECT has_formal_levels FROM hierarchy_meta WHERE urn = ?",
+            [urn],
+        )
+    )
 
     return Hierarchy(
         **_spine_kwargs(meta),
@@ -1206,9 +1213,11 @@ def _release_calendar(row: object) -> ReleaseCalendar | None:
 
 def _read_constraint_attachment(conn: duckdb.DuckDBPyConnection, urn: str) -> ConstraintAttachment:
     """A constraint's attachment, every alternative and in order (#422)."""
-    row = conn.execute(
-        "SELECT attachment_data_provider_urn, simple_data_sources FROM data_constraint WHERE urn = ?", [urn]
-    ).fetchone()
+    row = first(
+        conn.execute(
+            "SELECT attachment_data_provider_urn, simple_data_sources FROM data_constraint WHERE urn = ?", [urn]
+        )
+    )
     provider_urn, sources = row if row is not None else (None, None)
 
     def attached(sql: str) -> tuple[Ref[object], ...]:
@@ -1264,14 +1273,16 @@ def _read_data_constraint(conn: duckdb.DuckDBPyConnection, urn: str, meta: Spine
     links = _links_of(conn, urn, meta)
     anns = by_owner.get(urn, Annotations.EMPTY)
 
-    cc_row = conn.execute(
-        """
+    cc_row = first(
+        conn.execute(
+            """
         SELECT constraint_type, ref_period_start, ref_period_end,
                release_periodicity, release_offset, release_tolerance
         FROM data_constraint WHERE urn = ?
         """,
-        [urn],
-    ).fetchone()
+            [urn],
+        )
+    )
     constraint_type = cc_row[0] if cc_row else "Allowed"
     reference_period = _reference_period(cc_row)
     release_calendar = _release_calendar(cc_row)
@@ -1540,7 +1551,7 @@ def _read_categorisation(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineR
     anns = _read_annotations(conn, urn)
     links = _links_of(conn, urn, meta)
 
-    row = conn.execute("SELECT source_urn, target_urn FROM categorisation WHERE urn = ?", [urn]).fetchone()
+    row = first(conn.execute("SELECT source_urn, target_urn FROM categorisation WHERE urn = ?", [urn]))
     source_ref = Ref[object].unresolved(SdmxUrn.parse(row[0])) if row and row[0] else None
     target_ref = Ref[object].unresolved(SdmxUrn.parse(row[1])) if row and row[1] else None
 
@@ -1626,10 +1637,13 @@ def _read_hierarchy_association(
     anns = _read_annotations(conn, urn)
     links = _links_of(conn, urn, meta)
 
-    row = conn.execute(
-        "SELECT linked_hierarchy_urn, linked_object_urn, context_object_urn FROM hierarchy_association WHERE urn = ?",
-        [urn],
-    ).fetchone()
+    row = first(
+        conn.execute(
+            "SELECT linked_hierarchy_urn, linked_object_urn, context_object_urn "
+            "FROM hierarchy_association WHERE urn = ?",
+            [urn],
+        )
+    )
     if row is None:
         return None
     linked_h, linked_o, context_o = row
@@ -1655,9 +1669,7 @@ def _read_provision_agreement(conn: duckdb.DuckDBPyConnection, urn: str, meta: S
     anns = _read_annotations(conn, urn)
     links = _links_of(conn, urn, meta)
 
-    row = conn.execute(
-        "SELECT dataflow_urn, data_provider_urn FROM provision_agreement WHERE urn = ?", [urn]
-    ).fetchone()
+    row = first(conn.execute("SELECT dataflow_urn, data_provider_urn FROM provision_agreement WHERE urn = ?", [urn]))
     df_ref = Ref[Dataflow].unresolved(Dataflow.parse_urn(row[0])) if row and row[0] else None
     dp_ref = Ref[object].unresolved(SdmxUrn.parse(row[1])) if row and row[1] else None
 
@@ -1923,7 +1935,7 @@ def _read_representation_map(conn: duckdb.DuckDBPyConnection, urn: str, meta: Sp
     links = _links_of(conn, urn, meta)
     anns = by_owner.get(urn, Annotations.EMPTY)
 
-    if conn.execute("SELECT 1 FROM representation_map WHERE urn = ?", [urn]).fetchone() is None:
+    if first(conn.execute("SELECT 1 FROM representation_map WHERE urn = ?", [urn])) is None:
         return None
 
     def endpoints(side: str) -> tuple[MapEndpoint, ...]:
@@ -1976,7 +1988,7 @@ def _read_map_ends(
     conn: duckdb.DuckDBPyConnection, urn: str, parent_table: str
 ) -> tuple[Ref[object] | None, Ref[object] | None] | None:
     """A scheme or structure map's source and target (#395); `None` when the row is absent."""
-    row = conn.execute(f"SELECT source_urn, target_urn FROM {parent_table} WHERE urn = ?", [urn]).fetchone()
+    row = first(conn.execute(f"SELECT source_urn, target_urn FROM {parent_table} WHERE urn = ?", [urn]))
     if row is None:
         return None
     src, tgt = row
@@ -2164,7 +2176,7 @@ def _read_structure_map(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineRo
         [urn],
     ).fetchall()
     name, desc = _read_name_and_description(conn, urn)
-    extension = conn.execute("SELECT is_extension FROM structure_map WHERE urn = ?", [urn]).fetchone()
+    extension = first(conn.execute("SELECT is_extension FROM structure_map WHERE urn = ?", [urn]))
     by_owner = _read_annotations_subtree(conn, urn)
     links = _links_of(conn, urn, meta)
     return StructureMap(
@@ -2336,7 +2348,7 @@ def _read_metadata_structure(conn: duckdb.DuckDBPyConnection, urn: str, meta: Sp
 
     attributes = _assemble(children_map, lambda path, kids: pending[path](children=kids))
 
-    list_uri = conn.execute("SELECT attribute_list_uri FROM metadata_structure WHERE urn = ?", [urn]).fetchone()
+    list_uri = first(conn.execute("SELECT attribute_list_uri FROM metadata_structure WHERE urn = ?", [urn]))
     return MetadataStructure(
         **_spine_kwargs_21(meta),
         name=name,
@@ -2429,7 +2441,7 @@ def _read_metadataflow(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineRow
     anns = _read_annotations(conn, urn)
     links = _links_of(conn, urn, meta)
 
-    row = conn.execute("SELECT msd_urn FROM metadataflow WHERE urn = ?", [urn]).fetchone()
+    row = first(conn.execute("SELECT msd_urn FROM metadataflow WHERE urn = ?", [urn]))
     structure_ref = None
     if row and row[0]:
         structure_ref = Ref[MetadataStructure].unresolved(MetadataStructure.parse_urn(row[0]))
@@ -2455,10 +2467,12 @@ def _read_metadata_provision_agreement(
     anns = _read_annotations(conn, urn)
     links = _links_of(conn, urn, meta)
 
-    row = conn.execute(
-        "SELECT metadataflow_urn, metadata_provider_urn FROM metadata_provision_agreement WHERE urn = ?",
-        [urn],
-    ).fetchone()
+    row = first(
+        conn.execute(
+            "SELECT metadataflow_urn, metadata_provider_urn FROM metadata_provision_agreement WHERE urn = ?",
+            [urn],
+        )
+    )
     flow_ref = Ref[Metadataflow].unresolved(Metadataflow.parse_urn(row[0])) if row and row[0] else None
     provider_ref = Ref[MetadataProvider].unresolved(MetadataProvider.parse_urn(row[1])) if row and row[1] else None
     # Strings, not Refs: a declared target may be a wildcard URN, which no
@@ -2483,7 +2497,7 @@ def _read_metadata_set(conn: duckdb.DuckDBPyConnection, urn: str, meta: SpineRow
     anns = _read_annotations(conn, urn)
     links = _links_of(conn, urn, meta)
 
-    set_row = conn.execute("SELECT structure_urn, structure_kind FROM metadata_set WHERE urn = ?", [urn]).fetchone()
+    set_row = first(conn.execute("SELECT structure_urn, structure_kind FROM metadata_set WHERE urn = ?", [urn]))
     if set_row is None:
         return None
     structure_urn, structure_kind = set_row
@@ -2536,16 +2550,18 @@ def _read_dataflow_binding(conn: duckdb.DuckDBPyConnection, urn: str, _meta: Spi
     Takes the spine row for the dispatch signature and reads nothing from it:
     a binding's identity is its dataflow's, carried on its own row.
     """
-    row = conn.execute(
-        """
+    row = first(
+        conn.execute(
+            """
         SELECT dataflow_urn, table_location, database_role,
                dimension_column_map, measure_column_map, attribute_column_map,
                structural_version, binding_source_registry,
                materialized_at, bound_at, series_attributes_location
         FROM dataflow_binding WHERE urn = ?
         """,
-        [urn],
-    ).fetchone()
+            [urn],
+        )
+    )
     if row is None:
         return None
 
@@ -2810,10 +2826,12 @@ def make_lazy_hierarchy(
         return None
     name, desc = _read_name_and_description(cur, urn)
 
-    formal_row = cur.execute(
-        "SELECT has_formal_levels FROM hierarchy_meta WHERE urn = ?",
-        [urn],
-    ).fetchone()
+    formal_row = first(
+        cur.execute(
+            "SELECT has_formal_levels FROM hierarchy_meta WHERE urn = ?",
+            [urn],
+        )
+    )
     has_formal_levels = bool(formal_row[0]) if formal_row is not None else False
 
     levels = _read_levels(cur, urn)
@@ -2888,9 +2906,9 @@ def _stored_attachment(level: object, path: str) -> AttachmentLevel:
 
 def get_availability(conn: duckdb.DuckDBPyConnection, dataflow_urn: str) -> AvailabilityConstraint | None:
     """The stored answer to `dataflow_urn`'s unfiltered availability query, or None when none is stored."""
-    head = conn.execute(
-        "SELECT obs_count, series_count FROM availability WHERE dataflow_urn = ?", [dataflow_urn]
-    ).fetchone()
+    head = first(
+        conn.execute("SELECT obs_count, series_count FROM availability WHERE dataflow_urn = ?", [dataflow_urn])
+    )
     if head is None:
         return None
     values: dict[str, list[str]] = {}

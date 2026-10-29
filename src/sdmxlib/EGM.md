@@ -20,7 +20,7 @@ the subpackages share.
   use, providing `session()` (nested sessions are counted), `execute`,
   `on_connect` and `open_sessions`. `SessionHook` is the type of an
   `on_connect` callback. The internal helpers are `cursor_for`, `own_handle`,
-  `adopt`, `completed`, `frame_of`, `value_match`, the module-level
+  `adopt`, `frame_of`, `value_match`, the module-level
   `on_connect(base, fn)` and `handle_count(base)` (live handles, for leak
   hunting), and `VALUES_RELATION_PREFIX` (`"_sl_values_"`).
 - `SqlRelation` and `HasSource` (`sql.py`): protocols for something that
@@ -54,7 +54,8 @@ the subpackages share.
   `reading_csv` wraps a `read_csv` statement sdmxlib runs itself (a scan, a
   REST ingest); `csv_errors` and `converting` convert at a query terminal and
   in a drained stream, and only errors DuckDB's CSV reader raised.
-- `count` (`_duckdb.py`): the row count from a cursor.
+- `first` and `count` (`_duckdb.py`): a cursor's first row with its result
+  finished, and the row count from a cursor.
 - `synthetic_bundle`, `profile_bundle`, `Shape`, `Dim` and `HierarchyShape`
   (`testing.py`): build a seeded synthetic bundle that passes `check_bundle`,
   or take a `Shape` from an existing bundle.
@@ -92,9 +93,12 @@ the subpackages share.
 - A `Session` is valid only inside its `with` block. Nested sessions share the
   handle. The outermost block releases it, and the next session gets a fresh
   cursor.
-- Every `sql`, `register` and `unregister` call on a handle goes through
-  `completed()`, which abandons any unfinished `execute()` result. DuckDB 2.0
-  requires this.
+- Every read in `src/` finishes its own `execute()` result: a single-row
+  read goes through `_duckdb.first`, and no `fetchone()` or `fetchmany()`
+  appears elsewhere (`test_no_read_in_src_strands_its_result`). DuckDB 2.0
+  refuses a `sql`, `register` or `unregister` call on a handle holding an
+  unfinished result, so a read that strands one raises at the next relation
+  call on that thread's handle (GH-75).
 - `SingleFlight` work must be idempotent: eviction runs it again, and a
   failure is not remembered, so waiters retry. A `maxsize` of 0 or less raises
   `ValueError`.

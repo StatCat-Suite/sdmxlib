@@ -75,7 +75,7 @@ from sdmxlib.query._expr import (
 )
 from sdmxlib.query._plan import Plan, scanned
 from sdmxlib.query._pushdown import DUCKDB, Program, Push, plan_program
-from sdmxlib.session import completed, cursor_for, frame_of, own_handle
+from sdmxlib.session import cursor_for, frame_of, own_handle
 
 
 def _partition_prefix(root: AnyCols, order: Sequence[OrderKey]) -> tuple[str, ...]:
@@ -129,7 +129,7 @@ def _stream_by_partition[R: RowKind, A](
             # does not pull the next partition until this one is finished — which
             # is exactly what keeps peak at one partition rather than their sum.
             cursor = own_handle(query._cursor())
-            yield completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
+            yield cursor.sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
 
     stream = readers()
     first = next(stream)
@@ -1652,7 +1652,7 @@ class Query[R: RowKind, A = object]:
         their `Facet` declares.
         """
         compiled = self.to_sql()
-        frame = _typed(frame_of(completed(self._cursor()).sql(compiled.sql, params=list(compiled.params))), self.root)
+        frame = _typed(frame_of(self._cursor().sql(compiled.sql, params=list(compiled.params))), self.root)
         if not labels:
             return frame
         return _labelled(frame, self.root, labels, label_suffix)
@@ -1738,9 +1738,7 @@ class Query[R: RowKind, A = object]:
         # on one connection would overwrite each other's row buffer (#75), and
         # the reader holds this one until it is exhausted or closed.
         cursor = own_handle(self._cursor())
-        return self._converting(
-            completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
-        )
+        return self._converting(cursor.sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows))
 
     def _converting(self, reader: pa.RecordBatchReader) -> pa.RecordBatchReader:
         """`reader`, converting a scanned file's read errors as it is drained (GH-247).
@@ -2405,7 +2403,7 @@ class Select[R: RowKind, A = object]:
         # component id -> the name it was projected under, so an aliased column
         # is typed and labelled under the alias.
         aliases = {item.projected_name: name for name, item in self.items if isinstance(item, AnyCol)}
-        frame = _as_utc(frame_of(completed(cursor).sql(compiled.sql, params=list(compiled.params))), self.items)
+        frame = _as_utc(frame_of(cursor.sql(compiled.sql, params=list(compiled.params))), self.items)
         frame = _typed(frame, self._query.root, aliases)
         if not labels:
             return frame
@@ -2503,7 +2501,7 @@ class Select[R: RowKind, A = object]:
             self._query._cursor(self._query._projection_columns(self.items), projection_paths(self.items))
         )
         return self._query._converting(
-            completed(cursor).sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
+            cursor.sql(compiled.sql, params=list(compiled.params)).to_arrow_reader(chunk_rows)
         )
 
     @override

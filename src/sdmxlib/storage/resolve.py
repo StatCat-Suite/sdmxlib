@@ -18,6 +18,7 @@ from typing import Any, Final
 import duckdb
 import msgspec
 
+from sdmxlib._duckdb import first
 from sdmxlib.model.annotations import Annotation, Annotations, AnnotationURL
 from sdmxlib.model.codelist import (
     CascadeSelection,
@@ -330,9 +331,9 @@ def _build_codes(cur: duckdb.DuckDBPyConnection, rows: list[_CodeRow], *, annota
 
 def geo_kind(conn: duckdb.DuckDBPyConnection, codelist_urn: str) -> tuple[str | None, str | None]:
     """A codelist's geographic kind and grid definition; ``(None, None)`` for a plain one (#422)."""
-    row: tuple[str, str | None] | None = conn.execute(
-        "SELECT geo_type, grid_definition FROM sdmx.geo_codelist WHERE codelist_urn = ?", [codelist_urn]
-    ).fetchone()
+    row: tuple[str, str | None] | None = first(
+        conn.execute("SELECT geo_type, grid_definition FROM sdmx.geo_codelist WHERE codelist_urn = ?", [codelist_urn])
+    )
     return (None, None) if row is None else row
 
 

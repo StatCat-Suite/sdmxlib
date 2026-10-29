@@ -37,7 +37,7 @@ from sdmxlib.model.ref import Ref
 from sdmxlib.model.representation import Facet
 from sdmxlib.query.observations import Observations, ObsQuery, Sidecar
 from sdmxlib.query.query import build
-from sdmxlib.session import SessionFactory, adopt, completed
+from sdmxlib.session import SessionFactory, adopt
 from sdmxlib.storage.schema import sdmx_catalog, use_sdmx
 
 if TYPE_CHECKING:
@@ -695,7 +695,7 @@ class DuckDBDataStore(SessionFactory):
         # Registered for this session, not created as a view: a view is
         # catalog state, and DuckDB refuses one over a Python object.
         view_name = f"__sdmxlib_write_obs_{id(source):x}"
-        completed(conn).register(view_name, _as_relation(conn, source))
+        conn.register(view_name, _as_relation(conn, source))
         try:
             target = f"{lake_alias}.{schema}.{table}"
             conn.execute(f"CREATE SCHEMA IF NOT EXISTS {lake_alias}.{schema}")
@@ -719,7 +719,7 @@ class DuckDBDataStore(SessionFactory):
             else:
                 conn.execute(f"CREATE OR REPLACE TABLE {target} AS SELECT * FROM {view_name}")
         finally:
-            completed(conn).unregister(view_name)
+            conn.unregister(view_name)
         # A rewrite can change the target table's schema; drop cached column
         # lists so the inspector (internal query path + custom SQL) re-reflects.
         # The target may be cached under a differently-qualified name than the

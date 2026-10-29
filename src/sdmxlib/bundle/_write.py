@@ -12,6 +12,7 @@ from typing import Literal
 import duckdb
 import google_crc32c
 
+from sdmxlib._duckdb import first
 from sdmxlib.bundle._availability import survey
 from sdmxlib.bundle._canonical import CANONICAL_FORM
 from sdmxlib.bundle._fingerprint import (
@@ -225,12 +226,12 @@ def _data_inventory(
 
 def _ducklake_versions(conn: duckdb.DuckDBPyConnection) -> tuple[str | None, str | None]:
     """The DuckLake extension's version, and the format the attached ``lake`` catalog records."""
-    (extension,) = conn.execute(
-        "SELECT extension_version FROM duckdb_extensions() WHERE extension_name = 'ducklake'"
-    ).fetchone() or (None,)
-    (spec,) = conn.execute(
-        "SELECT value FROM __ducklake_metadata_lake.ducklake_metadata WHERE key = 'version'"
-    ).fetchone() or (None,)
+    (extension,) = first(
+        conn.execute("SELECT extension_version FROM duckdb_extensions() WHERE extension_name = 'ducklake'")
+    ) or (None,)
+    (spec,) = first(
+        conn.execute("SELECT value FROM __ducklake_metadata_lake.ducklake_metadata WHERE key = 'version'")
+    ) or (None,)
     return extension, spec
 
 
