@@ -109,6 +109,10 @@ def enforce(artefact: object) -> None:
     issues = issues_of(artefact)
     if issues:
         raise ValidationError(issues)
-    advisories = advisories_of(artefact)
+    advise(advisories_of(artefact))
+
+
+def advise(advisories: list[ValidationIssue]) -> None:
+    """Warn with one `ImRuleWarning` carrying `advisories`, pointed at the caller's line; nothing if empty."""
     if advisories:
         warnings.warn(ImRuleWarning(advisories), skip_file_prefixes=_INTERNAL)

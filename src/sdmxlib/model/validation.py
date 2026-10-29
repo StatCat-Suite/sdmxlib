@@ -29,7 +29,7 @@ import attrs
 from attrs import frozen
 
 from sdmxlib.model._container import inner_id
-from sdmxlib.model._invariants import register, register_advisory
+from sdmxlib.model._invariants import advise, register, register_advisory
 from sdmxlib.model._items import spellings
 from sdmxlib.model._referenceable import CLASSES_21, ENUMERATION_PAIR_JSON, PACKAGES_21, PAIRS_30, PAIRS_31, PAIRS_JSON
 from sdmxlib.model._refshape import can_reach_ref, item_fields, link_fields, walk_fields
@@ -102,7 +102,7 @@ from sdmxlib.model.provision import ProvisionAgreement
 from sdmxlib.model.ref import Ref, artefact_urn
 from sdmxlib.model.representation import DataType, Facet
 from sdmxlib.model.urn import SdmxUrn
-from sdmxlib.model.version import unreferenceable, unwritable
+from sdmxlib.model.version import late_binds, unreferenceable, unwritable
 
 # Formal type patterns from SDMXCommonReferences.xsd. There are *three* id
 # types and the distinction is load-bearing — applying IDType everywhere let
@@ -1500,6 +1500,10 @@ def validate(msg: StructureMessage | MetadataMessage) -> None:
     artefact in the message, so a partial bundle — a dataflow without its DSD —
     fails, and is resolved against a richer registry instead.
 
+    It warns with one `ImRuleWarning` on an IM rule between artefacts that no
+    wire schema can enforce: a dataflow bound to the latest minor version of
+    an evolving DSD with no dimension constraint (IM §5.3.2.1).
+
     Args:
         msg: A `StructureMessage`; a `MetadataMessage` holds no references to check.
 
@@ -1524,6 +1528,50 @@ def validate(msg: StructureMessage | MetadataMessage) -> None:
     if issues:
         raise ValidationError(issues)
     validate_references(msg)
+    advisories: list[ValidationIssue] = []
+    _check_evolving_structure_constraints(msg, advisories)
+    advise(advisories)
+
+
+def _late_binds_minor(version: str) -> bool:
+    """Whether a reference version takes later minor versions: a `+` on its major or minor part.
+
+    `2.0+.0` and `2+.0.0` do; `2.0.0+`, which takes later patches of one
+    minor, and a plain version do not.
+    """
+    return any(part.endswith("+") for part in version.split(".")[:2])
+
+
+def _check_evolving_structure_constraints(msg: StructureMessage, issues: list[ValidationIssue]) -> None:
+    """A dataflow late-bound to an evolving DSD's minor versions names its dimensions (IM §5.3.2.1).
+
+    "A Dataflow may optionally define which Dimensions it uses, by defining a
+    DimensionConstraint (this is a mandatory requirement if the
+    DataStructureDefinition sets its' evolvingStructure property to 'true' and
+    is sematically referenced by the Dataflow)" — referenced "on the latest
+    minor version", by a `+` on the minor part (§5.3.2.2 and its footnote; the
+    3.1 XSD's `DataflowType` says the same). A wildcard names no one DSD, so
+    every DSD of the message it can bind to is asked whether it evolves.
+    """
+    for flow in msg.dataflows:
+        if flow.structure is None or flow.dimension_constraint:
+            continue
+        ref = flow.structure.urn
+        if not _late_binds_minor(ref.version):
+            continue
+        evolving = [
+            dsd
+            for dsd in msg.data_structures
+            if dsd.evolving_structure
+            and (dsd.maintainer.id, dsd.id) == (ref.agency, ref.id)
+            and late_binds(ref.version, dsd.version)
+        ]
+        if evolving:
+            message = (
+                f"is bound to {ref} and {evolving[0].urn} is an evolving structure, so the IM requires a "
+                "dimension constraint naming the dimensions it uses"
+            )
+            issues.append(ValidationIssue(path=f"Dataflow:{flow.id}.dimension_constraint", message=message))
 
 
 # ── Cross-artefact reference validation ──────────────────────────────────────
@@ -1721,11 +1769,16 @@ def _alternate_spellings(
 
     Two axes, and they compose: the class spellings SDMX changed between
     versions (`_items.CLASS_ALIAS_GROUPS`) and, for a version-less reference,
-    each version of that artefact the message actually carries. A reference
-    naming an explicit version is left alone — a different version is a
-    different artefact, not a different spelling of this one.
+    each version of that artefact the message actually carries; for a
+    late-bound one (`1.0+.0`), each version it binds to (`version.late_binds`).
+    A reference naming an explicit version is left alone — a different version
+    is a different artefact, not a different spelling of this one.
     """
-    resolved_versions = versions.get((urn.package, urn.agency, urn.id), ()) if urn.is_latest else ()
+    present = versions.get((urn.package, urn.agency, urn.id), ())
+    if urn.is_latest:
+        resolved_versions = present
+    else:
+        resolved_versions = tuple(version for version in present if late_binds(urn.version, version))
     for artefact_class in spellings(urn.artefact_class):
         for version in (urn.version, *resolved_versions):
             if artefact_class == urn.artefact_class and version == urn.version:

@@ -341,7 +341,14 @@ RULES: tuple[Rule, ...] = (
         "A Dataflow may optionally define which Dimensions it uses, by defining a DimensionConstraint (this is a "
         "mandatory requirement if the DataStructureDefinition sets its\u2019 evolvingStructure property to "
         "\u2018true\u2019 and is sematically referenced by the Dataflow).",
-        NotChecked("a dataflow of an evolving DSD is not required to carry a dimension constraint: #484"),
+        Warned(
+            (
+                Check(
+                    "_check_evolving_structure_constraints",
+                    "tests/unit/test_evolving_structure.py::test_a_late_bound_flow_of_an_evolving_dsd_warns[minor]",
+                ),
+            )
+        ),
     ),
     Rule(
         "IM-5.3.2.1-3",

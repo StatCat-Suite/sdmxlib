@@ -97,10 +97,14 @@ hierarchical roll-ups.
   `DataStructure.key_slot_ids`.
 - `validate` and `validate_references` (`validation.py`), `to_dict` and
   `from_dict` (`convert.py`), and `DataflowBinding`, `DriftIssue` and
-  `DriftError` (`binding.py`).
-- `sort_key`, `compliance`, `unwritable`, `is_final` and `unreferenceable`
-  (`version.py`): version ordering, and which SDMX grammar (2.1 or 3.x)
-  accepts a version.
+  `DriftError` (`binding.py`). `validate_references` accepts a late-bound
+  reference (`1.0+.0`) to a version the message holds that it binds to;
+  `validate` then warns with one `ImRuleWarning` on a dataflow late-bound to
+  an evolving DSD's minor versions with no dimension constraint (IM
+  §5.3.2.1, GH-27).
+- `sort_key`, `compliance`, `unwritable`, `is_final`, `unreferenceable` and
+  `late_binds` (`version.py`): version ordering, which SDMX grammar (2.1 or
+  3.x) accepts a version, and which versions a late-bound reference takes.
 
 ## Invariants
 
