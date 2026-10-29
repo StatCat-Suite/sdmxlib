@@ -35,3 +35,12 @@ The reports are kept as written, so their findings describe the first draft.
 commit. Six reviewers found about 110 differences; the contracts were
 corrected from them, and four findings that point at the code were filed as
 GH-262, GH-263, GH-264 and GH-265.
+
+## Drift report on the design documents
+
+[`2026-10-28_DESIGN_DRIFT_REPORT.md`](2026-10-28_DESIGN_DRIFT_REPORT.md)
+labels the 21 documents in `docs/design/` (current, evidence or superseded)
+and lists what each said that the code contradicts, for GH-267. The documents
+were corrected from it, their dated sections moved to `docs/design/evidence/`,
+and the rejected explorations to `history/design/`. Two findings point at the
+code: GH-271 and GH-272.

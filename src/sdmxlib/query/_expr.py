@@ -3062,9 +3062,9 @@ class FanOut[P: RowKind, C: RowKind]:
         """Every child satisfies all of `preds`.
 
         Vacuously true when there are no children, which is standard logic and
-        a standard surprise. The negation inside must be null-safe
-        (`IS DISTINCT FROM`) or a child whose column is NULL silently counts as
-        satisfying — see `docs/design/query-language-examples.md` §3.
+        a standard surprise. The negation inside is null-safe (`IS NOT TRUE`),
+        so a child whose column is NULL counts as violating — see
+        `docs/design/query-language-examples.md` §3.
         """
         self._refuse_other_relation(preds, ".every()")
         return Quantified("every", _fan_path(self), preds)

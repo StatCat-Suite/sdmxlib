@@ -1,8 +1,15 @@
 # The query language: rejected explorations
 
-Companion to `query-language.md` (the design), `query-language-evidence.md`
-(what was run), `query-language-examples.md` (the surface, construct by
-construct) and `query-language-cookbook.md` (the surface applied).
+> Superseded: rejected branches from the query-language design pass for
+> #306/#280, August 2026. The code follows rooted paths through declared edges;
+> the design is [query-language.md](../../docs/design/query-language.md).
+
+Companion to [`query-language.md`](../../docs/design/query-language.md) (the
+design), [`evidence/query-language.md`](../../docs/design/evidence/query-language.md)
+(what was run), [`query-language-examples.md`](../../docs/design/query-language-examples.md)
+(the surface, construct by construct) and
+[`query-language-cookbook.md`](../../docs/design/query-language-cookbook.md)
+(the surface applied).
 
 This file holds branches that were prototyped and **rejected**. They are kept
 rather than deleted because each one's failure is the reason a live choice is
@@ -71,7 +78,7 @@ lies outside its individual costs:
 - projection through a to-many refused, or forced through `list()`
 
 That is Django's `__` lookups with `EXISTS` substituted for `INNER JOIN` —
-Django without the duplicate-row footgun measured under "To-many edges", and it
+Django without the duplicate-row footgun (`query-language.md` §3.3), and it
 would work.
 
 **Form B rules it out for a different reason: a shorter unchecked spelling
@@ -215,9 +222,8 @@ What *is* right about the objection: the friction is real, and it is the child
 accessor (`sl.q.component`) appearing inside a fan-out rooted elsewhere. The
 fix that removes it without touching path resolution is to let `Many` expose
 the child's columns directly — `sl.q.dsd.dimensions.concept.id` — which keeps
-the edge name and drops the repetition. That has now been prototyped and works;
-see "Reaching a grandchild through a to-many", which also records the variant
-of it that does not.
+the edge name and drops the repetition. That is dot-through, which the design
+adopted (`query-language.md` §2.9 and §3.4).
 
 ## The `Fan[R]` marker
 
@@ -241,43 +247,14 @@ that needs `Fan[Fan[R]] == Fan[R]`, a type-level function Python does not have.
 
 ## Strict path with a bare inner predicate
 
-### Strictness and quantification are separable; `.any()` is quantification
+The reasoning in this section was adopted, and is now the design's rule:
+`query-language.md` §2.9, "Every edge is named, and `.any()` is the
+quantifier". What stays here is the branch it led to and the design did not
+build, a postfix universal.
 
-An objection worth recording because it corrects the framing above: if
-mechanism 5 fails on vague paths, does forcing a strict path let `.any()` stay?
-As in `sl.q.dsd.dimensions.any(sl.q.codelist.id == "CL_GEO")` — the outer edge
-named, the inner predicate bare.
+### A postfix `.every()` modifier
 
-**No, because the ambiguity in that example is in the *inner* hop.**
-`dimensions` pins dsd->component, but the predicate is about a codelist, so the
-compiler must still travel component->codelist — the hop with two routes and
-two answers (`['TRADE']` versus `['CPI', 'TRADE']`). Naming the first edge
-moves the vagueness inside `.any()` rather than removing it.
-
-So the rule is not "name the first edge" but **name every edge**. And once
-every edge is named, the inner predicate must be rooted at the child —
-`sl.q.component.codelist.id` — which is mechanism 1.
-
-**This separates two things this document had been treating as one.**
-
-> Naming every edge is what makes a path strict. `.any()`'s job is the
-> **quantifier**.
-
-Read that way the comparison rearranges. Mechanism 5 *has* `.any()` and fails
-because it names no edges. Mechanism 1 succeeds because `dimensions` plus a
-child-rooted predicate names them all. And dot-through reaches the same strictness with no
-namespace ceremony, because the path never leaves the parent's accessor:
-
-```python
-sl.q.dsd.dimensions.codelist.id == "CL_GEO"          # component's own representation
-sl.q.dsd.dimensions.concept.codelist.id == "CL_GEO"  # the concept's default
-```
-
-Both are `Pred[DsdRow]`; both type clean on both checkers; the two readings
-that were ambiguous under a bare inner predicate are now two distinct
-spellings.
-
-**Dot-through drops one thing `.any()` carried: the quantifier.** It looks
+Dot-through drops one thing `.any()` carried: the quantifier. It looked
 recoverable as a modifier rather than a wrapper:
 
 ```python
@@ -291,10 +268,12 @@ both decidable from the recorded path: refuse when the path crosses no to-many
 dimensions, for all codes" and "for all dimensions, some code" are different
 and the modifier cannot say which. Not prototyped.
 
-If that holds, dot-through subsumes `.any()` in filter position, and `Many`'s
-verbs are needed only where the fan-out itself is refined
-(`dimensions.filter(...).count()`) and for `list()` in projections — which
-narrows open question 13 considerably.
+If that held, dot-through would subsume `.any()` in filter position, and
+`Many`'s verbs would be needed only where the fan-out itself is refined
+(`dimensions.filter(...).count()`) and for `list()` in projections. The design
+kept `.any(*preds)` for predicates that must land on one child and built the
+universal as `FanOut.every(*preds)`, which composes across nested to-many
+edges with neither refusal (`query-language.md` §3.4, §3.5 and §14).
 
 ## Superseded: the grain claim
 
@@ -315,9 +294,9 @@ So a many-to-many product still needs an explicit join producing a wider row.
 Neither path traversal nor `.any()` provides it, and that remains unsolved.
 
 **Both halves of that paragraph were later overturned, in different ways.**
-"Fan-out: how graph APIs answer it" shows the *nested* result sidesteps the
-product entirely. And "The root determines the grain" retracts the middle
-claim: rooting at `component` and traversing `component -> flow` **does**
+The nested result sidesteps the product entirely (`query-language.md` §6, "A
+fan-out nests by default"). And rooting at the child retracts the middle claim
+(`query-language.md` §2.4, "The root fixes the grain"): rooting at `component` and traversing `component -> flow` **does**
 express the `(dataflow, component)` grain, because that upward edge is to-one
 per row and it is the flat shape `structure_frame` already returns. The
 sentence "which no single base relation expresses" was reasoning about

@@ -159,8 +159,9 @@ q.limit(1)                    ['0']
 q.limit(1).filter(id != '0')  ['1']    ← a row the query being refined did not contain
 ```
 
-That violates the principle. So `filter`, `qualify` and `order_by` raise
-`SliceError` on an already-sliced query. Both readings of the composition are
+That violates the principle. So `filter`, `qualify`, `order_by`, `intersect`,
+`difference`, `after`, `group_by` and `agg` raise `SliceError` on an
+already-sliced query. Both readings of the composition are
 defensible ("filter the whole set, then cap" and "of the first n, the ones
 matching"), and the language refuses rather than picking one silently.
 

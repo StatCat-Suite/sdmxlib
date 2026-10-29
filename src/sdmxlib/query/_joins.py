@@ -9,7 +9,7 @@ is what makes a path a proof rather than a hope.
 **Shared prefixes are deduplicated, and that is a requirement rather than an
 optimisation.** Two paths off one root — `dimensions.concept.id` and
 `dimensions.codelist.id` — must produce *one* join to `dsd_component`, not two.
-The correlated-subquery benchmark in `query-language-evidence.md` measured the
+The correlated-subquery benchmark in `docs/design/evidence/query-language.md` measured the
 cost of getting this wrong as linear in the number of fan-out columns.
 """
 

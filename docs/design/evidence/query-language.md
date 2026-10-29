@@ -1,5 +1,11 @@
 # The query language: evidence
 
+> Evidence record: peer surveys (polars 1.x, SQLAlchemy 2.x, ibis 12, Django
+> 6.x, DuckDB), schema and path measurements, benchmarks and prototypes from the
+> query-language design pass for #306/#280, August 2026, with in-place
+> corrections through October 2026 (#411, #425, #511). Not maintained against
+> the code; the design is [query-language.md](../query-language.md).
+
 Companion to `query-language.md`, which carries the design and the decisions.
 This file carries what was **run**: peer surveys, schema measurements,
 benchmarks, and the prototype log. Each entry states what it tested and what it
@@ -339,8 +345,7 @@ The peers split here: Django infers per context, SQLAlchemy makes the caller
 say. Inference fits a path-expression DSL, which has no join clause to hang
 `isouter` on, but it meant the design had to specify the *negation* case, which
 no draft did.
-*(Since resolved differently: a to-many hop compiles to a correlated
-`EXISTS`, never a join, and `~` over it is `NOT EXISTS` — a true complement.)*
+*(Since resolved; the rule as built is `query-language.md` §3.3 and §3.6.)*
 
 ### `list()` alignment in projections
 
@@ -384,13 +389,13 @@ Checked because a divergence here would change results without an error:
 | --- | --- | --- | --- | --- | --- |
 | `x != v` drops nulls | yes | yes (SQL) | yes (SQL) | yes | yes |
 | `is_in([])` → no rows | yes | yes — emits `1 != 1` | yes | yes | yes (#273) |
-| `select(name=expr)` kwargs | **yes** | `.label()` | `.annotate()` | **yes** | proposed (since built) |
+| `select(name=expr)` kwargs | **yes** | `.label()` | `.annotate()` | **yes** | proposed (built; `query-language.md` §6) |
 | `.any()` on a to-many → `EXISTS` | — | **yes** | no — `INNER JOIN` (dupes) | — | yes |
 
 Two notes. `select(alias=expr)` as keyword arguments is polars' and ibis's
-spelling and validates the design's `select(flow=…, dims=…)` (since built). And the `.any()` row
-restates the measured Django footgun from "To-many edges" — SQLAlchemy is the
-peer we match, deliberately.
+spelling and validates the design's `select(flow=…, dims=…)`. And the `.any()`
+row restates the measured Django footgun in `query-language.md` §3.3 —
+SQLAlchemy is the peer we match, deliberately.
 
 ### Names for array aggregation
 
@@ -402,12 +407,12 @@ function, which is the tiebreak used elsewhere in this file.
 ### Sweep scope
 
 - `PIVOT` and window functions, then unimplemented gaps listed in
-  `query-composition.md`. *(Windows have since
-  been built — `qualify(col.rank(...).over(...) == 1)`; `PIVOT` has not.)*
+  `query-composition.md`. *(Since answered: `query-language.md` §7.3 and §13,
+  item 11.)*
 - Streaming / chunked collection. polars has `collect(engine="streaming")` and
   ibis `.to_pyarrow_batches()`; nothing in this design said what happens when a
   result does not fit in memory, and its terminal list was silent on it.
-  *(Since built: `stream()` returns Arrow record batches.)*
+  *(Since built: `query-language.md` §5.)*
 - `group_by` / `agg` shapes beyond naming.
 - The data plane. Its operator mapping to `c[...]` was checked against
   a downstream SDMX REST service, but not against these peers, and its namespace is dynamic so
@@ -523,8 +528,8 @@ and is checked.
 
 ### Gap-analysis probes
 
-Three claims in "What the design still cannot express" checked rather than
-asserted.
+Three claims about what the design could not express checked rather than
+asserted (the gaps still open are `query-language.md` §13).
 
 **Any-language label search.** `name` is `MAP(VARCHAR, VARCHAR)`, and
 `name['en']` picks one language. Matching in *any* language needs map
@@ -681,14 +686,7 @@ The prototype covered less than the design:
   `.descendants.list(...)` maps onto the baked columns or needs a recursive CTE
   is open — and `narrower_transitive` already exists as a scoped verb, which is
   the replace-or-coexist question in concrete form.
-  **Since answered:** no recursive CTE is ever emitted. An earlier
-  correction here said that therefore `.descendants.list(...)` would not be
-  built and `narrower_transitive` would stay the only spelling; that was
-  overtaken. `ancestors` / `descendants` became declared edges over the baked
-  closure (`query-tree-paths.md`), so `sl.q.code.descendants.id.list()` is an
-  ordinary correlated list over stored columns, and `narrower_transitive` is
-  a named filter over the same edge. Recursion is still never path syntax —
-  the closure is read from stored columns.
+  *(Since answered: `query-language.md` §2.7 and `query-tree-paths.md`.)*
 - Binding a URN list with `unnest(?)` is the ~48 us/value path #271 measured. *(That rate was duckdb with pandas absent; with pandas importable it is ~1-2 us — DuckDB retries `import pandas` per bound value when it is missing (#411). The shape holds either way. See `tests/unit/test_value_set.py`.)*
   Fine at 60 URNs; at 5,000 it is what `value_set` exists for.
 
