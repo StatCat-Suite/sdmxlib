@@ -42,7 +42,7 @@ design; read it before changing the script.
   private host, because naming it in the gate would leak it.
   `check_indexes.py` and its test are exempt from its own scan.
 - `check_prose.py` exempts CLAUDE.md's "Writing style" section and itself,
-  since both quote the banned phrases. CHANGELOG.md and `design/archive/` are
+  since both quote the banned phrases. CHANGELOG.md and `history/` are
   not read.
 - `check_docstrings.py` consults only pydoclint's `DOC003`. Every other
   pydoclint code is discarded. It exits 2 when pydoclint fails to run

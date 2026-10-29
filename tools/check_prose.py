@@ -21,7 +21,7 @@ Headings: the Markdown in `MARKDOWN`, outside code fences. Phrases: that
 Markdown, and every Python, toml and justfile line under `CODE`. Issue
 references: the Markdown under `USER_DOCS`, outside code fences, but not under
 `DESIGN_DOCS`. CHANGELOG.md
-and the root `design/archive/` are left out as the historical record.
+and `history/` are left out as the historical record.
 
 CLAUDE.md's own "Writing style" section quotes the phrases it bans, so lines
 inside it are exempt. This file is exempt for the same reason.

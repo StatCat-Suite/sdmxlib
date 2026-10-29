@@ -97,7 +97,7 @@ def test_the_rules_section_of_claude_md_is_exempt_and_nothing_else(tmp_path: Pat
 
 
 def test_the_changelog_and_archive_are_not_read(tmp_path: Path) -> None:
-    root = _tree(tmp_path, {"CHANGELOG.md": f"{_SAMPLES[3]}\n", "design/archive/a.md": "## Old?\n"})
+    root = _tree(tmp_path, {"CHANGELOG.md": f"{_SAMPLES[3]}\n", "history/design-archive/a.md": "## Old?\n"})
     assert check_prose.find(root) == []
 
 
