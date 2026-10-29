@@ -1184,17 +1184,19 @@ class RestRegistry:
         Reads the file's ``DATAFLOW`` / ``STRUCTURE_ID`` column to name the
         dataflow, fetches it with its structure, and reads the file with it:
         the same `ObsQuery` `obs(flow)` returns, over the file's rows
-        instead of a fetch. A path is read in place on every query; bytes are
-        loaded once. See `sdmxlib.local._scan`.
+        instead of a fetch. A path is read in place on every query, and once
+        as it is scanned, to refuse a delete row; bytes are loaded once. See
+        `sdmxlib.local._scan`.
 
         Args:
             source: File path or raw SDMX-CSV bytes.
 
         Raises:
             ValueError: If the ``DATAFLOW`` column is absent or unparseable.
-            SdmxParseError: If the bytes are not readable SDMX-CSV, or lack a
-                column the structure declares. For a path, a row DuckDB cannot
-                read raises it when a query reads that row.
+            SdmxParseError: If the data is not readable SDMX-CSV, lacks a
+                column the structure declares, or holds a ``D`` (delete) row
+                in its ``ACTION`` column, which says what to remove rather
+                than what was observed.
             ValueError: If a value does not fit its component's type, when the
                 file is read; for a path, when a query reads the value.
 

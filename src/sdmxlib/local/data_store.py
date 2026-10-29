@@ -33,6 +33,7 @@ from sdmxlib.local.object_store import OptionValue, StoreSecret
 from sdmxlib.local.sql import SchemaInspector
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.datastructure import DataStructure
+from sdmxlib.model.errors import SdmxParseError
 from sdmxlib.model.ref import Ref
 from sdmxlib.model.representation import Facet
 from sdmxlib.query.observations import Observations, ObsQuery, Sidecar
@@ -628,6 +629,7 @@ class DuckDBDataStore(SessionFactory):
             f"CREATE OR REPLACE TABLE {lake_alias}.{schema}.{table} AS SELECT * FROM read_csv(?, types=?, header=true)",
             [str(path), dict(types)],
         )
+        refuse_deletions(conn, f"{lake_alias}.{schema}.{table}", kind="TABLE")
         # A column `types` leaves out is inferred, so a replacement may change
         # its type (#518) — and the inspector's cached `DESCRIBE` with it.
         self.inspect().invalidate(f"{lake_alias}.{schema}.{table}")
@@ -920,6 +922,36 @@ def _as_relation(
         return conn.from_arrow(source.to_arrow())
     # Last branch: pyarrow.Table. Imported lazily to keep pyarrow optional.
     return conn.from_arrow(source)
+
+
+def refuse_deletions(conn: duckdb.DuckDBPyConnection, relation: str, *, kind: str) -> None:
+    """Refuse SDMX-CSV data holding a delete row, dropping the relation it was read into.
+
+    SDMX-CSV 2.0 carries each row's action in an ``ACTION`` column, and a
+    ``D`` row says what to remove: read as an observation, it reports deleted
+    data as data, and the frame keeps no ``ACTION`` to tell it apart. A
+    SDMX-JSON ``Delete`` data set is refused the same way (GH-264). Without
+    an ``ACTION`` column, 1.0's shape, there is nothing to refuse.
+
+    Args:
+        conn: The handle the relation is on.
+        relation: The qualified relation just created over the data.
+        kind: ``"TABLE"`` or ``"VIEW"``, to drop it.
+
+    Raises:
+        SdmxParseError: If any row's action is ``D``.
+    """
+    columns = {row[0] for row in conn.execute(f"DESCRIBE {relation}").fetchall()}
+    if "ACTION" not in columns:
+        return
+    (deleted,) = conn.execute(f"SELECT count(*) FROM {relation} WHERE \"ACTION\" = 'D'").fetchall()[0]
+    if deleted:
+        conn.execute(f"DROP {kind} {relation}")
+        msg = (
+            f"the SDMX-CSV data holds {deleted} delete row{'' if deleted == 1 else 's'} (ACTION D); "
+            "a delete row says what to remove, not what was observed"
+        )
+        raise SdmxParseError(msg)
 
 
 def column_types(binding: DataflowBinding, dsd: DataStructure) -> dict[str, str]:

@@ -66,7 +66,10 @@ plane: it attaches the catalogs, serves observation reads and takes writes.
 - `scan_csv_into`, `scan_frame_into` and `resolve_flow` (`_scan.py`): a
   scanned file's rows as a relation in the attached `:memory:` catalog
   `sdmx_scans` (`_read_errors.SCANS`). A path is a view DuckDB reads on each
-  query; bytes and SDMX-JSON are a table loaded once.
+  query; bytes and SDMX-JSON are a table loaded once. `scan_csv_into` and
+  `DuckDBDataStore.ingest_csv` (a REST `obs()`) refuse SDMX-CSV holding a
+  `D` (delete) row with `SdmxParseError`, dropping the relation they made
+  (`data_store.refuse_deletions`, one pass at scan time; GH-284).
 - Package exports (`__init__.py`): `BundleRegistry`, `LocalRegistry`,
   `QueryPlan`, `SchemaInspector`, `LazyCodelist` and `LazyHierarchy`.
 
