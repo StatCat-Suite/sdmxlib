@@ -30,19 +30,18 @@
         "structureUrl": "https://example.org/structure/MDS.xml",
         "metadataflow": "urn:sdmx:org.sdmx.infomodel.metadatastructure.Metadataflow=AG:MDF(1.0)",
         "targets": [
-          "urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=AG:CATS(1.0)"
+          "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)"
         ],
         "attributes": [
           {
-            "id": "PARENT",
-            "value": {
-              "en": "parent-en",
-              "fr": "parent-fr"
-            },
+            "id": "MA",
             "attributes": [
               {
-                "id": "CHILD",
-                "value": "child"
+                "id": "MA_CHILD",
+                "value": {
+                  "en": "child-en",
+                  "fr": "child-fr"
+                }
               }
             ]
           }

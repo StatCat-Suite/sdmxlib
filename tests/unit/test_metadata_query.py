@@ -24,10 +24,11 @@ from sdmxlib.local import LocalRegistry
 from sdmxlib.model.codelist import Code, Codelist
 from sdmxlib.model.metadataflow import Metadataflow
 from sdmxlib.model.metadataset import MetadataSet, ReportedAttribute
-from sdmxlib.model.metadatastructure import MetadataStructure
+from sdmxlib.model.metadatastructure import MetadataAttribute, MetadataStructure
 from sdmxlib.model.ref import artefact_urn
 from sdmxlib.query._joins import PathError
 from sdmxlib.query.accessors import q
+from tests.support.factories import concept_ref
 
 pytestmark = pytest.mark.unit
 
@@ -42,7 +43,22 @@ def catalogue():
     with LocalRegistry(":memory:") as reg:
         described = _codelist("CL_DESCRIBED")
         bare = _codelist("CL_BARE")
-        msd = MetadataStructure(id="MSD", maintainer="AG", name={"en": "MSD"})
+        msd = MetadataStructure(
+            id="MSD",
+            maintainer="AG",
+            name={"en": "MSD"},
+            attributes=[
+                MetadataAttribute(
+                    id="QUALITY",
+                    concept=concept_ref("QUALITY"),
+                    children=[
+                        MetadataAttribute(id="COVERAGE", concept=concept_ref("COVERAGE")),
+                        MetadataAttribute(id="NOTE", concept=concept_ref("NOTE")),
+                    ],
+                ),
+                MetadataAttribute(id="CONTACT", concept=concept_ref("CONTACT")),
+            ],
+        )
         mdf = Metadataflow(id="MDF", maintainer="AG", name={"en": "MDF"}, structure=msd)
         for a in (described, bare, msd, mdf):
             reg.add(a)

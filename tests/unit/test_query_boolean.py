@@ -35,7 +35,7 @@ from sdmxlib.model.expr import item
 from sdmxlib.model.hierarchy import HierarchicalCode, Hierarchy, Level
 from sdmxlib.model.metadataflow import Metadataflow
 from sdmxlib.model.metadataset import MetadataSet, ReportedAttribute
-from sdmxlib.model.metadatastructure import MetadataStructure
+from sdmxlib.model.metadatastructure import MetadataAttribute, MetadataStructure
 from sdmxlib.model.ref import artefact_urn
 from sdmxlib.query._expr import BoolOp, Pred
 from sdmxlib.query.accessors import CodeRow, q
@@ -358,7 +358,15 @@ def test_the_metadata_dsl_is_wired() -> None:
     described = Codelist(
         id="CL_D", maintainer="AG", version="1.0", name={"en": "d"}, codes=[Code(id="A", name={"en": "a"})]
     )
-    msd = MetadataStructure(id="MSD", maintainer="AG", name={"en": "MSD"})
+    msd = MetadataStructure(
+        id="MSD",
+        maintainer="AG",
+        name={"en": "MSD"},
+        attributes=[
+            MetadataAttribute(id="COVERAGE", concept=concept_ref("COVERAGE")),
+            MetadataAttribute(id="TIER", concept=concept_ref("TIER")),
+        ],
+    )
     mdf = Metadataflow(id="MDF", maintainer="AG", name={"en": "MDF"}, structure=msd)
     mds = MetadataSet(
         id="MDS",

@@ -52,7 +52,7 @@ def reg() -> Iterator[sl.LocalRegistry]:
             maintainer=Agency(id="ESTAT"),
             name={"en": "Reporting"},
             attributes=[
-                MetadataAttribute(id="CONTACT", concept=concept_ref("CONTACT")),
+                MetadataAttribute(id="CONTACT", concept=concept_ref("CONTACT"), max_occurs=None),
                 MetadataAttribute(id="QUALITY", concept=concept_ref("QUALITY")),
             ],
         )

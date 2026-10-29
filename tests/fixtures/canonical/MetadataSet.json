@@ -66,17 +66,17 @@
           "$class": "ReportedAttribute",
           "annotations": [],
           "children": [],
-          "id": "CHILD",
+          "id": "MA_CHILD",
           "uri": null,
-          "value": "child"
+          "value": {
+            "en": "child-en",
+            "fr": "child-fr"
+          }
         }
       ],
-      "id": "PARENT",
+      "id": "MA",
       "uri": "https://example.org/uri/MDS-ATTR",
-      "value": {
-        "en": "parent-en",
-        "fr": "parent-fr"
-      }
+      "value": null
     }
   ],
   "description": {
@@ -113,7 +113,7 @@
   "structure": "urn:sdmx:org.sdmx.infomodel.metadatastructure.Metadataflow=AG:MDF(1.0)",
   "structure_url": "https://example.org/structure/MDS.xml",
   "targets": [
-    "urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=AG:CATS(1.0)"
+    "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)"
   ],
   "uri": "https://example.org/uri/MDS",
   "valid_from": "2020-01-01T00:00:00.000000Z",

@@ -28,12 +28,13 @@ from sdmxlib.local import LocalRegistry
 from sdmxlib.model.mapping import CategorySchemeMap, ItemMap
 from sdmxlib.model.metadataflow import Metadataflow
 from sdmxlib.model.metadataset import MetadataSet, ReportedAttribute
-from sdmxlib.model.metadatastructure import MetadataStructure
+from sdmxlib.model.metadatastructure import MetadataAttribute, MetadataStructure
 from sdmxlib.model.ref import Ref, artefact_urn
 from sdmxlib.query._expr import Cols, RowKind
 from sdmxlib.query.accessors import q
 from sdmxlib.storage.lazy import LazyCodelist, LazyHierarchy
 from tests.support import maximal
+from tests.support.factories import concept_ref
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -134,7 +135,12 @@ def populated() -> Iterator[LocalRegistry]:
                 maps=(ItemMap(source_id="A", target_id="B"),),
             )
         )
-        msd = MetadataStructure(id="MSD_Q", maintainer="AG", name={"en": "MSD"})
+        msd = MetadataStructure(
+            id="MSD_Q",
+            maintainer="AG",
+            name={"en": "MSD"},
+            attributes=[MetadataAttribute(id="CONTACT", concept=concept_ref("CONTACT"))],
+        )
         mdf = Metadataflow(id="MDF_Q", maintainer="AG", name={"en": "MDF"}, structure=msd)
         for artefact in (codelist, msd, mdf):
             reg.add(artefact)

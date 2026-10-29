@@ -56,8 +56,10 @@ mdf = sl.Metadataflow(
     name={"en": "Census footnote flow"},
     structure=msd,
     # At least one target is required — SDMX-ML 3.0 declares <Target> with
-    # minOccurs=1. The targets say what the reported metadata is *about*.
-    targets=[str(sl.Dataflow.urn_for(agency="STATCAN", id="DF_CENSUS", version="1.0"))],
+    # minOccurs=1. The targets say what the reported metadata may be *about*:
+    # a metadata set's targets must be among them, and a `*` stands for any
+    # part of a URN. These footnotes describe STATCAN codes.
+    targets=["urn:sdmx:org.sdmx.infomodel.codelist.Code=STATCAN:*(1.0).*"],
 )
 ```
 

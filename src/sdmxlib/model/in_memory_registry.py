@@ -23,6 +23,7 @@ Example:
 from collections.abc import Iterable, Iterator
 from typing import overload
 
+from sdmxlib.model._invariants import advise
 from sdmxlib.model._items import resolve_item
 from sdmxlib.model._rebind import bind
 from sdmxlib.model._resolvers import MapResolver
@@ -31,7 +32,7 @@ from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.hierarchy import Hierarchy, _applicable_hierarchies, _unique_hierarchy
 from sdmxlib.model.ref import Ref, SupportsUrn, artefact_urn, target_urn
 from sdmxlib.model.urn import SdmxUrn
-from sdmxlib.model.validation import ValidationError, _collect_refs
+from sdmxlib.model.validation import ValidationError, _collect_refs, metadata_sets_advisories
 from sdmxlib.model.version_rewrite import (
     RewrittenVersion,
     VersionRewrite,
@@ -96,6 +97,7 @@ class InMemoryRegistry:
         check_ingestable([artefact])
         self._rewritten.pop(str(artefact_urn(artefact)), None)
         self._intern(artefact)
+        advise(metadata_sets_advisories([artefact], self.get))
 
     def add_all(
         self, artefacts: Iterable[SupportsUrn], *, rewrite_version: VersionRewrite | None = None
@@ -132,6 +134,7 @@ class InMemoryRegistry:
             self._intern(artefact)
         for rewrite in rewrites:
             self._rewritten[rewrite.urn] = rewrite.original
+        advise(metadata_sets_advisories(batch, self.get))
         return rewrites
 
     def _refuse_rewrites(self, batch: list[SupportsUrn], rewrites: tuple[RewrittenVersion, ...]) -> None:

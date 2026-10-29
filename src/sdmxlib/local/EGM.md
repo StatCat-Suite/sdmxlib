@@ -34,7 +34,9 @@ plane: it attaches the catalogs, serves observation reads and takes writes.
   connection the caller owns. The caller keeps its lifecycle.
 - `LocalRegistry` (`registry.py`): `BundleRegistry` plus writes: `add`,
   `add_all`, `drop`, `replace`, `ingest`, `write_observations`, `sql`,
-  `scan_csv`, `scan_json` and `transaction`.
+  `scan_csv`, `scan_json` and `transaction`. A `MetadataSet` added beside its metadataflow and MSD is checked against them (IM §7.4.2.1,
+  GH-29): one `ImRuleWarning` per call names targets outside the flow's and attributes
+  the MSD does not define or allow that often (`validation.metadata_sets_advisories`).
 - `LocalRegistry.build(...)` (`registry.py`): creates a publication directory
   `<bundle>/<uuid7 token>` over the shared `<bundle>/data/`. Takes `previous=`
   or `resume=`. `resume=` reopens an unpublished publication and raises

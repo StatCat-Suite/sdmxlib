@@ -30,7 +30,7 @@ from sdmxlib.model.codelist import Code, Codelist
 from sdmxlib.model.hierarchy import HierarchicalCode, Hierarchy
 from sdmxlib.query.accessors import q
 from sdmxlib.query.query import SliceError
-from tests.support.factories import code_urn
+from tests.support.factories import code_urn, concept_ref
 from tests.support.narrow import present
 
 pytestmark = pytest.mark.unit
@@ -178,13 +178,21 @@ def test_the_hierarchy_dsl_is_guarded() -> None:
 def test_the_metadata_dsl_is_guarded() -> None:
     from sdmxlib.model.metadataflow import Metadataflow
     from sdmxlib.model.metadataset import MetadataSet, ReportedAttribute
-    from sdmxlib.model.metadatastructure import MetadataStructure
+    from sdmxlib.model.metadatastructure import MetadataAttribute, MetadataStructure
     from sdmxlib.model.ref import artefact_urn
 
     described = Codelist(
         id="CL_D", maintainer="AG", version="1.0", name={"en": "d"}, codes=[Code(id="A", name={"en": "a"})]
     )
-    msd = MetadataStructure(id="MSD", maintainer="AG", name={"en": "MSD"})
+    msd = MetadataStructure(
+        id="MSD",
+        maintainer="AG",
+        name={"en": "MSD"},
+        attributes=[
+            MetadataAttribute(id="A", concept=concept_ref("A")),
+            MetadataAttribute(id="B", concept=concept_ref("B")),
+        ],
+    )
     mdf = Metadataflow(id="MDF", maintainer="AG", name={"en": "MDF"}, structure=msd)
     mds = MetadataSet(
         id="MDS",
