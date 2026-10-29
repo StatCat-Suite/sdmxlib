@@ -95,6 +95,11 @@ through `RestRegistry.query` (structures) and `RestRegistry.obs`
 - Concurrent identical `query()` fetches run once, through `SingleFlight`.
   `get()` does not use it. The observation path serialises its fetch and
   ingest under `_data_lock`, one question per table at a time.
+- `RestRegistry._settled`, the bounded `latest -> pinned` map, is written
+  under `_settled_lock`, and `_raise_if_refused` reads a snapshot of the
+  refusal record, so concurrent `get`s neither collide evicting a pointer
+  nor fail iterating a refusal record another fetch is adding to (GH-286).
+  The refusal record has no bound; it holds one entry per refused artefact.
 - With `store=` set, a pinned `get` with `resolve=False` or `"parents"` is
   served from the store, when the store holds it, before any HTTP. A `latest`
   URN is never served from the store.
