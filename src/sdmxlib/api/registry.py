@@ -273,6 +273,9 @@ class RestRegistry:
         #: and an eviction costs a fetch rather than a wrong answer.
         self._settled: dict[str, SdmxUrn[object]] = {}
         self._settled_size = 256
+        #: Guards `_settled`'s writes: two threads evicting at capacity pick
+        #: the same oldest key, and the second `del` raises `KeyError`.
+        self._settled_lock = threading.Lock()
         #: What the provider served and the reader refused (#419), by URN —
         #: so `get` of one says why rather than that it does not exist.
         self._refused: dict[str, Refusal] = {}
@@ -460,12 +463,13 @@ class RestRegistry:
         """Raise naming why, if the artefact `urn` names was served and refused.
 
         A `latest` URN names no version, so it matches a refusal of any
-        version of the same artefact.
+        version of the same artefact. It reads a snapshot, since `_absorb` on
+        another thread may be adding a refusal.
 
         Raises:
             SdmxConformanceError: If `urn` names a refused artefact.
         """
-        for refusal in self._refused.values():
+        for refusal in tuple(self._refused.values()):
             refused = SdmxUrn.parse(refusal.urn)
             same = (refused.artefact_class, refused.agency, refused.id) == (urn.artefact_class, urn.agency, urn.id)
             if same and urn.version in {"latest", refused.version}:
@@ -600,13 +604,15 @@ class RestRegistry:
         so a stale entry cannot be served — which is what separates this from
         the `_latest` index #338 removed.
         """
-        self._settled[latest] = pinned
-        while len(self._settled) > self._settled_size:
-            del self._settled[next(iter(self._settled))]
+        with self._settled_lock:
+            self._settled[latest] = pinned
+            while len(self._settled) > self._settled_size:
+                del self._settled[next(iter(self._settled))]
 
     def _forget(self, latest: str) -> None:
         """Drop a pointer and the freshness that vouched for it."""
-        self._settled.pop(latest, None)
+        with self._settled_lock:
+            self._settled.pop(latest, None)
         self._client.forget_freshness()
 
     def _fetch_all_with[T](
