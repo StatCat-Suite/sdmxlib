@@ -181,6 +181,7 @@ class DocumentReport(TypedDict, total=False):
     read_lost: dict[str, int]
     read_lost_derivable: dict[str, int]
     read_gained: dict[str, int]
+    read_gained_derivable: dict[str, int]
     chunks: int
     peak_mb: int
 
@@ -319,7 +320,7 @@ class Totals:
         report["store_diff"] = self.store_diff.as_report()
         report["targets"] = {target: totals.report() for target, totals in self.targets.items()}
         report["read_lost"], report["read_lost_derivable"] = lost(self.source, self.written)
-        report["read_gained"] = gained(self.source, self.written)
+        report["read_gained"], report["read_gained_derivable"] = gained(self.source, self.written)
 
 
 class _TargetTotals:
