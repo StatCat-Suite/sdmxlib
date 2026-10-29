@@ -1622,7 +1622,7 @@ def _check_metadata_set_attributes(ms: MetadataSet, msd: MetadataStructure, issu
     reported attribute is one the MSD defines at that place in its tree,
     reported between its `min_occurs` and `max_occurs` times, and a
     presentational one carries no value. An uncoded value against its
-    attribute's representation is not checked yet (GH-29).
+    attribute's text format is not checked (GH-297).
     """
 
     def walk(reported: Sequence[ReportedAttribute], slots: Sequence[MetadataAttribute], path: str) -> None:
@@ -1706,7 +1706,7 @@ def _check_constraint_values(msg: StructureMessage, issues: list[ValidationIssue
     where the message holds the constraint's DSD and the component's codelist
     or value list; a value set with `remove_prefix` holds values with the
     codes' prefix removed and is not compared. A value against a text format
-    is not checked yet (GH-29).
+    is not checked (GH-297).
     """
     for dc in msg.constraints:
         for dsd in _constrained_structures(dc, msg):
