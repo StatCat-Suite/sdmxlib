@@ -22,7 +22,7 @@ Example:
 """
 
 import re
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from typing import Any
 
 import attrs
@@ -89,7 +89,7 @@ from sdmxlib.model.mapping import (
 from sdmxlib.model.message import MetadataMessage, StructureMessage
 from sdmxlib.model.metadata_provision import MetadataProvisionAgreement
 from sdmxlib.model.metadataflow import Metadataflow
-from sdmxlib.model.metadataset import MetadataSet
+from sdmxlib.model.metadataset import MetadataSet, ReportedAttribute
 from sdmxlib.model.metadatastructure import MetadataAttribute, MetadataStructure
 from sdmxlib.model.organisation import (
     AgencyScheme,
@@ -1534,6 +1534,116 @@ def validate(msg: StructureMessage | MetadataMessage) -> None:
     _check_evolving_structure_constraints(msg, advisories)
     _check_constraint_values(msg, advisories)
     advise(advisories)
+
+
+def metadata_sets_advisories(
+    artefacts: Iterable[object], lookup: Callable[[SdmxUrn[object]], object]
+) -> list[ValidationIssue]:
+    """`metadata_set_advisories` over the metadata sets among `artefacts`, each structure looked up once.
+
+    Args:
+        artefacts: What a registry just added.
+        lookup: The registry's `get`.
+
+    Returns:
+        Every rule the sets break, for one `_invariants.advise`.
+    """
+    found: dict[str, object] = {}
+
+    def cached(urn: SdmxUrn[object]) -> object:
+        key = str(urn)
+        if key not in found:
+            found[key] = lookup(urn)
+        return found[key]
+
+    return [
+        issue
+        for artefact in artefacts
+        if isinstance(artefact, MetadataSet)
+        for issue in metadata_set_advisories(artefact, cached)
+    ]
+
+
+def metadata_set_advisories(ms: MetadataSet, lookup: Callable[[SdmxUrn[object]], object]) -> list[ValidationIssue]:
+    """What a metadata set breaks of IM §7.4.2.1, against the structures `lookup` finds.
+
+    For the registries, which hold a set beside its metadataflow and MSD: a
+    message carries one or the other. Nothing is checked of a structure
+    `lookup` does not find, so a set added before its metadataflow is not
+    checked.
+
+    Args:
+        ms: The metadata set.
+        lookup: A registry's `get`: an artefact by URN, or None.
+
+    Returns:
+        The rules the set breaks, for `_invariants.advise`.
+    """
+    structure = lookup(ms.structure.urn)
+    if isinstance(structure, MetadataProvisionAgreement):
+        structure = None if structure.metadataflow is None else lookup(structure.metadataflow.urn)
+    if not isinstance(structure, Metadataflow):
+        return []
+    issues: list[ValidationIssue] = []
+    _check_metadata_set_targets(ms, structure, issues)
+    msd = None if structure.structure is None else lookup(structure.structure.urn)
+    if isinstance(msd, MetadataStructure):
+        _check_metadata_set_attributes(ms, msd, issues)
+    return issues
+
+
+def _wildcard_urn(pattern: str) -> re.Pattern[str]:
+    """A `WildcardUrnType` as a regular expression: `*` stands for any run of characters."""
+    return re.compile(".*".join(re.escape(part) for part in pattern.split("*")))
+
+
+def _check_metadata_set_targets(ms: MetadataSet, flow: Metadataflow, issues: list[ValidationIssue]) -> None:
+    """A metadata set's targets are among its metadataflow's (IM §7.4.2.1).
+
+    "The identifiable objects to which the metadata is to be attached must be
+    part of those specified in the relevant Metadataflow or
+    MetadataProvisionAgreement." A metadataflow names its targets as
+    wildcard URNs; one that names none restricts nothing here.
+    """
+    if not flow.targets:
+        return
+    patterns = [_wildcard_urn(target) for target in flow.targets]
+    for i, target in enumerate(ms.targets):
+        urn = str(target.urn)
+        if not any(pattern.fullmatch(urn) for pattern in patterns):
+            message = f"targets {urn}, which none of {flow.urn}'s targets ({', '.join(flow.targets)}) covers"
+            issues.append(ValidationIssue(path=f"MetadataSet:{ms.id}.targets[{i}]", message=message))
+
+
+def _check_metadata_set_attributes(ms: MetadataSet, msd: MetadataStructure, issues: list[ValidationIssue]) -> None:
+    """A metadata set reports the attributes its MSD defines, as often as it allows (IM §7.4.2.1).
+
+    "The MetadataSet must conform to the MetadataStructureDefinition": each
+    reported attribute is one the MSD defines at that place in its tree,
+    reported between its `min_occurs` and `max_occurs` times, and a
+    presentational one carries no value. An uncoded value against its
+    attribute's representation is not checked yet (GH-29).
+    """
+
+    def walk(reported: Sequence[ReportedAttribute], slots: Sequence[MetadataAttribute], path: str) -> None:
+        by_id = {slot.id: slot for slot in slots}
+        for attribute in reported:
+            if attribute.id not in by_id:
+                message = f"reports {attribute.id}, which {msd.urn} does not define here"
+                issues.append(ValidationIssue(path=f"{path}[{attribute.id}]", message=message))
+        for slot in slots:
+            found = [attribute for attribute in reported if attribute.id == slot.id]
+            if len(found) < slot.min_occurs or (slot.max_occurs is not None and len(found) > slot.max_occurs):
+                bound = "unbounded" if slot.max_occurs is None else slot.max_occurs
+                message = f"reports {slot.id} {len(found)} times, and {msd.urn} allows {slot.min_occurs}..{bound}"
+                issues.append(ValidationIssue(path=f"{path}[{slot.id}]", message=message))
+            for attribute in found:
+                if slot.is_presentational and attribute.value is not None:
+                    message = f"gives {slot.id} a value, and {msd.urn} makes it presentational, holding none"
+                    issues.append(ValidationIssue(path=f"{path}[{slot.id}].value", message=message))
+                walk(list(attribute.children), list(slot.children), f"{path}[{slot.id}].children")
+
+    walk(list(ms.attributes), list(msd.attributes), f"MetadataSet:{ms.id}.attributes")
 
 
 def _held_as[T](urn: SdmxUrn[object], held: Sequence[T]) -> list[T]:

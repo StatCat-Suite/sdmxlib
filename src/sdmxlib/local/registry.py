@@ -56,6 +56,7 @@ from sdmxlib.local.data_store import DuckDBDataStore, store_path
 from sdmxlib.local.engine import BundleEngine, spill_directory
 from sdmxlib.local.object_store import data_uri, sql_literal
 from sdmxlib.model._binding import binding
+from sdmxlib.model._invariants import advise
 from sdmxlib.model._items import find_item, owner_classes
 from sdmxlib.model._refshape import can_reach_ref, walk_plan
 from sdmxlib.model._tree import tree_rows
@@ -76,7 +77,7 @@ from sdmxlib.model.ref import Ref, SupportsUrn, UnresolvedRef, target_urn, urn_o
 from sdmxlib.model.registry import artefact_urn
 from sdmxlib.model.representation import Facet
 from sdmxlib.model.urn import SdmxUrn
-from sdmxlib.model.validation import SdmxConformanceError, ValidationError, ValidationIssue
+from sdmxlib.model.validation import SdmxConformanceError, ValidationError, ValidationIssue, metadata_sets_advisories
 from sdmxlib.model.version_rewrite import (
     RewrittenVersion,
     VersionRewrite,
@@ -2657,6 +2658,7 @@ class LocalRegistry(BundleRegistry):
         # in a 3.x model; the rewrite that admits one is `add_all`'s (#420).
         check_ingestable([artefact])
         self._put(artefact, source_registry=source_registry)
+        advise(metadata_sets_advisories([artefact], self.get))
 
     def _put(self, artefact: SupportsUrn, *, source_registry: str | None) -> None:
         """`add` without `check_ingestable`, for a batch `add_all` has checked whole."""
@@ -2726,6 +2728,7 @@ class LocalRegistry(BundleRegistry):
                 self._put(artefact, source_registry=source_registry)
             for rewrite in rewrites:
                 writers.put_version_rewrite(self._c, rewrite.urn, rewrite.original)
+        advise(metadata_sets_advisories(batch, self.get))
         return rewrites
 
     def _refuse_rewrites(self, batch: list[SupportsUrn], rewrites: tuple[RewrittenVersion, ...]) -> None:

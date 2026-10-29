@@ -50,7 +50,9 @@ hierarchical roll-ups.
   `isinstance`. `ref` returns a Ref bound to the registry's own resolver.
   `applicable_hierarchies`, `unique_hierarchy`, `check_binding_drift` and
   `validate_binding` answer graph and drift questions. `add_all` can rewrite
-  SDMX 2.1 versions (`version_rewrite.py`).
+  SDMX 2.1 versions (`version_rewrite.py`). A `MetadataSet` added beside its metadataflow and MSD is checked against them (IM §7.4.2.1,
+  GH-29): one `ImRuleWarning` per call names targets outside the flow's and attributes
+  the MSD does not define or allow that often (`validation.metadata_sets_advisories`).
 - `Resolver`, `binding()` and `current()` (`_binding.py`), plus `MapResolver`
   and `document_binding` (`_resolvers.py`): the ContextVar binding that
   attaches every Ref built inside a block to a resolver.

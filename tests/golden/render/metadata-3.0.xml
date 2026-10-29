@@ -17,12 +17,11 @@
     <com:Description xml:lang="en">MDS-DESC-en</com:Description>
     <com:Description xml:lang="fr">MDS-DESC-fr</com:Description>
     <md:Metadataflow>urn:sdmx:org.sdmx.infomodel.metadatastructure.Metadataflow=AG:MDF(1.0)</md:Metadataflow>
-    <md:Target>urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=AG:CATS(1.0)</md:Target>
-    <md:Attribute id="PARENT">
-      <com:Text xml:lang="en">parent-en</com:Text>
-      <com:Text xml:lang="fr">parent-fr</com:Text>
-      <md:Attribute id="CHILD">
-        <md:Value>child</md:Value>
+    <md:Target>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)</md:Target>
+    <md:Attribute id="MA">
+      <md:Attribute id="MA_CHILD">
+        <com:Text xml:lang="en">child-en</com:Text>
+        <com:Text xml:lang="fr">child-fr</com:Text>
       </md:Attribute>
     </md:Attribute>
   </mes:MetadataSet>

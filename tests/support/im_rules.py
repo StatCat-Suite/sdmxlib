@@ -577,7 +577,14 @@ RULES: tuple[Rule, ...] = (
         101,
         "Note that the MetadataSet must conform to the MetadataStructureDefinition associated to the Metadataflow "
         "or MetadataProvisionAgreement",
-        NotChecked(_CROSS),
+        Warned(
+            (
+                Check(
+                    "_check_metadata_set_attributes",
+                    "tests/unit/test_metadata_set_conformance.py::test_an_attribute_the_msd_lacks_warns",
+                ),
+            )
+        ),
     ),
     Rule(
         "IM-7.4.2.1-2",
@@ -596,7 +603,14 @@ RULES: tuple[Rule, ...] = (
         102,
         "a set of TargetIdentifiableObjects, which must be part of those specified in the relevant Metadataflow "
         "or MetadataProvisionAgreement.",
-        NotChecked(_CROSS),
+        Warned(
+            (
+                Check(
+                    "_check_metadata_set_targets",
+                    "tests/unit/test_metadata_set_conformance.py::test_a_target_outside_the_flows_warns[in-memory]",
+                ),
+            )
+        ),
     ),
     Rule(
         "IM-7.4.2.1-4",

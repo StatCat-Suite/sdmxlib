@@ -28,6 +28,7 @@ from sdmxlib.model.mapping import CategorySchemeMap, ItemMap
 from sdmxlib.model.metadataflow import Metadataflow
 from sdmxlib.model.metadataset import MetadataSet, ReportedAttribute
 from sdmxlib.model.ref import Ref
+from sdmxlib.model.urn import SdmxUrn
 from tests.support import maximal
 
 #: Where the golden files live, one per class.
@@ -81,14 +82,15 @@ def _the_rest(scheme: CategoryScheme, flow: Metadataflow, dsd: DataStructure) ->
         **{key: value for key, value in maximal._maintainable("MDS").items() if key != "version"},
         version="1.0.0",
         structure=Ref.to(flow),
-        targets=[Ref.to(scheme)],
+        # What the metadataflow targets, and the MSD's attributes as it defines
+        # them: `MA` presentational, so its child carries the value (GH-29).
+        targets=[Ref[object].unresolved(SdmxUrn.parse(flow.targets[0]))],
         attributes=[
             ReportedAttribute(
-                id="PARENT",
-                value={"en": "parent-en", "fr": "parent-fr"},
+                id="MA",
                 annotations=maximal._annotations("MDS-ATTR"),
                 uri="https://example.org/uri/MDS-ATTR",
-                children=[ReportedAttribute(id="CHILD", value="child")],
+                children=[ReportedAttribute(id="MA_CHILD", value={"en": "child-en", "fr": "child-fr"})],
             )
         ],
     )
