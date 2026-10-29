@@ -114,10 +114,9 @@ hierarchical roll-ups.
   stores a rebound copy (`_rebind.py`) and leaves the caller's object
   untouched.
 - `InMemoryRegistry._intern` replaces an entry by URN in `_store` and in the
-  new object's type bucket of `_by_type`. It removes the URN from no other
-  bucket, so re-adding a URN as a different class (a `GeographicCodelist`
-  over a `Codelist`) leaves the stale copy in `get_all` of the old class
-  while `get` returns the new one (GH-263).
+  new object's type bucket of `_by_type`, and removes it from the replaced
+  object's bucket when the class changed (a `GeographicCodelist` over a
+  `Codelist` shares its URN), so `get` and `get_all` agree (GH-263).
 - The model holds SDMX 3.x versions. `add` refuses a version that only SDMX 2.1
   accepts. `add_all` can rewrite such versions instead.
 - A `MaintainableArtefact` subclass is expected to set `sdmx_package`,
