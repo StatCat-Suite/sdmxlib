@@ -12,7 +12,7 @@ StatCat-Suite publishes SDMX products as sdmxlib bundles. A bundle is one direct
 
 [`sharded-bundle-catalog.md`](sharded-bundle-catalog.md) (the specification, fifth revision) defines the formats and behaviour: manifest 2.x, fingerprints, the catalog index, routing, pools, cache keys, publication and garbage collection. This plan orders the remaining work into phases so that every repository stays releasable at the end of each phase. It specifies Phases 1 to 3 to implementation level, states the contracts and gating tests of Phases 4 to 6, and outlines Phases 7 to 9, which are re-planned once Phase 6 is merged.
 
-Phase 0, the specification's fifth revision, is merged (PR #222). sdmxlib 0.75.0 is released with tier-3 reads, store-neutral verification, tiered pulls, the fingerprint comparison and the derived tables (GH-180 to GH-184).
+Phase 0, the specification's fifth revision, is merged (PR #222). sdmxlib 0.75.0 is released with tier-3 reads, store-neutral verification, tiered pulls, the fingerprint comparison and the derived tables (GH-180 to GH-184). Phase 1 and measurement track M are done, released in sdmxlib 0.76.0; sdmxlib 0.77.0 is current.
 
 ## The Problem
 
@@ -24,7 +24,7 @@ A serving pod opens one bundle. At catalog scale that fails in four ways (specif
 *   **Shard**: what the router attaches, one publication of one bundle. The plan says *bundle* for the product and *publication* for one version of it.
 *   **Tier**: where a file lives when served. Tier 1 (manifest, `meta.duckdb`, `lake.ducklake`) is pulled before a pod is ready; tier 2 (search tables) is pulled on first use; tier 3 (Parquet data files) is read from object storage by byte range.
 *   **Pinned**: a bundle a pool attaches before its pods report ready.
-*   **Partial**: a codelist or scheme vendored with only the codes a product uses and their ancestors (`isPartial="true"`). It records the fingerprint of the full artefact it was cut from (`cut_from`, specification §4.2).
+*   **Partial**: a codelist vendored with only the codes a product uses and their ancestors (`isPartial="true"`). It records the fingerprint of the full artefact it was cut from (`cut_from`, specification §4.2).
 *   **Structures bundle**: a bundle of `kind: structures` holding full codelists, concept schemes, category schemes and hierarchies, with no observations (specification §8).
 *   **Release**: the 08:30 step that moves staged publications to `serving` with one conditional write of `catalog/current` (specification §11.2). The plan calls that write *the flip*.
 *   **Pre-materialisation**: computing a release's most-requested results ahead of 08:30 into the result store, in a job that runs the pods' image (specification §11.2 step 3).
@@ -55,7 +55,7 @@ A serving pod opens one bundle. At catalog scale that fails in four ways (specif
 *   **Q1. CODR bundle granularity** (specification open question 6): one bundle per table by default. The synthetic corpus uses one per table; the real split is decided with the CODR producers.
 *   **Q2. StatCan's structures-bundle split** (open question 8): by artefact family, by change rate, or both. Phase 3 builds `kind: structures` with any split.
 *   **Q3. Code search scope** (open question 4): whether geography-first agent queries need the catalog-level code index to cover partials. Phase 7 builds it over full codelists only.
-*   **Q4. Block cache** (GH-185): whether tier-3 reads need a disk cache beyond DuckDB's in-memory external file cache. Measurement track M decides; it gates no phase.
+*   **Q4. Block cache** (GH-185): settled by measurement track M. A repeated read in one process costs no request with DuckDB's in-memory external file cache, so no disk cache is built (specification §7.1).
 *   **Q5. Ingress resolution**: the ingress hashes on `bundle_id`, which an SDMX REST path does not contain. Phase 6 chooses between an ingress filter that reads a path-to-bundle map the router publishes, and routing every request to any pod, which forwards it to the owner. Both are tested against Phase 8's remap bound.
 *   **Q6. Structure versioning at the FMR** (specification open question 5): StatCan edits legacy `1.0` artefacts in place. The fingerprints record each edit, and invariant 10 holds back every product cut from an edited full artefact until it is republished. Whether StatCan moves to semantic versions, which FMR freezes once final, is an FMR governance decision outside this program.
 
@@ -108,7 +108,7 @@ The specification's architecture (§3) stands. The plan fixes three placements t
 | Phase | Repository | Milestone | Depends on | Releases |
 |---|---|---|---|---|
 | 0 Specification v5 | sdmxlib | — | — | merged (PR #222) |
-| 1 Closure builder, `cut_from`, 0.76 | sdmxlib | M6 (sdmxlib part) | 0 | sdmxlib 0.76.0 |
+| 1 Closure builder, `cut_from`, 0.76 | sdmxlib | M6 (sdmxlib part) | 0 | done, sdmxlib 0.76.0 |
 | 2a Adopt sdmxlib 0.76 | statcatlib | M8 prerequisite | 1 | statcatlib minor |
 | 2b Token-named search tables | statcatlib | M8 prerequisite | 2a | statcatlib minor |
 | 3 Structures bundles | statcatlib | M6 | 1, 2a | statcatlib minor |
@@ -118,7 +118,7 @@ The specification's architecture (§3) stands. The plan fixes three placements t
 | 7 Catalog-level search | statcatlib, sdmxlib-rest | M13 | 4, 6 | outline |
 | 8 Kubernetes | sdmxlib-rest | M11 | 6 | outline |
 | 9 Drills | sdmxlib-rest | M12 | 8 | outline |
-| M Tier-3 measurement (GH-185) | sdmxlib | — | — | a release only if it builds a cache |
+| M Tier-3 measurement (GH-185) | sdmxlib | — | — | done in sdmxlib 0.76.0; no cache built |
 
 Phase 5's release job is tested against the index sequence alone, with no pods: the staged index, the serving index and the ETag-conditional write. Phase 6 tests the same flip under load with pods. No phase waits on a later one.
 
@@ -179,7 +179,7 @@ The specification records the design alternatives and their rejections (§7.4, �
 ## Additional Resources
 
 *   [`sharded-bundle-catalog.md`](sharded-bundle-catalog.md): the specification this plan builds.
-*   [`../bundle.md`](../bundle.md): the bundle format, manifest 2.0.
+*   [`../bundle.md`](../bundle.md): the bundle format, manifest 2.1.
 *   [`caching.md`](caching.md): the rules every cache in this program follows.
 *   [GH-136](https://github.com/StatCat-Suite/sdmxlib/issues/136): the cross-repo tracking issue.
 *   [GH-221](https://github.com/StatCat-Suite/sdmxlib/issues/221): the incoming-reference closure, with the FMR measurement.
@@ -199,60 +199,37 @@ Each phase lists its repository, issues, files and tests, and ends with that rep
 
 ### Target Files to Create/Modify
 
-#### Phase 1: sdmxlib closure builder, `cut_from` and the 0.76 release
+#### Phase 1: sdmxlib closure builder, `cut_from` and the 0.76 release (done)
 
-Issues: [GH-221](https://github.com/StatCat-Suite/sdmxlib/issues/221) (reference direction), [GH-223](https://github.com/StatCat-Suite/sdmxlib/issues/223) (`build_bundle`), [GH-224](https://github.com/StatCat-Suite/sdmxlib/issues/224) (`cut_from`, manifest 2.1).
+Issues: [GH-221](https://github.com/StatCat-Suite/sdmxlib/issues/221) (reference direction), [GH-223](https://github.com/StatCat-Suite/sdmxlib/issues/223) (`build_bundle`), [GH-224](https://github.com/StatCat-Suite/sdmxlib/issues/224) (`cut_from`, manifest 2.1), [GH-228](https://github.com/StatCat-Suite/sdmxlib/issues/228) (sibling dataflows). Released in sdmxlib 0.76.0.
 
-1.  **`src/sdmxlib/api/session.py`, `src/sdmxlib/api/registry.py`** (Modify; GH-221)
-    *   `resolve` becomes `bool | Literal["all", "parents"] | Sequence[type]`. `_references_for` maps `"all"` to `references=all` and `"parents"` to `references=parents`; `True` stays `descendants`.
-    *   The session records direction as well as completeness. `Completeness` gains `CLOSED` above `FULL`, set by an `all` fetch with `detail=full`. The session also records, per URN, whether its parents were fetched. `_already_held` answers a `resolve="all"` request from the session only at `CLOSED`, and a `resolve="parents"` request only when parents were fetched, so an earlier `descendants` fetch satisfies neither.
-    *   Artefacts a `parents` fetch brings in, such as sibling dataflows of a shared DSD, are stored like any other. A bundle's closure leaves them out because `References.closure` starts from the requested dataflow.
-    *   The docstring states that over SDMX 2.1 no hierarchy association arrives.
-2.  **`src/sdmxlib/bundle/_build.py`** (Create), **`src/sdmxlib/bundle/__init__.py`** (Modify; GH-223)
-    *   The signature:
+1.  **`api/session.py`, `api/registry.py`** (GH-221). `resolve` takes `"all"` and `"parents"` beside `True`, `False` and a type list; `_references_for` sends each as `references=`. The session records direction in its own set, `Session._parents`, beside `Completeness`: `record_parents` adds a URN fetched with `"all"` or `"parents"`, and `get_at_least(..., parents=True)` answers from the session only for such a URN, so an earlier `descendants` fetch never answers an `all` or `parents` request.
+2.  **`bundle/_build.py`** (GH-223). The signature:
 
-        ```python
-        def build_bundle(
-            source: RestRegistry | BundleRegistry,
-            dataflows: Sequence[SdmxUrn[Dataflow]],
-            path: str | Path,
-            *,
-            observations: Mapping[str, WriteSource] | None = None,
-            partials: bool = True,
-            producer: Producer,
-            provenance: Provenance | None = None,
-            lifecycle: Lifecycle = "live",
-        ) -> Manifest
-        ```
+    ```python
+    def build_bundle(
+        source: RestRegistry | BundleRegistry,
+        dataflows: Sequence[SdmxUrn[Dataflow]],
+        path: str | Path,
+        *,
+        bundle_id: str,
+        producer: Producer,
+        observations: Mapping[str, WriteSource] | None = None,
+        partials: bool = True,
+        provenance: Provenance | None = None,
+        lifecycle: Lifecycle = "live",
+    ) -> Manifest
+    ```
 
-    *   **Fetch.** For a `RestRegistry`, it fetches each dataflow with `resolve="all"` and its DSD with `resolve="parents"` into a staging `LocalRegistry`. For a `BundleRegistry` (a published product or structures bundle), it reads the store directly, since the store's `artefact_ref` already holds the incoming edges.
-    *   **Select.** It takes the union of each dataflow's `References.closure` and adds those artefacts to `LocalRegistry.build(path)`.
-    *   **Observations.** `observations` maps a dataflow URN to anything `LocalRegistry.write_observations` reads: a Polars frame, an Arrow reader, or a DuckDB relation over a DuckLake table. Each is written to its own table and bound with `DataflowBinding.from_dsd`. `None` builds a structures-only bundle.
-    *   **Partials.** With `partials=True`, each enumerated codelist is cut before `write_manifest`. It keeps the codes the dataflow's observations use in that dimension (a `SELECT DISTINCT` over the written table) together with the codes its allowed content constraints name, and `Codelist.partial` (`model/codelist.py:668`) adds their ancestors. The cut records `cut_from`, the artefact fingerprint of the full codelist. A dataflow with no observations keeps full codelists.
-    *   **Publish.** It calls `write_manifest(..., cut_from=...)` and then `check_bundle(at="publish")`.
-    *   **`fetch_bundle`.** `fetch_bundle` (`bundle/_fetch.py`) becomes `build_bundle` with `observations` from the source's narrowed `obs()` stream and `partials=False`. Its manifests keep their current artefacts and gain the incoming ones.
-    *   **Errors.**
-        *   `TypeError` when a URN is not a dataflow at the source.
-        *   `ValueError` naming the dataflow when its DSD is absent.
-        *   `ValueError` naming the dimension and the codes when `observations` holds a coded value outside the full codelist.
-3.  **`src/sdmxlib/bundle/_write.py`, `src/sdmxlib/bundle/_check.py`, `src/sdmxlib/bundle/manifest.schema.json`, `docs/bundle.md`** (Modify; GH-224)
-    *   `write_manifest` takes `cut_from: Mapping[str, str] | None` (partial URN to full fingerprint) and writes `ArtefactEntry.cut_from`. The manifest's `format_version` becomes `"2.1"`. A 2.0 reader reads it and ignores the field, by `docs/bundle.md`'s minor-version rule.
-    *   `check_bundle(at="publish", structures=<publication path> | None)`: when `structures` is given, each partial with `cut_from` needs a full artefact at its URN in that publication whose fingerprint equals `cut_from`. The partial's code ids and parents must also be a subset of that artefact's. Each mismatch is a finding naming the URN and the first missing code.
-    *   `docs/bundle.md` documents `cut_from` and the `structures` check.
-4.  **Tests**
-    *   `tests/integration/test_bundle_fetch_live.py` (Modify): three cassettes recorded from the local FMR (Colima, `sdmxio/fmr-mysql:12.4.2` on `localhost:8080`). The probe artefacts `ECB:CC_EXR_PROBE`, `ECB:H_CURRENCY_PROBE` and `ECB:HA_EXR_CURRENCY_PROBE` load from `tests/integration/fmr/12.4.2/incoming.xml`.
-        *   The 3.0 fetch holds all three.
-        *   With the constraint edited, `EXR`'s structural fingerprint differs and every other artefact's fingerprint is equal.
-        *   The 2.1 fetch holds the constraint and the hierarchy, and no association.
-
-        The module docstring records the steps that load the probes and record the cassettes.
-    *   `tests/unit/test_api_session.py` (Modify): with a counting transport, a `descendants` fetch followed by `resolve="all"` on the same URN sends two requests, and a second `resolve="all"` sends none.
-    *   `tests/unit/test_bundle_build.py` (Create):
-        *   A `BundleRegistry` source with a constraint stored beside its dataflow gives a closure that holds the constraint.
-        *   Observations using three codes of a 20-code hierarchical codelist give a partial holding those codes and their ancestors, with `cut_from` equal to the full codelist's fingerprint.
-        *   A coded value outside the codelist is refused with the dimension named.
-    *   `tests/unit/test_bundle_check.py` (Modify): a partial with a code the full artefact lacks is a finding naming that code, and a `cut_from` that matches no artefact in `structures` is a finding naming the URN.
-5.  **Release 0.76.0**: `just release-1-preview` through `just release-5-pypi`. The `docs/upgrading.md` section covers store schema 2.51, GH-213's observation order, `resolve`'s new values, `fetch_bundle`'s larger closure and manifest 2.1.
+    *   **Fetch and select.** From a `RestRegistry` it fetches each dataflow with `resolve="all"` and its DSD with `resolve="parents"`, adds everything fetched to `LocalRegistry.build(path)` and drops what the union of the dataflows' `References.closure` does not reach. From a `BundleRegistry` it copies the closure the store holds.
+    *   **Observations.** Each dataflow's rows go to their own table in schema `obs` and are bound with `DataflowBinding.from_dsd`; a dataflow with none is bound to nothing.
+    *   **Partials.** `partials=True` applies specification §8's rule. It cuts `Codelist`s only, keeping the observed codes, the codes the allowed constraints name (with cascade) and the codes other kept artefacts reference, plus their ancestors. It leaves a codelist full when a Hierarchy places it, when it has extensions, when a component it enumerates has no column, when no observations are given, or when the cut would keep every code. Each cut records `cut_from`, the full codelist's fingerprint. `fold_overlays` drops `cut_from` on a folded publication (GH-272).
+    *   **Publish.** It writes the manifest with `cut_from` and runs no check; the caller runs `check_bundle`, with `structures=` to check the partials.
+    *   **Errors.** `FileExistsError` for a non-empty `path`; `TypeError` for a URN that is no dataflow; `ValueError` for a missing DSD, for `observations` naming a dataflow not built, and for a coded value outside its codelist, naming the dataflow, the component and the values.
+    *   **`fetch_bundle`** calls it with `partials=False`.
+3.  **`bundle/_write.py`, `bundle/_check.py`, `manifest.schema.json`, `docs/bundle.md`** (GH-224). `write_manifest(cut_from=...)` writes `ArtefactEntry.cut_from` at manifest 2.1. `check_bundle(structures=<publication>)` checks each partial's `cut_from` and its codes and parents against the full artefact, at `publish` and `receive`, and is refused at `open`.
+4.  **Tests.** `tests/unit/test_rest_references.py` (direction on the wire and in the session), `tests/unit/test_bundle_build.py` (closure, cut, cascade, hierarchy, refusals), `tests/unit/test_bundle_cut_from.py` (`cut_from` and the `partials` check), and two FMR cassettes in `tests/integration/test_bundle_fetch_live.py`, over 3.0 and 2.1, loaded from `tests/integration/fmr/12.4.2/incoming.xml`.
+5.  **Release 0.76.0.** `docs/upgrading.md` covers store schema 2.51, GH-213's observation order and GH-228's sibling fingerprints. `resolve`'s new values and manifest 2.1 are additive and have no section.
 
 #### Phase 2a: statcatlib adopts sdmxlib 0.76 (StatCat-Suite/statcatlib#46, StatCat-Suite/statcatlib#47)
 
@@ -378,16 +355,9 @@ Deployments for `hot`, `base` and `search`; KEDA scaling; probes and `preStop` p
 
 The §9.2 schema bump with mixed pods and zero non-2xx responses; restore by pointing `current` back; restore of a deleted token directory from the storage account's replica. Each restore ends with `check_bundle(at="receive")` on every entry.
 
-#### Measurement track M: tier-3 reads (GH-185)
+#### Measurement track M: tier-3 reads (GH-185) (done)
 
-1.  **`tests/stores/test_tier3_reads.py`** (Create), marked `stores` so that `just test-stores` runs it and `just ci` does not.
-    *   It reads the census publication's dataflow with the fewest observations from the Azurite container, through `LocalRegistry.bundle(path, remote=...)`.
-    *   It runs with DuckDB's external file cache off, on, and on with spill. For a first and a repeated `obs()`, and again after a process restart, it records GET count, bytes, wall time, and retained and peak memory.
-    *   It writes the results to `bench/baselines/tier3.json`.
-2.  **`src/sdmxlib/local/engine.py`** (Modify) only if, with the cache on, a repeated read in the same process issues more than 10% of the first read's GETs.
-    *   `BundleEngine(cache: Literal["memory", "spill"] | None = None)`: `"memory"` sets `enable_external_file_cache`, and `"spill"` also sets `external_file_cache_spill`.
-    *   A unit test counts the GETs of a repeated read.
-3.  **Specification §7.1**: the measurement and its decision.
+Built as `bench/tier3/` (`bench_tier3.py`, `baselines.json`, `README.md`), run by `just bench-tier3 <publication>` outside `just ci`, since it uploads the census publication's 2.1 GB of data files to Azurite. `just ci` runs the object-store tier, `just test-stores` (`tests/stores/`, `justfile:255`), which checks that a remote read equals the local one. With DuckDB's external file cache on, a repeated read in the same process issues no request, so `BundleEngine` gained no cache setting. Specification §7.1 records the measurement; GH-231 measures request sizing in a cloud region.
 
 ### Verification Plan
 
