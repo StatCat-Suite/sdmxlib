@@ -17,6 +17,7 @@ components only, so the envelope is never a column of its result.
 import csv
 import io
 import re
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Final
 
@@ -59,31 +60,43 @@ def parse_dataflow_id(dataflow_id: str) -> tuple[str, str, str]:
 STRUCTURE_KINDS: Final[tuple[str, ...]] = ("dataflow", "datastructure", "dataprovision")
 
 
+def _head(source: str | Path | bytes) -> tuple[list[str], list[str]] | None:
+    """The header and the first data row, read as CSV records, or None when the data has no row.
+
+    Read record by record, so a header or row of any length comes whole: a
+    fixed 4096-character prefix ended inside a header wider than that, and the
+    file then read as naming no structure. A path is decoded strictly, so a
+    bad byte raises `UnicodeDecodeError`; bytes are decoded with replacement.
+
+    Lines end at a line feed alone, a carriage return and line feed kept
+    whole, so a bare carriage return inside an unquoted field reaches `csv`,
+    which refuses it as DuckDB does, rather than ending the record there.
+    """
+    if isinstance(source, (str, Path)):
+        with Path(source).open(newline="\n", encoding="utf-8") as f:
+            return _two_records(csv.reader(f))
+    with io.TextIOWrapper(io.BytesIO(source), encoding="utf-8", errors="replace", newline="\n") as f:
+        return _two_records(csv.reader(f))
+
+
+def _two_records(reader: Iterator[list[str]]) -> tuple[list[str], list[str]] | None:
+    try:
+        return next(reader), next(reader)
+    except StopIteration:
+        return None
+
+
 def _peek_dataflow_id(source: str | Path | bytes) -> str | None:
     """Extract the DATAFLOW value from the first data row without reading the whole file."""
-    if isinstance(source, (str, Path)):
-        with Path(source).open(newline="", encoding="utf-8") as f:
-            head = f.read(4096)
-    else:
-        head = source[:4096].decode("utf-8", errors="replace")
-
-    reader = csv.reader(io.StringIO(head))
-    try:
-        header = next(reader)
-    except StopIteration:
+    head = _head(source)
+    if head is None:
         return None
-    df_idx: int | None = None
+    header, first_row = head
     for col in (_DATAFLOW_COL, _STRUCTURE_ID_COL):
         if col in header:
-            df_idx = header.index(col)
-            break
-    if df_idx is None:
-        return None
-    try:
-        first_row = next(reader)
-    except StopIteration:
-        return None
-    return first_row[df_idx] if df_idx < len(first_row) else None
+            index = header.index(col)
+            return first_row[index] if index < len(first_row) else None
+    return None
 
 
 def _peek_structure(source: str | Path | bytes) -> tuple[str | None, str | None]:
@@ -96,19 +109,13 @@ def _peek_structure(source: str | Path | bytes) -> tuple[str | None, str | None]
     first element is None there and the caller treats it as a dataflow.
     """
     try:
-        if isinstance(source, (str, Path)):
-            with Path(source).open(newline="", encoding="utf-8") as f:
-                head = f.read(4096)
-        else:
-            head = source[:4096].decode("utf-8", errors="replace")
-        reader = csv.reader(io.StringIO(head))
-        header = next(reader)
-        first_row = next(reader)
-    except StopIteration:
-        return None, None
+        head = _head(source)
     except (csv.Error, UnicodeDecodeError) as exc:
         msg = f"the SDMX-CSV header could not be read: {exc}"
         raise SdmxParseError(msg) from exc
+    if head is None:
+        return None, None
+    header, first_row = head
 
     def value(column: str) -> str | None:
         if column not in header:
