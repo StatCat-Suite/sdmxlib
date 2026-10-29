@@ -22,10 +22,12 @@ from __future__ import annotations
 import threading
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
+from typing import override
 
 import pytest
 
 import sdmxlib as sl
+from sdmxlib.api.session import Completeness
 from sdmxlib.model.concept import Concept
 from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.model.ref import Ref
@@ -270,3 +272,93 @@ def test_the_catalog_probe_uses_a_per_thread_handle() -> None:
     with sl.RestRegistry("https://example.test/service", id="ECB") as reg:
         seen = _race(lambda _i: {reg._current_catalog() for _ in range(repeats)})
     assert seen == [{"memory"}] * _THREADS, "a None row, or another thread's answer"
+
+
+# ── the latest-pointer map and the refusal record (GH-286) ───────────────
+
+
+def _on_threads(*works: Callable[[], object]) -> list[KeyError | RuntimeError]:
+    """Run each of `works` on its own thread and return the races they lost."""
+    raised: list[KeyError | RuntimeError] = []
+
+    def _run(work: Callable[[], object]) -> None:
+        try:
+            work()
+        except (KeyError, RuntimeError) as error:
+            raised.append(error)
+
+    threads = [threading.Thread(target=_run, args=(work,)) for work in works]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=_TIMEOUT)
+    return raised
+
+
+def test_two_threads_evicting_a_pointer_at_capacity_do_not_collide() -> None:
+    """The first thread pauses between picking the oldest key and deleting it.
+
+    Unguarded, the second picks the same key and deletes it first, and the
+    first's `del` raises `KeyError`. Guarded, the second waits on the lock, the
+    pause times out, and both finish.
+    """
+    second_deleted = threading.Event()
+    paused = threading.Event()
+
+    class _Pausing(dict[str, sl.SdmxUrn[object]]):
+        @override
+        def __delitem__(self, key: str) -> None:
+            if not paused.is_set():
+                paused.set()
+                second_deleted.wait(timeout=0.5)
+            else:
+                second_deleted.set()
+            super().__delitem__(key)
+
+    pinned = sl.SdmxUrn.parse(str(_FLOW))
+    with sl.RestRegistry("https://example.test/service", id="ECB") as reg:
+        reg._settled = _Pausing(seed=pinned)
+        reg._settled_size = 1
+
+        def _second() -> None:
+            paused.wait(timeout=_TIMEOUT)
+            reg._remember_pointer("b", pinned)
+
+        raised = _on_threads(lambda: reg._remember_pointer("a", pinned), _second)
+        assert raised == []
+        assert len(reg._settled) == 1
+
+
+def test_a_refusal_added_while_another_thread_reads_the_record_is_safe(monkeypatch) -> None:
+    """`get` reads the refusal record while a fetch on another thread adds one.
+
+    The reader pauses at its first URN parse, mid-iteration; the writer waits
+    for that, then adds a refusal. Iterating the dict itself raises `RuntimeError: dictionary changed
+    size during iteration` out of `get`; a snapshot reads on.
+    """
+    reading = threading.Event()
+    added = threading.Event()
+    real_parse = sl.SdmxUrn.parse
+
+    def _parse(text: str) -> sl.SdmxUrn[object]:
+        if not reading.is_set():
+            reading.set()
+            added.wait(timeout=_TIMEOUT)
+        return real_parse(text)
+
+    def _refusal(id_: str) -> sl.Refusal:
+        urn = sl.Codelist.urn_for(agency="ECB", id=id_, version="1.0")
+        return sl.Refusal(artefact_class="Codelist", urn=str(urn), reason="bad")
+
+    with sl.RestRegistry("https://example.test/service", id="ECB") as reg:
+        reg._refused = {r.urn: r for r in (_refusal("CL_A"), _refusal("CL_B"))}
+        monkeypatch.setattr(sl.SdmxUrn, "parse", staticmethod(_parse))
+        asked = sl.Codelist.urn_for(agency="ECB", id="CL_OTHER", version="1.0")
+
+        def _write() -> None:
+            reading.wait(timeout=_TIMEOUT)
+            reg._absorb(sl.StructureMessage(refused=(_refusal("CL_C"),)), completeness=Completeness.UNRESOLVED)
+            added.set()
+
+        assert _on_threads(lambda: reg._raise_if_refused(asked), _write) == []
+        assert len(reg.refused) == 3
