@@ -159,6 +159,13 @@ class InMemoryRegistry:
     def _intern(self, artefact: SupportsUrn) -> None:
         urn_str = str(artefact_urn(artefact))
         stored = bind(artefact, self._resolver)
+        # A URN can change class on replacement: a `GeographicCodelist` shares
+        # `sdmx_class` with `Codelist`, so the two have one URN. The replaced
+        # entry leaves its own class's bucket, or `get_all` of that class
+        # would keep it while `get` returned the new one (GH-263).
+        replaced = self._store.get(urn_str)
+        if replaced is not None and type(replaced) is not type(stored):
+            self._by_type[type(replaced)].pop(urn_str, None)
         self._store[urn_str] = stored
         # Track by Python type for get_all(), under the same key `_store`
         # uses so the two cannot disagree about what is stored.
