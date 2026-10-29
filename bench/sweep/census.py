@@ -54,6 +54,18 @@ DERIVABLE: dict[str, str] = {
     "@maxOccurs=1": "the schema default",
     "@minOccurs=1": "the schema default",
     "@usage=optional": "the schema default",
+    "@isPresentational=false": "the schema default",
+    "@include=true": "the schema default, or the value the schema fixes",
+    "@removePrefix=false": "the schema gives no default, and the model reads an absent one as false",
+    # 2.1 names a hierarchical code's code through an alias the document
+    # declares (`IncludedCodelist/@alias`, then `CodelistAliasRef` and
+    # `CodeID`). The reader resolves it to the code, and the writer writes the
+    # other legal form, a full `Code` reference, which `gained` reports.
+    "HierarchicalCode/CodelistAliasRef": "2.1's alias form, written as a full Code reference",
+    "HierarchicalCode/CodeID": "2.1's alias form, written as a full Code reference",
+    "CodeID/Ref": "2.1's alias form, written as a full Code reference",
+    "CodeID/Ref/@id": "2.1's alias form, written as a full Code reference",
+    "IncludedCodelist/@alias": "a label local to the document, which the alias form alone uses",
     _EMPTY: "an element with no text, no children and no attribute but xml:lang says nothing",
 }
 
@@ -186,6 +198,11 @@ def lost(before: Counter[str], after: Counter[str]) -> tuple[dict[str, int], dic
     return real, derivable
 
 
-def gained(before: Counter[str], after: Counter[str]) -> dict[str, int]:
-    """Paths whose count rose — the writer adding what the source did not say."""
-    return {path: n - before[path] for path, n in sorted(after.items()) if n > before[path]}
+def gained(before: Counter[str], after: Counter[str]) -> tuple[dict[str, int], dict[str, int]]:
+    """Paths whose count rose — the writer adding what the source did not say.
+
+    Returns:
+        The real gains, then the `DERIVABLE` ones: a default the writer spells
+        out where the source omitted it says nothing new.
+    """
+    return lost(after, before)

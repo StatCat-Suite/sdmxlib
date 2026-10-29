@@ -42,7 +42,9 @@ registries actually publish.
 needing to be told what to look for: whatever we fail to write back, we failed
 to read or failed to write. `read_lost_derivable` (full report only) holds the
 paths `census.DERIVABLE` names with a reason — `@urn`, a boolean at its
-schema default — so they do not bury the real losses.
+schema default, 2.1's alias form of a code reference — so they do not bury the
+real losses. `read_gained_derivable` does the same for `read_gained`: a
+default the writer spells out where the source omitted it.
 
 Findings are **rule keys**: the message with its URNs, quoted ids and numbers
 removed (`analyse.rule_key`), so equal problems count together and two runs

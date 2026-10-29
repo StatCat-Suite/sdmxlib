@@ -21,6 +21,7 @@ from sdmxlib.model.istring import InternationalString
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.ref import Ref
 from sdmxlib.model.urn import SdmxUrn
+from tests.support.repo import ROOT
 
 # `bench/` is outside the trees mutmut copies into `mutants/`, so a plain
 # `from bench.sweep import ...` would abort the whole mutation run at
@@ -87,7 +88,7 @@ def test_lost_reports_a_removed_element_and_separates_the_derivable():
 
 def test_lost_and_gained_are_empty_for_the_same_document():
     assert lost(census(_DOC), census(_DOC)) == ({}, {})
-    assert gained(census(_DOC), census(_DOC)) == {}
+    assert gained(census(_DOC), census(_DOC)) == ({}, {})
 
 
 def test_census_of_a_real_round_trip_is_capable_of_seeing_a_loss():
@@ -328,3 +329,80 @@ def test_a_written_codelist_is_censused_once():
     accepted.take(_underscore_parent(parent="T"), 0)
     assert accepted.targets["3.0"].written == 1
     assert sum(refused.written.values()) == sum(accepted.written.values())
+
+
+# ── schema defaults and the 2.1 alias form (GH-36) ───────────────────────
+
+_FLAGS = b"""<m:Structure xmlns:m="M" xmlns:s="S"><m:Structures><s:MetadataStructures>
+<s:MetadataStructure id="MSD" agencyID="X" version="1.0">
+<s:MetadataAttribute id="A" isPresentational="false"/><s:MetadataAttribute id="B" isPresentational="true"/>
+</s:MetadataStructure></s:MetadataStructures><s:DataConstraints>
+<s:DataConstraint id="DC" agencyID="X" version="1.0"><s:CubeRegion>
+<s:KeyValue id="FREQ" include="true" removePrefix="false"/><s:KeyValue id="AREA" removePrefix="true"/>
+</s:CubeRegion></s:DataConstraint></s:DataConstraints></m:Structures></m:Structure>"""
+
+
+def test_a_default_is_derivable_and_its_opposite_is_lost():
+    """Omitting `isPresentational="false"`, `include="true"` or `removePrefix="false"` says
+    the same thing; omitting a `true` the model failed to hold loses it. The census has
+    to stay able to fail."""
+    stripped = (
+        _FLAGS.replace(b' isPresentational="false"', b"")
+        .replace(b' isPresentational="true"', b"")
+        .replace(b' include="true"', b"")
+        .replace(b' removePrefix="false"', b"")
+        .replace(b' removePrefix="true"', b"")
+    )
+    real, derivable = lost(census(_FLAGS), census(stripped))
+    msd = "MetadataStructures/MetadataStructure/MetadataAttribute"
+    region = "DataConstraints/DataConstraint/CubeRegion/KeyValue"
+    assert derivable == {
+        f"{msd}/@isPresentational=false": 1,
+        f"{region}/@include=true": 1,
+        f"{region}/@removePrefix=false": 1,
+    }
+    assert real == {f"{msd}/@isPresentational=true": 1, f"{region}/@removePrefix=true": 1}
+
+
+def test_a_default_the_writer_spells_out_is_a_derivable_gain():
+    """GitLab #503's mirror: a writer adding `usage="optional"` the source omitted
+    gains nothing, and adding a `true` it did not say gains something."""
+    written = _FLAGS.replace(b'<s:MetadataAttribute id="A"', b'<s:MetadataAttribute id="A" usage="optional"').replace(
+        b'<s:KeyValue id="AREA"', b'<s:KeyValue id="AREA" include="false"'
+    )
+    real, derivable = gained(census(_FLAGS), census(written))
+    assert derivable == {"MetadataStructures/MetadataStructure/MetadataAttribute/@usage=optional": 1}
+    assert real == {"DataConstraints/DataConstraint/CubeRegion/KeyValue/@include=false": 1}
+
+
+def test_the_21_alias_form_of_a_code_reference_is_derivable():
+    """OECD names a hierarchical code's code through an alias. The reader resolves it, the
+    writer writes the full `Code` reference, and the alias form is set aside with its reason;
+    the full reference it became shows as gained, which is what the writer did."""
+    full = (ROOT / "tests" / "fixtures" / "sdmx_ml21" / "with_hierarchy.xml").read_bytes()
+    reference = (
+        b"<str:Code>\n"
+        b'              <Ref agencyID="TEST" maintainableParentID="CL_AREA" maintainableParentVersion="1.0" '
+        b'id="CA" package="codelist" class="Code"/>\n'
+        b"            </str:Code>"
+    )
+    included = (
+        b'<str:IncludedCodelist alias="AREA"><Ref agencyID="TEST" id="CL_AREA" version="1.0" '
+        b'package="codelist" class="Codelist"/></str:IncludedCodelist>\n        <str:Hierarchy '
+    )
+    alias = full.replace(b"<str:Hierarchy ", included, 1).replace(
+        reference, b'<str:CodeID><Ref id="CA"/></str:CodeID><str:CodelistAliasRef>AREA</str:CodelistAliasRef>'
+    )
+    assert alias.count(b"<str:CodelistAliasRef>") == 1, "the fixture changed under this test"
+    written = serialize(parse(alias, strict=False), version="2.1")
+    real, derivable = lost(census(alias), census(written))
+    node = "HierarchicalCodelists/HierarchicalCodelist/Hierarchy/HierarchicalCode"
+    assert real == {}
+    assert derivable == {
+        f"{node}/CodeID": 1,
+        f"{node}/CodeID/Ref": 1,
+        f"{node}/CodeID/Ref/@id": 1,
+        f"{node}/CodelistAliasRef": 1,
+        "HierarchicalCodelists/HierarchicalCodelist/IncludedCodelist/@alias": 1,
+    }
+    assert gained(census(alias), census(written))[0][f"{node}/Code/Ref/@id"] == 1
