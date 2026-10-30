@@ -60,6 +60,12 @@ def normalize_tag(tag: str) -> str:
         raise TypeError(msg)
     # ASCII first: `str.lower` maps some non-ASCII letters to ASCII ones (the
     # Kelvin sign to "k"), which would turn a malformed tag into a valid one.
+    # Two ASCII letters are always a well-formed tag, and are every tag the
+    # surveyed registries send, so they skip the match: it halved what
+    # checking costs a parse (`docs/design/language-tags.md`, "As built").
+    # `tests/unit/test_language_tags.py` checks the two agree on every pair.
+    if len(tag) == 2 and tag.isascii() and tag.isalpha():
+        return tag.lower()
     if len(tag) <= MAX_TAG_LENGTH and tag.isascii():
         lowered = tag.lower()
         if _TAG_RE.fullmatch(lowered):

@@ -241,18 +241,20 @@ into the `SdmxConformanceError` that `build_each` refuses an artefact for.
 `check_bundle`'s `tags` check finds the store's tag columns in
 `information_schema`, so a column added later is covered.
 
-**Cost.** Parsing pays one check per text, about 0.5 µs each. Measured on
-2026-10-30 against `main`, three interleaved runs each:
+**Cost.** Parsing pays one check per text. Every check in the measured
+documents is a two-letter code, and two ASCII letters are always a
+well-formed tag, so `normalize_tag` returns them lowercased without the
+pattern match; the owner chose that on 2026-10-30, and a test checks the two
+paths agree on every two-character string. Measured on 2026-10-30 against
+`main`, three interleaved runs each, medians:
 
-| document | checks | main | branch |
-|---|---|---|---|
-| ECB 2.1 codelists, SDMX-ML, 39 MB | 197,337 | 1.32 s | 1.44 s |
-| OECD 3.0 codelists, SDMX-ML, 78 MB | 361,808 | 2.39 s | 2.56 s |
-| OECD 3.0 codelists, SDMX-JSON, 128 MB | 362,010 | 0.83 s | 0.98 s |
+| document | checks | main | pattern only | with the two-letter path |
+|---|---|---|---|---|
+| ECB 2.1 codelists, SDMX-ML, 39 MB | 197,337 | 1.32 s | 1.44 s | 1.35 s |
+| OECD 3.0 codelists, SDMX-ML, 78 MB | 361,808 | 2.39 s | 2.56 s | 2.44 s |
+| OECD 3.0 codelists, SDMX-JSON, 128 MB | 362,010 | 0.83 s | 0.98 s | 0.88 s |
 
-Every check in these documents is a two-letter code. Returning a two-letter
-ASCII tag lowercased without the pattern match brings OECD's two reads to
-2.47 s and 0.92 s. That is left for the owner to decide; no memo was added.
+No memo was added.
 
 ## Alternatives considered
 
@@ -285,7 +287,7 @@ ASCII tag lowercased without the pattern match brings OECD's two reads to
   bounded.
 - **Cost on the hot path.** One census codelist read builds 1,159,902
   `InternationalString`s (`istring.py`). Mitigation: store reads skip the
-  check (D6), so only parsing a document pays it: 7–18% on the documents
+  check (D6), so only parsing a document pays it: 2–6% on the documents
   measured under "As built". Whether parsing needs a memo is decided by a
   profile, not assumed. If one is added, it goes through
   `SingleFlight`, as `docs/design/caching.md` requires, and a test asserts the

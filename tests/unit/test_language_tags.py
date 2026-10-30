@@ -13,6 +13,7 @@ import importlib
 import inspect
 import json
 import pkgutil
+import re
 import time
 from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
@@ -96,6 +97,23 @@ def test_a_well_formed_tag_is_stored_lowercase(tag: str, stored: str) -> None:
 def test_a_malformed_tag_is_refused(tag: str) -> None:
     with pytest.raises(ValueError, match="not a well-formed language tag"):
         sl.normalize_tag(tag)
+
+
+def test_the_two_letter_path_agrees_with_the_pattern_on_every_pair() -> None:
+    """Every two-character string from a set that includes non-letters and non-ASCII: same answer either way."""
+    alphabet = [chr(c) for c in range(0x20, 0x7F)] + [chr(0xE9), chr(0x212A), chr(0x131)]
+    pattern = re.compile(TAG_PATTERN)
+    pairs = [a + b for a in alphabet for b in alphabet]
+    letters = 0
+    for pair in pairs:
+        expected = pair.lower() if pair.isascii() and pattern.fullmatch(pair.lower()) else None
+        try:
+            got: str | None = sl.normalize_tag(pair)
+        except ValueError:
+            got = None
+        assert got == expected, pair
+        letters += got is not None
+    assert letters == 52 * 52, "the discrimination check: every pair of ASCII letters is accepted"
 
 
 def test_a_tag_that_is_not_a_str_is_a_type_error() -> None:
