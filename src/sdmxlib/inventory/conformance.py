@@ -1,4 +1,4 @@
-"""A conformance suite for implementations of the Inventory protocol (GH-252).
+"""A conformance suite for implementations of the Inventory protocol.
 
 The Inventory is a small transaction log of its own: exclusively created,
 sequence-numbered versions, a hint pointer, a probing reader, a seal journal

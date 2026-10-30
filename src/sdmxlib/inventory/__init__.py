@@ -1,4 +1,4 @@
-"""The Inventory: which edition of each product in a catalog is live (GH-251).
+"""The Inventory: which edition of each product in a catalog is live.
 
 The sharded catalog spec's §6 defines it. sdmxlib owns its documents, their
 validation, the state-transition rules and a reader; statcatlib writes it.

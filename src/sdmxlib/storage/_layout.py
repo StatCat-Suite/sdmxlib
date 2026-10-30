@@ -125,7 +125,7 @@ def refuse_second_unsealed(product: Path) -> None:
 
 
 def discard(edition: str | Path) -> None:
-    """Delete an unsealed edition's directory (GH-255).
+    """Delete an unsealed edition's directory.
 
     Data files it wrote under the product's shared ``data/`` stay: garbage
     collection deletes only files no manifest lists.
