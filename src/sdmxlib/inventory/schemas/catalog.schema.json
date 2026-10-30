@@ -1,0 +1,26 @@
+{
+  "$ref": "#/$defs/CatalogDocument",
+  "$defs": {
+    "CatalogDocument": {
+      "title": "CatalogDocument",
+      "description": "``catalog.json``: a catalog's identity, written when it is created.\n\nAttributes:\n    format_version: `CATALOG_FORMAT`.\n    catalog_id: A UUIDv7. An export keeps it.\n    restore_epoch: Starts at 0; a whole-catalog restore or failover bumps\n        it, and readers reset their ``seq`` floor when it changes.",
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "type": "string"
+        },
+        "catalog_id": {
+          "type": "string"
+        },
+        "restore_epoch": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "format_version",
+        "catalog_id"
+      ]
+    }
+  }
+}

@@ -1,0 +1,162 @@
+{
+  "$ref": "#/$defs/Root",
+  "$defs": {
+    "Root": {
+      "title": "Root",
+      "description": "``inventory/<seq>.json``: one Inventory version.\n\nAttributes:\n    format_version: `INVENTORY_FORMAT`.\n    seq: This version's sequence number; the first is 1.\n    previous_inventory: The ``seq`` this version was built from, or None\n        for version 1. Usually ``seq - 1``; a correction builds from an\n        older, known-good one.\n    restore_epoch: ``catalog.json``'s, when written.\n    created_at: When it was written, in UTC.\n    producer: The library that wrote it.\n    embargo: Whether a seal releases its edition in the same version\n        (False) or records it embargoed (True).\n    products: Each product's leaf, by ``product_id``.\n    retired: Tombstones within the tombstone window, sorted by product\n        then edition.\n    event: Who acted, and why.\n    extensions: Sections owned by other packages, by name.",
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "type": "string"
+        },
+        "seq": {
+          "type": "integer"
+        },
+        "previous_inventory": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "restore_epoch": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "producer": {
+          "$ref": "#/$defs/Producer"
+        },
+        "embargo": {
+          "type": "boolean"
+        },
+        "products": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/LeafRef"
+          }
+        },
+        "retired": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Tombstone"
+          }
+        },
+        "event": {
+          "$ref": "#/$defs/Event"
+        },
+        "extensions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "description": "A JSON value of any kind."
+            }
+          },
+          "default": {}
+        }
+      },
+      "required": [
+        "format_version",
+        "seq",
+        "previous_inventory",
+        "restore_epoch",
+        "created_at",
+        "producer",
+        "embargo",
+        "products",
+        "retired",
+        "event"
+      ]
+    },
+    "Producer": {
+      "title": "Producer",
+      "description": "What sealed the edition: a name and its version, e.g. a product builder.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ]
+    },
+    "LeafRef": {
+      "title": "LeafRef",
+      "description": "A root's pointer to one product's leaf.\n\nAttributes:\n    leaf: The leaf's path, ``inventory/leaves/<leaf_sha256>.json``.\n    leaf_sha256: The SHA-256 of the leaf's bytes.",
+      "type": "object",
+      "properties": {
+        "leaf": {
+          "type": "string"
+        },
+        "leaf_sha256": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "leaf",
+        "leaf_sha256"
+      ]
+    },
+    "Tombstone": {
+      "title": "Tombstone",
+      "description": "A retired edition, kept so it stays distinct from one never recorded.\n\nAttributes:\n    product_id: Its product.\n    edition_id: The edition.\n    retired_at: When it was retired.",
+      "type": "object",
+      "properties": {
+        "product_id": {
+          "type": "string"
+        },
+        "edition_id": {
+          "type": "string"
+        },
+        "retired_at": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "product_id",
+        "edition_id",
+        "retired_at"
+      ]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Who wrote an Inventory version, and why.\n\nAttributes:\n    actor: The acting principal, from the writer's identity, never from a caller.\n    reason: Why, in the actor's words.\n    kind: What the version records.",
+      "type": "object",
+      "properties": {
+        "actor": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "correct",
+            "embargo-change",
+            "release",
+            "restore",
+            "retire",
+            "rollback",
+            "seal",
+            "withdraw"
+          ]
+        }
+      },
+      "required": [
+        "actor",
+        "reason",
+        "kind"
+      ]
+    }
+  }
+}

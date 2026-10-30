@@ -75,6 +75,8 @@ the subpackages share.
     parameterised DuckDB SQL; `ObsQuery`; and raw SQL.
   - [`api/`](./api/EGM.md): `RestRegistry`, `FmrRegistry`,
     `FederatedRegistry`, `Provider` and the httpx2 client.
+  - [`inventory/`](./inventory/EGM.md): the Inventory's documents, transition
+    rules and reader: which edition of each product is live.
   - [`edition/`](./edition/EGM.md): `seal`, `check_edition`,
     `copy_edition`, `build_edition`, `fetch_edition`, overlays and
     fingerprints.
