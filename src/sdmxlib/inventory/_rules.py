@@ -511,3 +511,28 @@ def next_root(
             k: dict(v) for k, v in (extensions or (previous.extensions if previous is not None else {})).items()
         },
     )
+
+
+def repairable(
+    journal: Iterable[tuple[str, str]], leaves: Mapping[str, Leaf], retired: Iterable[Tombstone]
+) -> list[tuple[str, str]]:
+    """The journalled seals a writer may record: those the Inventory neither names nor tombstones.
+
+    The narrow repair of spec §6.7. A seal writes a journal entry before its
+    manifest and the writer removes it once the edition is recorded, so an
+    entry left behind is an edition this writer sealed and may never have
+    recorded. One the newest version names, in any state, was recorded; one it
+    tombstones was retired. Neither is recorded again, so a withdrawn edition
+    is never re-released by repair.
+
+    Args:
+        journal: ``(product_id, edition_id)`` for each journal entry left behind.
+        leaves: The newest version's leaves, by product.
+        retired: The newest version's tombstones.
+
+    Returns:
+        The entries to record, in the order given.
+    """
+    named = {(p, e.edition_id) for p, leaf in leaves.items() for e in leaf.editions}
+    stones = {(t.product_id, t.edition_id) for t in retired}
+    return [entry for entry in journal if entry not in named and entry not in stones]

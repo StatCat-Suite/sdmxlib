@@ -31,6 +31,15 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
   return `LiveEdition`s; `FullInventory.root`, `embargo`, `retired`,
   `products()`, `leaf()`, `leaves()` and `entries()`. `local_fetch(dir)`
   is a `Fetch` over a directory.
+- `repairable(journal, leaves, retired)` (`_rules.py`): the seal-journal
+  entries the narrow repair (spec §6.7) may record: those the newest version
+  neither names nor tombstones.
+- Conformance (`conformance.py`, GH-252): a `Backend` protocol (`head`,
+  `commit` raising `ConflictError` on a stale base, `commit_interrupted`,
+  `reader`, `hint_behind`, `restore_to`, `restore_with_new_epoch`), the
+  `Snapshot` it returns, the checks in `CHECKS`, and `run(new)`, which runs
+  every check against fresh backends. An implementation of the protocol
+  (statcatlib's writer) runs it as a test.
 
 ## Invariants
 
@@ -55,5 +64,10 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
 
 ## Verification
 
-- `uv run pytest -m unit tests/unit/test_inventory.py`; the writer in
-  `tests/support/inventory.py` follows the spec's write protocol.
+- `uv run pytest -m unit tests/unit/test_inventory.py tests/unit/test_inventory_conformance.py`.
+  The conformance suite runs against two backends in
+  `tests/support/inventory_backends.py`: the file protocol, written by the
+  reference writer in `tests/support/inventory.py`, and a prototype over a
+  Delta table (delta-rs, a dev dependency), which proves the spec's escape
+  route. A Delta reader lists its log, so `hint_behind` has nothing to do
+  there. Two sabotaged backends show each check can fail.
