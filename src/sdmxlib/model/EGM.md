@@ -91,9 +91,10 @@ hierarchical roll-ups.
   `MetadataStructure` (`metadatastructure.py`), `Metadataflow`
   (`metadataflow.py`), `MetadataSet` and `ReportedAttribute`
   (`metadataset.py`), and `Header` (`header.py`).
-- Shared value types: `InternationalString`, `LocalisedString`,
-  `InvalidTagError` and `normalize_tag` (`istring.py`), `Annotation` and `Annotations`
-  (`annotations.py`) and `Link` (`link.py`).
+- Shared value types: `InternationalString`, a `Mapping` from tag to
+  `LocalisedString`, with `InvalidTagError`, `MissingTagError`,
+  `normalize_tag` and `tag_alias` (`istring.py`); `Annotation` and
+  `Annotations` (`annotations.py`); and `Link` (`link.py`).
 - `PathIndex` and `PathNavigation` (`_tree.py`): nested items keyed by path,
   shared by `CategoryScheme`, `Hierarchy` and `MetadataStructure`.
 - `ApiVersion` (`rest_api.py`): the SDMX-REST generation (`"2.1"` or `"3.0"`), which changes
@@ -119,11 +120,16 @@ hierarchical roll-ups.
   `LocalisedString`, `AnnotationURL.lang`, `RegionValue.lang` and
   `Link.hreflang` normalise as they are built and raise `InvalidTagError` (a
   `ValueError`) for a malformed tag, and an `InternationalString` refuses two
-  texts of one tag. Every public `lang` /
-  `langs` parameter normalises the same way
-  (`tests/unit/test_language_tags.py` lists them).
+  texts of one tag. Every public `lang` / `langs` parameter normalises the
+  same way (`tests/unit/test_language_tags.py` lists them).
   `InternationalString._from_normalized` skips the check, for the store
   readers and the format readers, which check tags themselves.
+- An `InternationalString` holds `str` texts and builds a `LocalisedString`
+  only when a lookup returns one. A malformed tag raises from every lookup,
+  `in` included, and a tag not held raises `MissingTagError` from `[]` only.
+  Serialisers read the texts through `_backing()` and `_emit_pair()`, which
+  return the stored map uncopied; `as_dict()` returns a copy. A generated name
+  that joins a base name and a tag writes the tag through `tag_alias`.
 - Every domain class is attrs `@frozen`. An artefact or item is
   `@frozen(unsafe_hash=False)`, so it compares by value and cannot be hashed;
   key collections by `urn`. To change one, make a copy with `attrs.evolve`.
@@ -182,6 +188,10 @@ hierarchical roll-ups.
   that invalidates the `_items` cache.
 - `enforce()` warns through `warnings.warn(..., skip_file_prefixes=...)`, so
   the warning points at the caller's line.
+- `istring.py` keeps `_SEEN_TAGS`, the tags `LocalisedString` has checked,
+  cleared at 1,024. At import it reads `SDMXLIB_ISTRING_AUDIT`; when set, the
+  `InternationalString` lookups append each new calling `file:line` to the
+  file `SDMXLIB_ISTRING_AUDIT_OUT` names (GH-309's migration audit).
 - `InMemoryRegistry` keeps its state in memory: `_store`, `_by_type`,
   `_rewritten`, and `_resolver`, a `MapResolver` over `_store` whose
   item-lookup cache every `_intern` clears through `forget_items()`.

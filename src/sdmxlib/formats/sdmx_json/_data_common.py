@@ -170,15 +170,14 @@ def _convention_duration(freq_id: str) -> _Duration | None:
 
 def _first_text(istr: InternationalString) -> str | None:
     """First localized value of an InternationalString, or None if empty."""
-    first = next(iter(istr.items()), None)
-    return first[1] if first is not None else None
+    return next(iter(istr._backing().values()), None)
 
 
 def _annotation_duration(annotations: Annotations, lang: str) -> _Duration | None:
     """Duration from a ``duration`` annotation (case-insensitive type), if any."""
     for ann in annotations:
         if ann.type and ann.type.strip().lower() == "duration":
-            text = ann.text.get(lang) or _first_text(ann.text)
+            text = ann.text._text(lang) or _first_text(ann.text)
             if text:
                 return _parse_iso_duration(text)
     return None
@@ -383,7 +382,7 @@ class ComponentTable:
                 continue
             name = cid
             if isinstance(comp.concept, Ref) and comp.concept.resolved:
-                cname = comp.concept().name.get(lang)
+                cname = comp.concept().name._text(self._lang)
                 if cname:
                     name = cname
             self._names[cid] = name
@@ -773,19 +772,19 @@ def display_names(
     out: DisplayNamesJson = {}
     name_attr: InternationalString | None = getattr(src, "name", None)
     if name_attr:
-        localized = name_attr.get(lang)
+        localized = name_attr._text(lang)
         if localized:
             out["name"] = localized
-        names_map = dict(name_attr.items())
+        names_map = name_attr.as_dict()
         if names_map:
             out["names"] = names_map
 
     desc_attr: InternationalString | None = getattr(src, "description", None)
     if desc_attr:
-        d_localized = desc_attr.get(lang)
+        d_localized = desc_attr._text(lang)
         if d_localized:
             out["description"] = d_localized
-        descs_map = dict(desc_attr.items())
+        descs_map = desc_attr.as_dict()
         if descs_map:
             out["descriptions"] = descs_map
     return out

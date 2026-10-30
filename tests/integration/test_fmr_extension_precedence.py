@@ -48,7 +48,7 @@ _MESSAGE = StructureMessage(
 
 
 def _names(codelist: Codelist) -> dict[str, str]:
-    return {code.id: code.name["en"] for code in codelist.codes}
+    return {code.id: code.name["en"].text for code in codelist.codes}
 
 
 def _served(cl_id: str) -> dict[str, str]:

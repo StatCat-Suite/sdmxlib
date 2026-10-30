@@ -136,7 +136,7 @@ class MetadataMessageJson(WireStruct):
 def _emit_value(v: ReportedAttributeValue | None) -> ValueJson:
     """Model value → wire union (InternationalString → ``{lang: text}`` dict)."""
     if isinstance(v, InternationalString):
-        return v.as_dict(copy=False)
+        return v._backing()
     return v
 
 

@@ -15,7 +15,7 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from sdmxlib.model.collections import ArtefactList, ItemList
-from sdmxlib.model.istring import InternationalString
+from sdmxlib.model.istring import InternationalString, LocalisedString
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.model.version import sort_key
 from tests.support.strategies import (
@@ -70,14 +70,14 @@ def test_item_urn_round_trips(agency: str, artefact_id: str, version: str, item_
 
 
 @given(istr=international_strings())
-def test_istring_emit_pair_round_trips(istr: InternationalString):
-    """``emit_pair`` splits into (primary, map); the map reconstructs the value.
+def test_istring__emit_pair_round_trips(istr: InternationalString):
+    """``_emit_pair`` splits into (primary, map); the map reconstructs the value.
 
     This is the split every SDMX-JSON writer relies on. The #213 pilot left
     three survivors in `istring.py`, all in `__repr__` / `__hash__` /
     `as_dict` — none in this path.
     """
-    primary, full = istr.emit_pair()
+    primary, full = istr._emit_pair()
     if not istr:
         assert (primary, full) == (None, None)
         return
@@ -90,7 +90,7 @@ def test_istring_emit_pair_round_trips(istr: InternationalString):
 def test_istring_get_agrees_with_mapping(istr: InternationalString):
     """``get(lang)`` agrees with the backing map for every language present."""
     for lang, text in istr.as_dict().items():
-        assert istr.get(lang) == text
+        assert istr[lang] == LocalisedString(text, lang)
 
 
 # ── Version ordering ──────────────────────────────────────────────────────────

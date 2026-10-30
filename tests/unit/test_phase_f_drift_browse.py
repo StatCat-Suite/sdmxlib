@@ -195,7 +195,7 @@ def test_browse_carries_dataflow_name_when_resolvable():
         cat = local
         entries = cat.browse()
         assert entries[0].name is not None
-        assert entries[0].name["en"] == "Test Dataflow"
+        assert entries[0].name["en"].text == "Test Dataflow"
 
 
 def test_browse_returns_empty_when_no_bindings():

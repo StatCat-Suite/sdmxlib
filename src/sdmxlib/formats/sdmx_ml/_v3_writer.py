@@ -769,11 +769,11 @@ class V3Writer:
         # <str:Department> and <str:Role> are in the structure namespace per
         # the v3.0 ContactType XSD; emit them manually rather than via
         # self._helpers.write_istring (which targets the common namespace).
-        for lang, text in contact.department.items():
+        for lang, text in contact.department._backing().items():
             dept_el = etree.SubElement(el, self._s("Department"))
             dept_el.set("{http://www.w3.org/XML/1998/namespace}lang", lang)
             dept_el.text = text
-        for lang, text in contact.role.items():
+        for lang, text in contact.role._backing().items():
             role_el = etree.SubElement(el, self._s("Role"))
             role_el.set("{http://www.w3.org/XML/1998/namespace}lang", lang)
             role_el.text = text

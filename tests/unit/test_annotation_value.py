@@ -82,7 +82,7 @@ def test_sdmx_ml_3x_round_trips_the_value(
     cl = reader(written).codelists["CL"]
     assert cl.annotations[0].value == "239"
     assert cl.codes["A"].annotations[0].value == "239"
-    assert cl.codes["A"].annotations[0].text.get("en") == "second", "text and value are siblings, not alternatives"
+    assert cl.codes["A"].annotations[0].text["en"].text == "second", "text and value are siblings, not alternatives"
 
 
 @pytest.mark.parametrize(("writer", "reader", "version"), _ML)
@@ -124,7 +124,7 @@ def test_sdmx_ml_21_drops_it_and_stays_valid() -> None:
     assert schema.validate(etree.fromstring(written)), str(schema.error_log)
     cl = r21.read(written).codelists["CL"]
     assert cl.annotations[0].value is None
-    assert cl.annotations[0].text.get("en") == "second", "only `value` is lost — the rest survives"
+    assert cl.annotations[0].text["en"].text == "second", "only `value` is lost — the rest survives"
 
 
 def test_the_gap_is_declared_for_21_only() -> None:

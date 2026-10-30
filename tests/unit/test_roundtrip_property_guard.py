@@ -179,8 +179,8 @@ def _codelist_case() -> Case:
         build,
         extract,
         [
-            Check("name", lambda a: a.name.get("en"), "Freq"),
-            Check("name.fr", lambda a: a.name.get("fr"), "Fréq"),
+            Check("name", lambda a: a.name["en"].text, "Freq"),
+            Check("name.fr", lambda a: a.name["fr"].text, "Fréq"),
             Check("legacy_is_final", lambda a: a.legacy_is_final, True),
             Check("valid_from", lambda a: a.valid_from, datetime(2020, 1, 1, tzinfo=UTC)),
             Check("valid_to", lambda a: a.valid_to, datetime(2021, 1, 1, tzinfo=UTC)),

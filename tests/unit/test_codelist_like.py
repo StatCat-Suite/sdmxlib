@@ -150,7 +150,7 @@ def test_materialize_gives_the_real_codes(both: dict[str, CodelistLike], kind: s
     assert isinstance(real, sl.Codelist)
     assert isinstance(real.codes, ItemList)
     assert [c.id for c in real.codes] == ["A", "Q", "M"]
-    assert real.codes["A"].name["fr"] == "Annuel"
+    assert real.codes["A"].name["fr"].text == "Annuel"
 
 
 def test_materialize_on_an_eager_codelist_is_free() -> None:

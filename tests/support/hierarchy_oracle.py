@@ -35,6 +35,7 @@ from collections.abc import Callable, Collection, Sequence
 import attrs
 
 from sdmxlib.model.hierarchy import HierarchicalCode, Hierarchy
+from sdmxlib.model.istring import InternationalString
 
 
 @attrs.frozen
@@ -58,6 +59,12 @@ class Row:
 
 #: A predicate over a single row, given every row for context.
 Pred = Callable[[Row, Sequence[Row]], bool]
+
+
+def _text_in(istring: InternationalString, lang: str) -> str | None:
+    """The text `istring` holds for `lang`, or None."""
+    found = istring.get(lang)
+    return None if found is None else found.text
 
 
 def flatten(h: Hierarchy) -> list[Row]:
@@ -145,7 +152,7 @@ def _annotation_titles(r: Row, ann_type: str) -> list[str | None]:
 
 def _annotation_texts(r: Row, ann_type: str, lang: str) -> list[str | None]:
     """Localised texts of every annotation on *r* of type *ann_type*."""
-    return [a.text.get(lang) for a in r.node.annotations if a.type == ann_type]
+    return [_text_in(a.text, lang) for a in r.node.annotations if a.type == ann_type]
 
 
 # ── String matching, as the compiler emits it ────────────────────────────────
@@ -455,7 +462,7 @@ def annotation_present(ann_type: str, lang: str | None = None) -> Pred:
     """
     if lang is None:
         return lambda r, _rows: any(a.type == ann_type for a in r.node.annotations)
-    return lambda r, _rows: any(a.type == ann_type and a.text.get(lang) is not None for a in r.node.annotations)
+    return lambda r, _rows: any(a.type == ann_type and _text_in(a.text, lang) is not None for a in r.node.annotations)
 
 
 def annotation_match(ann_type: str, op: str, value: str) -> Pred:

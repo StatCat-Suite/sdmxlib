@@ -70,7 +70,7 @@ def test_stat_pres_set_carries_xhtml_via_localised_text() -> None:
     assert isinstance(msg, sl.MetadataMessage)
     desc = msg.metadata_sets["STAT_PRES"].attributes["DATA_DESCR"]
     assert isinstance(desc.value, sl.InternationalString)
-    body = desc.value["en"]
+    body = desc.value["en"].text
     # The sample wraps content in an XHTML <div>; verify the literal markup
     # round-trips as text content (per the spec's localisedText shape).
     assert "<div" in body

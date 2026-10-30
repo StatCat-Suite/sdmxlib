@@ -36,9 +36,9 @@ cl_freq = sl.Codelist(
 )
 
 print(cl_freq.id)  # "CL_FREQ"
-print(cl_freq.name["en"])  # "Frequency"
+print(cl_freq.name["en"].text)  # "Frequency"
 print(cl_freq.codes.ids())  # ["A", "Q", "M"]
-print(cl_freq.codes["A"].name["en"])  # "Annual"
+print(cl_freq.codes["A"].name["en"].text)  # "Annual"
 ```
 
 Names are dicts with language keys. Codes are a list that gets
@@ -59,9 +59,9 @@ cl_freq = sl.Codelist(
     ],
 )
 
-print(cl_freq.name["fr"])  # "Fréquence"
+print(cl_freq.name["fr"].text)  # "Fréquence"
 print(cl_freq.name.langs)  # ["en", "fr", "de"]
-print(cl_freq.codes["A"].name.get("de", "en"))  # falls back to "Annual"
+print(cl_freq.codes["A"].name.pick("de", "en"))  # falls back: LocalisedString(text='Annual', lang='en')
 ```
 
 ### Hierarchical codelists
@@ -125,8 +125,8 @@ cs = sl.ConceptScheme(
 )
 
 # Look up a concept
-print(cs.concepts["FREQ"].name["en"])  # "Frequency"
-print(cs.concepts["FREQ"].description.get("en"))  # "The frequency of..."
+print(cs.concepts["FREQ"].name["en"].text)  # "Frequency"
+print(cs.concepts["FREQ"].description["en"].text)  # "The frequency of..."
 
 # Build a Ref to a concept (needed for DSD construction)
 freq_ref = cs.ref_to("FREQ")
@@ -771,7 +771,7 @@ cl = sl.Codelist(
 
 # Query annotations
 print(cl.annotations.types)  # ["CONTACT", "SOURCE", "UPDATE_SCHEDULE"]
-print(cl.annotations.first("CONTACT").text["en"])  # "stats-helpdesk@example.com"
+print(cl.annotations.first("CONTACT").text["en"].text)  # "stats-helpdesk@example.com"
 print("DEPRECATED" in cl.codes["CS"].annotations)  # True
 ```
 

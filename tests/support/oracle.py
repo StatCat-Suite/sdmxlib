@@ -34,9 +34,16 @@ from collections.abc import Callable, Collection, Mapping, Sequence
 from collections.abc import Set as AbstractSet
 
 from sdmxlib.model.codelist import Code
+from sdmxlib.model.istring import InternationalString
 
 #: A predicate over a single code, given the full list for context.
 Pred = Callable[[Code, Sequence[Code]], bool]
+
+
+def _text_in(istring: InternationalString, lang: str) -> str | None:
+    """The text `istring` holds for `lang`, or None."""
+    found = istring.get(lang)
+    return None if found is None else found.text
 
 
 def parent_of(codes: Sequence[Code]) -> dict[str, str | None]:
@@ -145,7 +152,7 @@ def _annotation_titles(c: Code, ann_type: str) -> list[str | None]:
 
 def _annotation_texts(c: Code, ann_type: str, lang: str) -> list[str | None]:
     """Localised texts of every annotation on *c* of type *ann_type*."""
-    return [a.text.get(lang) for a in c.annotations if a.type == ann_type]
+    return [_text_in(a.text, lang) for a in c.annotations if a.type == ann_type]
 
 
 def _apply_op(haystack: str, op: str, fragment: str) -> bool:
@@ -414,18 +421,18 @@ def has_no_narrower() -> Pred:
 def name_eq(lang: str, value: str, *, negate: bool = False) -> Pred:
     """``code.name[lang] ==`` / ``!=``. An absent language fails both."""
     if negate:
-        return lambda c, _codes: c.name.get(lang) is not None and c.name.get(lang) != value
-    return lambda c, _codes: c.name.get(lang) == value
+        return lambda c, _codes: _text_in(c.name, lang) is not None and _text_in(c.name, lang) != value
+    return lambda c, _codes: _text_in(c.name, lang) == value
 
 
 def name_match(lang: str, op: str, value: str) -> Pred:
     """``code.name[lang].contains`` / ``starts_with`` / ``ends_with`` — plain ILIKE."""
-    return lambda c, _codes: _matches(c.name.get(lang), op, value)
+    return lambda c, _codes: _matches(_text_in(c.name, lang), op, value)
 
 
 def name_folded_match(lang: str, op: str, value: str, *, punctuation: bool) -> Pred:
     """``code.name[lang].unaccented`` / ``.folded`` — see `_folded_matches`."""
-    return lambda c, _codes: _folded_matches(c.name.get(lang), op, value, punctuation=punctuation)
+    return lambda c, _codes: _folded_matches(_text_in(c.name, lang), op, value, punctuation=punctuation)
 
 
 def annotation_eq(ann_type: str, value: str, *, negate: bool = False) -> Pred:
@@ -456,7 +463,7 @@ def annotation_present(ann_type: str, lang: str | None = None) -> Pred:
     """
     if lang is None:
         return lambda c, _codes: any(a.type == ann_type for a in c.annotations)
-    return lambda c, _codes: any(a.type == ann_type and a.text.get(lang) is not None for a in c.annotations)
+    return lambda c, _codes: any(a.type == ann_type and _text_in(a.text, lang) is not None for a in c.annotations)
 
 
 def annotation_match(ann_type: str, op: str, value: str) -> Pred:

@@ -21,7 +21,7 @@ from typing import Literal, Protocol, runtime_checkable
 import polars as pl
 
 from sdmxlib.model.datastructure import Attribute, DataStructure, Dimension, Measure, MeasureDimension
-from sdmxlib.model.istring import normalize_tag
+from sdmxlib.model.istring import normalize_tag, tag_alias
 from sdmxlib.model.ref import Ref
 from sdmxlib.model.representation import Facet
 
@@ -284,7 +284,8 @@ def label(
     """Add human-readable label columns for every enumerated component.
 
     For each enumerated dimension/attribute/measure that exists in ``df``,
-    appends a ``{col}{suffix}_{lang}`` column with the code label. Codes with
+    appends a ``{col}{suffix}_{lang}`` column with the code label, the tag
+    written as `tag_alias` writes it (``REF_AREA_label_fr_ca``). Codes with
     no label fall back to the code id.
 
     **The one labelling path**: `Query.frame(labels=)` and
@@ -350,7 +351,7 @@ def label(
                 pl.col(column)
                 .cast(pl.String)
                 .replace_strict(old=list(mapping.keys()), new=list(mapping.values()), default=None)
-                .alias(f"{column}{suffix}_{one}")
+                .alias(f"{column}{suffix}_{tag_alias(one)}")
             )
             added += 1
     if not added:
@@ -410,9 +411,9 @@ def structure_frame(dsd: DataStructure, *, lang: str) -> pl.DataFrame:
     rows: list[dict[str, object]] = []
 
     for i, dim in enumerate(dsd.dimensions, start=1):
-        concept_label = (
-            dim.concept().name.get(lang) or dim.id if isinstance(dim.concept, Ref) and dim.concept.resolved else dim.id
-        )
+        concept_label = dim.id
+        if isinstance(dim.concept, Ref) and dim.concept.resolved:
+            concept_label = dim.concept().name._text(lang) or dim.id
         cl = dim.resolved_enumeration
         cl_id = cl.id if cl is not None else None
         n_codes = len(cl) if cl is not None else 0
@@ -430,7 +431,7 @@ def structure_frame(dsd: DataStructure, *, lang: str) -> pl.DataFrame:
     if dsd.time_dimension is not None:
         td = dsd.time_dimension
         concept_label = (
-            td.concept().name.get(lang) or td.id if isinstance(td.concept, Ref) and td.concept.resolved else td.id
+            td.concept().name._text(lang) or td.id if isinstance(td.concept, Ref) and td.concept.resolved else td.id
         )
         rows.append(
             {
@@ -446,7 +447,7 @@ def structure_frame(dsd: DataStructure, *, lang: str) -> pl.DataFrame:
     if dsd.measure_dimension is not None:
         md = dsd.measure_dimension
         concept_label = (
-            md.concept().name.get(lang) or md.id if isinstance(md.concept, Ref) and md.concept.resolved else md.id
+            md.concept().name._text(lang) or md.id if isinstance(md.concept, Ref) and md.concept.resolved else md.id
         )
         cs = md.resolved_concept_scheme
         cl_id = cs.id if cs is not None else None
@@ -464,7 +465,7 @@ def structure_frame(dsd: DataStructure, *, lang: str) -> pl.DataFrame:
 
     for attr in dsd.attributes:
         if isinstance(attr.concept, Ref) and attr.concept.resolved:
-            concept_label = attr.concept().name.get(lang) or attr.id
+            concept_label = attr.concept().name._text(lang) or attr.id
         else:
             concept_label = attr.id
         cl = attr.resolved_enumeration
@@ -483,7 +484,7 @@ def structure_frame(dsd: DataStructure, *, lang: str) -> pl.DataFrame:
 
     for meas in dsd.measures:
         if isinstance(meas.concept, Ref) and meas.concept.resolved:
-            concept_label = meas.concept().name.get(lang) or meas.id
+            concept_label = meas.concept().name._text(lang) or meas.id
         else:
             concept_label = meas.id
         rows.append(

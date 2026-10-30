@@ -157,7 +157,7 @@ def test_concept_scheme_reader_is_bounded():
         result = local.get(ConceptScheme.urn_for(agency="SDMX", id="CS_BIG", version="1.0"))
         assert result is not None
         # Each annotation should round-trip exactly. Sanity: pick a random one.
-        assert result.concepts[42].annotations[0].text["en"] == "note 42"
+        assert result.concepts[42].annotations[0].text["en"].text == "note 42"
         # Expect O(1) executes per reader call, not O(items). Allow generous
         # headroom — schema/spine/items/istring/annotations is well under 20.
         assert counter.count < 20, f"too many executes: {counter.count}"
@@ -185,7 +185,7 @@ def test_codelist_eager_reader_is_bounded():
         urn = Codelist.urn_for(agency="SDMX", id="CL_BIG", version="1.0")
         result = local.get(urn, eager=True)
         assert result is not None
-        assert result.codes[42].annotations[0].text["en"] == "n42"
+        assert result.codes[42].annotations[0].text["en"].text == "n42"
         assert counter.count < 20, f"too many executes: {counter.count}"
 
 
@@ -218,7 +218,7 @@ def test_hierarchy_reader_is_bounded():
         assert result is not None
         # Sanity-check that annotations land on the right node.
         target = next(c for c in result.tree[0].children if c.id == "N0042")
-        assert target.annotations[0].text["en"] == "note 42"
+        assert target.annotations[0].text["en"].text == "note 42"
         assert counter.count < 20, f"too many executes: {counter.count}"
 
 

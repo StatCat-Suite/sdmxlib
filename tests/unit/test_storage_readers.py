@@ -74,7 +74,7 @@ def test_get_codelist_eager(cursor, make_codelist):
     result = get_artefact(cur, _CL_URN, eager=True)
     assert isinstance(result, Codelist)
     assert len(result.codes) == 2
-    assert result.codes["A"].name["en"] == "Annual"
+    assert result.codes["A"].name["en"].text == "Annual"
 
 
 def test_get_concept_scheme(cursor, make_concept_scheme):
@@ -241,7 +241,7 @@ def test_lazy_codelist_codes(cursor, make_codelist):
     lazy = get_artefact(cur, _CL_URN)
     assert isinstance(present(lazy).codes, Query)
     assert present(lazy).codes["A"].id == "A"
-    assert present(lazy).codes["A"].name["en"] == "Annual"
+    assert present(lazy).codes["A"].name["en"].text == "Annual"
 
 
 def test_lazy_codelist_code_map(cursor, make_codelist):

@@ -235,6 +235,12 @@ Every multilingual API in sdmxlib takes the language explicitly. `name` alone
 will not project, because a guessed language produces a report in the wrong
 one.
 
+A projected label is text, one column per language. Unnamed, the column takes
+the tag with `_` for `-`, as `sl.tag_alias` writes it: `select(q.name["fr-CA"])`
+projects `name_fr_ca`. The model differs here: `code.name["fr"]` on a `Code`
+returns a `sl.LocalisedString`, the text with its tag, and `.text` reads the
+text.
+
 ## 6. Searching text
 
 String columns carry a `.str` namespace:

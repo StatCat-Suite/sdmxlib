@@ -74,7 +74,7 @@ def test_own_codes_win_and_a_later_extension_wins() -> None:
     second = _codelist("CL_SECOND", ("A", None), ("B", None), ("C", None))
     own = _codelist("CL_OWN", ("A", None), extensions=(_extending(first), _extending(second)))
     applied = own.apply_extensions([first, second])
-    assert [(code.id, code.name["en"]) for code in applied.codes] == [
+    assert [(code.id, code.name["en"].text) for code in applied.codes] == [
         ("A", "CL_OWN A"),
         ("B", "CL_SECOND B"),
         ("C", "CL_SECOND C"),

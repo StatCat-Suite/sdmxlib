@@ -115,8 +115,8 @@ def test_maintainable_annotation_all_fields_round_trip() -> None:
     assert ann.title == "A title"
     assert ann.type == "NOTE"
     assert [u.url for u in ann.urls] == ["https://example.org/note"]
-    assert ann.text.get("en") == "English"
-    assert ann.text.get("fr") == "Français"
+    assert ann.text["en"].text == "English"
+    assert ann.text["fr"].text == "Français"
 
 
 def test_item_and_component_annotations_round_trip() -> None:

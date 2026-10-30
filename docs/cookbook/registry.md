@@ -27,7 +27,7 @@ import sdmxlib as sl
 # Using a built-in provider shortcut
 with sl.RestRegistry(sl.Provider.SDMX_GLOBAL) as reg:
     dsd = reg.get(sl.DataStructure.urn_for(agency="ESTAT", id="NAMAIN_10_GDP"), resolve=True)
-    print(dsd.id, dsd.name.get("en"))
+    print(dsd.id, dsd.name["en"].text)
 ```
 
 ```
@@ -72,7 +72,7 @@ with sl.RestRegistry(sl.Provider.SDMX_GLOBAL) as reg:
     print(f"Total codes: {len(cl.codes)}")
     print()
     for code in cl.codes[:6]:
-        print(f"  {code.id:<8}  {code.name.get('en', '')}")
+        print(f"  {code.id:<8}  {code.name.as_dict().get('en', '')}")
     print("  ...")
 ```
 

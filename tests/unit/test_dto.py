@@ -82,7 +82,7 @@ def test_emit_istr_shares_map_not_copy() -> None:
     # copy=False on the hot path — the returned map is the model's backing dict.
     v = InternationalString.of({"en": "x"})
     _, names = emit_istr(v)
-    assert names is v.as_dict(copy=False)
+    assert names is v._backing()
 
 
 # ── Shared Structs: omit_defaults + roundtrip ────────────────────────────────

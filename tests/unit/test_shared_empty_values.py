@@ -9,7 +9,7 @@ codelist read — ~98% of its 585,675 annotations carry no text at all.
 risk is specific and worth naming rather than gesturing at: a shared instance
 makes any escape of the backing store a *process-wide* corruption instead of a
 local one. `InternationalString` has two deliberate escapes —
-`as_dict(copy=False)` and `emit_pair()` — both documented read-only for the
+`_backing()` and `_emit_pair()` — both documented read-only for the
 caller and both on serialiser hot paths. So the contract is now load-bearing,
 and the tests below are where it is stated.
 """
@@ -113,18 +113,18 @@ def test_as_dict_copies_by_default():
     """
     istr = InternationalString(en="x")
     assert istr.as_dict() is not istr.as_dict()
-    assert istr.as_dict(copy=False) is istr.as_dict(copy=False)
+    assert istr._backing() is istr._backing()
 
 
 def test_the_shared_empty_hands_out_nothing_worth_mutating():
     """Both escapes yield an empty map or None, so the blast radius is nil.
 
-    This is the reassuring half of the risk above: `emit_pair()` on the empty
+    This is the reassuring half of the risk above: `_emit_pair()` on the empty
     istring returns `(None, None)` rather than the backing dict, and
-    `as_dict(copy=False)` returns a dict with nothing in it to corrupt in
+    `_backing()` returns a dict with nothing in it to corrupt in
     place. A caller would have to *add* a key to do damage, which no serialiser
     does — but if one ever did, `test_istring_exposes_no_mutator` is not the
     test that catches it, so it is written down here instead of assumed.
     """
-    assert InternationalString.EMPTY.emit_pair() == (None, None)
-    assert InternationalString.EMPTY.as_dict(copy=False) == {}
+    assert InternationalString.EMPTY._emit_pair() == (None, None)
+    assert InternationalString.EMPTY._backing() == {}

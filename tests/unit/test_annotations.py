@@ -91,7 +91,7 @@ def test_annotation_with_text():
         type="NOTE",
         text=InternationalString(en="Some note"),
     )
-    assert ann.text["en"] == "Some note"
+    assert ann.text["en"].text == "Some note"
 
 
 def test_equality():

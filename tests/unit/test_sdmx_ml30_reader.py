@@ -68,14 +68,14 @@ def test_code_ids():
 
 def test_code_name():
     msg = load_xml("3.0", "minimal")
-    assert msg.codelists["CL_FREQ"].codes["A"].name.get("en") == "Annual"
+    assert msg.codelists["CL_FREQ"].codes["A"].name["en"].text == "Annual"
 
 
 def test_code_multilingual():
     msg = load_xml("3.0", "minimal")
     code_a = msg.codelists["CL_FREQ"].codes["A"]
-    assert code_a.name.get("en") == "Annual"
-    assert code_a.name.get("fr") == "Annuel"
+    assert code_a.name["en"].text == "Annual"
+    assert code_a.name["fr"].text == "Annuel"
 
 
 def test_code_parent_id():
@@ -286,7 +286,7 @@ def test_agency_scheme_agencies():
     msg = load_xml("3.0", "minimal")
     scheme = msg.agency_schemes[0]
     assert scheme.agencies.ids() == ["SDMX", "TEST"]
-    assert scheme.agencies["SDMX"].name["en"] == "SDMX"
+    assert scheme.agencies["SDMX"].name["en"].text == "SDMX"
 
 
 def test_agency_contact_parsed():
@@ -294,7 +294,7 @@ def test_agency_contact_parsed():
     sdmx_agency = msg.agency_schemes[0].agencies["SDMX"]
     assert len(sdmx_agency.contacts) == 1
     contact = sdmx_agency.contacts[0]
-    assert contact.name["en"] == "SDMX Support"
+    assert contact.name["en"].text == "SDMX Support"
     assert "support@sdmx.org" in contact.emails
 
 
@@ -800,8 +800,8 @@ def test_codelist_annotation_parsed_with_all_fields():
     assert ann.title == "Source frequency codelist"
     assert ann.type == "SOURCE"
     assert [u.url for u in ann.urls] == ["https://example.org/CL_FREQ"]
-    assert ann.text.get("en") == "Curated by SDMX"
-    assert ann.text.get("fr") == "Conservé par SDMX"
+    assert ann.text["en"].text == "Curated by SDMX"
+    assert ann.text["fr"].text == "Conservé par SDMX"
 
 
 def test_concept_scheme_annotation_minimal():
@@ -812,7 +812,7 @@ def test_concept_scheme_annotation_minimal():
 
 def test_dataflow_annotation_parsed():
     df = _load_complete().dataflows["DF_TEST"]
-    assert present(df.annotations.first("STATUS")).text.get("en") == "Production-ready"
+    assert present(df.annotations.first("STATUS")).text["en"].text == "Production-ready"
 
 
 def test_categorisation_annotation_parsed():
@@ -827,7 +827,7 @@ def test_provision_agreement_annotation_parsed():
 
 def test_data_constraint_annotation_parsed():
     cc = _load_complete().constraints["CC_TEST"]
-    assert present(cc.annotations.first("NOTE")).text.get("en") == ("Restricted dimensions for Q1 reporting")
+    assert present(cc.annotations.first("NOTE")).text["en"].text == ("Restricted dimensions for Q1 reporting")
 
 
 def test_annotations_round_trip_on_all_non_dsd_maintainables():
@@ -906,10 +906,10 @@ def test_contact_all_fields_parsed():
     agency = msg.agency_schemes[0].agencies["SDMX"]
     assert len(agency.contacts) == 2
     press = agency.contacts[1]
-    assert press.name["en"] == "SDMX Press Office"
-    assert press.name["fr"] == "Bureau de presse SDMX"
-    assert press.department["en"] == "Communications"
-    assert press.role["en"] == "Media liaison"
+    assert press.name["en"].text == "SDMX Press Office"
+    assert press.name["fr"].text == "Bureau de presse SDMX"
+    assert press.department["en"].text == "Communications"
+    assert press.role["en"].text == "Media liaison"
     assert press.phones == ("+33 1 23 45 67 89", "+33 1 98 76 54 32")
     assert press.faxes == ("+33 1 11 22 33 44",)
     assert press.x400s == ("C=FR;A=ATLAS;P=SDMX;O=PRESS;S=OFFICE",)
@@ -933,17 +933,17 @@ def test_codelist_name_carries_non_en_fr_tags():
     """CL_FREQ.Name carries en + fr + de + es; all four survive parse."""
     cl = _load_complete().codelists["CL_FREQ"]
     assert set(cl.name.langs) >= {"en", "fr", "de", "es"}
-    assert cl.name["de"] == "Häufigkeit"
-    assert cl.name["es"] == "Frecuencia"
+    assert cl.name["de"].text == "Häufigkeit"
+    assert cl.name["es"].text == "Frecuencia"
 
 
 def test_region_coded_language_tags_are_read_lowercase():
     """Region-coded tags (pt-BR, zh-Hans, es-419) are stored lowercase (GH-280),
     and found under any case."""
     code = _load_complete().codelists["CL_FREQ"].codes["A"]
-    assert code.name["pt-BR"] == "Anual"
-    assert code.name["zh-Hans"] == "每年"
-    assert code.name["es-419"] == "Anual"
+    assert code.name["pt-BR"].text == "Anual"
+    assert code.name["zh-Hans"].text == "每年"
+    assert code.name["es-419"].text == "Anual"
     assert code.name.langs[3:] == ["pt-br", "zh-hans", "es-419"]
 
 

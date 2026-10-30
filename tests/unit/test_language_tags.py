@@ -12,6 +12,7 @@ import contextlib
 import importlib
 import inspect
 import json
+import operator
 import pkgutil
 import re
 import time
@@ -162,8 +163,8 @@ def test_an_adversarial_tag_is_checked_in_bounded_time(tag: str) -> None:
 def test_keys_are_normalised_and_looked_up_normalised() -> None:
     s = sl.InternationalString(**{"FR-CA": "a", "en": "b"})
     assert s.langs == ["fr-ca", "en"]
-    assert s["fr-CA"] == "a"
-    assert s.get("de", "FR-ca") == "a"
+    assert s["fr-CA"].text == "a"
+    assert s.pick("de", "FR-ca") == sl.LocalisedString("a", "fr-ca")
     assert "Fr-Ca" in s
     assert sl.InternationalString.of({"EN": "b"}) == sl.InternationalString(en="b")
 
@@ -180,17 +181,12 @@ def test_a_malformed_key_is_refused() -> None:
         sl.InternationalString.of({_BAD: "a"})
 
 
-def test_indexing_a_malformed_tag_is_a_key_error_from_the_value_error() -> None:
+def test_indexing_or_membership_of_a_malformed_tag_raises() -> None:
     s = sl.InternationalString(en="a")
-    with pytest.raises(KeyError) as raised:
+    with pytest.raises(sl.InvalidTagError, match="fr_CA"):
         s[_BAD]
-    assert isinstance(raised.value.__cause__, ValueError)
-
-
-def test_membership_of_a_malformed_tag_or_a_non_str_is_false() -> None:
-    s = sl.InternationalString(en="a")
-    assert _BAD not in s
-    assert 1 not in s
+    with pytest.raises(sl.InvalidTagError, match="fr_CA"):
+        operator.contains(s, _BAD)
 
 
 def test_get_and_pick_refuse_a_malformed_tag() -> None:
@@ -533,11 +529,10 @@ def _calls(store: sl.LocalRegistry, tmp_path: Path) -> dict[str, Callable[[], No
     no_batches: list[object] = []
 
     def contains() -> None:
-        assert _BAD not in istring
+        _refuses(lambda: _BAD in istring)
 
     def getitem() -> None:
-        with pytest.raises(KeyError):
-            istring[_BAD]
+        _refuses(lambda: istring[_BAD])
 
     def table() -> None:
         _refuses(lambda: ComponentTable(["A"], _DSD, kind="dimension", lang=_BAD, annotations=AnnotationPool()))
@@ -573,6 +568,7 @@ def _calls(store: sl.LocalRegistry, tmp_path: Path) -> dict[str, Callable[[], No
         "sdmxlib.model.istring:InternationalString.__getitem__": getitem,
         "sdmxlib.model.istring:InternationalString.get": lambda: _refuses(lambda: istring.get(_BAD)),
         "sdmxlib.model.istring:InternationalString.pick": lambda: _refuses(lambda: istring.pick(_BAD)),
+        "sdmxlib.model.istring:tag_alias": lambda: _refuses(lambda: sl.tag_alias(_BAD)),
         "sdmxlib.model.istring:LocalisedString": lambda: _refuses(lambda: sl.LocalisedString("x", _BAD)),
         "sdmxlib.model.valuelist:ValueList.code_map": lambda: _refuses(
             lambda: sl.ValueList(id="VL", maintainer="AG", name={"en": "v"}, items=[]).code_map(lang=_BAD)
@@ -602,6 +598,13 @@ def test_every_public_lang_parameter_refuses_a_malformed_tag(store: sl.LocalRegi
             call()
         except AssertionError as exc:
             pytest.fail(f"{name}: {exc}")
+
+
+def test_a_generated_name_writes_its_tag_through_tag_alias() -> None:
+    assert q.code.name["fr-CA"].column == "name_fr_ca"
+    assert q.code.name["fr-CA"].projected_name == "name_fr_ca"
+    labelled = slpl.label(_FRAME, _DSD, lang=["en", "fr-CA"]).collect()
+    assert labelled.columns == ["A", "A_label_en", "A_label_fr_ca"]
 
 
 # ── overlays and the store ─────────────────────────────────────────────────

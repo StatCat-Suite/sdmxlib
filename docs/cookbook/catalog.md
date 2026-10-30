@@ -17,7 +17,7 @@ with sl.RestRegistry(sl.Provider.SDMX_GLOBAL) as reg:
     print(f"{'ID':<30} {'Name':<45} Dims")
     print("-" * 82)
     for df in flows:
-        name = df.name.get("en", "")[:44]
+        name = df.name.as_dict().get("en", "")[:44]
         n_dims = len(df.structure().dimensions) if df.structure.resolved else "?"
         print(f"{df.id:<30} {name:<45} {n_dims}")
 ```
@@ -99,7 +99,7 @@ with sl.RestRegistry(sl.Provider.SDMX_GLOBAL) as reg:
     )
 
     for df in sorted(priced, key=lambda df: df.id)[:5]:
-        print(df.id, df.name.get("en", ""))
+        print(df.id, df.name.as_dict().get("en", ""))
 ```
 
 The name search runs locally — no SDMX REST URL can express it — but the
@@ -180,7 +180,7 @@ with sl.RestRegistry(sl.Provider.SDMX_GLOBAL) as reg:
 
     def walk(cats, indent=0):
         for cat in cats:
-            print("  " * indent + f"[{cat.id}] {cat.name.get('en', '')}")
+            print("  " * indent + f"[{cat.id}] {cat.name.as_dict().get('en', '')}")
             walk(cat.categories, indent + 1)
 
     walk(scheme.categories)

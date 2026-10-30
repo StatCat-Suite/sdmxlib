@@ -141,8 +141,8 @@ def test_a_leaf_repeated_in_another_branch_is_valid() -> None:
 
 def test_each_repeat_is_its_own_item_by_path() -> None:
     cs = _categories()
-    assert cs["HEALTH.HSW"].name["en"] == "Health and safety at work"
-    assert cs["LABOUR.HSW"].name["en"] == "Health and safety, labour view"
+    assert cs["HEALTH.HSW"].name["en"].text == "Health and safety at work"
+    assert cs["LABOUR.HSW"].name["en"].text == "Health and safety, labour view"
     assert [cs.path_of(c) for c in cs.by_id("HSW")] == ["HEALTH.HSW", "LABOUR.HSW"]
     assert _msd()["LINK.URL"].max_occurs is None
     assert _hierarchy().depths() == {"MR": 0, "TYPO_METRO": 0, "TYPO_METRO.MR": 1}
@@ -235,7 +235,7 @@ def test_a_category_scheme_with_a_repeat_round_trips(version: SchemaVersion) -> 
     assert_valid_sdmx_ml(written, compile_structure_schema(version))
     back = parse(written, version=version)
     assert isinstance(back, StructureMessage)
-    assert back.category_schemes[0]["LABOUR.HSW"].name["en"] == "Health and safety, labour view"
+    assert back.category_schemes[0]["LABOUR.HSW"].name["en"].text == "Health and safety, labour view"
 
 
 def test_a_2_1_hierarchical_code_reference_names_the_hierarchy_by_container() -> None:
@@ -433,7 +433,7 @@ def test_a_categorisation_joins_and_resolves_to_the_category_its_path_names() ->
         assert under["path"].to_list() == ["LABOUR.HSW"]
         target = _target_of(reg, "BY_LABOUR")
         assert isinstance(target, Category)
-        assert target.name["en"] == "Health and safety, labour view"
+        assert target.name["en"].text == "Health and safety, labour view"
 
 
 def test_the_store_resolves_hierarchy_node_and_metadata_attribute_refs() -> None:

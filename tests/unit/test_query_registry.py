@@ -261,7 +261,7 @@ def test_codes_resolve_to_code_objects(reg: sl.LocalRegistry) -> None:
     found = reg.query(q.code).filter(q.code.codelist.id == "CL_AREA").order_by(q.code.id).collect()
     assert [type(c).__name__ for c in found] == ["Code", "Code"]
     assert [c.id for c in found] == ["CA", "US"]
-    assert found[0].name.get("en") == "CA"
+    assert found[0].name["en"].text == "CA"
     assert [a.title for a in found[0].annotations] == ["about CA"]
     assert list(found[1].annotations) == [], "only the first code carries one"
 

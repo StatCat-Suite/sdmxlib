@@ -100,7 +100,7 @@ def _read(*hcls: bytes) -> StructureMessage:
 def test_hierarchies_of_one_inner_id_in_two_codelists_stay_two() -> None:
     """OECD's shape: every codelist names its hierarchy ``H``."""
     msg = _read(_hcl("HCL_AGE", ("H", "Age")), _hcl("HCL_SEX", ("H", "Sex")))
-    assert [(h.id, h.name["en"]) for h in msg.hierarchies] == [("H@HCL_AGE", "Age"), ("H@HCL_SEX", "Sex")]
+    assert [(h.id, h.name["en"].text) for h in msg.hierarchies] == [("H@HCL_AGE", "Age"), ("H@HCL_SEX", "Sex")]
     assert [[str(ref.urn) for ref in hcl.hierarchies] for hcl in msg.hierarchical_codelists] == [
         [str(artefact_urn(h))] for h in msg.hierarchies
     ]

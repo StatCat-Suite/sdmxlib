@@ -145,7 +145,7 @@ def name_problem(name: InternationalString) -> tuple[str, str] | None:
     """
     if not name:
         return "name", "name is required (SDMX NameableArtefact)"
-    for lang, text in name.items():
+    for lang, text in name._backing().items():
         # The character first: Python strips some XML-forbidden characters as
         # whitespace (U+000B, U+000C), and "cannot be written" is the finding.
         bad = first_xml_incompatible(text)
@@ -210,7 +210,7 @@ def named(instance: object, _attribute: attrs.Attribute[InternationalString], va
     # once per item built — 579,951 times for the census geography codelist —
     # and the bundle tier's per-row call budget counts it: a generator over
     # three string checks cost 13 calls a row there, this costs 5.
-    texts = value.as_dict(copy=False)
+    texts = value._backing()
     if texts:
         for text in texts.values():
             if not PLAIN_NAME_RE.fullmatch(text):

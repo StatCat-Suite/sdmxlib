@@ -310,8 +310,8 @@ def test_lazy_codelist_metadata():
         assert present(lazy).id == "CL_FREQ"
         assert present(lazy).agency_id == "SDMX"
         assert present(lazy).version == "1.0"
-        assert present(lazy).name["en"] == "Test"
-        assert present(lazy).name["fr"] == "Essai"
+        assert present(lazy).name["en"].text == "Test"
+        assert present(lazy).name["fr"].text == "Essai"
 
 
 def test_lazy_codelist_len():
@@ -333,7 +333,7 @@ def test_lazy_codelist_getitem_by_id():
         assert lazy is not None
         code = lazy.codes["A"]
         assert code.id == "A"
-        assert code.name["en"] == "Annual"
+        assert code.name["en"].text == "Annual"
 
 
 def test_lazy_codelist_getitem_missing_raises():
@@ -395,7 +395,7 @@ def test_lazy_codelist_materialize():
         real = present(lazy).materialize()
         assert isinstance(real, Codelist)
         assert len(real.codes) == 3
-        assert real.codes["A"].name["en"] == "Annual"
+        assert real.codes["A"].name["en"].text == "Annual"
 
 
 # ── code_map ─────────────────────────────────────────────────────────────────
@@ -793,7 +793,7 @@ def test_code_annotations_round_trip():
         code = present(lazy).codes["A"]
         assert len(code.annotations) == 1
         assert code.annotations[0].type == "SOURCE"
-        assert code.annotations[0].text["en"] == "Test source"
+        assert code.annotations[0].text["en"].text == "Test source"
 
 
 # ── Drop cascades codes ─────────────────────────────────────────────────────
@@ -854,7 +854,7 @@ def test_to_registry():
         cl_urn = Codelist.urn_for(agency="SDMX", id="CL_FREQ", version="1.0")
         loaded_cl = reg.get(cl_urn)
         assert loaded_cl is not None
-        assert loaded_cl.codes["A"].name["en"] == "Annual"
+        assert loaded_cl.codes["A"].name["en"].text == "Annual"
 
 
 def test_to_registry_leaves_the_threads_read_cursor_open():
@@ -882,7 +882,7 @@ def test_persistence(tmp_path):
     with LocalRegistry(db_path) as local:
         assert urn in local
         lazy = local.get(urn)
-        assert present(lazy).codes["A"].name["en"] == "Annual"
+        assert present(lazy).codes["A"].name["en"].text == "Annual"
 
 
 def test_re_add_across_reopen_does_not_corrupt_localized_text(tmp_path):
@@ -899,7 +899,7 @@ def test_re_add_across_reopen_does_not_corrupt_localized_text(tmp_path):
         local.add(cl)
         urn = Codelist.urn_for(agency="SDMX", id="CL_FREQ", version="1.0")
         lazy = local.get(urn)
-        assert present(lazy).codes["A"].name["en"] == "Annual"
+        assert present(lazy).codes["A"].name["en"].text == "Annual"
 
 
 # ── get_all returns LazyCodelist for codelists ───────────────────────────────
@@ -1003,7 +1003,7 @@ def test_get_resolves_codelist_refs():
         assert area_dim.representation.resolved
         area_cl = area_dim.codelist
         assert isinstance(area_cl, LazyCodelist)
-        assert area_cl.codes["CA"].name["en"] == "Canada"
+        assert area_cl.codes["CA"].name["en"].text == "Canada"
 
 
 def test_get_resolves_concept_refs():
@@ -1020,7 +1020,7 @@ def test_get_resolves_concept_refs():
 
         freq_dim = present(result).dimensions["FREQ"]
         assert present(freq_dim.concept).resolved
-        assert freq_dim.concept_identity.name["en"] == "Frequency"
+        assert freq_dim.concept_identity.name["en"].text == "Frequency"
 
 
 def test_dsd_traversal_code_map():
@@ -1126,7 +1126,7 @@ def test_dimension_codes_via_lazy_codelist():
         codes = freq.codes
         assert isinstance(codes, ItemList), f"declared ItemList[Code], got {type(codes).__name__}"
         assert len(codes) == 3, "and len() works on it, which is what used to raise"
-        assert codes["A"].name["en"] == "Annual"
+        assert codes["A"].name["en"].text == "Annual"
 
         assert freq.code_ids() == codes.ids(), "the cheap path must agree with the built one"
 

@@ -135,7 +135,7 @@ q.collect()                    # list[Code] — whole artefacts, annotations inc
 q.first()                      # Code | None
 q.filter(sl.q.code.id == "FR").one()              # exactly one, or raises
 q.filter(sl.q.code.id == "XX").one_or_none()      # None
-print(q["FR"].name["fr"])  # France
+print(q["FR"].name["fr"].text)  # France
 q.get("XX")                    # None (q["XX"] raises KeyError)
 print((q.count(), q.filter(sl.q.code.depth == 2).exists()))  # (5, True)
 q.frame()                      # pl.DataFrame of the relation's stored columns
@@ -403,8 +403,8 @@ print(store.connection.execute(sql, ["A"]).fetchall())  # [('FR', '2.3'), ('DE',
 - **`and` / `or` / `not` raise.** Use `&`, `|`, `~`, and parenthesise.
 - **Two dotted conditions on a to-many edge may match different children.**
   Group them in `.any(...)`.
-- **A localised column projects with its language** — `name["en"]` is
-  `name_en`.
+- **A localised column projects as text, with its language** — `name["en"]`
+  is `name_en`, and `name["fr-CA"]` is `name_fr_ca`.
 - **No default language.** `name["en"]`, `frame(labels="en")`: the language
   is always named.
 - **REST scans that filter need an agency**, or `PushdownError`.

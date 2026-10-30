@@ -148,4 +148,4 @@ def test_the_refs_still_resolve(reg):
     assert len(leaves) == _N_CODES
     assert all(node.code.resolved for node in leaves)
     assert {node.code().id for node in leaves} == {f"C{i:04d}" for i in range(_N_CODES)}
-    assert all(node.code().name["en"].startswith("Code ") for node in leaves)
+    assert all(node.code().name["en"].text.startswith("Code ") for node in leaves)

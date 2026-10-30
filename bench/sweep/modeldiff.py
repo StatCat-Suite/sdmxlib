@@ -88,7 +88,7 @@ def _identity(left: object, right: object, path: str, out: Differences) -> bool:
             out.note(path, str(left), str(right))
         return True
     if isinstance(left, InternationalString) and isinstance(right, InternationalString):
-        if left.as_dict(copy=False) != right.as_dict(copy=False):
+        if left._backing() != right._backing():
             _walk_istring(left, right, path, out)
         return True
     return False
@@ -136,7 +136,7 @@ def _walk_keyed(
 
 
 def _walk_istring(left: InternationalString, right: InternationalString, path: str, out: Differences) -> None:
-    a, b = left.as_dict(copy=False), right.as_dict(copy=False)
+    a, b = left._backing(), right._backing()
     if a.keys() != b.keys():
         out.note(f"{path} (languages)", sorted(a), sorted(b))
         return

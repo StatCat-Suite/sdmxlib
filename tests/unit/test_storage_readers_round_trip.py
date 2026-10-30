@@ -94,7 +94,7 @@ def test_data_constraint_round_trip(cursor) -> None:
     assert result is not None
     assert result.id == "CC_TEST"
     assert result.agency_id == "TEST"
-    assert result.name.get("en") == "Test Constraint"
+    assert result.name["en"].text == "Test Constraint"
     assert result.constraint_type is ConstraintType.ALLOWED
     assert len(result.attachment.dataflows) == 1
     assert result.attachment.dataflows[0].urn.id == "DF_X"
@@ -129,13 +129,13 @@ def test_category_scheme_round_trip(cursor) -> None:
     result = get_artefact(cursor, _urn(CategoryScheme, "TEST", "CS_TEST"))
     assert result is not None
     assert result.id == "CS_TEST"
-    assert result.name.get("en") == "Test Categories"
+    assert result.name["en"].text == "Test Categories"
     # Top-level categories preserved
     assert sorted(result.categories.ids()) == ["A", "B"]
     # Nested category survives
     a = result.categories["A"]
     assert sorted(a.categories.ids()) == ["A1"]
-    assert a.categories["A1"].name.get("en") == "Child A1"
+    assert a.categories["A1"].name["en"].text == "Child A1"
 
 
 # ── Categorisation ───────────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ def test_categorisation_round_trip(cursor) -> None:
     result = get_artefact(cursor, _urn(Categorisation, "TEST", "CAT_X"))
     assert result is not None
     assert result.id == "CAT_X"
-    assert result.name.get("en") == "DF_X under A"
+    assert result.name["en"].text == "DF_X under A"
     assert result.source is not None
     assert result.source.urn.id == "DF_X"
     assert result.target is not None
@@ -204,7 +204,7 @@ def test_hierarchy_association_round_trip(cursor) -> None:
     result = get_artefact(cursor, _urn(HierarchyAssociation, "TEST", "HA_GEO"))
     assert result is not None
     assert result.id == "HA_GEO"
-    assert result.name.get("en") == "Default geo hierarchy for DF_X"
+    assert result.name["en"].text == "Default geo hierarchy for DF_X"
     assert result.linked_hierarchy is not None
     assert result.linked_hierarchy.urn.id == "H_GEO"
     assert result.linked_object is not None
@@ -263,7 +263,7 @@ def test_agency_scheme_round_trip(cursor) -> None:
     assert result is not None
     assert result.id == "AGENCIES"
     assert sorted(result.agencies.ids()) == ["SDMX", "TEST"]
-    assert result.agencies["TEST"].name.get("en") == "Test agency"
+    assert result.agencies["TEST"].name["en"].text == "Test agency"
 
 
 # ── DataProviderScheme ───────────────────────────────────────────────────────
@@ -287,7 +287,7 @@ def test_data_provider_scheme_round_trip(cursor) -> None:
     assert result is not None
     assert result.id == "DATA_PROVIDERS"
     assert sorted(result.providers.ids()) == ["ECB", "ESTAT"]
-    assert result.providers["ECB"].name.get("en") == "European Central Bank"
+    assert result.providers["ECB"].name["en"].text == "European Central Bank"
 
 
 # ── ProvisionAgreement ───────────────────────────────────────────────────────

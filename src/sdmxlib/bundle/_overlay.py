@@ -499,7 +499,7 @@ class _Plan:
         if "name" in fields and not fields["name"]:
             msg = f"{urn}: removing the last language of its name; a name keeps at least one"
             raise OverlayError(msg)
-        return {field: (value or None) if field == "description" else value for field, value in fields.items()}
+        return dict(fields)
 
     def _apply(self, entry: OverlayEntry, current: list[Annotation]) -> list[Annotation]:
         kept = [a for a in current if a.type != entry.type]

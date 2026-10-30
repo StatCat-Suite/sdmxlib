@@ -198,9 +198,10 @@ def _conformant(artefact: SupportsUrn) -> SupportsUrn:
     def repaired(code: Code) -> Code:
         if code.parent_id is not None and code.parent_id not in ids:
             code = attrs.evolve(code, parent_id=None)
-        if all(text.strip() for _, text in code.name.items()):
+        texts = code.name.as_dict()
+        if all(text.strip() for text in texts.values()):
             return code
-        return attrs.evolve(code, name={lang: text if text.strip() else code.id for lang, text in code.name.items()})
+        return attrs.evolve(code, name={lang: text if text.strip() else code.id for lang, text in texts.items()})
 
     return attrs.evolve(artefact, codes=[repaired(code) for code in artefact.codes])
 

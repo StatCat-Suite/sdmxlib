@@ -110,7 +110,7 @@ def test_representation_map_translate_empty():
 
 def test_representation_map_name_converter():
     m = RepresentationMap(id="RM_TEST", maintainer="SDMX", name={"en": "Map"})
-    assert m.name["en"] == "Map"
+    assert m.name["en"].text == "Map"
 
 
 def test_representation_map_urn_classvar():

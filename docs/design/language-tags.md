@@ -148,9 +148,14 @@ that each refuses a malformed tag.
 | Bundle overlay `lang` | as given | normalised; a malformed one is refused as the overlay is read |
 | Store readers (`storage/readers.py`, `lazy.py`, `_projections.py`) | rows as stored | built through the internal `InternationalString._from_normalized`, which skips the check: what the store holds was normalised as it was written (D6) |
 | Every `lang=` / `langs=` parameter (the rule above) | compared as given | normalised before use; a malformed one raises `InvalidTagError` |
-| `InternationalString.get(*langs)`, `pick(*langs)` | exact key | each requested tag normalised, then matched exactly; a malformed one raises `InvalidTagError` |
-| `InternationalString.__getitem__(lang)` | exact key | normalised; a malformed tag raises `KeyError`, chained from the `InvalidTagError`, so `try/except KeyError` callers keep working |
-| `InternationalString.__contains__(lang)` | exact key | `False` for a malformed tag or a non-`str`, as a predicate should be |
+| `InternationalString.get(lang)`, `pick(*langs)` | exact key | each requested tag normalised, then matched exactly; a malformed one raises `InvalidTagError`, and `pick` checks every tag before it looks any up |
+| `InternationalString.__getitem__(lang)` | exact key | normalised; a malformed tag raises `InvalidTagError`, a tag not held raises `MissingTagError` (a `KeyError`) |
+| `InternationalString.__contains__(lang)` | exact key | normalised; a malformed tag raises `InvalidTagError` and a non-`str` raises `TypeError`, as an unhashable key does on a `dict` |
+
+The last three rows are as amended by GH-309, which made `InternationalString`
+a `Mapping[str, LocalisedString]` (the suite design, D7). `InvalidTagError` is
+a `ValueError` only, so generic code catching `KeyError` (`Mapping.get`,
+`ChainMap`) passes it on rather than reading a malformed tag as absent.
 
 "Refuses the artefact" is the readers' existing per-artefact refusal: the
 reader records a `Refusal` naming the artefact and the tag in `msg.refused`,
@@ -211,10 +216,10 @@ that design's second stage.
 - A malformed tag raises `InvalidTagError`, a `ValueError`, which
   `normalize_tag` and so every `lang=` parameter raise. Its message names the
   hyphen form of a tag written with `_` ("did you mean 'fr-ca'?").
-- `InternationalString.pick(*langs) -> LocalisedString | None` works as `get`
-  does (each requested tag normalised, the first one present wins) and
-  returns the tag that answered. So a caller asking for `("fr-ca", "fr",
-  "en")` learns which tag answered.
+- Every per-language lookup on `InternationalString` returns one: `[]`,
+  `get`, `values()` and `items()`, and `pick(*langs)`, which returns the first
+  of `langs` held. So a caller asking for `("fr-ca", "fr", "en")` learns which
+  tag answered (GH-309).
 - **JSON form, a suite contract** (StatCat-Suite/statcatlib#88):
   `{"text": "Population", "lang": "en"}`, keys in that order, with the stored
   lowercase tag and no display case. `msgspec.json.encode(value)` writes it.
@@ -317,9 +322,8 @@ No memo was added.
 - `InternationalString`, `LocalisedString` and every `lang=` refuse a
   malformed tag with `InvalidTagError`, a `ValueError`; two keys of one tag
   raise `ValueError`.
-- `InternationalString.__getitem__` raises `KeyError` for a malformed tag,
-  where it raised nothing for an absent one before; `__contains__` returns
-  `False` for one.
+- `InternationalString.__getitem__` and `__contains__` raise
+  `InvalidTagError` for a malformed tag (GH-309; D3).
 - A read refuses an artefact carrying an empty `xml:lang`, a malformed tag,
   one of the four mixed-case grandfathered tags, or two texts of one tag. It
   read before, keeping the key `""`, the tag as given, or the last text.

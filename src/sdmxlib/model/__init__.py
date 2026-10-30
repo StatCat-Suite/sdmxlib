@@ -93,7 +93,14 @@ from sdmxlib.model.datastructure import (
     MetadataAttributeUsage,
     TimeDimension,
 )
-from sdmxlib.model.istring import InternationalString, InvalidTagError, LocalisedString, normalize_tag
+from sdmxlib.model.istring import (
+    InternationalString,
+    InvalidTagError,
+    LocalisedString,
+    MissingTagError,
+    normalize_tag,
+    tag_alias,
+)
 from sdmxlib.model.link import Link
 from sdmxlib.model.errors import Refusal
 from sdmxlib.model.header import ActionType, Header, MetadataHeader, Party, Sender
@@ -225,6 +232,7 @@ __all__ = [
     "MetadataSet",
     "MetadataStructure",
     "Metadataflow",
+    "MissingTagError",
     "OrganisationSchemeMap",
     "OrganisationUnit",
     "OrganisationUnitScheme",
@@ -266,6 +274,7 @@ __all__ = [
     "from_dict",
     "item",
     "normalize_tag",
+    "tag_alias",
     "to_dict",
     "validate",
     "validate_references",
