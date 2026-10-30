@@ -125,7 +125,7 @@ written (#377, since fixed). So a second tier reads one.
 | `test_bundle_writes.py` | The write path (#140) |
 
 ```bash
-export SDMXLIB_BENCH_BUNDLE=/path/to/bundle/<token>   # a publication: holds bundle.manifest.json
+export SDMXLIB_BENCH_BUNDLE=/path/to/bundle/<token>   # a publication: holds manifest.json
 just bench-bundle
 ```
 

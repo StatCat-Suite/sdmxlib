@@ -252,7 +252,7 @@ the bindings and the lake are.
 import sdmxlib as sl
 
 # The local store: bindings, cached structures, and the observation lake.
-# `LocalRegistry.bundle("/srv/census-2021")` opens a published one the same way.
+# `LocalRegistry.edition("/srv/census-2021")` opens a sealed one the same way.
 with sl.LocalRegistry("lake.duckdb", source_registry="local") as local:
     # Federate the *structural* side into it.
     estat = sl.RestRegistry(sl.Provider.ESTAT, store=local)

@@ -4,7 +4,7 @@
 
 The `sdmxlib` command, a typer app shipped as the separate `sdmxlib-cli`
 distribution so that `sdmxlib` itself never depends on typer (GH-67). Each
-command is a thin wrapper over `sdmxlib.bundle`: the module parses arguments,
+command is a thin wrapper over `sdmxlib.edition`: the module parses arguments,
 calls one library function, and prints its result. The library tests the
 behaviour behind each command; `tests/unit/test_cli.py` tests the wrapping.
 
@@ -12,24 +12,24 @@ behaviour behind each command; `tests/unit/test_cli.py` tests the wrapping.
 
 - `app` — the root `typer.Typer`; the console script `sdmxlib = "sdmxlib_cli:app"`
   in `cli/pyproject.toml`. It holds one sub-app, `bundle`.
-- `sdmxlib bundle check PATH --at {publish,receive,open} [--expect EARLIER]` —
-  `check(path, *, at, expect)` calls `check_bundle(path, at=..., expect=...)`,
+- `sdmxlib edition check PATH --at {publish,receive,open} [--expect EARLIER]` —
+  `check(path, *, at, expect)` calls `check_edition(path, at=..., expect=...)`,
   prints each finding and a summary line
   (`<path>: N finding(s); checked ...`), and exits 1 when the report is not
   `ok`, 0 otherwise. `--at` is required.
-- `sdmxlib bundle fetch SOURCE FLOW PATH [--key] [--start] [--end]
+- `sdmxlib edition fetch SOURCE FLOW PATH [--key] [--start] [--end]
   [--structures-only] [--api 2.1] [--source-id]` — `fetch(...)` calls
-  `fetch_bundle` and prints `<path>/<token>: <bundle_id>, <counts>; token <token>`.
-  `PATH` must be absent or empty (`fetch_bundle` raises `FileExistsError`
-  otherwise); the publication lands in `<path>/<token>/` and its data files in
+  `fetch_edition` and prints `<path>/<edition_id>: <product_id>, <counts>; edition id <edition_id>`.
+  `PATH` must be absent or empty (`fetch_edition` raises `FileExistsError`
+  otherwise); the edition lands in `<path>/<edition_id>/` and its data files in
   `<path>/data/`. `--api` and `--source-id` apply only to a URL `SOURCE`; a
   provider carries its own API version.
-- `sdmxlib bundle copy SOURCE DESTINATION [--tiers 1,2,3]` — `copy(...)` calls
-  `copy_bundle` and prints the destination, bundle id, token and file count.
-- `sdmxlib bundle files MANIFEST [--tiers 1,2,3] [--manifest]` — `files(...)`
-  reads the manifest with `read_manifest` and prints `bundle_files(...)` one
+- `sdmxlib edition copy SOURCE DESTINATION [--tiers 1,2,3]` — `copy(...)` calls
+  `copy_edition` and prints the destination, product id, edition id and file count.
+- `sdmxlib edition files MANIFEST [--tiers 1,2,3] [--manifest]` — `files(...)`
+  reads the manifest with `read_manifest` and prints `edition_files(...)` one
   path per line, for `rclone --files-from -` or azcopy; `--manifest` prints
-  only `<token>/bundle.manifest.json`.
+  only `<edition_id>/manifest.json`.
 - `At` — `StrEnum` of `--at`'s choices (`publish`, `receive`, `open`), mapped
   to the library's `Profile` literals by `_PROFILES`.
 - Private parsers: `_source(text)` (a `sl.Provider` by case-insensitive name,
@@ -40,14 +40,14 @@ behaviour behind each command; `tests/unit/test_cli.py` tests the wrapping.
 ## Invariants
 
 - Commands hold no logic of their own beyond argument parsing and printing;
-  behaviour changes belong in `sdmxlib.bundle`.
+  behaviour changes belong in `sdmxlib.edition`.
 - A bad `SOURCE`, `FLOW` or tier raises `typer.BadParameter` naming the
   accepted forms, so the CLI prints usage rather than a traceback. `_flow`
   converts the library's `SdmxParseError` (a malformed URN, agency or id) and
   refuses a version that is neither `latest` nor an SDMX version
   (`model.version.compliance`), in either form (GH-265).
-- `bundle files` accepts either a publication directory or a
-  `bundle.manifest.json` staged elsewhere (its parent is used). Its listing
+- `edition files` accepts either an edition directory or a
+  `manifest.json` staged elsewhere (its parent is used). Its listing
   leaves the manifest out and `--manifest` prints the manifest's path alone,
   so a copy tool moves the manifest in a second step, after every other file.
 - `cli/pyproject.toml`'s version and its `sdmxlib==` pin equal sdmxlib's
@@ -57,10 +57,10 @@ behaviour behind each command; `tests/unit/test_cli.py` tests the wrapping.
 
 ## Side Effects
 
-- `check` and `files` read the bundle (manifest, files, DuckDB catalog) and
+- `check` and `files` read the edition (manifest, files, DuckDB catalog) and
   write nothing.
 - `fetch` makes HTTP requests to the SDMX REST source and creates a new
-  publication directory under `PATH`.
+  edition directory under `PATH`.
 - `copy` writes files to `DESTINATION` and the shared data directory beside
   it, verifies them, and writes the manifest last.
 - All commands write to stdout; `check` sets the process exit status.

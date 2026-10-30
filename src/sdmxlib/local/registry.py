@@ -53,7 +53,7 @@ from sdmxlib.formats.sdmx_csv.reader import _resolve_structure
 from sdmxlib.formats.sdmx_json.data import read_observations
 from sdmxlib.local._scan import resolve_flow, scan_csv_into, scan_frame_into
 from sdmxlib.local.data_store import DuckDBDataStore, store_path
-from sdmxlib.local.engine import BundleEngine, spill_directory
+from sdmxlib.local.engine import EditionEngine, spill_directory
 from sdmxlib.local.object_store import data_uri, sql_literal
 from sdmxlib.model._binding import binding
 from sdmxlib.model._invariants import advise
@@ -101,6 +101,8 @@ from sdmxlib.storage._kinds import NAME_TO_CLASS as _TYPE_REGISTRY
 from sdmxlib.storage._manifest import (
     DATA_PATH,
     MANIFEST_NAME,
+    METADATA_NAME,
+    TABLES_NAME,
     Manifest,
     ManifestError,
     read_manifest,
@@ -181,12 +183,12 @@ def _owner_of(artefact_class: str) -> type[MaintainableArtefact] | None:
 #:
 #: **Items, not entries.** The bound used to be 256 *entries*, which said
 #: nothing about memory because entries differ in size by four orders of
-#: magnitude: on the 2021 Census Profile bundle the five largest artefacts total ~4.4 GB and
+#: magnitude: on the 2021 Census Profile edition the five largest artefacts total ~4.4 GB and
 #: occupy 5 of 256 slots, so a service could sit on 4.4 GB while its counter
 #: read 2% full. `docs/design/caching.md` requires a runtime cache to be
 #: bounded, and that satisfied it on paper only (#386).
 #:
-#: **What an item weighs**, measured on the 2021 Census Profile bundle with `tracemalloc`, in
+#: **What an item weighs**, measured on the 2021 Census Profile edition with `tracemalloc`, in
 #: one process so a one-time 4.4 MB warm-up is not charged to each artefact:
 #:
 #: | artefact | items | retained | bytes/item |
@@ -203,7 +205,7 @@ def _owner_of(artefact_class: str) -> type[MaintainableArtefact] | None:
 #: weigher where an entry count was not.
 #:
 #: **1,000,000 items is therefore 0.7 GB of codes to 2.0 GB of nodes.** It
-#: holds either of that bundle's two largest artefacts outright — the codelist
+#: holds either of that edition's two largest artefacts outright — the codelist
 #: at 0.40 GB or the largest hierarchy at 0.91 GB — but not both at once. A
 #: consumer who needs both raises it; the point of the number is that raising
 #: it is now a memory decision someone can make.
@@ -517,7 +519,7 @@ class _MemoResolver:
 
     __slots__ = ("_memo", "_registry")
 
-    def __init__(self, registry: BundleRegistry, memo: _CallScopedMemo) -> None:
+    def __init__(self, registry: EditionRegistry, memo: _CallScopedMemo) -> None:
         self._registry = registry
         self._memo = memo
 
@@ -546,10 +548,10 @@ def _as_value_key(key: Sequence[object]) -> tuple[str, str, int]:
     return str(set_urn), str(path), sibling
 
 
-type _Resolver = "Callable[[BundleRegistry], Resolver | None]"
+type _Resolver = "Callable[[EditionRegistry], Resolver | None]"
 
 
-def _no_resolver(_registry: BundleRegistry) -> None:
+def _no_resolver(_registry: EditionRegistry) -> None:
     """No way to build a domain object from this root's rows."""
     return
 
@@ -564,21 +566,21 @@ def _no_resolver(_registry: BundleRegistry) -> None:
 _RESOLVERS: dict[str, _Resolver] = {}
 
 
-class BundleRegistry(SessionFactory):
-    """A DuckDB-backed SDMX store, read-only: what a published bundle opens as.
+class EditionRegistry(SessionFactory):
+    """A DuckDB-backed SDMX store, read-only: what a sealed edition opens as.
 
     It carries the read surface (``get``, ``get_all``, ``query``, ``obs``,
     ``dsd``, ``binding_for``, ``browse``, the label maps) and opens its
     database with DuckDB's ``read_only``, so any number of processes may hold
-    one bundle open at once. `LocalRegistry` extends it with the writes.
+    one edition open at once. `LocalRegistry` extends it with the writes.
 
-    It has no ``sql()``. Several bundles can share one DuckDB engine, where a
+    It has no ``sql()``. Several editions can share one DuckDB engine, where a
     fully qualified name reaches any attached catalog, so a request-reachable
-    raw SQL surface would read other bundles. ``connection``, ``execute`` and
+    raw SQL surface would read other editions. ``connection``, ``execute`` and
     ``session`` remain for checkers and set-valued filters; they are not for
     a request path.
 
-    Open a published bundle with ``LocalRegistry.bundle(path)``.
+    Open a sealed edition with ``LocalRegistry.edition(path)``.
 
     **Concurrency.** Reads (``get`` / ``get_all`` / ``codelist`` /
     ``code_map`` / ``dsd_code_map`` / ``to_registry`` / ``__contains__``
@@ -604,7 +606,7 @@ class BundleRegistry(SessionFactory):
         on another schema version. Without it such a store is refused
         with `StoreSchemaError`, because the rebuild empties it: right for a
         cache that `RestRegistry(store=...)` can fetch again, and wrong for a
-        bundle or a store filled with ``add``. An empty store, or a new file,
+        edition or a store filled with ``add``. An empty store, or a new file,
         is created or migrated either way.
 
         ``target`` declares which SDMX-ML version this store's contents are
@@ -658,18 +660,18 @@ class BundleRegistry(SessionFactory):
         #: The lake's ``DATA_PATH``, a local directory or a remote URI, ending
         #: in ``/``; None where no lake is attached through the registry.
         self._data_path: str | None = None
-        #: The manifest `bundle()` read, if the bundle had one (GH-66).
+        #: The manifest `bundle()` read, if the edition had one (GH-66).
         self._manifest: Manifest | None = None
         #: The catalog whose ``sdmx`` schema every handle reads: the file's own
-        #: once open, or the bundle's ``<prefix>__meta`` in a `BundleEngine`.
+        #: once open, or the edition's ``<prefix>__metadata`` in a `EditionEngine`.
         self._catalog: str | None = None
-        #: The engine `bundle()` attached this publication into, its prefix
+        #: The engine `bundle()` attached this edition into, its prefix
         #: there, and whether this registry made the engine and closes it.
-        self._engine: BundleEngine | None = None
+        self._engine: EditionEngine | None = None
         self._prefix: str | None = None
         self._owns_engine = False
         #: Each binding role to the catalog it names here: ``lake`` to the
-        #: bundle's ``<prefix>__lake``. Empty where the role is the catalog.
+        #: edition's ``<prefix>__tables``. Empty where the role is the catalog.
         self._roles: dict[str, str] = {}
         # Per-thread read cursor (#80). Each thread that reads from this
         # LocalRegistry lazily gets its own cursor on first call; subsequent
@@ -686,16 +688,16 @@ class BundleRegistry(SessionFactory):
         """Where the lake reads its data files: a local directory or a remote URI, ending in ``/``.
 
         The manifest's relative ``data_path`` resolved against the
-        publication, or against its remote root (`bundle`'s ``remote``). None
+        edition, or against its remote root (`bundle`'s ``remote``). None
         for a registry with no lake of its own.
         """
         return self._data_path
 
     @property
     def manifest(self) -> Manifest | None:
-        """The bundle manifest `bundle()` read, or None (not a bundle, or unpublished).
+        """The edition manifest `bundle()` read, or None (not an edition, or unsealed).
 
-        Its ``token`` changes at every publication and never on a read, so it
+        Its ``token`` changes at every edition and never on a read, so it
         is what a cache or an ETag keys on.
         """
         return self._manifest
@@ -762,8 +764,8 @@ class BundleRegistry(SessionFactory):
         if self._conn is not None:
             return self
         if self._engine is not None and self._prefix is not None:
-            # A handle of its own on the shared engine, reading this bundle's
-            # catalog; the engine set the spill directory for every bundle.
+            # A handle of its own on the shared engine, reading this edition's
+            # catalog; the engine set the spill directory for every edition.
             self._conn = self._engine.cursor(self._prefix)
             self._owns_connection = True
             self._initialise_schema()
@@ -773,7 +775,7 @@ class BundleRegistry(SessionFactory):
         self._owns_connection = True
         if self._READ_ONLY:
             # A read-only database spills to `<file>.tmp` beside itself by
-            # default: inside a published bundle, and shared by every process
+            # default: inside a sealed edition, and shared by every process
             # holding it. Each process spills under the system temp instead.
             spill = str(spill_directory()).replace("'", "''")
             self._conn.execute(f"SET temp_directory = '{spill}'")
@@ -867,7 +869,7 @@ class BundleRegistry(SessionFactory):
                 msg = (
                     f"{self._uri} holds artefacts on store {found}, and this sdmxlib "
                     f"({_sdmxlib_version()}) reads schema {SCHEMA_VERSION}, so it was not opened: "
-                    f"migrating means dropping them. A bundle: rebuild it from its source with this "
+                    f"migrating means dropping them. An edition: rebuild it from its source with this "
                     f"sdmxlib, or read it with the one that built it. A cache that can be fetched "
                     f"again: open it with rebuild=True."
                 )
@@ -1423,43 +1425,43 @@ class BundleRegistry(SessionFactory):
     # ── The data plane ────────────────────────────────────────────────────
 
     @classmethod
-    def bundle(
+    def edition(
         cls,
         path: str | Path,
         *,
         remote: str | None = None,
-        engine: BundleEngine | None = None,
+        engine: EditionEngine | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
-    ) -> BundleRegistry:
-        """Open a published bundle, read-only: artefacts and observations together.
+    ) -> EditionRegistry:
+        """Open a sealed edition, read-only: artefacts and observations together.
 
-        `path` is one publication of a bundle, the directory named by its
-        token. Every publication of a bundle shares the ``data/`` beside it::
+        `path` is one edition of a product, the directory named by its
+        edition id. Every edition of a product shares the ``data/`` beside it::
 
-            <bundle>/data/                       data files, shared by every publication
-            <bundle>/<token>/bundle.manifest.json   the manifest, written last
-            <bundle>/<token>/meta.duckdb            sdmx.* artefacts, including the bindings
-            <bundle>/<token>/lake.ducklake          DuckLake catalog over ``data/``
+            <product>/data/                          data files, shared by every edition
+            <product>/<edition_id>/manifest.json     the manifest, written last
+            <product>/<edition_id>/metadata.duckdb   sdmx.* artefacts, including the bindings
+            <product>/<edition_id>/tables.ducklake   DuckLake catalog over ``data/``
 
         The lake reads its data files from the manifest's ``data_path``,
         resolved against `path`, or against `remote` when the data files are
         in object storage.
 
         **Data files in object storage.** A server may hold only a
-        publication's catalog files, tiers 1 and 2, on local disk and read its
-        data files, tier 3, from the store they were published to. `remote`
-        names the publication directory there, and the manifest's
-        ``data_path`` is resolved against it, so nothing in the bundle names
+        edition's catalog files, tiers 1 and 2, on local disk and read its
+        data files, the remote tier, from the store they were uploaded to. `remote`
+        names the edition directory there, and the manifest's
+        ``data_path`` is resolved against it, so nothing in the edition names
         a location::
 
-            engine = sl.BundleEngine(
+            engine = sl.EditionEngine(
                 secrets=[
                     sl.StoreSecret(
                         "azure", provider="credential_chain", options={"account_name": "acct"}
                     )
                 ]
             )
-            reg = sl.LocalRegistry.bundle(
+            reg = sl.LocalRegistry.edition(
                 "/var/bundles/census/019a…/",
                 remote="abfss://c@acct.dfs.core.windows.net/bundles/census/019a…/",
                 engine=engine,
@@ -1470,44 +1472,44 @@ class BundleRegistry(SessionFactory):
         ``file://`` for a mounted one. The engine loads the extension the
         scheme needs and holds the credentials, as `StoreSecret` values.
 
-        **Published means a manifest** (``bundle.manifest.json``,
-        `sdmxlib.bundle`). It is required, read first, and its store schema
-        version checked *before* ``meta.duckdb`` is opened, so a mismatched
-        bundle is refused without the file being touched. It is `manifest`
+        **Published means a manifest** (``manifest.json``,
+        `sdmxlib.edition`). It is required, read first, and its store schema
+        version checked *before* ``metadata.duckdb`` is opened, so a mismatched
+        edition is refused without the file being touched. It is `manifest`
         afterwards, whose ``token`` is what a cache keys on.
 
-        **Read-only.** ``meta.duckdb`` opens with DuckDB's
+        **Read-only.** ``metadata.duckdb`` opens with DuckDB's
         ``read_only`` and the lake attaches ``READ_ONLY``, so any number of
-        processes may hold one bundle open at once, and a checker can run
-        beside a server. The result is a `BundleRegistry`, which has no write
+        processes may hold one edition open at once, and a checker can run
+        beside a server. The result is a `EditionRegistry`, which has no write
         methods and no ``sql()``. DuckDB's spill directory is moved outside
-        the bundle, which is never written after publication. Open a bundle
+        the edition, which is never written after edition. Open an edition
         directory for building with ``LocalRegistry.build(path)``.
 
         The lake is ATTACHed lazily, when something first asks for
-        observations, so opening a bundle to read a codelist costs nothing.
+        observations, so opening an edition to read a codelist costs nothing.
 
-        **One engine for many bundles.** Pass a `BundleEngine` to
-        attach the publication into it, beside every other bundle it holds,
+        **One engine for many editions.** Pass a `EditionEngine` to
+        attach the edition into it, beside every other edition it holds,
         so they share one buffer pool, one thread pool and one
-        ``memory_limit``. Without one, the bundle gets an engine of its own,
+        ``memory_limit``. Without one, the edition gets an engine of its own,
         closed with the registry. Either way its catalogs attach under a
-        prefix of their own, ``<bundle id>__<token>__meta`` and ``__lake``,
-        and a binding's ``lake`` role reads ``<prefix>__lake`` (`locate`).
+        prefix of their own, ``<product id>__<edition_id>__metadata`` and ``__tables``,
+        and a binding's ``lake`` role reads ``<prefix>__tables`` (`locate`).
 
         Args:
-            path: The publication directory.
-            remote: The publication directory in object storage, as a URI,
+            path: The edition directory.
+            remote: The edition directory in object storage, as a URI,
                 when the data files are read from there; the data files are
                 beside `path` when None.
             engine: The engine to attach into; one of its own when None.
             resolve_cache_items: As the `LocalRegistry` constructor.
 
         Returns:
-            An open, read-only registry over the publication.
+            An open, read-only registry over the edition.
 
         Raises:
-            StoreSchemaError: If the bundle was built on another schema version.
+            StoreSchemaError: If the edition was built on another schema version.
             StoreFormatError: If its DuckDB storage version or its DuckLake
                 format is newer than this build reads.
             ManifestError: If there is no manifest, or it is malformed or in a
@@ -1518,7 +1520,7 @@ class BundleRegistry(SessionFactory):
         manifest = read_manifest(root)
         if manifest.schema_version != SCHEMA_VERSION:
             msg = (
-                f"{root} is a bundle on store schema {manifest.schema_version} (its manifest says so), "
+                f"{root} is an edition on store schema {manifest.schema_version} (its manifest says so), "
                 f"and this sdmxlib ({_sdmxlib_version()}) reads schema {SCHEMA_VERSION}, so it was not "
                 f"opened. Rebuild it from its source with this sdmxlib, or read it with the one that built it."
             )
@@ -1526,17 +1528,17 @@ class BundleRegistry(SessionFactory):
         refuse_engine_mismatch(manifest, root)
         data = root / manifest.data_path if remote is None else data_uri(remote, manifest.data_path)
         owned = engine is None
-        shared = BundleEngine() if engine is None else engine
+        shared = EditionEngine() if engine is None else engine
         if remote is not None:
             shared.load_for_uri(remote)
-        prefix = shared.attach(root, bundle_id=manifest.bundle_id, token=manifest.token)
-        registry = BundleRegistry._over_bundle(
-            root, data, resolve_cache_items=resolve_cache_items, lake=f"{prefix}__lake"
+        prefix = shared.attach(root, product_id=manifest.product_id, edition_id=manifest.edition_id)
+        registry = EditionRegistry._over_edition(
+            root, data, resolve_cache_items=resolve_cache_items, lake=f"{prefix}__tables"
         )
         registry._manifest = manifest
         registry._engine, registry._prefix, registry._owns_engine = shared, prefix, owned
-        registry._catalog = f"{prefix}__meta"
-        registry._roles = {"lake": f"{prefix}__lake"}
+        registry._catalog = f"{prefix}__metadata"
+        registry._roles = {"lake": f"{prefix}__tables"}
         try:
             return registry.open()
         except Exception:
@@ -1544,7 +1546,7 @@ class BundleRegistry(SessionFactory):
             raise
 
     @classmethod
-    def _over_bundle(
+    def _over_edition(
         cls,
         root: Path,
         data: Path | str,
@@ -1553,30 +1555,30 @@ class BundleRegistry(SessionFactory):
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
         lake: str = "lake",
     ) -> Self:
-        """An unopened registry of this class over publication `root`, its lake's data files in `data`.
+        """An unopened registry of this class over edition `root`, its lake's data files in `data`.
 
         `data` is a local directory, or a URI ending in ``/`` for data files
         in object storage.
 
         The lake attaches as `lake`: ``lake`` for a builder or the manifest
-        writer, ``<prefix>__lake`` for a bundle in an engine.
+        writer, ``<prefix>__tables`` for an edition in an engine.
 
         `bundle` opens a read-only one after checking the manifest;
         `LocalRegistry.build` and the manifest writer open a writable one.
         """
         registry = cls(
-            root / "meta.duckdb",
+            root / "metadata.duckdb",
             source_registry=source_registry,
             resolve_cache_items=resolve_cache_items,
         )
         # `OVERRIDE_DATA_PATH` because a DuckLake catalog records the data path
-        # it was *written* with, and a bundle is a directory that gets moved,
+        # it was *written* with, and an edition is a directory that gets moved,
         # copied and unpacked somewhere else. Without the override DuckLake
         # refuses the ATTACH of a moved catalog, and the whole data plane is
         # unreachable — which is how this was found.
         #
         # Overriding is right rather than merely convenient: the manifest's
-        # `data_path`, resolved against where the publication is *now*, says
+        # `data_path`, resolved against where the edition is *now*, says
         # where its data files are. The catalog's remembered path is
         # provenance, not truth.
         read_only = ", READ_ONLY" if cls._READ_ONLY else ""
@@ -1584,7 +1586,7 @@ class BundleRegistry(SessionFactory):
         registry._data_path = data_path
         registry._attach = {
             lake: (
-                sql_literal(f"ducklake:{root / 'lake.ducklake'}"),
+                sql_literal(f"ducklake:{root / 'tables.ducklake'}"),
                 f"(DATA_PATH {sql_literal(data_path)}, OVERRIDE_DATA_PATH true{read_only})",
             )
         }
@@ -1641,7 +1643,7 @@ class BundleRegistry(SessionFactory):
     def availability(self, flow: Dataflow | Ref[Dataflow] | SdmxUrn[Dataflow]) -> AvailabilityConstraint | None:
         """What data this dataflow holds: the stored answer to its unfiltered availability query.
 
-        The SDMX 3.1 `AvailabilityConstraint`, which `write_manifest` stores at
+        The SDMX 3.1 `AvailabilityConstraint`, which `seal` stores at
         publish: one cube region of the values each dimension holds, and the
         observation count. Read from the store, so a server answers
         ``/availability/<flow>/all/all`` without scanning the observations.
@@ -1653,7 +1655,7 @@ class BundleRegistry(SessionFactory):
 
         Returns:
             The availability, or None when none is stored: the dataflow is not
-            bound here, or its publication was written with
+            bound here, or its edition was written with
             ``availability=False``.
         """
         return get_availability(self._require_open(), str(urn_of(flow)))
@@ -1661,12 +1663,12 @@ class BundleRegistry(SessionFactory):
     def locate(self, binding: DataflowBinding) -> DataflowBinding:
         """`binding` with its ``database_role`` naming the catalog its table is in here, attached.
 
-        The stored binding names a role, ``lake``; a bundle in a `BundleEngine`
-        attaches its lake as ``<prefix>__lake``, and SQL built from a binding
+        The stored binding names a role, ``lake``; an edition in a `EditionEngine`
+        attaches its lake as ``<prefix>__tables``, and SQL built from a binding
         (``<database_role>.<table_location>``) has to name that. A role this
         registry does not map is left as it is.
 
-        The lake attaches when something first needs it, so opening a bundle
+        The lake attaches when something first needs it, so opening an edition
         to read a codelist costs nothing. A binding is that need: SQL built
         from it reads the catalog it names, so a catalog this registry
         attaches is attached before the binding is returned.
@@ -1678,7 +1680,7 @@ class BundleRegistry(SessionFactory):
 
     @property
     def lake_alias(self) -> str:
-        """The catalog this registry's DuckLake attaches as: ``lake``, or ``<prefix>__lake`` in an engine."""
+        """The catalog this registry's DuckLake attaches as: ``lake``, or ``<prefix>__tables`` in an engine."""
         return self._roles.get("lake", "lake")
 
     def dsd(self, flow: Dataflow | Ref[Dataflow] | SdmxUrn[Dataflow]) -> DataStructure | None:
@@ -1738,7 +1740,7 @@ class BundleRegistry(SessionFactory):
         if binding is None:
             msg = (
                 f"no DataflowBinding for {urn_of(flow)} — this registry holds no observations for "
-                f"that dataflow. Add a binding, or open the bundle that has one."
+                f"that dataflow. Add a binding, or open the edition that has one."
             )
             raise KeyError(msg)
         return self._data_plane().obs(binding, dsd=self.dsd(flow))
@@ -1753,7 +1755,7 @@ class BundleRegistry(SessionFactory):
 
         Each entry's binding names the catalog its table is in here, as
         `binding_for` returns it (`locate`), so SQL built from it reads this
-        bundle's lake.
+        edition's lake.
 
         Returns:
             One `DataflowEntry` per binding, ordered by dataflow URN.
@@ -2230,7 +2232,7 @@ class BundleRegistry(SessionFactory):
 
         The pre-#378 path, kept for the two cases the targeted read cannot
         serve: a `Concept`, which has no batched by-URN reader (concept schemes
-        are small — 349 concepts in the whole 2021 Census Profile bundle — so there is
+        are small — 349 concepts in the whole 2021 Census Profile edition — so there is
         nothing to win by adding one), and a `version="latest"` item URN, whose
         stored `code_urn` carries a concrete version instead and so cannot be
         matched directly.
@@ -2436,8 +2438,8 @@ class BundleRegistry(SessionFactory):
         return reg
 
 
-class LocalRegistry(BundleRegistry):
-    """DuckDB-backed persistent SDMX artefact store: `BundleRegistry`'s reads plus the writes.
+class LocalRegistry(EditionRegistry):
+    """DuckDB-backed persistent SDMX artefact store: `EditionRegistry`'s reads plus the writes.
 
     Path-style construction. ``LocalRegistry(uri)`` is cheap — it just stores
     the URI. The DuckDB connection is opened by ``open()`` (or implicitly
@@ -2452,12 +2454,12 @@ class LocalRegistry(BundleRegistry):
     Sharing an existing DuckDB connection (e.g. when co-located with a
     DuckLake catalog the caller already opened) is done via
     `from_connection`, which doesn't take ownership of the
-    connection's lifecycle. ``LocalRegistry.build(path)`` opens a bundle
-    directory for building; ``LocalRegistry.bundle(path)`` opens a published
-    one, read-only, as a `BundleRegistry`.
+    connection's lifecycle. ``LocalRegistry.build(path)`` opens an edition
+    directory for building; ``LocalRegistry.edition(path)`` opens a sealed
+    one, read-only, as a `EditionRegistry`.
 
     **Concurrency.** Reads are safe from multiple threads, as on
-    `BundleRegistry`. Writes (``add`` / ``drop`` / ``replace`` /
+    `EditionRegistry`. Writes (``add`` / ``drop`` / ``replace`` /
     ``add_all`` / ``ingest``) are single-threaded — serialise externally
     if you need to mutate from multiple threads. See
     ``docs/design/concurrency.md`` for the model and deployment
@@ -2476,114 +2478,116 @@ class LocalRegistry(BundleRegistry):
         source_registry: str | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
     ) -> Self:
-        """Start a new publication of the bundle at `path`, and open it for building.
+        """Start the product at `path`'s next edition, unsealed, and open it for building.
 
-        Mints the publication's token, a UUIDv7, and creates its directory,
-        ``<path>/<token>/``, which `publication` names. ``meta.duckdb`` and the
-        lake open read-write; the lake writes its data files into
-        ``<path>/data/``, which every publication of the bundle shares. A
-        builder writes artefacts and observations, closes, then publishes with
-        ``sdmxlib.bundle.write_manifest(builder.publication, ...)``; readers open
-        the result with ``LocalRegistry.bundle(builder.publication)``.
+        Mints the edition id, a UUIDv7, and creates the edition's directory,
+        ``<path>/<edition_id>/``, which `edition_dir` names. ``metadata.duckdb``
+        and the lake open read-write; the lake writes its data files into
+        ``<path>/data/``, which every edition of the product shares. A builder
+        writes artefacts and observations, closes, then seals with
+        ``sdmxlib.edition.seal(builder.edition_dir, ...)``; readers open the
+        result with ``LocalRegistry.edition(builder.edition_dir)``.
 
-        With `previous`, the new publication extends that one: its
-        ``meta.duckdb`` and ``lake.ducklake`` are copied in, so the builder
-        changes only what differs and the lake writes only new data files.
-        Without it, both start empty. Neither touches an earlier publication's
-        directory, and nothing is ever deleted from ``data/``: files an earlier
-        publication lists stay until garbage collection finds no manifest
-        listing them.
+        With `previous`, the new edition extends that one: its
+        ``metadata.duckdb`` and ``tables.ducklake`` are copied in, so the
+        builder changes only what differs and the lake writes only new data
+        files. Without it, both start empty. Neither touches an earlier
+        edition's directory, and nothing is ever deleted from ``data/``: files
+        an earlier edition lists stay until garbage collection finds no
+        manifest listing them.
 
-        With `resume`, it reopens a publication `build` started and nobody has
-        published yet, for a builder that writes in more than one step.
+        With `resume`, it reopens an edition `build` started and nobody has
+        sealed yet, for a builder that writes in more than one step.
 
         Args:
-            path: The bundle directory, holding ``data/`` and one directory per
-                publication. Created if missing.
-            previous: The token of the published publication to extend, or
-                None for a bundle's first.
-            resume: The token of an unpublished publication to reopen, instead
+            path: The product directory, holding ``data/`` and one directory
+                per edition. Created if missing.
+            previous: The edition id of the sealed edition to extend, or None
+                for a product's first.
+            resume: The edition id of an unsealed edition to reopen, instead
                 of starting one.
             source_registry: Provenance tag for the artefacts added.
             resolve_cache_items: As the constructor.
 
         Returns:
-            An open, writable registry over the publication.
+            An open, writable registry over the unsealed edition.
 
         Raises:
-            ManifestError: If `previous` is not a published publication of this
-                bundle, or `resume` is not an unpublished one.
+            ManifestError: If `previous` is not a sealed edition of this
+                product, or `resume` is not an unsealed one.
             ValueError: If both `previous` and `resume` are given.
         """
-        bundle = Path(path)
+        product = Path(path)
         if resume is not None:
             if previous is not None:
-                msg = "pass previous= to start a publication or resume= to reopen one, not both"
+                msg = "pass previous= to start an edition or resume= to reopen one, not both"
                 raise ValueError(msg)
-            return cls._resume(bundle, resume, source_registry=source_registry, resolve_cache_items=resolve_cache_items)
-        token = str(uuid.uuid7())
-        publication = bundle / token
+            return cls._resume(
+                product, resume, source_registry=source_registry, resolve_cache_items=resolve_cache_items
+            )
+        edition_id = str(uuid.uuid7())
+        edition = product / edition_id
         if previous is not None:
-            source = bundle / previous
+            source = product / previous
             extended = read_manifest(source)
             refuse_engine_mismatch(extended, source)
             if extended.data_path != DATA_PATH:
-                msg = f"{source} keeps its data files outside {bundle / 'data'}, so a publication cannot extend it"
+                msg = f"{source} keeps its data files outside {product / 'data'}, so an edition cannot extend it"
                 raise ManifestError(msg)
-            publication.mkdir(parents=True)
-            for name in ("meta.duckdb", "lake.ducklake"):
+            edition.mkdir(parents=True)
+            for name in (METADATA_NAME, TABLES_NAME):
                 if (source / name).exists():
-                    shutil.copyfile(source / name, publication / name)
+                    shutil.copyfile(source / name, edition / name)
         else:
-            publication.mkdir(parents=True)
-        (bundle / "data").mkdir(exist_ok=True)
-        registry = cls._over_bundle(
-            publication,
-            bundle / "data",
+            edition.mkdir(parents=True)
+        (product / "data").mkdir(exist_ok=True)
+        registry = cls._over_edition(
+            edition,
+            product / "data",
             source_registry=source_registry,
             resolve_cache_items=resolve_cache_items,
         ).open()
         if previous is not None:
-            # Published stores leave out keys a reader does not need; a store
+            # Sealed stores leave out keys a reader does not need; a store
             # being written gets them back (GH-165).
             restore(registry.connection)
-        registry.connection.execute("DELETE FROM sdmx._meta WHERE key IN ('publication_token', 'previous_token')")
-        registry.connection.execute("INSERT INTO sdmx._meta (key, value) VALUES ('publication_token', ?)", [token])
+        registry.connection.execute("DELETE FROM sdmx._meta WHERE key IN ('edition_id', 'previous')")
+        registry.connection.execute("INSERT INTO sdmx._meta (key, value) VALUES ('edition_id', ?)", [edition_id])
         if previous is not None:
-            registry.connection.execute("INSERT INTO sdmx._meta (key, value) VALUES ('previous_token', ?)", [previous])
+            registry.connection.execute("INSERT INTO sdmx._meta (key, value) VALUES ('previous', ?)", [previous])
         return registry
 
     @classmethod
-    def _resume(cls, bundle: Path, token: str, *, source_registry: str | None, resolve_cache_items: int) -> Self:
-        """`build(bundle, resume=token)`: reopen an unpublished publication writable."""
-        publication = bundle / token
-        if (publication / MANIFEST_NAME).exists():
+    def _resume(cls, product: Path, edition_id: str, *, source_registry: str | None, resolve_cache_items: int) -> Self:
+        """`build(product, resume=edition_id)`: reopen an unsealed edition writable."""
+        edition = product / edition_id
+        if (edition / MANIFEST_NAME).exists():
             msg = (
-                f"{publication} is published, and a publication is never rewritten. "
-                f"Start a new one with LocalRegistry.build({str(bundle)!r}, previous={token!r})."
+                f"{edition} is sealed, and an edition is never rewritten. "
+                f"Start a new one with LocalRegistry.build({str(product)!r}, previous={edition_id!r})."
             )
             raise ManifestError(msg)
-        if not (publication / "meta.duckdb").is_file():
-            msg = f"{publication} is not a publication LocalRegistry.build started"
+        if not (edition / METADATA_NAME).is_file():
+            msg = f"{edition} is not an edition LocalRegistry.build started"
             raise ManifestError(msg)
-        registry = cls._over_bundle(
-            publication, bundle / "data", source_registry=source_registry, resolve_cache_items=resolve_cache_items
+        registry = cls._over_edition(
+            edition, product / "data", source_registry=source_registry, resolve_cache_items=resolve_cache_items
         ).open()
-        if meta_value(registry.connection, "publication_token") != token:
+        if meta_value(registry.connection, "edition_id") != edition_id:
             registry.close()
-            msg = f"{publication} is not a publication LocalRegistry.build started"
+            msg = f"{edition} is not an edition LocalRegistry.build started"
             raise ManifestError(msg)
         return registry
 
     @property
-    def publication(self) -> Path:
-        """The publication directory `build` created, named by its token.
+    def edition_dir(self) -> Path:
+        """The unsealed edition's directory `build` created, named by its edition id.
 
         Raises:
             ValueError: If this registry was not opened with `build`.
         """
-        if meta_value(self.connection, "publication_token") is None:
-            msg = f"{self.uri} is not a publication; LocalRegistry.build(path) starts one"
+        if meta_value(self.connection, "edition_id") is None:
+            msg = f"{self.uri} is not an unsealed edition; LocalRegistry.build(path) starts one"
             raise ValueError(msg)
         return self.uri.parent
 
@@ -2786,7 +2790,7 @@ class LocalRegistry(BundleRegistry):
     ) -> None:
         """Write rows into a table of this registry's lake, ``<lake>.<schema>.<table>``.
 
-        The data-plane half of building a publication (`build`): the rows a
+        The data-plane half of building an edition (`build`): the rows a
         `DataflowBinding` then names by ``table_location="<schema>.<table>"``.
         ``source`` is anything this registry's connection can read: a Polars
         frame, an Arrow table or reader, or a relation on `connection`,
@@ -2819,7 +2823,7 @@ class LocalRegistry(BundleRegistry):
             msg = (
                 f"this registry has no lake ({self.lake_alias!r} is not attached; attached: "
                 f"{', '.join(sorted(attached))}), so there is nowhere to write {schema}.{table}. "
-                "A publication's registry has one: LocalRegistry.build(bundle)."
+                "An unsealed edition's registry has one: LocalRegistry.build(product)."
             )
             raise KeyError(msg)
         store.write_observations(

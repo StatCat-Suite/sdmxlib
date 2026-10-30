@@ -32,13 +32,13 @@ def published(tmp_path: Path) -> Path:
 
 
 def test_opening_a_bundle_and_reading_structure_attaches_no_lake(published: Path) -> None:
-    with sl.LocalRegistry.bundle(published) as reg:
+    with sl.LocalRegistry.edition(published) as reg:
         assert reg.get(FLOW.urn) is not None
         assert not _attached(reg.connection, reg.lake_alias)
 
 
 def test_binding_for_attaches_the_lake_it_names(published: Path) -> None:
-    with sl.LocalRegistry.bundle(published) as reg:
+    with sl.LocalRegistry.edition(published) as reg:
         binding = present(reg.binding_for(FLOW.urn))
         assert binding.database_role == reg.lake_alias
         assert _attached(reg.connection, reg.lake_alias)
@@ -48,10 +48,10 @@ def test_binding_for_attaches_the_lake_it_names(published: Path) -> None:
 
 def test_availability_runs_on_a_freshly_opened_bundle(published: Path) -> None:
     """Neither builder reads observations through `obs()` first, as a server's first request does not."""
-    with sl.LocalRegistry.bundle(published) as reg:
+    with sl.LocalRegistry.edition(published) as reg:
         flow = build_dataflow_constraint(reg, FLOW.urn, name={"en": "a"})
         assert {k.dimension_id: len(k.values) for r in flow.regions for k in r.keys} == {"GEO": 7}
-    with sl.LocalRegistry.bundle(published) as reg:
+    with sl.LocalRegistry.edition(published) as reg:
         component = build_component_availability(
             reg, FLOW.urn, name={"en": "a"}, key="all", component_id="all", api="2.1"
         )
@@ -59,12 +59,12 @@ def test_availability_runs_on_a_freshly_opened_bundle(published: Path) -> None:
 
 
 def test_a_bundle_in_a_shared_engine_attaches_its_own_lake(published: Path) -> None:
-    engine = sl.BundleEngine()
+    engine = sl.EditionEngine()
     try:
-        with sl.LocalRegistry.bundle(published, engine=engine) as reg:
+        with sl.LocalRegistry.edition(published, engine=engine) as reg:
             present(reg.binding_for(FLOW.urn))
             assert _attached(engine.connection, reg.lake_alias)
-            assert reg.lake_alias.endswith("__lake")
+            assert reg.lake_alias.endswith("__tables")
     finally:
         engine.close()
 

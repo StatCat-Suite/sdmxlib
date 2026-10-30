@@ -25,7 +25,7 @@ import httpx2
 from attrs import frozen
 
 import sdmxlib as sl
-from sdmxlib.bundle import RemoteFile, read_manifest
+from sdmxlib.edition import RemoteFile, read_manifest
 
 #: Azurite's well-known development account, the same in every install.
 AZURITE_ACCOUNT = "devstoreaccount1"
@@ -256,4 +256,4 @@ def upload_publication(put: Callable[[str, bytes], None], publication: Path, *, 
             put(f"{bundle}/data/{entry.path}", (data / entry.path).read_bytes())
         else:
             put(f"{bundle}/{publication.name}/{entry.path}", (publication / entry.path).read_bytes())
-    put(f"{bundle}/{publication.name}/bundle.manifest.json", (publication / "bundle.manifest.json").read_bytes())
+    put(f"{bundle}/{publication.name}/manifest.json", (publication / "manifest.json").read_bytes())

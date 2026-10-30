@@ -167,8 +167,8 @@ def annotations_from_joined_rows(
             return
         db_id, ann_id, title, ann_type, value = current
         # This yields the shared empty when there is no text, which is ~98% of
-        # annotations on a real bundle — 585,675 of them against 10,064 text
-        # rows on the 2021 Census Profile bundle (#377).
+        # annotations on a real edition — 585,675 of them against 10,064 text
+        # rows on the 2021 Census Profile edition (#377).
         text = InternationalString._from_normalized(texts)
         result.append(
             Annotation(id=ann_id, title=title, type=ann_type, urls=tuple(urls.get(db_id, ())), text=text, value=value)
@@ -267,7 +267,7 @@ def codes_by_urn(conn: duckdb.DuckDBPyConnection, urns: Sequence[str], *, annota
     The targeted counterpart to loading a whole `Codelist`. Resolving an item
     `Ref` used to load the item's entire parent scheme — correct, and the #72
     fix that made it load *once* rather than per-ref, but still every code in
-    it. On the 2021 Census Profile bundle that made a 28-node hierarchy cost 2.09 s because its
+    it. On the 2021 Census Profile edition that made a 28-node hierarchy cost 2.09 s because its
     nodes reference `CL_GEOGRAPHY`, which has 579,951 codes (#378).
 
     Reading only what was asked for is **never slower** and up to 178x faster.
@@ -527,7 +527,7 @@ def _level_for(levels: dict[str, dict[str, Level]], hierarchy_urn: str, level_id
     from `LazyHierarchy.materialize()`. The other is worse and invisible in a
     timing: the `Level` it built carried **only an id**, so the same node
     reached through `collect()` had no level name, description or coding
-    format, while through `materialize()` it had all three. On the 2021 Census Profile bundle
+    format, while through `materialize()` it had all three. On the 2021 Census Profile edition
     that disagreed on every node of every hierarchy.
 
     The fallback is kept because a node may sit at a level the hierarchy never
@@ -759,7 +759,7 @@ def read_levels(conn: duckdb.DuckDBPyConnection, urn: str) -> tuple[Level, ...]:
         -- Schema-qualified, unlike the unqualified spelling this carried in
         -- `readers`: that worked only because every caller there holds a
         -- connection with `sdmx` on the search path, and `resolve`'s callers
-        -- do not. The bundle tier caught it (#379); no unit test could, since
+        -- do not. The edition tier caught it (#379); no unit test could, since
         -- they all use a search-path connection.
         FROM sdmx.hierarchy_level WHERE hierarchy_urn = ?
         ORDER BY level_idx

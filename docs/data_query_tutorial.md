@@ -25,7 +25,7 @@ print(binding.measure_column_map)            # {'OBS_VALUE': 'OBS_VALUE'}
 That map is what lets you write `REF_AREA` and have it work even when the
 column is called `geo_code`. You will not usually build a binding by hand —
 whatever loads the observations records one beside them, and a published
-bundle (`sl.LocalRegistry.bundle(path)`) carries its own. The rest of this
+edition (`sl.LocalRegistry.edition(path)`) carries its own. The rest of this
 tutorial depends on the map it holds.
 
 ## The catalogue used here

@@ -103,7 +103,7 @@ nav:
       - Reference Metadata: cookbook/reference_metadata.md
       - Serialization: cookbook/serialization.md
   - API Reference: api.md
-  - Bundle Format: bundle.md
+  - Edition Format: edition.md
   - Design:
       - The Registry API: design/registry-and-catalog.md
       - Query language:

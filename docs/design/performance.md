@@ -1,7 +1,7 @@
 # Performance: Bulk Reads & Resolver Cache
 
 How sdmxlib's DuckDB-backed store makes reads cheap. The read path and the
-resolver cache live on `BundleRegistry` (`local/registry.py`), which
+resolver cache live on `EditionRegistry` (`local/registry.py`), which
 `LocalRegistry` extends with writes.
 For *using* the cache, see the
 [Local Registry tutorial — §7 Resolver Cache](../local_registry_tutorial.md).
@@ -34,7 +34,7 @@ unmemoised resolver re-loads that parent once per child reference.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  BundleRegistry.get / get_all                                    │
+│  EditionRegistry.get / get_all                                    │
 │      │                                                           │
 │      ▼                                                           │
 │  ┌─────────────────────────────────────────────────────┐         │
@@ -116,7 +116,7 @@ count, not O(items).
 
 ### Layer 2 — batched ref resolution (#72)
 
-**File**: `src/sdmxlib/local/registry.py`, `BundleRegistry` methods
+**File**: `src/sdmxlib/local/registry.py`, `EditionRegistry` methods
 `_resolve_refs`, `_collect_refs`, `_pending_urns`, `_resolve_urns`,
 `_resolve_scheme_items`, `_frontier`, `_load_parent_scheme`.
 
@@ -417,7 +417,7 @@ MSD=45ms), that's ~2s instead of ~15s.
 | `src/sdmxlib/storage/resolve.py` (`annotation_rows`) | Layer 1: the two annotation statements, by `owner_artefact_urn`. |
 | `src/sdmxlib/local/registry.py` (`_resolve_refs`, `_collect_refs`, `_resolve_urns`, `_resolve_scheme_items`, `_frontier`, `_load_parent_scheme`, `_MemoResolver`) | Layer 2: collect / batch / transitive frontier; `Ref`s bound to the memo. |
 | `src/sdmxlib/storage/resolve.py` (`codes_by_urn`, `hcodes_by_urn`) | Layer 2: the by-URN item reads (#378). |
-| `src/sdmxlib/local/registry.py` (`_FIFOCache`, `_CallScopedMemo`, `BundleRegistry._resolve_cache`) | Layer 3: bounded FIFO cache + per-call overlay + invalidation. |
+| `src/sdmxlib/local/registry.py` (`_FIFOCache`, `_CallScopedMemo`, `EditionRegistry._resolve_cache`) | Layer 3: bounded FIFO cache + per-call overlay + invalidation. |
 | `tests/unit/test_storage_query_bounds.py` | Regression bounds. Every fix is guarded by a test asserting *count* of SQL round-trips, not wall-clock time — so future N+1 regressions fail in CI. |
 
 ## Serialization

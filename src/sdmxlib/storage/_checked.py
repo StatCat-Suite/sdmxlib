@@ -1,6 +1,6 @@
 """A stored artefact is checked as it is built, and refused alone (#492).
 
-A store read used to trust its rows. The bundle was written straight into
+A store read used to trust its rows. The edition was written straight into
 DuckDB, bypassing `Registry.add`, so its rows never met `validate()`, and an
 artefact no SDMX format can write reached the model and stayed there until a
 write found it. Every rule now runs as an artefact is built (#492): a value

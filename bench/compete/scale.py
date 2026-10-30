@@ -160,7 +160,7 @@ def _bundle() -> list[Document]:
     if declared is None:
         print("$SDMXLIB_BENCH_BUNDLE is unset: the CL_GEOGRAPHY document is left out\n")
         return []
-    path = Path(declared) / "meta.duckdb"
+    path = Path(declared) / "metadata.duckdb"
     if not path.exists():
         print(f"no bundle at {path}: the CL_GEOGRAPHY document is left out\n")
         return []

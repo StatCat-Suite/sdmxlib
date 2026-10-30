@@ -11,7 +11,7 @@ nothing on a clean bundle.
 
 import pytest
 
-from sdmxlib.bundle import check_bundle
+from sdmxlib.edition import check_edition
 
 pytestmark = [pytest.mark.bench, pytest.mark.bundle]
 
@@ -30,6 +30,6 @@ pytestmark = [pytest.mark.bench, pytest.mark.bundle]
     ],
 )
 def test_the_republished_bundle_checks_clean(data_plane_bundle, at, checked):
-    report = check_bundle(data_plane_bundle, at=at)
+    report = check_edition(data_plane_bundle, at=at)
     assert report.checked == checked
     assert report.ok, "\n".join(map(str, report.findings))

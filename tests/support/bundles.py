@@ -1,7 +1,7 @@
 """Small real bundles, for the bundle contract's tests (GH-66, GH-67).
 
 Real in every part that matters: a publication started by
-`LocalRegistry.build`, its `meta.duckdb`, a DuckLake catalog, and data files in
+`LocalRegistry.build`, its `metadata.duckdb`, a DuckLake catalog, and data files in
 the bundle's shared ``data/`` when the table is large enough that DuckLake does
 not inline it into the catalog.
 """
@@ -9,7 +9,7 @@ not inline it into the catalog.
 from pathlib import Path
 
 import sdmxlib as sl
-from sdmxlib.bundle import Producer, write_manifest
+from sdmxlib.edition import Producer, seal
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure, Dimension, Measure
@@ -56,10 +56,10 @@ def make_bundle(root: Path, rows: int, *, extra: tuple[SupportsUrn, ...] = (), c
         )
         reg.add_all([*((CONCEPTS,) if closed else ()), *extra, DSD, FLOW])
         reg.add(DataflowBinding.from_dsd(DSD, dataflow=Ref.to(FLOW), schema="d", table="obs", database_role="lake"))
-        return reg.publication
+        return reg.edition_dir
 
 
 def publish(root: Path) -> Path:
-    """The publication `root` published with `write_manifest`, so `LocalRegistry.bundle` opens it (GH-122)."""
-    write_manifest(root, bundle_id=root.parent.name, producer=Producer(name="tests", version="0"))
+    """The publication `root` published with `seal`, so `LocalRegistry.edition` opens it (GH-122)."""
+    seal(root, product_id=root.parent.name, producer=Producer(name="tests", version="0"))
     return root

@@ -10,11 +10,11 @@ The binding artefact is local-store-owned: a Dataflow may live in a
 remote registry (FMR, ESTAT, ECB), but the binding to a Parquet/DuckLake
 table lives in the local registry that knows about the data.
 
-The bundle architecture splits the physical address of a table into
+The edition architecture splits the physical address of a table into
 ``database_role`` (ATTACH alias of the catalog database) and
 ``table_location`` (``schema.table`` inside that database). The resolver
 re-joins them at query time as ``<database_role>.<table_location>``;
-this keeps bindings portable across bundles that may attach the lake
+this keeps bindings portable across editions that may attach the lake
 under different aliases.
 
 Example:
@@ -68,7 +68,7 @@ class DataflowBinding(ParsesUrn):
         dataflow: Ref to the bound dataflow (may be remote).
         database_role: ATTACH alias of the catalog database that owns the
             table. Defaults to ``"lake"`` to match the conventional
-            bundle layout (``meta.duckdb`` + ``lake.ducklake`` attached
+            edition layout (``metadata.duckdb`` + ``tables.ducklake`` attached
             as ``lake``). Combined with `table_location` at query
             time as ``<database_role>.<table_location>``.
         table_location: ``schema.table`` inside the database identified

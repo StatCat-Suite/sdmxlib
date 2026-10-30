@@ -466,7 +466,7 @@ def partitioned(tmp_path):
     )
     with LocalRegistry(":memory:") as registry:
         store = DuckDBDataStore.from_registry(registry)
-        store.connection.execute(f"ATTACH 'ducklake:{tmp_path / 'lake.ducklake'}' AS lake (DATA_PATH '{tmp_path}/')")
+        store.connection.execute(f"ATTACH 'ducklake:{tmp_path / 'tables.ducklake'}' AS lake (DATA_PATH '{tmp_path}/')")
         store.write_observations(schema="data", table="obs", source=frame, partition_by=("GEO",))
         binding = _binding(database_role="lake")
         yield store, binding, Observations(binding, partitions=("GEO",))

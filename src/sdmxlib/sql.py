@@ -19,7 +19,7 @@ which is the composition that was actually used — `SqlRelation` has consumers
 in `rest.py`, `is_in`, and statcatlib — and which works precisely because a
 single-column subquery carries no row kind to disagree about.
 
-A bundle laid out as a single DuckDB file co-locating ``sdmx.*``,
+An edition laid out as a single DuckDB file co-locating ``sdmx.*``,
 ``statcat.*``, and the DuckLake catalog tables is what makes `SqlRelation`
 composition routinely useful across sdmxlib + statcatlib: subquery tables are
 always visible on the same connection.
@@ -44,7 +44,7 @@ class SqlRelation(Protocol):
     `DuckDBDataStore` (which shares its connection with `Registry`), codelist
     relations compose automatically because both sides see the same
     ``sdmx.code`` table. For statcatlib's ``Catalog``, the same applies when the
-    bundle uses Topology B (one DuckDB file holding sdmx.*, statcat.*, and the
+    edition uses Topology B (one DuckDB file holding sdmx.*, statcat.*, and the
     DuckLake catalog).
     """
 

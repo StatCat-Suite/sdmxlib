@@ -1,12 +1,12 @@
-"""Object storage a published bundle's data files are read from (GH-180).
+"""Object storage a sealed edition's data files are read from (GH-180).
 
-A split deployment holds a publication's catalog files on local disk and reads
-its data files from object storage. The bundle records no location: the
+A split deployment holds an edition's catalog files on local disk and reads
+its data files from object storage. The edition records no location: the
 manifest's ``data_path`` is relative, and the deployment names the remote
-publication root, which `data_uri` joins it to. DuckDB reads every store, so
+edition root, which `data_uri` joins it to. DuckDB reads every store, so
 sdmxlib holds no blob client: the scheme picks the extension (`extension_for`)
 and the credentials are DuckDB secrets (`StoreSecret`), created on the
-`BundleEngine` every bundle in the process shares.
+`EditionEngine` every edition in the process shares.
 """
 
 import posixpath
@@ -82,8 +82,8 @@ def _secret_type(_instance: object, _attribute: attrs.Attribute[str], value: str
 class StoreSecret:
     """A DuckDB secret: the credentials DuckDB reads one object store with.
 
-    Rendered as DuckDB's ``CREATE SECRET`` and created on a `BundleEngine`,
-    so every bundle the engine holds reads with it. The fields are DuckDB's
+    Rendered as DuckDB's ``CREATE SECRET`` and created on a `EditionEngine`,
+    so every edition the engine holds reads with it. The fields are DuckDB's
     own; its documentation lists each type's providers and options.
 
     Example:
@@ -165,9 +165,9 @@ def extension_for(uri: str) -> str | None:
 
 
 def data_uri(remote: str, data_path: str) -> str:
-    """Where the data files of the publication at `remote` live: `data_path` resolved against it.
+    """Where the data files of the edition at `remote` live: `data_path` resolved against it.
 
-    `remote` names the publication directory, with or without a trailing
+    `remote` names the edition directory, with or without a trailing
     ``/``; `data_path` is the manifest's, relative to it. The result ends in
     ``/``, as DuckLake's ``DATA_PATH`` does.
 
@@ -181,7 +181,7 @@ def data_uri(remote: str, data_path: str) -> str:
     """
     scheme_of(remote)
     if data_path.startswith("/") or urlsplit(data_path).scheme:
-        msg = f"data_path {data_path!r} is not relative to the publication"
+        msg = f"data_path {data_path!r} is not relative to the edition"
         raise ValueError(msg)
     parts = urlsplit(remote)
     segments = [s for s in parts.path.split("/") if s]
@@ -203,7 +203,7 @@ def load_for(conn: duckdb.DuckDBPyConnection, extension: str | None) -> None:
     """Install and load `extension` on `conn`'s database; nothing for None.
 
     Loading ``azure`` also selects its curl transport, which reads the
-    system's CA bundle (``SSL_CERT_FILE``, ``CURL_CA_BUNDLE``) where the
+    system's CA edition (``SSL_CERT_FILE``, ``CURL_CA_BUNDLE``) where the
     default transport does not. It is set globally, since every per-thread
     handle reads data (GitLab #81).
     """

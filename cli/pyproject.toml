@@ -4,7 +4,7 @@ name = "sdmxlib-cli"
 # bump both and the pin below, and a test asserts the three agree, so the
 # command can never be installed against an sdmxlib it was not tested with.
 version = "0.79.0"
-description = "sdmxlib from the command line: check SDMX bundles"
+description = "sdmxlib from the command line: check SDMX editions"
 readme = "README.md"
 license = "Apache-2.0"
 # Its own copy, as PEP 639 keeps `license-files` inside the package directory;

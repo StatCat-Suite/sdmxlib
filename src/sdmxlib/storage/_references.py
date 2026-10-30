@@ -15,7 +15,7 @@ A target that matches nothing exactly is tried under the spellings the
 loading check (`sdmxlib.model.validation.reference_issues`) also accepts: a
 URN without a version names the latest one the store holds, and the
 component classes SDMX renamed (`CLASS_ALIAS_GROUPS`) match under either name.
-Every reference resolves exactly in a typical bundle, so the second query
+Every reference resolves exactly in a typical edition, so the second query
 rarely runs.
 """
 

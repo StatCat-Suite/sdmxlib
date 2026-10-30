@@ -1,4 +1,4 @@
-"""``sdmxlib``: the command line over the library's bundle tools (GH-67).
+"""``sdmxlib``: the command line over the library's edition tools (GH-67).
 
 A separate distribution, ``sdmxlib-cli``, so ``sdmxlib`` itself never depends on
 typer. Each command is a thin wrapper: the work is the library's, and is
@@ -13,14 +13,14 @@ import typer
 
 import sdmxlib as sl
 from sdmxlib.api.providers import ProviderInfo
-from sdmxlib.bundle import (
+from sdmxlib.edition import (
     MANIFEST_NAME,
     Profile,
     Tier,
-    bundle_files,
-    check_bundle,
-    copy_bundle,
-    fetch_bundle,
+    edition_files,
+    check_edition,
+    copy_edition,
+    fetch_edition,
     read_manifest,
 )
 from sdmxlib.model.dataflow import Dataflow
@@ -39,13 +39,13 @@ class At(StrEnum):
 _PROFILES: dict[At, Profile] = {At.PUBLISH: "publish", At.RECEIVE: "receive", At.OPEN: "open"}
 
 app = typer.Typer(help="sdmxlib from the command line.", no_args_is_help=True)
-bundle = typer.Typer(help="Published SDMX bundles.", no_args_is_help=True)
-app.add_typer(bundle, name="bundle")
+edition = typer.Typer(help="Sealed editions of SDMX products.", no_args_is_help=True)
+app.add_typer(edition, name="edition")
 
 
-@bundle.command("check")
+@edition.command("check")
 def check(
-    path: Annotated[Path, typer.Argument(help="The bundle directory.")],
+    path: Annotated[Path, typer.Argument(help="The edition directory.")],
     *,
     at: Annotated[
         At,
@@ -57,20 +57,20 @@ def check(
     expect: Annotated[
         Path | None,
         typer.Option(
-            help="An earlier publication whose content this one must have: each fingerprint that differs is a finding.",
+            help="An earlier edition whose content this one must have: each fingerprint that differs is a finding.",
         ),
     ] = None,
 ) -> None:
-    """Check a published bundle against its manifest and against itself.
+    """Check a sealed edition against its manifest and against itself.
 
     Prints each finding and what was checked. Exits 1 if anything was found.
     ``--expect`` guards a republish that is to change no content, such as a
     rebuild at a new store schema.
 
     Raises:
-        Exit: With status 1 when the bundle has findings, 0 otherwise.
+        Exit: With status 1 when the edition has findings, 0 otherwise.
     """
-    report = check_bundle(path, at=_PROFILES[at], expect=expect)
+    report = check_edition(path, at=_PROFILES[at], expect=expect)
     for finding in report.findings:
         typer.echo(str(finding))
     found = len(report.findings)
@@ -118,11 +118,11 @@ def _flow(text: str) -> SdmxUrn[Dataflow]:
     return urn
 
 
-@bundle.command("fetch")
+@edition.command("fetch")
 def fetch(
     source: Annotated[str, typer.Argument(help="A provider (ECB, ESTAT, BIS, OECD, ...) or a REST endpoint URL.")],
     flow: Annotated[str, typer.Argument(help="The dataflow: AGENCY:ID(VERSION), AGENCY:ID, or a URN.")],
-    path: Annotated[Path, typer.Argument(help="The bundle directory; the publication is created inside it.")],
+    path: Annotated[Path, typer.Argument(help="The product directory; the edition is created inside it.")],
     *,
     key: Annotated[str | None, typer.Option(help="SDMX key, e.g. M.USD+GBP.EUR.SP00.A.")] = None,
     start: Annotated[str | None, typer.Option(help="Inclusive startPeriod.")] = None,
@@ -131,11 +131,11 @@ def fetch(
     api: Annotated[str, typer.Option(help="REST API version of a URL source.")] = "2.1",
     source_id: Annotated[str | None, typer.Option(help="Registry id of a URL source, recorded as provenance.")] = None,
 ) -> None:
-    """Fetch one dataflow, narrowed by key and period, into a new published bundle.
+    """Fetch one dataflow, narrowed by key and period, into a new sealed edition.
 
-    Prints the publication directory, its token and what it holds.
+    Prints the edition directory, its product and what it holds.
     """
-    manifest = fetch_bundle(
+    manifest = fetch_edition(
         _source(source),
         _flow(flow),
         path,
@@ -147,61 +147,59 @@ def fetch(
         source_id=source_id,
     )
     counts = ", ".join(f"{b.observations} observations" for b in manifest.bindings) or "structures only"
-    typer.echo(f"{path / manifest.token}: {manifest.bundle_id}, {counts}; token {manifest.token}")
+    typer.echo(f"{path / manifest.edition_id}: {manifest.product_id}, {counts}")
 
 
-@bundle.command("copy")
+@edition.command("copy")
 def copy(
-    source: Annotated[Path, typer.Argument(help="The published publication directory.")],
-    destination: Annotated[Path, typer.Argument(help="The publication directory to create.")],
+    source: Annotated[Path, typer.Argument(help="The sealed edition directory.")],
+    destination: Annotated[Path, typer.Argument(help="The edition directory to create.")],
     *,
     tiers: Annotated[
-        str, typer.Option(help="Placement tiers to copy, comma-separated: 1,2 for what a server holds.")
-    ] = "1,2,3",
+        str, typer.Option(help="Placement tiers to copy, comma-separated: required,lazy for what a server holds.")
+    ] = "required,lazy,remote",
 ) -> None:
-    """Copy a publication's listed files, verify them, and write its manifest last.
+    """Copy an edition's listed files, verify them, and write its manifest last.
 
     Data files go to the shared data directory beside the destination, and one
-    already there at the listed digest is kept. Prints the token copied.
+    already there at the listed digest is kept. Prints the edition copied.
 
     Raises:
-        BadParameter: If a tier is not 1, 2 or 3.
+        BadParameter: If a tier is not required, lazy or remote.
     """
-    manifest = copy_bundle(source, destination, tiers=_tiers(tiers))
-    typer.echo(f"{destination}: {manifest.bundle_id}, token {manifest.token}; {len(manifest.files)} files")
+    manifest = copy_edition(source, destination, tiers=_tiers(tiers))
+    typer.echo(f"{destination}: {manifest.product_id}, edition {manifest.edition_id}; {len(manifest.files)} files")
 
 
-@bundle.command("files")
+@edition.command("files")
 def files(
-    manifest: Annotated[
-        Path, typer.Argument(help="A publication directory, or its bundle.manifest.json wherever it is staged.")
-    ],
+    manifest: Annotated[Path, typer.Argument(help="An edition directory, or its manifest.json wherever it is staged.")],
     *,
     tiers: Annotated[
-        str, typer.Option(help="Placement tiers to list, comma-separated: 1,2 for what a server holds.")
-    ] = "1,2,3",
+        str, typer.Option(help="Placement tiers to list, comma-separated: required,lazy for what a server holds.")
+    ] = "required,lazy,remote",
     manifest_only: Annotated[
         bool, typer.Option("--manifest", help="Print only the manifest's path, for the copy's second step.")
     ] = False,
 ) -> None:
-    r"""Print the files a copy of a publication needs, one path per line, for rclone or azcopy.
+    r"""Print the files a copy of an edition needs, one path per line, for rclone or azcopy.
 
-    Paths are under the bundle directory: ``<token>/meta.duckdb``,
+    Paths are under the product directory: ``<edition_id>/metadata.duckdb``,
     ``data/<schema>/<table>/ducklake-….parquet``. The manifest is left out,
     and ``--manifest`` prints its path alone: copy tools move several files at
     once, so the manifest is copied in a second step, after every other file.
 
-        sdmxlib bundle files /stage/census --tiers 1,2 \
-          | rclone copy --files-from - store:bundles/census /var/bundles/census
-        sdmxlib bundle files /stage/census --manifest \
-          | rclone copy --files-from - store:bundles/census /var/bundles/census
+        sdmxlib edition files /stage/census --tiers required,lazy \
+          | rclone copy --files-from - store:products/census /var/products/census
+        sdmxlib edition files /stage/census --manifest \
+          | rclone copy --files-from - store:products/census /var/products/census
 
     Raises:
-        BadParameter: If a tier is not 1, 2 or 3.
+        BadParameter: If a tier is not required, lazy or remote.
     """
     root = manifest.parent if manifest.name == MANIFEST_NAME else manifest
     read = read_manifest(root)
-    listed = [f"{read.token}/{MANIFEST_NAME}"] if manifest_only else bundle_files(read, tiers=_tiers(tiers))
+    listed = [f"{read.edition_id}/{MANIFEST_NAME}"] if manifest_only else edition_files(read, tiers=_tiers(tiers))
     for path in listed:
         typer.echo(path)
 
@@ -210,18 +208,18 @@ def _tiers(text: str) -> list[Tier]:
     """The placement tiers `text` names, comma-separated.
 
     Raises:
-        BadParameter: If one is not 1, 2 or 3.
+        BadParameter: If one is not required, lazy or remote.
     """
     chosen: list[Tier] = []
     for part in text.split(","):
         match part.strip():
-            case "1":
-                chosen.append(1)
-            case "2":
-                chosen.append(2)
-            case "3":
-                chosen.append(3)
+            case "required":
+                chosen.append("required")
+            case "lazy":
+                chosen.append("lazy")
+            case "remote":
+                chosen.append("remote")
             case other:
-                msg = f"{other!r} is not a tier; give 1, 2 or 3, comma-separated"
+                msg = f"{other!r} is not a tier; give required, lazy or remote, comma-separated"
                 raise typer.BadParameter(msg)
     return chosen

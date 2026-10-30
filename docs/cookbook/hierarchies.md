@@ -368,7 +368,7 @@ with sl.LocalRegistry("classifications.duckdb") as local:
 `count()` brings back one row and `ids()` brings back the answer — neither
 fetches an operand.
 
-Measured on a real bundle — 499,137 and 266,965 nodes in, 265,939 out:
+Measured on a real edition — 499,137 and 266,965 nodes in, 265,939 out:
 
 | | wall | peak Python heap |
 | --- | --- | --- |

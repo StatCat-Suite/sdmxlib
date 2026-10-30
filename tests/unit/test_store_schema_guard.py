@@ -4,7 +4,7 @@ Migration is drop and rebuild. sdmxlib 0.68 to 0.70 ran it on any store whose
 ``schema_version`` differed, so a bundle built by 0.67 lost every artefact the
 moment a newer sdmxlib opened it, even to read, and the older sdmxlib that
 built it then read it empty too. Only a read-only connection was refused, and
-`LocalRegistry.bundle` opens read-write.
+`LocalRegistry.edition` opens read-write.
 
 Each test stamps a real store with a version other than this build's, so the
 guard decides on the same `_meta` row the old stores carry.
@@ -57,10 +57,10 @@ def test_a_bundle_on_another_schema_is_refused_and_kept(tmp_path: Path) -> None:
     """The reported case, a bundle's store opened on another schema, here by a builder resuming it."""
     publication = tmp_path / "bundle" / "token"
     publication.mkdir(parents=True)
-    _store(publication / "meta.duckdb", stamped="2.19")
+    _store(publication / "metadata.duckdb", stamped="2.19")
     with pytest.raises(sl.StoreSchemaError):
         sl.LocalRegistry.build(publication.parent, resume=publication.name)
-    assert _artefacts(publication / "meta.duckdb") == 1
+    assert _artefacts(publication / "metadata.duckdb") == 1
 
 
 def test_rebuild_asks_for_the_drop(tmp_path: Path) -> None:

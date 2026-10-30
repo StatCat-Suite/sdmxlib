@@ -8,7 +8,7 @@ Throughout, `reg` is an open registry holding the structures and the
 bindings, and `flow_urn` names the dataflow the request is for:
 
 ```python
-reg = sl.LocalRegistry.bundle("bundle")  # /srv/bundle in a deployment
+reg = sl.LocalRegistry.edition("edition")  # /srv/products/census/<edition_id> in a deployment
 flow_urn = sl.Dataflow.parse_rest_ref("ESTAT,STS_INPR_M,1.0")  # AGENCY,ID,VERSION
 ```
 

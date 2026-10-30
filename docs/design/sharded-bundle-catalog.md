@@ -671,7 +671,7 @@ Order follows risk removed per unit of work. Synthetic bundles and `profile_bund
 
 **M6. statcatlib: partials, structures bundle, local fixes.** Partial vendoring closed under parents, which sdmxlib's `build_bundle` does (GH-223, §8), for statcatlib's ingest to call; the structures bundle kind; `statcat._meta` check (statcatlib#39); refuse unknown `index_version`; token-named search tables. Test: a CODR-shaped product closure under 10 MB; a partial lacking an ancestor is refused at build.
 
-**M7. sdmxlib: shared engine.** Per-cursor `search_path`; role-to-alias map; token-keyed caches. Test: 200 synthetic bundles attached in one engine; queries against each return that bundle's rows; the `lake` alias collision test passes with two bundles. Built in GH-133, with the 200-bundle test in `tests/unit/test_bundle_engine.py`; the token-keyed caches stay per registry (§7.2, GH-160).
+**M7. sdmxlib: shared engine.** Per-cursor `search_path`; role-to-alias map; token-keyed caches. Test: 200 synthetic bundles attached in one engine; queries against each return that bundle's rows; the `lake` alias collision test passes with two bundles. Built in GH-133, with the 200-bundle test in `tests/unit/test_edition_engine.py`; the token-keyed caches stay per registry (§7.2, GH-160).
 
 **M8. statcatlib: catalog index 1.0 and structures document.** Builder, invariants §6.4, states, `pool`, `pinned`, `lifecycle`, `kind`, `products`, manifest-digest skip, `catalog/structures/`. Test: each invariant refused by name; a 7,000-entry build with 200 changes fetches 200 manifests; `latest` resolves through the structures document.
 

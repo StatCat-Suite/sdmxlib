@@ -47,8 +47,8 @@ from sdmxlib.query._pushdown import PushdownError
 from sdmxlib.sql import SqlRelation
 from sdmxlib.formats import parse, read, serialize, to_json, to_xml
 from sdmxlib.local import (
-    BundleEngine,
-    BundleRegistry,
+    EditionEngine,
+    EditionRegistry,
     LazyCodelist,
     LazyHierarchy,
     QueryPlan,
@@ -256,8 +256,6 @@ __all__ = [
     "AttributeUsage",
     "AvailabilityConstraint",
     "BearerToken",
-    "BundleEngine",
-    "BundleRegistry",
     "CascadeSelection",
     "Categorisation",
     "Category",
@@ -309,6 +307,8 @@ __all__ = [
     "DroppedArtefact",
     "DuckDBDataStore",
     "DuckLakeVersionError",
+    "EditionEngine",
+    "EditionRegistry",
     "EnumerationLike",
     "EpochMap",
     "EpochPeriod",

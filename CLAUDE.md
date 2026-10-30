@@ -195,8 +195,8 @@ read-only, and a change they need is an issue on their tracker
 (`StatCat-Suite/<repo>#N`).
 
 - `../statcatlib` — the catalog bundle format. Publishes through
-  `sdmxlib.bundle` (`write_manifest(extensions=...)`, wrapping
-  `check_bundle`), injects a `SqlRelation` into the path language, and reads
+  `sdmxlib.edition` (`seal(extensions=...)`, wrapping
+  `check_edition`), injects a `SqlRelation` into the path language, and reads
   `storage.schema.SCHEMA_VERSION`.
 - `../sdmxlib-rest` — an SDMX-REST server over a `LocalRegistry`: the model
   artefacts, `DataflowBinding`, `obs()` and `ObsQuery`.
@@ -221,8 +221,8 @@ Where to start:
 - `model/` — the frozen SDMX information model, `SdmxUrn`, `Ref[T]`.
 - `formats/` — every SDMX wire format; `formats/gaps.py` is what each cannot
   carry.
-- `storage/` and `local/` — the DuckDB store, `BundleRegistry` /
-  `LocalRegistry`; `bundle/` publishes and checks a bundle (`docs/bundle.md`).
+- `storage/` and `local/` — the DuckDB store, `EditionRegistry` /
+  `LocalRegistry`; `bundle/` publishes and checks a bundle (`docs/edition.md`).
 - `query/` — the `sl.q` path language and `ObsQuery`.
 - `api/` — `RestRegistry`, `FederatedRegistry`, `Provider`.
 

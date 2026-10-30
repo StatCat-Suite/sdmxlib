@@ -1,21 +1,21 @@
-"""One DuckDB engine that many published bundles attach into (GH-133).
+"""One DuckDB engine that many sealed editions attach into (GH-133).
 
-A server holding several bundles open keeps one buffer pool, one thread pool
-and one ``memory_limit`` for all of them: one `BundleEngine`, passed to
-``LocalRegistry.bundle(path, engine=engine)``. Without one, each bundle gets
-an engine of its own, so a bundle always opens the same way.
+A server holding several editions open keeps one buffer pool, one thread pool
+and one ``memory_limit`` for all of them: one `EditionEngine`, passed to
+``LocalRegistry.edition(path, engine=engine)``. Without one, each edition gets
+an engine of its own, so an edition always opens the same way.
 
-Each publication attaches under a prefix, ``<bundle id>__<token>``: its
-``meta.duckdb`` as ``<prefix>__meta`` and its DuckLake catalog, when
-something first reads observations, as ``<prefix>__lake``. A registry's
-handles select its own ``<prefix>__meta`` catalog with ``USE``, so the
-``sdmx.<table>`` names every query spells read that bundle and no other. The
-same publication opened twice shares one attachment, counted, and is detached
+Each edition attaches under a prefix, ``<product id>__<edition_id>``: its
+``metadata.duckdb`` as ``<prefix>__metadata`` and its DuckLake catalog, when
+something first reads observations, as ``<prefix>__tables``. A registry's
+handles select its own ``<prefix>__metadata`` catalog with ``USE``, so the
+``sdmx.<table>`` names every query spells read that edition and no other. The
+same edition opened twice shares one attachment, counted, and is detached
 when the last registry over it closes.
 
-A publication whose data files are in object storage reads them through the
+An edition whose data files are in object storage reads them through the
 engine (GH-180): `secrets` holds the stores' credentials, and the extension a
-store's scheme needs is loaded when a bundle first names it.
+store's scheme needs is loaded when an edition first names it.
 """
 
 import os
@@ -31,7 +31,7 @@ import duckdb
 from sdmxlib.local.object_store import SECRET_EXTENSIONS, StoreSecret, extension_for, load_for, sql_literal
 from sdmxlib.storage.schema import use_sdmx
 
-#: What a bundle id keeps in an alias; anything else becomes ``_``.
+#: What a product id keeps in an alias; anything else becomes ``_``.
 _UNSAFE = re.compile(r"[^A-Za-z0-9_]")
 #: A DuckDB memory setting: a number and a unit, or a percentage.
 _MEMORY = re.compile(r"^\d+(\.\d+)?\s*(B|KB|KiB|MB|MiB|GB|GiB|TB|TiB|%)$", re.IGNORECASE)
@@ -52,8 +52,8 @@ class _Attached:
     holders: int
 
 
-class BundleEngine:
-    """A DuckDB engine shared by the bundles a process holds open.
+class EditionEngine:
+    """A DuckDB engine shared by the editions a process holds open.
 
     Thread-safe: attaching and releasing hold a lock, and each registry reads
     on handles of its own.
@@ -66,14 +66,14 @@ class BundleEngine:
         threads: int | None = None,
         secrets: Iterable[StoreSecret] = (),
     ) -> None:
-        """Start an engine with no bundle attached.
+        """Start an engine with no edition attached.
 
         Args:
-            memory_limit: DuckDB's ``memory_limit`` for every bundle together,
+            memory_limit: DuckDB's ``memory_limit`` for every edition together,
                 such as ``"8GB"`` or ``"70%"``; DuckDB's default when None.
             threads: DuckDB's thread pool size; DuckDB's default when None.
             secrets: The credentials for the object stores the engine's
-                bundles read their data files from, created as DuckDB secrets
+                editions read their data files from, created as DuckDB secrets
                 with the extension each needs.
 
         Raises:
@@ -86,7 +86,7 @@ class BundleEngine:
             msg = f"threads must be at least 1, got {threads}"
             raise ValueError(msg)
         self._conn = duckdb.connect()
-        # Published bundles are never written, so the engine spills under the
+        # Published editions are never written, so the engine spills under the
         # system temp, one directory per process, as a read-only store does.
         self._conn.execute(f"SET temp_directory = {sql_literal(str(spill_directory()))}")
         if memory_limit is not None:
@@ -103,32 +103,32 @@ class BundleEngine:
 
     @property
     def connection(self) -> duckdb.DuckDBPyConnection:
-        """The engine's base connection, which every bundle's handles derive from."""
+        """The engine's base connection, which every edition's handles derive from."""
         return self._conn
 
     @property
     def attached(self) -> tuple[str, ...]:
-        """The prefixes of the publications attached now, sorted."""
+        """The prefixes of the editions attached now, sorted."""
         with self._lock:
             return tuple(sorted(self._attached))
 
-    def attach(self, root: Path, *, bundle_id: str, token: str) -> str:
-        """Attach the publication at `root`, or count one more holder of it, and return its prefix.
+    def attach(self, root: Path, *, product_id: str, edition_id: str) -> str:
+        """Attach the edition at `root`, or count one more holder of it, and return its prefix.
 
         Args:
-            root: The publication directory.
-            bundle_id: Its manifest's ``bundle_id``.
-            token: Its manifest's ``token``.
+            root: The edition directory.
+            product_id: Its manifest's ``product_id``.
+            edition_id: Its manifest's ``edition_id``.
 
         Returns:
-            ``<bundle_id>__<token>``, with every character an alias cannot hold
+            ``<product_id>__<edition_id>``, with every character an alias cannot hold
             made ``_``: the prefix of its catalogs' aliases.
 
         Raises:
-            ValueError: If the prefix is attached to another publication's files.
+            ValueError: If the prefix is attached to another edition's files.
         """
-        prefix = f"{_UNSAFE.sub('_', bundle_id)}__{_UNSAFE.sub('', token)}"
-        meta = (root / "meta.duckdb").resolve()
+        prefix = f"{_UNSAFE.sub('_', product_id)}__{_UNSAFE.sub('', edition_id)}"
+        meta = (root / "metadata.duckdb").resolve()
         with self._lock:
             held = self._attached.get(prefix)
             if held is not None:
@@ -137,7 +137,7 @@ class BundleEngine:
                     raise ValueError(msg)
                 held.holders += 1
                 return prefix
-            self._conn.execute(f"ATTACH {sql_literal(str(meta))} AS {_identifier(prefix + '__meta')} (READ_ONLY)")
+            self._conn.execute(f"ATTACH {sql_literal(str(meta))} AS {_identifier(prefix + '__metadata')} (READ_ONLY)")
             self._attached[prefix] = _Attached(meta=meta, holders=1)
         return prefix
 
@@ -157,8 +157,8 @@ class BundleEngine:
             self._loaded.add(extension)
 
     def cursor(self, prefix: str) -> duckdb.DuckDBPyConnection:
-        """A new handle reading the ``sdmx`` schema of the publication attached as `prefix`."""
-        return use_sdmx(self._conn.cursor(), prefix + "__meta")
+        """A new handle reading the ``sdmx`` schema of the edition attached as `prefix`."""
+        return use_sdmx(self._conn.cursor(), prefix + "__metadata")
 
     def release(self, prefix: str) -> None:
         """Count one holder of `prefix` gone, and detach its catalogs when none is left."""
@@ -170,8 +170,8 @@ class BundleEngine:
             if held.holders > 0:
                 return
             del self._attached[prefix]
-            self._conn.execute(f"DETACH DATABASE IF EXISTS {_identifier(prefix + '__lake')}")
-            self._conn.execute(f"DETACH DATABASE IF EXISTS {_identifier(prefix + '__meta')}")
+            self._conn.execute(f"DETACH DATABASE IF EXISTS {_identifier(prefix + '__tables')}")
+            self._conn.execute(f"DETACH DATABASE IF EXISTS {_identifier(prefix + '__metadata')}")
 
     def close(self) -> None:
         """Close the engine and every handle on it."""

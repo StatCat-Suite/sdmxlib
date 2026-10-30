@@ -111,11 +111,11 @@ def test_a_bundle_is_a_publication_whose_lake_is_optional():
     """The tier reads a published bundle, and its structural half reads no observations.
 
     The manifest is what makes a directory a published bundle; the store is
-    what the structural benchmarks read. Requiring `lake.ducklake` of every
+    what the structural benchmarks read. Requiring `tables.ducklake` of every
     bundle would refuse a structural-only one for benchmarks that never touch
     the data plane, so only the observation tier asks for it.
     """
-    assert _bundle.REQUIRED == "bundle.manifest.json"
-    assert _bundle.STORE == "meta.duckdb"
-    assert "lake.ducklake" in _bundle.DATA_PLANE_FILES
-    assert "lake.ducklake" not in (_bundle.REQUIRED, _bundle.STORE)
+    assert _bundle.REQUIRED == "manifest.json"
+    assert _bundle.STORE == "metadata.duckdb"
+    assert "tables.ducklake" in _bundle.DATA_PLANE_FILES
+    assert "tables.ducklake" not in (_bundle.REQUIRED, _bundle.STORE)

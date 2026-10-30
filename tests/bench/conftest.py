@@ -113,7 +113,7 @@ def data_plane_bundle(bundle: Path) -> Path:
     """The published bundle, for the tests that read its observations; skips, naming the file, without a lake.
 
     Read in place: a published bundle is never written, and opening it with
-    `LocalRegistry.bundle()` exercises the public constructor every consumer
+    `LocalRegistry.edition()` exercises the public constructor every consumer
     uses.
     """
     missing = _bundle.data_plane_missing(bundle)
@@ -130,8 +130,8 @@ def data_plane_registry(data_plane_bundle):
     In an engine of `_bundle.threads()` threads, so the tier leaves the
     machine usable.
     """
-    engine = sl.BundleEngine(threads=_bundle.threads())
-    registry = sl.LocalRegistry.bundle(data_plane_bundle, engine=engine)
+    engine = sl.EditionEngine(threads=_bundle.threads())
+    registry = sl.LocalRegistry.edition(data_plane_bundle, engine=engine)
     try:
         yield registry
     finally:

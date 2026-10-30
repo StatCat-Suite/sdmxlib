@@ -13,9 +13,9 @@ So this tier reads a bundle that is not, and cannot be, in the repo.
 ## Resolution, and why a bad path is an error
 
 `$SDMXLIB_BENCH_BUNDLE` names a published bundle, a publication directory
-holding `bundle.manifest.json` (the one `write_manifest` wrote), and it is the
+holding `manifest.json` (the one `seal` wrote), and it is the
 only route: unset, the tier skips and says so. The tier opens it read-only
-with `LocalRegistry.bundle`, as any consumer of a bundle does. There is no default location — a path
+with `LocalRegistry.edition`, as any consumer of a bundle does. There is no default location — a path
 baked in here would name one machine's layout, and the justfile's
 `set dotenv-load` lets a gitignored `.env` carry the variable instead.
 
@@ -58,15 +58,15 @@ from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.query.observations import Observations
 from sdmxlib.storage.schema import SCHEMA_VERSION, get_schema_version
 
-#: Names a publication directory, one holding `bundle.manifest.json`. Set it
+#: Names a publication directory, one holding `manifest.json`. Set it
 #: and the tier runs; set it wrongly and the tier raises rather than skipping.
 ENV_VAR = "SDMXLIB_BENCH_BUNDLE"
 
 #: What makes a directory a published bundle.
-REQUIRED = "bundle.manifest.json"
+REQUIRED = "manifest.json"
 
 #: The structural store every benchmark reads.
-STORE = "meta.duckdb"
+STORE = "metadata.duckdb"
 
 #: What the observation tier needs on top of the store (#391): the lake's
 #: catalog. Its data files are in the bundle's ``data/``, beside the
@@ -75,7 +75,7 @@ STORE = "meta.duckdb"
 #: Checked per *test* rather than required of every bundle, so a bundle with
 #: no data plane still runs every structural benchmark and skips these,
 #: saying which file it lacked.
-DATA_PLANE_FILES = ("lake.ducklake",)
+DATA_PLANE_FILES = ("tables.ducklake",)
 
 #: Ceiling on the partition the observation benchmarks materialise.
 #:
@@ -154,7 +154,7 @@ def bundle_path() -> Path | None:
 
     Raises:
         BundlePathError: if `$SDMXLIB_BENCH_BUNDLE` is set but does not name a
-            directory holding `bundle.manifest.json`. The message says which of
+            directory holding `manifest.json`. The message says which of
             the two failed, because "no bundle" and "wrong path" must not read
             alike.
     """

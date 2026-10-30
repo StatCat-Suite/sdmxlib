@@ -77,8 +77,8 @@ def test_the_walk_reaches_what_the_api_reference_renders() -> None:
     assert "sdmxlib.local.registry.LocalRegistry" in rendered
     assert "sdmxlib.api.registry.RestRegistry.get" in rendered
     assert "sdmxlib.model.codelist.Codelist.apply_extensions" in rendered
-    assert "sdmxlib.bundle._write.write_manifest" in rendered
-    assert "issues/19" in rendered["sdmxlib.bundle._overlay.apply_overlays"]
+    assert "sdmxlib.edition._write.seal" in rendered
+    assert "issues/19" in rendered["sdmxlib.edition._overlay.apply_overlays"]
     assert len(rendered) >= 650, "a discovery floor: the walk must reach the API reference, not a stub of it"
 
 

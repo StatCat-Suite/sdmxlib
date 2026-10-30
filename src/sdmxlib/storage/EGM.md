@@ -7,8 +7,8 @@ defines the relational schema in the `sdmx` namespace. `writers.py` writes
 domain artefacts with `put_*` functions, which first delete the artefact's
 existing rows by type. `readers.py` rebuilds artefacts eagerly, and `lazy.py`
 rebuilds them on demand; both use the shared queries in `resolve.py`. The
-package also handles the bundle manifest (`_manifest.py`) and the trimmed copy
-of the store that publication ships (`_trim.py`).
+package also handles the edition manifest (`_manifest.py`) and the trimmed copy
+of the store that edition ships (`_trim.py`).
 
 ## Interface
 
@@ -56,13 +56,13 @@ of the store that publication ships (`_trim.py`).
 - `checked` (`_checked.py`): wraps an artefact build and turns a
   `ValidationError` into an `SdmxConformanceError` carrying one `Refusal`.
 - `compact_for_publication` and `restore` (`_trim.py`): drop primary keys and
-  indexes from `TRIMMED_TABLES` for publication, and add them back where
+  indexes from `TRIMMED_TABLES` for edition, and add them back where
   missing.
 - `Manifest`, `read_manifest`, `encode_manifest`, `refuse_engine_mismatch` and
-  `storage_version_of` (`_manifest.py`): the msgspec bundle manifest and the
+  `storage_version_of` (`_manifest.py`): the msgspec edition manifest and the
   DuckDB storage-version checks. The module also defines `ManifestError`,
   `StoreFormatError`, `MANIFEST_NAME`, `FORMAT_VERSION`, `DATA_PATH`,
-  `DUCKLAKE_SPEC_VERSION`, `publication_storage_version`,
+  `DUCKLAKE_SPEC_VERSION`, `edition_storage_version`,
   `engine_storage_version` and `generate_schema` (the manifest's JSON Schema).
 - `ARTEFACT_KINDS`, with `CLASS_TO_NAME`, `NAME_TO_CLASS`, `ARTEFACT_TYPES` and
   `COMPONENT_TYPES` derived from it (`_kinds.py`): the single
@@ -73,7 +73,7 @@ of the store that publication ships (`_trim.py`).
   and single-flight through `SingleFlight`.
 - `table_columns` and `value_counts` (`_columns.py`): column-level reads of a
   bound table. `observations_sql` and `distinct_periods` (`_synthetic.py`):
-  the SQL behind `sdmxlib.testing`'s synthetic bundles.
+  the SQL behind `sdmxlib.testing`'s synthetic editions.
 - `unresolved_references` and `Unresolved` (`_references.py`): find dangling
   references between artefacts. `code_map` (`_projections.py`): code-to-label
   projection.
@@ -82,8 +82,8 @@ of the store that publication ships (`_trim.py`).
 
 - The store holds language tags in the form `normalize_tag` returns, and the
   readers trust them (`InternationalString._from_normalized`). `_tags.py`'s
-  `stale_tags` finds any that is not, for `check_bundle` (GH-280).
-- `SCHEMA_VERSION` (`schema.py`, currently `"2.51"`) is written to
+  `stale_tags` finds any that is not, for `check_edition` (GH-280).
+- `SCHEMA_VERSION` (`schema.py`, currently `"2.52"`) is written to
   `sdmx._meta` with `INSERT OR REPLACE`. statcatlib reads it, so changing it
   affects that repo.
 - `create_schema` drops lines that start with `--`, splits the DDL on `;`, and
@@ -120,7 +120,7 @@ of the store that publication ships (`_trim.py`).
   temporary directory on every call (`engine_storage_version`).
 - `readers.py`, `lazy.py` and `resolve.py` run only `SELECT`s.
 - `compact_for_publication` attaches the store read-only, copies it through
-  `.trim` and `.new` files, replaces the original `meta.duckdb`, and deletes the
+  `.trim` and `.new` files, replaces the original `metadata.duckdb`, and deletes the
   temporary file.
 - `restore` rebuilds tables and runs `CREATE INDEX` on an open store when the
   trimmed keys or indexes are missing.
@@ -128,5 +128,5 @@ of the store that publication ships (`_trim.py`).
 ## Verification
 
 - Run: `just test` (unit tests) and `just check` (lint and typecheck).
-- The real-bundle tier in `just ci` reads the published census bundle through
+- The real-bundle tier in `just ci` reads the published census edition through
   these readers.

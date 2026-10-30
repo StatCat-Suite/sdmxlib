@@ -236,8 +236,8 @@ its evidence and fails if a DuckDB release ever reverses it.
 
 ### Answering from stored availability
 
-A published bundle stores the values each dimension holds
-(`BundleRegistry.availability`), and `build_component_availability` reads them
+A sealed edition stores the values each dimension holds
+(`EditionRegistry.availability`), and `build_component_availability` reads them
 to skip work. A selection that lists every value a dimension holds excludes no
 row, so that dimension's constraint is dropped before scanning. A dimension
 left with no constraint, after that and after `available` mode drops its own,
@@ -247,7 +247,7 @@ So over key slots `FREQ.REF_AREA.GENDER`, a UI that opens on one area and every
 gender, `key=".CA._T+1+2"`, enumerates `REF_AREA` in `available` mode without
 reading an observation. The answer is
 the scan's in every case. Attributes always scan, since stored availability
-lists dimensions only, and a `LocalRegistry` always scans: a publication being
+lists dimensions only, and a `LocalRegistry` always scans: an edition being
 built may hold the availability of the one it extends.
 
 ---

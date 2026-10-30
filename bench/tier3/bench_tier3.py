@@ -27,7 +27,7 @@ from pathlib import Path
 import httpx2
 
 import sdmxlib as sl
-from sdmxlib.bundle import copy_bundle, read_manifest
+from sdmxlib.edition import copy_edition, read_manifest
 from sdmxlib.query.observations import ObsQuery
 from tests.stores import _stores
 
@@ -51,7 +51,7 @@ SETTINGS: dict[str, dict[str, str]] = {
 }
 
 
-def _queries(reg: sl.BundleRegistry, flow: sl.SdmxUrn[sl.Dataflow]) -> dict[str, ObsQuery]:
+def _queries(reg: sl.EditionRegistry, flow: sl.SdmxUrn[sl.Dataflow]) -> dict[str, ObsQuery]:
     """One geography, one characteristic and the count: the middle value in sort order of each dimension."""
     availability = reg.availability(flow)
     assert availability is not None
@@ -68,14 +68,14 @@ def _queries(reg: sl.BundleRegistry, flow: sl.SdmxUrn[sl.Dataflow]) -> dict[str,
 def _worker(pod: Path, remote: str, port: int, options: dict[str, str]) -> list[dict[str, object]]:
     """Each query read twice in this process: requests, bytes and seconds per read."""
     store = _stores.Running(_stores.EMULATORS[0], "", port)
-    engine = sl.BundleEngine(secrets=[_stores.secret(store)], threads=4)
+    engine = sl.EditionEngine(secrets=[_stores.secret(store)], threads=4)
     conn = engine.connection
     for name, value in options.items():
         conn.execute(f"SET {name} = {value}")
     conn.execute("SET redact_http_logs = false")
     conn.execute("CALL enable_logging('HTTP')")
     found: list[dict[str, object]] = []
-    with sl.LocalRegistry.bundle(pod, remote=remote, engine=engine) as reg:
+    with sl.LocalRegistry.edition(pod, remote=remote, engine=engine) as reg:
         (binding,) = reg.get_all(sl.DataflowBinding)
         flow = sl.Dataflow.parse_urn(str(binding.dataflow.urn))
         for query, built in _queries(reg, flow).items():
@@ -117,7 +117,7 @@ def main() -> None:
     parser.add_argument("--publication", type=Path, required=True)
     parser.add_argument("--update", action="store_true")
     args = parser.parse_args()
-    publication: Path = args.publication
+    publication: Path = args.edition_dir
     missing = _stores.runtime_missing()
     if missing is not None:
         sys.exit(f"tier-3 bench needs a container runtime: {missing}")
@@ -127,7 +127,7 @@ def main() -> None:
             with httpx2.Client(base_url=store.base, timeout=600) as client:
                 _stores.upload_publication(_stores.uploader(store, client), publication, bundle="census")
             pod = Path(tmp) / "pod" / "census" / publication.name
-            copy_bundle(publication, pod, tiers=(1, 2))
+            copy_edition(publication, pod, tiers=("required", "lazy"))
             remote = f"{_stores.root(store)}census/{publication.name}/"
             results = {
                 name: {
@@ -144,7 +144,7 @@ def main() -> None:
                 print(name, phase, row)
     if args.update:
         report = {
-            "_publication": read_manifest(publication).token,
+            "_publication": read_manifest(publication).edition_id,
             "_sdmxlib": metadata.version("sdmxlib"),
             "_store": "azurite",
             "results": results,

@@ -1,7 +1,7 @@
 # Concurrency
 
 How sdmxlib's registries behave under threaded access — what's safe, what
-isn't, and where the ceilings are. `BundleRegistry` (the read-only DuckDB
+isn't, and where the ceilings are. `EditionRegistry` (the read-only DuckDB
 store a published bundle opens as), `LocalRegistry` (which extends it with
 writes) and `RestRegistry` (HTTP, with a store behind it) commit to the same
 contract; `RestRegistry` arrived later and is covered in its own section
@@ -17,11 +17,11 @@ without rediscovering the constraints.
 
 | Operation | Thread-safe? |
 |---|---|
-| `BundleRegistry.get`, `get_all`, `codelist`, `code_map`, `dsd_code_map`, `to_registry`, `__contains__`, `__len__`, `__repr__` (inherited by `LocalRegistry`) | ✅ Yes |
-| `BundleRegistry.query(...)`, `obs(...)` and their terminals | ✅ Yes |
+| `EditionRegistry.get`, `get_all`, `codelist`, `code_map`, `dsd_code_map`, `to_registry`, `__contains__`, `__len__`, `__repr__` (inherited by `LocalRegistry`) | ✅ Yes |
+| `EditionRegistry.query(...)`, `obs(...)` and their terminals | ✅ Yes |
 | `LocalRegistry.add`, `drop`, `replace`, `add_all`, `ingest`, `write_observations` | ❌ No — single-threaded only |
 | Concurrent access to the **same** `LazyCodelist` / `LazyHierarchy` instance from multiple threads | ✅ Yes |
-| Several Python *processes* opening one published bundle as a `BundleRegistry` | ✅ Yes — it opens its database `read_only` |
+| Several Python *processes* opening one published bundle as a `EditionRegistry` | ✅ Yes — it opens its database `read_only` |
 | Sharing a writable `LocalRegistry` across Python *processes* | ❌ No — one DuckDB connection per process |
 | `RestRegistry.get`, `query`, `obs`, `download` | ✅ Yes |
 | `RestRegistry.load`, and writes to the `LocalRegistry` passed as `store=` | ❌ No — single-threaded only |
@@ -33,7 +33,7 @@ below.
 ## Read safety
 
 Each thread gets its own DuckDB cursor, lazily created on first read
-and reused for the thread's lifetime (`BundleRegistry._read_cursor`,
+and reused for the thread's lifetime (`EditionRegistry._read_cursor`,
 `local/registry.py`):
 
 ```python
@@ -122,8 +122,8 @@ workload `concurrent_get_mixed_{N}w`) reads 885 ops/s at 1 worker, 1,045 at
 or the Python that builds the artefact, has not been profiled, and the
 baseline predates DuckDB 2.0.
 
-`BundleEngine` (`local/engine.py`) attaches several published bundles into
-one DuckDB connection, and each `BundleRegistry` opened on it takes its own
+`EditionEngine` (`local/engine.py`) attaches several published bundles into
+one DuckDB connection, and each `EditionRegistry` opened on it takes its own
 handle from that connection (`engine.cursor(prefix)`). Registries on one
 engine share its connection, its `threads` setting and its memory limit.
 
@@ -155,7 +155,7 @@ the lock — the lock only serialises *other writers*.
 
 ## Resolver cache — FIFO, lock-free reads, not single-flight
 
-`resolve_cache_items=` on `BundleRegistry` and `LocalRegistry` configures a
+`resolve_cache_items=` on `EditionRegistry` and `LocalRegistry` configures a
 bounded URN → resolved-target cache shared across calls, bounded in *items*
 rather than entries (#386). Its purpose is to amortise parent-scheme
 reads — e.g. listing 293 MetadataSets that all reference the same MSD

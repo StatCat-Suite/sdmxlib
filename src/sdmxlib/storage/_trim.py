@@ -1,8 +1,8 @@
-"""What a published store leaves out, and puts back when a builder extends it (GH-165).
+"""What a sealed store leaves out, and puts back when a builder extends it (GH-165).
 
-A published bundle is never written, so its keys enforce nothing; their
+A sealed edition is never written, so its keys enforce nothing; their
 indexes cost it space on every tier-1 pull, and some buy reads. Measured on
-the census bundle (1,022 MB rebuilt), by the bundle tier's read benchmarks
+the census edition (1,022 MB rebuilt), by the edition tier's read benchmarks
 with each structure dropped, interleaved with the baseline:
 
 | structure | size | read cost |
@@ -31,9 +31,9 @@ import duckdb
 from sdmxlib._duckdb import first
 from sdmxlib.storage.schema import create_schema
 
-#: Tables whose keys a published store leaves out.
+#: Tables whose keys a sealed store leaves out.
 TRIMMED_TABLES = ("artefact_ref", "hierarchy_node")
-#: Explicit indexes a published store leaves out.
+#: Explicit indexes a sealed store leaves out.
 TRIMMED_INDEXES = ("idx_ref_role", "idx_ref_target")
 
 
@@ -113,7 +113,7 @@ def compact_for_publication(meta: Path) -> None:
     try:
         conn.execute(f"ATTACH '{meta}' AS src (READ_ONLY)")
         # Written at the storage version the store was written at, which a
-        # producer may have chosen so that older readers open the bundle.
+        # producer may have chosen so that older readers open the edition.
         (tag,) = first(
             conn.execute("SELECT tags['storage_version'] FROM duckdb_databases() WHERE database_name = 'src'")
         ) or (None,)

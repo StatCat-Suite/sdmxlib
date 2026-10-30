@@ -2,7 +2,7 @@
 
 The loading check (`sdmxlib.model.validation`'s resolution, over every
 artefact built from the store) is the oracle. It shares no code with
-`sdmxlib.bundle._references`, which reads stored rows and builds item URNs in
+`sdmxlib.edition._references`, which reads stored rows and builds item URNs in
 SQL. Both are compared on ``(source artefact URN, target URN)`` pairs, the
 loading check's path standing for the artefact it starts at.
 

@@ -1,0 +1,697 @@
+"""Checking a sealed edition against its manifest and against itself (GH-67).
+
+Three profiles, by where the check runs (GH-130). ``publish`` runs where the
+edition is built and hashes everything. ``receive`` runs where it lands: data
+files by size, and with a blob-store lookup by ``Content-MD5``, so no data
+file is hashed. A server that reads the data files from object storage passes
+``remote=`` and the ``engine`` holding the store's credentials, and the checks
+read them where the registry does (GH-180). ``open`` runs each time a server opens it, checking sizes
+only. `check_on_open` runs ``receive`` once per edition id and manifest, records
+a stamp, and runs ``open`` after that. Each check names what it found rather
+than stopping at the first, so one run lists everything wrong.
+"""
+
+import hashlib
+import json
+from collections.abc import Callable, Iterable, Mapping
+from datetime import UTC, datetime
+from functools import partial
+from pathlib import Path
+from typing import Literal
+
+import attrs
+import duckdb
+import msgspec
+from attrs import frozen
+
+from sdmxlib.edition._availability import survey
+from sdmxlib.edition._finding import Finding
+from sdmxlib.edition._fingerprint import bundle_fingerprint
+from sdmxlib.edition._remote import RemoteFile, verify_remote
+from sdmxlib.edition._write import artefact_entries, binding_counts, differing, digests_of, lake_files
+from sdmxlib.local.engine import EditionEngine
+from sdmxlib.local.object_store import sizes
+from sdmxlib.local.registry import EditionRegistry, LocalRegistry
+from sdmxlib.model.binding import DataflowBinding
+from sdmxlib.model.urn import SdmxUrn
+from sdmxlib.storage._manifest import (
+    MANIFEST_NAME,
+    UNLISTED,
+    EditionFile,
+    Manifest,
+    ManifestError,
+    StoreFormatError,
+    read_manifest,
+)
+from sdmxlib.storage._references import unresolved_references
+from sdmxlib.storage._tags import stale_tags
+from sdmxlib.storage.schema import StoreSchemaError
+
+#: Where a check runs: where the edition is built, where it lands, or where a
+#: server opens it.
+type Profile = Literal["publish", "receive", "open"]
+
+#: An extension's check: given the edition root, its manifest, an open registry
+#: over it and the profile, what is wrong with the extension's part of it.
+type Check = Callable[[Path, Manifest, EditionRegistry, Profile], Iterable[Finding]]
+
+#: A blob store's report of one file, as `verify_remote` takes it.
+type Lookup = Callable[[EditionFile], RemoteFile | None]
+
+
+@frozen
+class Report:
+    """What `check_edition` checked, and what it found.
+
+    Attributes:
+        path: The edition checked.
+        at: The profile that ran.
+        checked: The checks that ran, in order — a skipped or unreachable one
+            is absent, so a clean report says how much it covered.
+        findings: Everything found wrong, by check.
+    """
+
+    path: Path
+    at: Profile
+    checked: tuple[str, ...]
+    findings: tuple[Finding, ...]
+
+    @property
+    def ok(self) -> bool:
+        """Whether nothing was found wrong."""
+        return not self.findings
+
+
+def check_edition(
+    path: str | Path,
+    *,
+    at: Profile,
+    remote: str | None = None,
+    engine: EditionEngine | None = None,
+    lookup: Lookup | None = None,
+    fingerprints: bool = False,
+    expect: Manifest | str | Path | None = None,
+    structures: str | Path | None = None,
+    extensions: Mapping[str, Check] | None = None,
+) -> Report:
+    """Check a sealed edition against its manifest and against itself, as profile `at` asks.
+
+    | check | publish | receive | open |
+    | --- | --- | --- | --- |
+    | manifest: parses, in a format and versions this build reads | yes | yes | yes |
+    | files, the edition's: size, sha256 and md5, nothing unlisted | yes | yes | size only |
+    | files, ``data/``'s listed entries | size, sha256 and md5 | size | no |
+    | remote: ``data/``'s entries in the blob store, by size and ``Content-MD5`` | no | with `lookup` | no |
+    | remote: ``data/``'s entries in object storage, by size | no | with `remote` and no `lookup` | no |
+    | lake: current files at their recorded size, no delete file, every referenced file listed | yes | yes | no |
+    | bindings: the manifest's, each with the count it gives | yes | yes | no |
+    | references: every stored reference names something in the store | yes | yes | no |
+    | tags: every stored language tag is in the form `normalize_tag` gives | yes | yes | no |
+    | fingerprints: recomputed, equal to the manifest's | yes | with `fingerprints` | no |
+    | availability: coded columns hold codes; stored availability is the data's | yes | no | no |
+    | expect: fingerprints equal to an earlier manifest's | with `expect` | with `expect` | with `expect` |
+    | partials: `partial_of` and the items match the full artefact | with `structures` | with `structures` | no |
+    | extensions | yes | yes | yes, told the profile |
+
+    ``data/`` is shared by editions, so only its listed entries are
+    checked. At ``receive`` with a `lookup`, ``data/`` is checked in the blob
+    store in place of on disk. With `remote`, the data files are in object
+    storage and the edition holds only the files the server pulled: the
+    registry, and with it the lake and the bindings checks, reads them there
+    through `engine`, and without a `lookup` the ``remote`` check sizes each
+    listed one there.
+
+    A manifest that cannot be read, or a store on another schema version or in
+    a DuckDB or DuckLake format this engine cannot read, ends the run there:
+    nothing after it can be checked against either.
+
+    Args:
+        path: The edition directory.
+        at: ``publish``, ``receive`` or ``open``.
+        remote: The edition in object storage, as
+            `LocalRegistry.edition` takes it, when the data files are read
+            from there.
+        engine: The engine to open the edition in, holding the stores'
+            credentials; one of its own when None.
+        lookup: At ``receive``, what the blob store reports for a ``data/``
+            entry, or None for a file it does not hold (see `verify_remote`).
+        fingerprints: At ``receive``, also recompute the fingerprints, which
+            ``publish`` always does.
+        expect: An earlier edition's manifest, or its directory, whose
+            content this one must have: a republish that is to change no
+            content, such as every edition rebuilt at a new store schema. Each
+            artefact, binding and the edition fingerprint that differs is a
+            finding under ``expect``. Read from the manifests alone, so at
+            ``publish``, where the fingerprints are also recomputed, a clean
+            run says the store's content is the earlier one's.
+        structures: An edition holding the full artefacts this edition's
+            partials were cut from, a structures edition say. Each partial
+            whose manifest entry records `partial_of` must have a full artefact
+            at its URN there with that fingerprint, and the partial's items,
+            with their parents, must be among that artefact's. A codelist's,
+            concept scheme's and category scheme's items are compared; for
+            another scheme, the fingerprint alone.
+        extensions: More checks, by name, for parts of the edition other
+            packages own (statcatlib's search index, say).
+
+    Returns:
+        What was checked and what was found.
+
+    Raises:
+        ValueError: If `lookup`, `fingerprints`, `remote` or `structures` is
+            given at a profile that does not use it.
+    """
+    _refuse_unused(at, lookup=lookup, fingerprints=fingerprints, remote=remote, structures=structures)
+    root = Path(path)
+    checked: list[str] = ["manifest"]
+    try:
+        manifest = read_manifest(root)
+    except ManifestError as exc:
+        return Report(root, at, tuple(checked), (Finding("manifest", MANIFEST_NAME, str(exc)),))
+    findings = list(_files(root, manifest, at, remote=lookup is not None or remote is not None))
+    checked.append("files")
+    if expect is not None:
+        try:
+            expected = expect if isinstance(expect, Manifest) else read_manifest(Path(expect))
+        except ManifestError as exc:
+            findings.append(Finding("expect", MANIFEST_NAME, f"the expected manifest cannot be read: {exc}"))
+        else:
+            findings += _expected(manifest, expected)
+        checked.append("expect")
+    if lookup is not None:
+        data_only = msgspec.structs.replace(manifest, files=tuple(f for f in manifest.files if f.root == "data"))
+        findings += verify_remote(data_only, lookup, tiers=("required", "lazy", "remote"))
+        checked.append("remote")
+    try:
+        reg = LocalRegistry.edition(root, remote=remote, engine=engine)
+    except (StoreSchemaError, StoreFormatError, ManifestError) as exc:
+        return Report(root, at, tuple(checked), (*findings, Finding("manifest", "metadata.duckdb", str(exc))))
+    except duckdb.Error as exc:
+        return Report(
+            root, at, tuple(checked), (*findings, Finding("files", "metadata.duckdb", f"cannot be read: {exc}"))
+        )
+    with reg:
+        steps = _steps(
+            root,
+            manifest,
+            reg,
+            at,
+            sized_remotely=remote is not None and lookup is None,
+            fingerprints=fingerprints,
+            structures=None if structures is None else Path(structures),
+            extensions=extensions or {},
+        )
+        for name, step in steps:
+            try:
+                findings += step()
+            except duckdb.Error as exc:
+                # A damaged database or catalog: the files check names which
+                # file, and nothing after it reads anything else.
+                findings.append(Finding(name, "metadata.duckdb, tables.ducklake", f"the store cannot be read: {exc}"))
+                checked.append(name)
+                break
+            checked.append(name)
+    return Report(root, at, tuple(checked), tuple(findings))
+
+
+def _refuse_unused(
+    at: Profile, *, lookup: Lookup | None, fingerprints: bool, remote: str | None, structures: str | Path | None
+) -> None:
+    """Raise for an argument the profile `at` does not use."""
+    if structures is not None and at == "open":
+        msg = "structures= compares partials with their full artefacts; at='open' reads no artefact"
+        raise ValueError(msg)
+    if remote is not None and at == "publish":
+        msg = "remote= reads a received edition's data files where they are stored; at='publish' hashes them locally"
+        raise ValueError(msg)
+    if lookup is not None and at != "receive":
+        msg = f"lookup= verifies data files at receive; at={at!r} does not use it"
+        raise ValueError(msg)
+    if fingerprints and at != "receive":
+        msg = f"fingerprints= opts a receive check into recomputing them; at={at!r} " + (
+            "always recomputes them" if at == "publish" else "never does"
+        )
+        raise ValueError(msg)
+
+
+def _steps(
+    root: Path,
+    manifest: Manifest,
+    reg: EditionRegistry,
+    at: Profile,
+    *,
+    sized_remotely: bool,
+    fingerprints: bool,
+    structures: Path | None,
+    extensions: Mapping[str, Check],
+) -> list[tuple[str, Callable[[], Iterable[Finding]]]]:
+    """The checks that read the store, by name, in the order profile `at` runs them."""
+    steps: list[tuple[str, Callable[[], Iterable[Finding]]]] = []
+    if at == "receive" and sized_remotely:
+        steps.append(("remote", partial(_remote_sizes, manifest, reg)))
+    if at != "open":
+        if (root / "tables.ducklake").exists():
+            steps.append(("lake", partial(_lake, root, manifest, reg)))
+        steps += [
+            ("bindings", partial(_bindings, manifest, reg)),
+            ("references", partial(_references, reg)),
+            ("tags", partial(_tags, reg)),
+        ]
+    if at == "publish" or fingerprints:
+        steps.append(("fingerprints", partial(_fingerprints, root, manifest, reg)))
+    if at == "publish":
+        steps.append(("availability", partial(_availability, manifest, reg)))
+    if structures is not None:
+        steps.append(("partials", partial(_partials, manifest, reg, structures)))
+    return steps + [(name, partial(check, root, manifest, reg, at)) for name, check in extensions.items()]
+
+
+def check_on_open(
+    path: str | Path,
+    *,
+    stamps: str | Path,
+    remote: str | None = None,
+    engine: EditionEngine | None = None,
+    lookup: Lookup | None = None,
+    extensions: Mapping[str, Check] | None = None,
+) -> Report:
+    """Check an edition as a server opens it: ``receive`` once per edition id and manifest, ``open`` after.
+
+    The stamp is ``<stamps>/<product_id>/<edition_id>``, a JSON file holding the
+    manifest's sha256 and what the receive check covered, written once that
+    check finds nothing. With a stamp for this manifest the ``open`` profile
+    runs, which hashes nothing. With none, or a stamp for another manifest
+    under the same edition id, the ``receive`` profile runs first.
+
+    Args:
+        path: The edition directory.
+        stamps: The directory holding the stamps, outside every edition: local
+            to the server, since a stamp says what this machine checked.
+        remote: As `check_edition`'s, for either profile.
+        engine: As `check_edition`'s, for either profile.
+        lookup: As `check_edition`'s, for the receive check.
+        extensions: As `check_edition`'s, for either profile.
+
+    Returns:
+        The report of the profile that ran; its ``at`` says which.
+    """
+    root = Path(path)
+    try:
+        digest = hashlib.sha256((root / MANIFEST_NAME).read_bytes()).hexdigest()
+        manifest = read_manifest(root)
+    except OSError, ManifestError:
+        return check_edition(root, at="receive", remote=remote, engine=engine, lookup=lookup, extensions=extensions)
+    stamp = Path(stamps) / manifest.product_id / manifest.edition_id
+    if not _names_a_file_under(stamp, Path(stamps)):
+        report = check_edition(root, at="receive", remote=remote, engine=engine, lookup=lookup, extensions=extensions)
+        detail = f"product_id {manifest.product_id!r} cannot name a stamp directory, so the check is not stamped"
+        return attrs.evolve(report, findings=(*report.findings, Finding("manifest", MANIFEST_NAME, detail)))
+    if _stamped(stamp, digest):
+        return check_edition(root, at="open", remote=remote, engine=engine, extensions=extensions)
+    report = check_edition(root, at="receive", remote=remote, engine=engine, lookup=lookup, extensions=extensions)
+    if report.ok:
+        _write_stamp(stamp, digest, report)
+    return report
+
+
+def _names_a_file_under(stamp: Path, stamps: Path) -> bool:
+    """Whether `stamp` is two plain names below `stamps`: no separator, no ``..``, not absolute."""
+    try:
+        parts = stamp.relative_to(stamps).parts
+    except ValueError:
+        return False
+    return len(parts) == 2 and all(part not in {".", ".."} for part in parts)
+
+
+def _stamped(stamp: Path, digest: str) -> bool:
+    """Whether `stamp` records a clean receive check of the manifest with sha256 `digest`."""
+    try:
+        recorded = json.loads(stamp.read_text())
+    except OSError, ValueError:
+        return False
+    return isinstance(recorded, dict) and recorded.get("manifest_sha256") == digest
+
+
+def _write_stamp(stamp: Path, digest: str, report: Report) -> None:
+    """Record `report` under `stamp`, whole or not at all: a rename puts it in place."""
+    stamp.parent.mkdir(parents=True, exist_ok=True)
+    partial = stamp.with_name(f".{stamp.name}.partial")
+    partial.write_text(
+        json.dumps(
+            {
+                "manifest_sha256": digest,
+                "at": report.at,
+                "checked": list(report.checked),
+                "verified_at": datetime.now(UTC).isoformat(),
+            },
+            indent=2,
+        )
+    )
+    partial.replace(stamp)
+
+
+def _files(root: Path, manifest: Manifest, at: Profile, *, remote: bool) -> Iterable[Finding]:
+    on_disk = {
+        p.relative_to(root).as_posix(): p
+        for p in sorted(root.rglob("*"))
+        if p.is_file() and p.relative_to(root).as_posix() not in UNLISTED
+    }
+    data = root / manifest.data_path
+    for entry in manifest.files:
+        if entry.root == "data":
+            if at == "open" or remote:
+                continue
+            subject = f"{manifest.data_path}{entry.path}"
+            found = data / entry.path if (data / entry.path).is_file() else None
+            hashed = at == "publish"
+        else:
+            subject = entry.path
+            found = on_disk.pop(entry.path, None)
+            hashed = at != "open"
+        if found is None:
+            yield Finding("files", subject, "listed in the manifest but missing")
+        elif (size := found.stat().st_size) != entry.size:
+            yield Finding("files", subject, f"{size} bytes, the manifest says {entry.size}")
+        elif hashed and (differs := differing(entry, digests_of(found))):
+            yield Finding("files", subject, f"contents differ from the manifest's {', '.join(differs)}")
+    if at == "open":
+        return
+    for extra in on_disk:
+        if extra.endswith(".wal"):
+            # A database was not checkpointed before the manifest: its log holds
+            # committed rows the database file's sha256 does not cover (GH-122).
+            yield Finding("files", extra, "a write-ahead log: its database was not checkpointed before sealing")
+        else:
+            yield Finding("files", extra, "in the edition but not in the manifest")
+
+
+def _fingerprints(root: Path, manifest: Manifest, opened: EditionRegistry) -> list[Finding]:
+    """The fingerprints recomputed, against the manifest's.
+
+    Read through a registry of their own, over the same edition, engine
+    and data files as `opened`.
+    """
+    with LocalRegistry.edition(root, remote=_remote_of(opened), engine=opened._engine) as reg:
+        artefacts = artefact_entries(reg)
+        try:
+            counts = binding_counts(reg, artefacts)
+        except duckdb.Error as exc:
+            return [Finding("fingerprints", MANIFEST_NAME, f"the bindings' tables cannot be read: {exc}")]
+    found = {a.urn: a.fingerprint for a in artefacts}
+    findings = _artefact_fingerprints(found, {a.urn: a.fingerprint for a in manifest.artefacts})
+    declared = {b.dataflow: b for b in manifest.bindings}
+    for count in counts:
+        binding = declared.get(count.dataflow)
+        if binding is None:
+            continue
+        for name in ("fingerprint", "structure_fingerprint"):
+            ours, theirs = getattr(count, name), getattr(binding, name)
+            if ours != theirs:
+                findings.append(Finding("fingerprints", count.dataflow, f"{name} {ours}, the manifest says {theirs}"))
+    content = bundle_fingerprint(found, {b.dataflow: b.fingerprint for b in counts})
+    if content != manifest.content_fingerprint:
+        findings.append(
+            Finding(
+                "fingerprints",
+                MANIFEST_NAME,
+                f"content_fingerprint {content}, the manifest says {manifest.content_fingerprint}",
+            )
+        )
+    return findings
+
+
+#: Each item scheme's items and their parents, by class. A category's
+#: identity is its path.
+_ITEMS = {
+    "Codelist": "SELECT code_id, parent_id FROM sdmx.code WHERE codelist_urn = $urn",
+    "ConceptScheme": "SELECT concept_id, parent_id FROM sdmx.concept WHERE scheme_urn = $urn",
+    "CategoryScheme": "SELECT path, parent_path FROM sdmx.category WHERE scheme_urn = $urn",
+}
+
+
+def _partials(manifest: Manifest, reg: EditionRegistry, structures: Path) -> list[Finding]:
+    """Each partial recording `partial_of` that the full artefact in `structures` does not bear out."""
+    cut = [a for a in manifest.artefacts if a.partial and a.partial_of is not None]
+    if not cut:
+        return []
+    try:
+        full = {a.urn: a.fingerprint for a in read_manifest(structures).artefacts if not a.partial}
+    except ManifestError as exc:
+        return [Finding("partials", str(structures), f"the structures edition cannot be read: {exc}")]
+    findings: list[Finding] = []
+    with LocalRegistry.edition(structures) as source:
+        for entry in cut:
+            fingerprint = full.get(entry.urn)
+            if fingerprint is None:
+                findings.append(Finding("partials", entry.urn, f"{structures} holds no full artefact at this URN"))
+            elif fingerprint != entry.partial_of:
+                detail = f"cut from {entry.partial_of}, and the full artefact in {structures} is {fingerprint}"
+                findings.append(Finding("partials", entry.urn, detail))
+            else:
+                findings += _subset(entry.urn, reg, source)
+    return findings
+
+
+def _subset(urn: str, partial_in: EditionRegistry, full_in: EditionRegistry) -> list[Finding]:
+    """The first item of the partial `urn` that the full artefact lacks, or places under another parent."""
+    query = _ITEMS.get(SdmxUrn.parse(urn).artefact_class)
+    if query is None:
+        return []
+    full = dict(full_in.connection.execute(query, {"urn": urn}).fetchall())
+    for found, under in sorted(partial_in.connection.execute(query, {"urn": urn}).fetchall()):
+        if found not in full:
+            return [Finding("partials", urn, f"{found} is not in the full artefact")]
+        if full[found] != under:
+            detail = f"{found} is under {under} here and under {full[found]} in the full artefact"
+            return [Finding("partials", urn, detail)]
+    return []
+
+
+def _availability(manifest: Manifest, reg: EditionRegistry) -> list[Finding]:
+    """Each coded value that is not a code, and each way the stored availability is not the data's."""
+    observations = {b.dataflow: b.observations for b in manifest.bindings}
+    findings: list[Finding] = []
+    for binding in reg.get_all(DataflowBinding):
+        urn = str(binding.dataflow.urn)
+        computed, non_codes = survey(reg, binding, obs_count=observations.get(urn, 0))
+        findings += [Finding("availability", urn, str(n)) for n in non_codes]
+        stored = reg.availability(binding.dataflow.urn)
+        if stored is None:
+            continue
+        if stored.obs_count != computed.obs_count:
+            detail = f"stores {stored.obs_count} observations, the data holds {computed.obs_count}"
+            findings.append(Finding("availability", urn, detail))
+        held = {k.dimension_id: {v.value for v in k.values} for k in computed.region.keys}
+        kept = {k.dimension_id: {v.value for v in k.values} for k in stored.region.keys}
+        for dimension in sorted(held.keys() | kept.keys()):
+            ours, theirs = kept.get(dimension, set()), held.get(dimension, set())
+            if ours != theirs:
+                detail = (
+                    f"stores {len(ours)} values of {dimension}, the data holds {len(theirs)}; "
+                    f"{len(ours - theirs)} stored and absent, {len(theirs - ours)} held and not stored"
+                )
+                findings.append(Finding("availability", urn, detail))
+    return findings
+
+
+def _expected(manifest: Manifest, expected: Manifest) -> list[Finding]:
+    """Each fingerprint `manifest` records that `expected`, an earlier edition's, records otherwise."""
+    if manifest.canonical_form != expected.canonical_form:
+        detail = (
+            f"canonical_form {manifest.canonical_form}, the expected manifest's is {expected.canonical_form}: "
+            "fingerprints at different forms are never compared"
+        )
+        return [Finding("expect", MANIFEST_NAME, detail)]
+    ours = {a.urn: {"fingerprint": a.fingerprint} for a in manifest.artefacts}
+    theirs = {a.urn: {"fingerprint": a.fingerprint} for a in expected.artefacts}
+    findings = _compared(ours, theirs, "artefacts")
+    ours = {
+        b.dataflow: {"fingerprint": b.fingerprint, "structure_fingerprint": b.structure_fingerprint}
+        for b in manifest.bindings
+    }
+    theirs = {
+        b.dataflow: {"fingerprint": b.fingerprint, "structure_fingerprint": b.structure_fingerprint}
+        for b in expected.bindings
+    }
+    findings += _compared(ours, theirs, "bindings")
+    if manifest.content_fingerprint != expected.content_fingerprint:
+        detail = (
+            f"content_fingerprint {manifest.content_fingerprint}, "
+            f"the expected manifest's is {expected.content_fingerprint}"
+        )
+        findings.append(Finding("expect", MANIFEST_NAME, detail))
+    return findings
+
+
+def _compared(
+    ours: Mapping[str, Mapping[str, str | None]], theirs: Mapping[str, Mapping[str, str | None]], kind: str
+) -> list[Finding]:
+    """Each URN in one manifest's `kind` only, and each fingerprint of a shared one that differs."""
+    findings: list[Finding] = []
+    for urn in sorted(ours.keys() | theirs.keys()):
+        if urn not in theirs:
+            findings.append(Finding("expect", urn, f"in this manifest's {kind} but not the expected one's"))
+        elif urn not in ours:
+            findings.append(Finding("expect", urn, f"in the expected manifest's {kind} but not this one's"))
+        else:
+            findings += [
+                Finding("expect", urn, f"{name} {value}, the expected manifest's is {theirs[urn][name]}")
+                for name, value in ours[urn].items()
+                if value != theirs[urn][name]
+            ]
+    return findings
+
+
+def _artefact_fingerprints(found: Mapping[str, str], recorded: Mapping[str, str]) -> list[Finding]:
+    """Each artefact whose recomputed fingerprint, `found`, is not the manifest's, `recorded`."""
+    findings: list[Finding] = []
+    for urn in sorted(recorded.keys() | found.keys()):
+        if urn not in found:
+            findings.append(Finding("fingerprints", urn, "in the manifest's artefacts but not in the store"))
+        elif urn not in recorded:
+            findings.append(Finding("fingerprints", urn, "in the store but not in the manifest's artefacts"))
+        elif found[urn] != recorded[urn]:
+            detail = f"fingerprint {found[urn]}, the manifest says {recorded[urn]}"
+            findings.append(Finding("fingerprints", urn, detail))
+    return findings
+
+
+def _lake(root: Path, manifest: Manifest, reg: EditionRegistry) -> list[Finding]:
+    """What DuckLake records against what is on disk and in the manifest."""
+    reg._data_plane()  # ATTACHes the lake
+    conn = reg.connection
+    data = _data_root(root, manifest, reg)
+    findings: list[Finding] = []
+    tables = conn.execute(
+        "SELECT schema_name, table_name FROM duckdb_tables() WHERE database_name = ? ORDER BY ALL", [reg.lake_alias]
+    ).fetchall()
+    for schema, table in tables:
+        listed = conn.execute(
+            "SELECT data_file, data_file_size_bytes, delete_file, delete_file_size_bytes "
+            "FROM ducklake_list_files(?, ?, schema => ?)",
+            [reg.lake_alias, table, schema],
+        ).fetchall()
+        recorded = [(f, n) for row in listed for f, n in ((row[0], row[1]), (row[2], row[3])) if f is not None]
+        found = _sizes_of(conn, data, [str(f) for f, _ in recorded])
+        for file, size in recorded:
+            findings += _lake_file(manifest.data_path, data, str(file), size, found[str(file)])
+        for _data_file, _data_size, delete_file, _delete_size in listed:
+            if delete_file is not None:
+                # Publishing rewrites every table holding one (GH-128), so the
+                # current snapshot reads its rows from data files alone.
+                findings.append(
+                    Finding(
+                        "lake",
+                        _relative(manifest.data_path, data, str(delete_file)),
+                        "a delete file in the current snapshot; seal rewrites the table without one",
+                    )
+                )
+    listed = {f.path for f in manifest.files if f.root == "data"}
+    try:
+        referenced = lake_files(conn, data, lake=reg.lake_alias)
+    except ManifestError as exc:
+        return [*findings, Finding("lake", "tables.ducklake", str(exc))]
+    findings += [
+        Finding("lake", f"{manifest.data_path}{path}", "referenced by the DuckLake catalog but not in the manifest")
+        for path in referenced
+        if path not in listed
+    ]
+    return findings
+
+
+def _data_root(root: Path, manifest: Manifest, reg: EditionRegistry) -> Path | str:
+    """Where `reg` reads the data files: the local directory, or the remote URI ending in ``/``."""
+    remote = _remote_of(reg)
+    return root / manifest.data_path if remote is None or reg.data_path is None else reg.data_path
+
+
+def _remote_of(reg: EditionRegistry) -> str | None:
+    """The data root `reg` reads remotely, or None when its data files are local."""
+    data = reg.data_path
+    return data if data is not None and "://" in data else None
+
+
+def _sizes_of(conn: duckdb.DuckDBPyConnection, data: Path | str, files: list[str]) -> dict[str, int | None]:
+    """Each file's size where it is stored: on disk under a local `data`, through the engine under a remote one."""
+    if isinstance(data, str):
+        return sizes(conn, files)
+    return {file: Path(file).stat().st_size if Path(file).is_file() else None for file in files}
+
+
+def _lake_file(data_path: str, data: Path | str, file: str, size: int, actual: int | None) -> list[Finding]:
+    subject = _relative(data_path, data, file)
+    if actual is None:
+        return [Finding("lake", subject, "referenced by the DuckLake catalog but missing")]
+    if actual != size:
+        return [Finding("lake", subject, f"{actual} bytes, DuckLake recorded {size}")]
+    return []
+
+
+def _relative(data_path: str, data: Path | str, file: str) -> str:
+    """`file` as the manifest's ``files`` name it: under `data_path` when it is in `data`."""
+    if isinstance(data, str):
+        return f"{data_path}{file[len(data) :]}" if file.startswith(data) else file
+    try:
+        return f"{data_path}{Path(file).resolve().relative_to(data.resolve()).as_posix()}"
+    except ValueError:
+        return file
+
+
+def _remote_sizes(manifest: Manifest, reg: EditionRegistry) -> list[Finding]:
+    """Each listed data file in object storage, by size, read through the registry's engine."""
+    data = reg.data_path
+    if data is None:
+        return []
+    entries = [e for e in manifest.files if e.root == "data"]
+    found = sizes(reg.connection, [f"{data}{e.path}" for e in entries])
+    findings: list[Finding] = []
+    for entry in entries:
+        subject = f"{manifest.data_path}{entry.path}"
+        actual = found[f"{data}{entry.path}"]
+        if actual is None:
+            findings.append(Finding("remote", subject, "listed in the manifest but missing from the store"))
+        elif actual != entry.size:
+            findings.append(Finding("remote", subject, f"{actual} bytes in the store, the manifest says {entry.size}"))
+    return findings
+
+
+def _bindings(manifest: Manifest, reg: EditionRegistry) -> list[Finding]:
+    stored = {str(b.dataflow.urn): b for b in reg.get_all(DataflowBinding)}
+    declared = {b.dataflow: b.observations for b in manifest.bindings}
+    findings = [
+        Finding("bindings", urn, "bound in the store but not in the manifest")
+        for urn in sorted(stored.keys() - declared.keys())
+    ]
+    findings += [
+        Finding("bindings", urn, "in the manifest but not bound in the store")
+        for urn in sorted(declared.keys() - stored.keys())
+    ]
+    for urn in sorted(stored.keys() & declared.keys()):
+        try:
+            count = reg.obs(stored[urn].dataflow).count()
+        except (duckdb.Error, ValueError) as exc:
+            findings.append(Finding("bindings", urn, f"its observations cannot be read: {exc}"))
+            continue
+        if count != declared[urn]:
+            findings.append(Finding("bindings", urn, f"{count} observations, the manifest says {declared[urn]}"))
+    return findings
+
+
+def _tags(reg: EditionRegistry) -> list[Finding]:
+    """A store built before tags were normalised (GH-280) answers Python reads and SQL lookups differently."""
+    return [
+        Finding(
+            "tags",
+            where,
+            f"holds the language tag {tag[:64]!r}, which normalize_tag would change or refuse; "
+            "rebuild the store from its sources (docs/upgrading.md)",
+        )
+        for where, tag in stale_tags(reg.connection)
+    ]
+
+
+def _references(reg: EditionRegistry) -> list[Finding]:
+    return [
+        Finding("references", u.source, f"its {u.role} reference {u.target} is not in the edition")
+        for u in unresolved_references(reg.connection)
+    ]

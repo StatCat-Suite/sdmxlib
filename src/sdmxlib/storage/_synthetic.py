@@ -1,4 +1,4 @@
-"""The SQL behind `sdmxlib.testing`'s synthetic bundles and profiles (GH-69).
+"""The SQL behind `sdmxlib.testing`'s synthetic editions and profiles (GH-69).
 
 Here rather than in `sdmxlib.testing` because SQL is composed in the storage
 layer: every value interpolated below is an integer this module computed or an

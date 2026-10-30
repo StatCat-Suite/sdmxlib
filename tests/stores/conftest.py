@@ -22,7 +22,7 @@ def pytest_terminal_summary(terminalreporter: pytest.TerminalReporter) -> None:
         terminalreporter.write_line(f"skipped: {_SKIPPED[0]}")
         terminalreporter.write_line(
             "These read a bundle's data files from Azurite, an S3 server and a GCS emulator. "
-            "Without them `just ci` cannot see LocalRegistry.bundle(remote=...) break on a real store."
+            "Without them `just ci` cannot see LocalRegistry.edition(remote=...) break on a real store."
         )
 
 

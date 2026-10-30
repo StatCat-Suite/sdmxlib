@@ -56,9 +56,9 @@ the subpackages share.
   in a drained stream, and only errors DuckDB's CSV reader raised.
 - `first` and `count` (`_duckdb.py`): a cursor's first row with its result
   finished, and the row count from a cursor.
-- `synthetic_bundle`, `profile_bundle`, `Shape`, `Dim` and `HierarchyShape`
-  (`testing.py`): build a seeded synthetic bundle that passes `check_bundle`,
-  or take a `Shape` from an existing bundle.
+- `synthetic_edition`, `profile_edition`, `Shape`, `Dim` and `HierarchyShape`
+  (`testing.py`): build a seeded synthetic edition that passes `check_edition`,
+  or take a `Shape` from an existing edition.
 - `RewrittenVersion`, `VersionRewrite` and `strip_leading_zeros`
   (`versions.py`): re-exported from `model.version_rewrite` for
   `add_all(rewrite_version=...)`.
@@ -68,18 +68,18 @@ the subpackages share.
   - [`formats/`](./formats/EGM.md): SDMX-ML 2.1/3.0/3.1, SDMX-JSON and
     SDMX-CSV readers and writers, and the format gap table.
   - [`storage/`](./storage/EGM.md): the DuckDB schema, writers, readers, lazy
-    facades and publication trimming.
-  - [`local/`](./local/EGM.md): `BundleRegistry`, `LocalRegistry`,
-    `BundleEngine` and `DuckDBDataStore` over DuckDB and DuckLake.
+    facades and edition trimming.
+  - [`local/`](./local/EGM.md): `EditionRegistry`, `LocalRegistry`,
+    `EditionEngine` and `DuckDBDataStore` over DuckDB and DuckLake.
   - [`query/`](./query/EGM.md): the `sl.q` path language, compiled to
     parameterised DuckDB SQL; `ObsQuery`; and raw SQL.
   - [`api/`](./api/EGM.md): `RestRegistry`, `FmrRegistry`,
     `FederatedRegistry`, `Provider` and the httpx2 client.
-  - [`bundle/`](./bundle/EGM.md): `write_manifest`, `check_bundle`,
-    `copy_bundle`, `build_bundle`, `fetch_bundle`, overlays and
+  - [`bundle/`](./bundle/EGM.md): `seal`, `check_edition`,
+    `copy_edition`, `build_edition`, `fetch_edition`, overlays and
     fingerprints.
   - [`builders/`](./builders/EGM.md): availability constraints and DSD
-    metadata annotations, computed from a bundle.
+    metadata annotations, computed from an edition.
 
 ## Invariants
 
@@ -106,8 +106,8 @@ the subpackages share.
   to be UTC already.
 - `SqlRelation.to_sql()` returns `(sql, params)`, and values are bound as
   parameters.
-- `synthetic_bundle` gives the same artefacts and observation rows for a given
-  seed and shape, and writes its manifest through `write_manifest`. The token
+- `synthetic_edition` gives the same artefacts and observation rows for a given
+  seed and shape, and writes its manifest through `seal`. The edition id
   and the DuckDB file bytes differ on each build.
 
 ## Side Effects
@@ -120,7 +120,7 @@ the subpackages share.
   the handle.
 - `SingleFlight` uses `threading.Lock` and `threading.Event`. Waiters block
   until the leader finishes.
-- `testing.synthetic_bundle` creates directories, writes observations and
+- `testing.synthetic_edition` creates directories, writes observations and
   writes a manifest.
 - `_read_errors` converts the exceptions raised by CSV reads and by
   `RecordBatchReader` iteration.

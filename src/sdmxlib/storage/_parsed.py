@@ -15,7 +15,7 @@ changes. Nothing here needs invalidating.
 
 **Opt-in, at fixed texts only.** A call site passes its SQL through `parsed`;
 nothing is intercepted. The texts are the hottest reads measured on a full
-browse of the 2021 Census Profile bundle — the spine read and the annotation
+browse of the 2021 Census Profile edition — the spine read and the annotation
 reads were 65% of every character parsed. A text naming a per-call value
 relation is never admitted: its name is random, so it would never be read
 back, and it would hold a slot until evicted.

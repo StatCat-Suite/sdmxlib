@@ -172,7 +172,7 @@ def id_type(instance: object, attribute: attrs.Attribute[str], value: str) -> No
         ValidationError: Naming the class and field, if it is not.
     """
     # The common case returns after one regex call: this runs once per item
-    # built, 579,951 times for the census geography codelist, and the bundle
+    # built, 579,951 times for the census geography codelist, and the edition
     # tier's per-row call budget (`test_collect_stays_close_to_frame`) counts it.
     if value and ID_RE.match(value):
         return
@@ -208,7 +208,7 @@ def named(instance: object, _attribute: attrs.Attribute[InternationalString], va
     # The common case: printable ASCII that is not all spaces holds no
     # forbidden character, and one regex call per language says so. This runs
     # once per item built — 579,951 times for the census geography codelist —
-    # and the bundle tier's per-row call budget counts it: a generator over
+    # and the edition tier's per-row call budget counts it: a generator over
     # three string checks cost 13 calls a row there, this costs 5.
     texts = value._backing()
     if texts:

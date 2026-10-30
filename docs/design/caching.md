@@ -35,7 +35,7 @@ Measured against a real 2021 Census Profile bundle, **none of that attribution h
 | Claim in the issue | Measured reality |
 |---|---|
 | `code_map` SQL is the ~58 s cost | 7.8 ms for CL_CHARACTERISTIC (2,631 codes); 70–80 ms for the largest codelists (70k codes / a 966k-row `code` table) |
-| Missing / unused index on `code` | `idx_code_codelist` exists; data is plain `meta.duckdb`, not DuckLake; planner seq-scans because the table is small enough not to matter |
+| Missing / unused index on `code` | `idx_code_codelist` exists; data is plain `metadata.duckdb`, not DuckLake; planner seq-scans because the table is small enough not to matter |
 | Cold `label()` is ~58 s | 1.3 s cold / 0.2 s warm on a 25-component DSD against a 594k-code bundle |
 | The slow load test is label-build contention | The consumer measured was an LLM agent built on sdmxlib, and its slowness was **its model round-trips**, not the label map (which measured 8 ms). Warm runs were no faster than cold ones — a cache would make warm *faster* — so the variance was the model provider's, not a cache effect. |
 

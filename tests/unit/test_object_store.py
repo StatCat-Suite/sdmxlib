@@ -13,9 +13,9 @@ import polars as pl
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.bundle import check_bundle, check_on_open, copy_bundle, read_manifest
+from sdmxlib.edition import check_edition, check_on_open, copy_edition, read_manifest
 from sdmxlib.local.object_store import data_uri, extension_for, sizes
-from sdmxlib.testing import Dim, Shape, synthetic_bundle
+from sdmxlib.testing import Dim, Shape, synthetic_edition
 
 pytestmark = pytest.mark.unit
 
@@ -116,7 +116,7 @@ def test_a_secret_duckdb_would_misread_is_refused(make: Callable[[], sl.StoreSec
 
 def test_the_engine_creates_its_secrets() -> None:
     secret = sl.StoreSecret("s3", options={"key_id": "k", "secret": "s", "endpoint": "localhost:1"}, name="probe")
-    engine = sl.BundleEngine(secrets=[secret])
+    engine = sl.EditionEngine(secrets=[secret])
     try:
         names = engine.connection.execute("SELECT name, type FROM duckdb_secrets()").fetchall()
     finally:
@@ -128,14 +128,14 @@ def test_the_engine_creates_its_secrets() -> None:
 def published(tmp_path_factory: pytest.TempPathFactory) -> Path:
     """A synthetic publication, built and published locally."""
     bundle = tmp_path_factory.mktemp("store") / "census"
-    return bundle / synthetic_bundle(bundle, _SHAPE, seed=5).token
+    return bundle / synthetic_edition(bundle, _SHAPE, seed=5).edition_id
 
 
 @pytest.fixture
 def pod(published: Path, tmp_path: Path) -> Path:
     """What a server holds: the publication's tier 1 and 2 files, and no data files."""
     held = tmp_path / "pod" / "census" / published.name
-    copy_bundle(published, held, tiers=(1, 2))
+    copy_edition(published, held, tiers=("required", "lazy"))
     assert not (held.parent / "data").exists()
     return held
 
@@ -145,7 +145,7 @@ def _remote(published: Path) -> str:
 
 
 def _rows(path: Path, *, remote: str | None = None) -> pl.DataFrame:
-    with sl.LocalRegistry.bundle(path, remote=remote) as reg:
+    with sl.LocalRegistry.edition(path, remote=remote) as reg:
         return reg.obs(_FLOW).frame().sort("DIM_1", "DIM_2", "TIME_PERIOD")
 
 
@@ -154,14 +154,14 @@ def test_a_server_holding_tiers_1_and_2_reads_every_row_from_the_store(published
 
 
 def test_the_registry_reports_where_it_reads_the_data_files(published: Path, pod: Path) -> None:
-    with sl.LocalRegistry.bundle(pod, remote=_remote(published)) as reg:
+    with sl.LocalRegistry.edition(pod, remote=_remote(published)) as reg:
         assert reg.data_path == f"file://{published.parent}/data/"
-    with sl.LocalRegistry.bundle(published) as reg:
+    with sl.LocalRegistry.edition(published) as reg:
         assert reg.data_path == f"{(published.parent / 'data').resolve()}/"
 
 
 def test_the_receive_check_passes_on_a_server_reading_the_store(published: Path, pod: Path) -> None:
-    report = check_bundle(pod, at="receive", remote=_remote(published))
+    report = check_edition(pod, at="receive", remote=_remote(published))
     assert report.ok, "\n".join(map(str, report.findings))
     assert "remote" in report.checked
     assert "lake" in report.checked
@@ -177,30 +177,30 @@ def test_check_on_open_stamps_a_server_reading_the_store(published: Path, pod: P
 
 def test_a_data_file_missing_from_the_store_is_named_by_both_checks(published: Path, tmp_path: Path) -> None:
     store = tmp_path / "store" / "census"
-    copy_bundle(published, store / published.name)
+    copy_edition(published, store / published.name)
     pod = tmp_path / "pod" / "census" / published.name
-    copy_bundle(published, pod, tiers=(1, 2))
+    copy_edition(published, pod, tiers=("required", "lazy"))
     manifest = read_manifest(published)
     lost = next(f for f in manifest.files if f.root == "data")
     (store / "data" / lost.path).unlink()
-    report = check_bundle(pod, at="receive", remote=f"file://{store / published.name}/")
+    report = check_edition(pod, at="receive", remote=f"file://{store / published.name}/")
     subjects = {(f.check, f.subject, f.detail) for f in report.findings}
     assert ("remote", f"../data/{lost.path}", "listed in the manifest but missing from the store") in subjects
     assert ("lake", f"../data/{lost.path}", "referenced by the DuckLake catalog but missing") in subjects
 
 
 def test_the_local_check_still_names_the_data_files_a_server_without_remote_lacks(pod: Path) -> None:
-    report = check_bundle(pod, at="receive")
+    report = check_edition(pod, at="receive")
     assert any(f.check == "files" and f.detail == "listed in the manifest but missing" for f in report.findings)
 
 
 def test_remote_is_refused_at_publish(published: Path) -> None:
     with pytest.raises(ValueError, match="at='publish' hashes them locally"):
-        check_bundle(published, at="publish", remote=_remote(published))
+        check_edition(published, at="publish", remote=_remote(published))
 
 
 def test_sizes_reads_a_missing_file_as_none(published: Path) -> None:
-    engine = sl.BundleEngine()
+    engine = sl.EditionEngine()
     try:
         data = published.parent / "data"
         held = next(p for p in data.rglob("*.parquet"))

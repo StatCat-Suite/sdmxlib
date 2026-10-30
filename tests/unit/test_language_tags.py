@@ -5,7 +5,7 @@ SDMX-JSON 2.1 schema's RFC 5646 pattern. Every way a tag enters normalises it:
 `InternationalString` and the other model types, both readers, the overlays
 and every public `lang` / `langs` parameter. The readers refuse an artefact
 with a tag that is not well-formed, and the store readers trust what the store
-holds, which `check_bundle` checks.
+holds, which `check_edition` checks.
 """
 
 import contextlib
@@ -28,7 +28,7 @@ import pytest
 import sdmxlib as sl
 import sdmxlib.polars as slpl
 from sdmxlib import q
-from sdmxlib.bundle._overlay import OverlayError, OverlayText, read_overlay
+from sdmxlib.edition._overlay import OverlayError, OverlayText, read_overlay
 from sdmxlib.formats.sdmx_json import writer as json_writer
 from sdmxlib.formats.sdmx_json._data_common import AnnotationPool, ComponentTable, display_names
 from sdmxlib.formats.sdmx_json._dto import Link as JsonLink
@@ -538,7 +538,7 @@ def _calls(store: sl.LocalRegistry, tmp_path: Path) -> dict[str, Callable[[], No
         _refuses(lambda: ComponentTable(["A"], _DSD, kind="dimension", lang=_BAD, annotations=AnnotationPool()))
 
     return {
-        "sdmxlib.bundle._overlay:OverlayText": lambda: _refuses(
+        "sdmxlib.edition._overlay:OverlayText": lambda: _refuses(
             lambda: OverlayText(selector="*", op="remove", field="name", lang=_BAD)
         ),
         "sdmxlib.formats.sdmx_json._data_common:ComponentTable": table,
@@ -551,10 +551,10 @@ def _calls(store: sl.LocalRegistry, tmp_path: Path) -> dict[str, Callable[[], No
         "sdmxlib.formats.sdmx_json.data_v2:write_sdmx_json_data": lambda: _refuses(
             lambda: next(write_v2(no_batches, _DSD, flow, message_id="m", prepared=_NOW, sender_id="s", lang=_BAD))
         ),
-        "sdmxlib.local.registry:BundleRegistry.code_map": lambda: _refuses(
+        "sdmxlib.local.registry:EditionRegistry.code_map": lambda: _refuses(
             lambda: store.code_map(_AREAS.urn, lang=_BAD)
         ),
-        "sdmxlib.local.registry:BundleRegistry.dsd_code_map": lambda: _refuses(
+        "sdmxlib.local.registry:EditionRegistry.dsd_code_map": lambda: _refuses(
             lambda: store.dsd_code_map(_DSD.urn, lang=_BAD)
         ),
         "sdmxlib.model.annotations:AnnotationURL": lambda: _refuses(lambda: sl.AnnotationURL("u", _BAD)),

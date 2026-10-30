@@ -15,8 +15,8 @@ import pytest
 import sdmxlib as sl
 from sdmxlib.builders import contentconstraint
 from sdmxlib.builders.contentconstraint import build_component_availability
-from sdmxlib.bundle._availability import survey
-from sdmxlib.local.registry import BundleRegistry
+from sdmxlib.edition._availability import survey
+from sdmxlib.local.registry import EditionRegistry
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.constraint import DataConstraint
 from sdmxlib.model.dataflow import Dataflow
@@ -74,7 +74,7 @@ _KEYS = (
 
 @pytest.fixture(scope="module")
 def store(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    """A store of `_FLOW`'s twelve rows and its availability, stored as `write_manifest` stores it.
+    """A store of `_FLOW`'s twelve rows and its availability, stored as `seal` stores it.
 
     The rows live in the store itself rather than a DuckLake lake, so the
     tests need no ``ducklake`` extension.
@@ -96,9 +96,9 @@ def store(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
 
 @pytest.fixture
-def bundle(store: Path) -> Iterator[BundleRegistry]:
+def bundle(store: Path) -> Iterator[EditionRegistry]:
     """The store opened read-only, as a published bundle is."""
-    with BundleRegistry(store) as reg:
+    with EditionRegistry(store) as reg:
         yield reg
 
 
@@ -117,7 +117,7 @@ def scans(monkeypatch: pytest.MonkeyPatch) -> list[str]:
 
 
 def _availability(
-    reg: BundleRegistry, key: str, component_id: str, mode: Literal["exact", "available"]
+    reg: EditionRegistry, key: str, component_id: str, mode: Literal["exact", "available"]
 ) -> DataConstraint:
     return build_component_availability(
         reg, _FLOW.urn, name={"en": "Availability"}, key=key, component_id=component_id, api="2.1", mode=mode
@@ -128,7 +128,7 @@ def _availability(
 @pytest.mark.parametrize("component_id", _COMPONENTS)
 @pytest.mark.parametrize("key", _KEYS)
 def test_the_stored_answer_equals_the_scan(
-    bundle: BundleRegistry,
+    bundle: EditionRegistry,
     monkeypatch: pytest.MonkeyPatch,
     key: str,
     component_id: str,
@@ -139,7 +139,7 @@ def test_the_stored_answer_equals_the_scan(
     assert fast == _availability(bundle, key, component_id, mode)
 
 
-def test_the_bundle_stores_availability(bundle: BundleRegistry):
+def test_the_bundle_stores_availability(bundle: EditionRegistry):
     # Without it every equivalence above compares the scan with itself.
     stored = bundle.availability(_FLOW.urn)
     assert stored is not None
@@ -150,13 +150,13 @@ def test_the_bundle_stores_availability(bundle: BundleRegistry):
     }
 
 
-def test_a_key_selecting_every_value_scans_nothing(bundle: BundleRegistry, scans: list[str]):
+def test_a_key_selecting_every_value_scans_nothing(bundle: EditionRegistry, scans: list[str]):
     cc = _availability(bundle, "A+Q.CA+US+MX._T+1+2", "all", "exact")
     assert scans == []
     assert {kv.dimension_id: kv.codes() for kv in cc.regions[0].keys}["REF_AREA"] == {"CA", "US", "MX"}
 
 
-def test_the_explorers_opening_key_scans_nothing(bundle: BundleRegistry, scans: list[str]):
+def test_the_explorers_opening_key_scans_nothing(bundle: EditionRegistry, scans: list[str]):
     # Available mode drops REF_AREA's own selection, and GENDER's covers
     # every value, so no constraint is left to scan under.
     cc = _availability(bundle, ".MX._T+1+2", "REF_AREA", "available")
@@ -164,13 +164,13 @@ def test_the_explorers_opening_key_scans_nothing(bundle: BundleRegistry, scans: 
     assert cc.regions[0].keys[0].codes() == {"CA", "US", "MX"}
 
 
-def test_a_key_selecting_a_strict_subset_scans_every_component(bundle: BundleRegistry, scans: list[str]):
+def test_a_key_selecting_a_strict_subset_scans_every_component(bundle: EditionRegistry, scans: list[str]):
     cc = _availability(bundle, ".CA+US.1", "all", "exact")
     assert scans == ["FREQ", "GENDER", "REF_AREA"]
     assert {kv.dimension_id: kv.codes() for kv in cc.regions[0].keys}["FREQ"] == {"A", "Q"}
 
 
-def test_an_attribute_scans_under_a_covering_key(bundle: BundleRegistry, scans: list[str]):
+def test_an_attribute_scans_under_a_covering_key(bundle: EditionRegistry, scans: list[str]):
     # Stored availability lists dimensions only.
     _availability(bundle, "all", "OBS_STATUS", "exact")
     assert scans == ["OBS_STATUS"]
