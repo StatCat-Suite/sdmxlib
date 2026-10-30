@@ -14,7 +14,11 @@ seals through `seal(extensions=...)`.
 
 ## Interface
 
-- `seal` (`_write.py`): seals a started edition. Writes the
+- `list_editions`, `discard`, `read_journal`, `clear_journal`, `EditionInfo`
+  and `JournalEntry`, from `storage/_layout.py`: a product's editions and
+  its seal journal.
+- `seal` (`_write.py`): seals a started edition, writing its journal entry
+  under `<product>/journal/` before the manifest. Writes the
   manifest last and refuses an edition that already has one.
 - `digests_of` and `sha256_of` (`_write.py`): sha256, md5 and crc32c
   (`google_crc32c`) of a file, from one chunked read.

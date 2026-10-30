@@ -22,12 +22,14 @@ key space, a bijection, so no two rows share a key.
 import hashlib
 import math
 from pathlib import Path
+from typing import Literal, overload
 
 import duckdb
 from attrs import field, frozen
 
 from sdmxlib._duckdb import first
-from sdmxlib.edition import Manifest, Producer, seal
+from sdmxlib.edition import Manifest, Producer
+from sdmxlib.edition import seal as seal_edition
 from sdmxlib.local.registry import LocalRegistry
 from sdmxlib.model.annotations import Annotation
 from sdmxlib.model.binding import DataflowBinding
@@ -172,7 +174,11 @@ class Shape:
     annotated: float = 0.0
 
 
-def synthetic_edition(path: str | Path, shape: Shape, *, seed: int = 0) -> Manifest:
+@overload
+def synthetic_edition(path: str | Path, shape: Shape, *, seed: int = 0, seal: Literal[True] = True) -> Manifest: ...
+@overload
+def synthetic_edition(path: str | Path, shape: Shape, *, seed: int = 0, seal: Literal[False]) -> LocalRegistry: ...
+def synthetic_edition(path: str | Path, shape: Shape, *, seed: int = 0, seal: bool = True) -> Manifest | LocalRegistry:
     """Build and seal an edition of `shape` at `path`, deterministically from `seed`.
 
     The edition's first edition, ``<path>/<edition_id>/``, beside its ``data/``.
@@ -187,9 +193,14 @@ def synthetic_edition(path: str | Path, shape: Shape, *, seed: int = 0) -> Manif
         shape: What to build.
         seed: Chooses the hierarchies, the annotations, and which keys the
             observations take.
+        seal: False to stop before the seal and return the unsealed
+            edition's open, writable registry, so a caller adds its own
+            tables (statcatlib's ``statcat`` schema, a search index), closes
+            it and seals with `sdmxlib.edition.seal`.
 
     Returns:
-        The manifest written; the edition is ``<path>/<manifest.edition_id>/``.
+        The manifest written, the edition at ``<path>/<manifest.edition_id>/``;
+        with ``seal=False``, the open registry over the unsealed edition.
 
     Raises:
         FileExistsError: If `path` exists and is not empty.
@@ -211,13 +222,20 @@ def synthetic_edition(path: str | Path, shape: Shape, *, seed: int = 0) -> Manif
     root.mkdir(parents=True, exist_ok=True)
     draws = _Draws(seed)
     artefacts, dsd, flow = _structures(shape, draws, _Draws(seed, "hierarchies"))
-    with LocalRegistry.build(root) as builder:
+    builder = LocalRegistry.build(root)
+    try:
         builder.add_all(artefacts)
         rows = builder.connection.sql(_observations_sql(shape, space, draws))
         builder.write_observations(schema=_SCHEMA, table=_TABLE, source=rows)
         builder.add(DataflowBinding.from_dsd(dsd, dataflow=Ref.to(flow), schema=_SCHEMA, table=_TABLE))
-        edition_dir = builder.edition_dir
-    return seal(
+    except BaseException:
+        builder.close()
+        raise
+    if not seal:
+        return builder
+    edition_dir = builder.edition_dir
+    builder.close()
+    return seal_edition(
         edition_dir,
         product_id=f"synthetic-{seed}",
         producer=Producer(name="sdmxlib.testing.synthetic_edition", version="1"),

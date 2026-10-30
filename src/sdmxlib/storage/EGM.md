@@ -77,6 +77,10 @@ of the store that edition ships (`_trim.py`).
 - `unresolved_references` and `Unresolved` (`_references.py`): find dangling
   references between artefacts. `code_map` (`_projections.py`): code-to-label
   projection.
+- `_layout.py`: a product directory's editions. `list_editions`,
+  `discard` and `refuse_second_unsealed` (which `LocalRegistry.build` calls);
+  the seal journal, `write_journal`, `read_journal` and `clear_journal`
+  under `<product>/journal/`.
 
 ## Invariants
 

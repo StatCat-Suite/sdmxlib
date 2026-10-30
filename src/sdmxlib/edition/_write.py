@@ -26,6 +26,7 @@ from sdmxlib.local.registry import EditionRegistry, LocalRegistry
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.model.urn import SdmxUrn
+from sdmxlib.storage._layout import JournalEntry, write_journal
 from sdmxlib.storage._manifest import (
     DATA_PATH,
     FORMAT_VERSION,
@@ -366,9 +367,9 @@ def seal(
     availability: bool = True,
     partial_of: Mapping[str, str] | None = None,
 ) -> Manifest:
-    """Publish the edition at `path`, which `LocalRegistry.build` started: write its manifest.
+    """Seal the edition at `path`, which `LocalRegistry.build` started: write its manifest.
 
-    Write it **last**, once every builder has closed: the inventory is the
+    Call it **last**, once every builder has closed: the file list is the
     files as they are now, and a directory without a manifest is unsealed.
     An edition is sealed once. A change is a new edition,
     ``LocalRegistry.build(product, previous=edition_id)``, with a new edition id, which
@@ -388,8 +389,13 @@ def seal(
     ``metadata.duckdb`` so a server answers it without scanning the observations
     (`EditionRegistry.availability`).
 
-    The manifest goes in through a temporary file and a rename, so a reader
-    never sees half of one.
+    Before the manifest, it writes the seal journal entry
+    ``<product>/journal/<edition_id>.json`` (`sdmxlib.edition.read_journal`),
+    which the writer that records the edition in the Inventory removes with
+    `sdmxlib.edition.clear_journal`; an entry left behind is a seal that may
+    never have been recorded (the sharded catalog spec §6.7). The manifest
+    goes in through a temporary file and a rename, so a reader never sees
+    half of one.
 
     Args:
         path: The edition directory, ``builder.edition_dir``.
@@ -463,6 +469,13 @@ def seal(
             f"databases open for writing. Close every builder before sealing."
         )
         raise ManifestError(msg)
+    # The journal entry goes first: a crash between it and the manifest
+    # leaves an entry the writer's narrow repair reads (spec §6.7, GH-259).
+    sealed_at = datetime.now(UTC)
+    write_journal(
+        root.parent,
+        JournalEntry(product_id=product_id, edition_id=edition_id, previous=previous, sealed_at=sealed_at),
+    )
     # Sealed, the store is never written: its keys enforce nothing, and
     # the ones the reads do not use leave it, in a fresh file (GH-165).
     compact_for_publication(root / "metadata.duckdb")
@@ -471,7 +484,7 @@ def seal(
         product_id=product_id,
         edition_id=edition_id,
         previous=previous,
-        created_at=datetime.now(UTC),
+        created_at=sealed_at,
         producer=producer,
         sdmxlib_version=metadata.version("sdmxlib"),
         schema_version=schema_version,

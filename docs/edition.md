@@ -24,6 +24,7 @@ edition; a *reader* opens one.
 <product>/
   data/                    data files shared by every edition of the product
     <schema>/<table>/ducklake-<uuid>.parquet
+  journal/<edition_id>.json  the seal journal: a seal started, until the Inventory records it
   <edition_id>/            one edition, named by its edition id; never rewritten once sealed
     metadata.duckdb        the artefact store: the sdmx.* schema, bindings included
     tables.ducklake        the DuckLake catalog for observations, over ../data/
@@ -49,7 +50,19 @@ edition; a *reader* opens one.
   catalog is a copy of the previous one's, extended (§7).
 - `manifest.json` marks the edition as sealed. A directory without one is an
   unsealed edition: `LocalRegistry.edition` refuses it, and its builder
-  reopens it with `LocalRegistry.build(product, resume=edition_id)`.
+  reopens it with `LocalRegistry.build(product, resume=edition_id)`. A
+  product has at most one unsealed edition: `build` refuses to start another,
+  naming it, and `sdmxlib.edition.discard(edition_dir)` deletes one, leaving
+  its data files to garbage collection. `list_editions(product)` lists every
+  edition with its id, whether it is sealed, its `previous` and when its
+  build started, reading manifests only.
+- `journal/<edition_id>.json` records a seal: `seal` writes it before the
+  manifest, holding `product_id`, `edition_id`, `previous` and `sealed_at`,
+  and the writer that records the edition in the Inventory removes it
+  (`clear_journal`). An entry left behind is a seal that may never have been
+  recorded; the sharded catalog spec §6.7 says when a writer may record it.
+  `read_journal(product)` reads them. The journal is outside every edition,
+  so no manifest lists it.
 - `manifest.json.sig` is reserved for a detached signature of the
   manifest. The manifest never lists it, the `files` check never reports it,
   and `copy_edition` copies it just before the manifest.
@@ -646,10 +659,13 @@ every check.
 
 1. Start an edition with `LocalRegistry.build(product)`, or
    `LocalRegistry.build(product, previous=edition_id)` to extend the last one.
-   It mints the edition id, creates `<product>/<edition_id>/`, which the
-   builder's `edition_dir` names, and with `previous=` copies that edition's
+   It refuses while the product has an unsealed edition. It mints the
+   edition id, creates `<product>/<edition_id>/`, which the builder's
+   `edition_dir` names, and with `previous=` copies that edition's
    `metadata.duckdb` and `tables.ducklake` in, so only what changed is written and
-   the lake adds only new data files to `data/`.
+   the lake adds only new data files to `data/`. It also copies the
+   previous edition's files outside the lake that its manifest lists at tier
+   `lazy`, such as a `search/` index, or the path prefixes `carry=` names.
 2. Write the artefacts at this sdmxlib's store schema (`add_all`) and the
    observations into the lake (`write_observations(schema=..., table=...,
    source=..., partition_by=..., sorted_by=...)`), adding a `DataflowBinding`
@@ -737,7 +753,8 @@ sdmxlib also produces editions itself:
   with every codelist full.
 - `sdmxlib.testing.synthetic_edition(path, shape, seed=...)` builds an
   edition of a given `Shape` deterministically from its seed, for tests and
-  benchmarks. A `Dim` may carry `HierarchyShape`s: each becomes a `Hierarchy`
+  benchmarks. With `seal=False` it stops before the seal and returns the open
+  builder, so a caller adds tables of its own and then seals. A `Dim` may carry `HierarchyShape`s: each becomes a `Hierarchy`
   over the dimension's codelist and a `HierarchyAssociation` linking it to
   the dimension.
 - `sdmxlib.testing.profile_edition(path, flow)` reads the `Shape` of one
