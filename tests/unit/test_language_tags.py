@@ -20,6 +20,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
+import msgspec
 import polars as pl
 import pytest
 
@@ -32,7 +33,7 @@ from sdmxlib.formats.sdmx_json._data_common import AnnotationPool, ComponentTabl
 from sdmxlib.formats.sdmx_json.data_v1 import write_sdmx_json_data as write_v1
 from sdmxlib.formats.sdmx_json.data_v2 import write_sdmx_json_data as write_v2
 from sdmxlib.formats.sdmx_ml30.writer import write as write30
-from sdmxlib.model.istring import MAX_TAG_LENGTH, TAG_PATTERN
+from sdmxlib.model.istring import _SEEN_TAGS, _SEEN_TAGS_MAX, MAX_TAG_LENGTH, TAG_PATTERN
 from sdmxlib.model.validation import SdmxParseError
 from sdmxlib.storage import readers
 from sdmxlib.storage._projections import code_map
@@ -152,7 +153,7 @@ def test_an_adversarial_tag_is_checked_in_bounded_time(tag: str) -> None:
     assert time.perf_counter() - start < 0.5
 
 
-# ── InternationalString and LocalizedText ──────────────────────────────────
+# ── InternationalString and LocalisedString ────────────────────────────────
 
 
 def test_keys_are_normalised_and_looked_up_normalised() -> None:
@@ -199,18 +200,77 @@ def test_get_and_pick_refuse_a_malformed_tag() -> None:
 
 def test_pick_says_which_tag_answered() -> None:
     s = sl.InternationalString(fr="Annuel", en="Annual")
-    assert s.pick("FR-CA", "Fr", "en") == sl.LocalizedText("Annuel", "fr")
+    assert s.pick("FR-CA", "Fr", "en") == sl.LocalisedString("Annuel", "fr")
     assert s.pick("de") is None
 
 
-def test_localized_text_normalises_its_tag_and_compares_by_both_fields() -> None:
-    text = sl.LocalizedText("Annuel", "FR")
+@pytest.mark.parametrize("already_seen", [[], ["fr"]], ids=["unseen", "seen"])
+def test_localised_string_normalises_its_tag_and_compares_by_both_fields(already_seen: list[str]) -> None:
+    _SEEN_TAGS.clear()
+    _SEEN_TAGS.update(already_seen)
+    text = sl.LocalisedString("Annuel", "FR")
     assert text.lang == "fr"
-    assert text == sl.LocalizedText("Annuel", "fr")
-    assert text != sl.LocalizedText("Annuel", "en")
-    assert len({text, sl.LocalizedText("Annuel", "fr")}) == 1
-    with pytest.raises(ValueError, match="fr_CA"):
-        sl.LocalizedText("x", _BAD)
+    assert text == sl.LocalisedString("Annuel", "fr")
+    assert text != sl.LocalisedString("Annuel", "en")
+    assert text != sl.LocalisedString("Annual", "fr")
+    assert len({text, sl.LocalisedString("Annuel", "fr")}) == 1
+
+
+def test_localised_string_refuses_a_malformed_tag_and_a_non_str_text() -> None:
+    with pytest.raises(sl.InvalidTagError, match="fr_CA"):
+        sl.LocalisedString("x", _BAD)
+    untyped = cast("Callable[[object, object], sl.LocalisedString]", sl.LocalisedString)
+    with pytest.raises(TypeError):
+        untyped(sl.LocalisedString("a", "en"), "en")
+    with pytest.raises(TypeError):
+        untyped("a", 1)
+
+
+def test_localised_string_normalises_when_decoded_converted_or_replaced() -> None:
+    decoded = msgspec.json.decode(b'{"text":"x","lang":"FR"}', type=sl.LocalisedString)
+    assert decoded == sl.LocalisedString("x", "fr")
+    assert decoded.lang == "fr"
+    with pytest.raises(msgspec.ValidationError, match="fr_CA"):
+        msgspec.json.decode(b'{"text":"x","lang":"fr_CA"}', type=sl.LocalisedString)
+    assert msgspec.convert({"text": "x", "lang": "EN"}, sl.LocalisedString).lang == "en"
+    assert msgspec.structs.replace(sl.LocalisedString("a", "fr"), lang="FR").lang == "fr"
+
+
+def test_localised_string_is_frozen() -> None:
+    value = sl.LocalisedString("a", "en")
+    for name in ("text", "lang"):
+        with pytest.raises(AttributeError):
+            setattr(value, name, "fr")
+
+
+def test_localised_string_encodes_text_then_lang() -> None:
+    assert msgspec.json.encode(sl.LocalisedString("Population", "en")) == b'{"text":"Population","lang":"en"}'
+
+
+def test_localised_string_is_read_through_text() -> None:
+    value = sl.LocalisedString("", "fr")
+    assert f"{value}" == "LocalisedString(text='', lang='fr')"
+    assert bool(value)
+    assert value != ""
+    with pytest.raises(TypeError):
+        format(value, ">10")
+
+
+def test_the_seen_set_is_cleared_when_full() -> None:
+    _SEEN_TAGS.clear()
+    tags = [f"x-{n:04d}" for n in range(_SEEN_TAGS_MAX + 1)]
+    for tag in tags:
+        sl.LocalisedString("t", tag)
+    assert {tags[-1]} == _SEEN_TAGS
+
+
+def test_an_underscore_tag_names_its_hyphen_form() -> None:
+    with pytest.raises(sl.InvalidTagError, match="did you mean 'fr-ca'") as raised:
+        sl.normalize_tag("fr_CA")
+    assert raised.value.lang == "fr_CA"
+    with pytest.raises(sl.InvalidTagError) as raised:
+        sl.normalize_tag("zz zz")
+    assert "did you mean" not in str(raised.value)
 
 
 def test_an_optional_tag_passes_none_and_normalises_the_rest() -> None:
@@ -379,11 +439,17 @@ def test_the_message_language_ends_with_the_read() -> None:
 
 
 def _public_lang_callables() -> set[str]:
-    """``module:qualname`` of every public function, class or method with a `lang` or `langs` parameter."""
+    """``module:qualname`` of every public function, class or method with a `lang` or `langs` parameter.
+
+    Protocols are skipped, and so are exceptions: `InvalidTagError(lang)`
+    carries the tag it refuses.
+    """
     found: set[str] = set()
     for module in _public_modules():
         for name, obj in vars(module).items():
             if name.startswith("_") or not getattr(obj, "__module__", "").startswith("sdmxlib"):
+                continue
+            if inspect.isclass(obj) and issubclass(obj, BaseException):
                 continue
             if inspect.isclass(obj) and not getattr(obj, "_is_protocol", False):
                 found |= {_named(each) for each in (obj, *_public_methods(obj)) if _takes_lang(each)}
@@ -451,7 +517,7 @@ def store() -> Iterator[sl.LocalRegistry]:
 
 
 def _refuses(call: Callable[[], object]) -> None:
-    with pytest.raises(ValueError, match="fr_CA"):
+    with pytest.raises(sl.InvalidTagError, match="fr_CA"):
         call()
 
 
@@ -504,7 +570,7 @@ def _calls(store: sl.LocalRegistry, tmp_path: Path) -> dict[str, Callable[[], No
         "sdmxlib.model.istring:InternationalString.__getitem__": getitem,
         "sdmxlib.model.istring:InternationalString.get": lambda: _refuses(lambda: istring.get(_BAD)),
         "sdmxlib.model.istring:InternationalString.pick": lambda: _refuses(lambda: istring.pick(_BAD)),
-        "sdmxlib.model.istring:LocalizedText": lambda: _refuses(lambda: sl.LocalizedText("x", _BAD)),
+        "sdmxlib.model.istring:LocalisedString": lambda: _refuses(lambda: sl.LocalisedString("x", _BAD)),
         "sdmxlib.model.valuelist:ValueList.code_map": lambda: _refuses(
             lambda: sl.ValueList(id="VL", maintainer="AG", name={"en": "v"}, items=[]).code_map(lang=_BAD)
         ),

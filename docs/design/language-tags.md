@@ -36,8 +36,6 @@ normalisation and to add a value type that pairs a text with its tag.
   statcatlib's.
 - **Display case.** Showing `fr-CA` to a person is statcatlib's, the layer
   that shows tags to people.
-- **`LocalizedText`'s JSON form.** statcatlib, which serialises labels,
-  defines it.
 
 ## Evidence
 
@@ -105,8 +103,8 @@ normalises.
 ### D1. A tag is well-formed, or it is refused
 
 `normalize_tag(tag: str) -> str` lowercases `tag` and returns it if it matches
-the SDMX-JSON 2.1 `localisedText` pattern. Otherwise it raises `ValueError`
-naming the tag, truncated to 64 characters. The pattern is held in `src/` as a
+the SDMX-JSON 2.1 `localisedText` pattern. Otherwise it raises `InvalidTagError`,
+a `ValueError`, naming the tag, truncated to 64 characters. The pattern is held in `src/` as a
 constant whose comment cites
 `tests/schemas/sdmx_json/2.1/sdmx-json-structure-schema.json`. It is never
 read from `tests/`.
@@ -149,9 +147,9 @@ that each refuses a malformed tag.
 | SDMX-JSON `meta.contentLanguages` | as given | each normalised; a malformed one fails the read with `SdmxParseError` |
 | Bundle overlay `lang` | as given | normalised; a malformed one is refused as the overlay is read |
 | Store readers (`storage/readers.py`, `lazy.py`, `_projections.py`) | rows as stored | built through the internal `InternationalString._from_normalized`, which skips the check: what the store holds was normalised as it was written (D6) |
-| Every `lang=` / `langs=` parameter (the rule above) | compared as given | normalised before use; a malformed one raises `ValueError` |
-| `InternationalString.get(*langs)`, `pick(*langs)` | exact key | each requested tag normalised, then matched exactly; a malformed one raises `ValueError` |
-| `InternationalString.__getitem__(lang)` | exact key | normalised; a malformed tag raises `KeyError`, chained from the `ValueError`, so `try/except KeyError` callers keep working |
+| Every `lang=` / `langs=` parameter (the rule above) | compared as given | normalised before use; a malformed one raises `InvalidTagError` |
+| `InternationalString.get(*langs)`, `pick(*langs)` | exact key | each requested tag normalised, then matched exactly; a malformed one raises `InvalidTagError` |
+| `InternationalString.__getitem__(lang)` | exact key | normalised; a malformed tag raises `KeyError`, chained from the `InvalidTagError`, so `try/except KeyError` callers keep working |
 | `InternationalString.__contains__(lang)` | exact key | `False` for a malformed tag or a non-`str`, as a predicate should be |
 
 "Refuses the artefact" is the readers' existing per-artefact refusal: the
@@ -192,20 +190,34 @@ stored tag that `normalize_tag` would change or refuse, scanning
 `localized_text` and the name-map keys once per check, and
 `docs/upgrading.md` says to rebuild such a store.
 
-### D7. `LocalizedText`
+### D7. `LocalisedString`
 
-`LocalizedText(text: str, lang: str)` is one text and the stored tag it was
-found under, in `sdmxlib.model.istring`, exported as `sl.LocalizedText`.
+`LocalisedString(text: str, lang: str)` is one text and the stored tag it was
+found under, in `sdmxlib.model.istring`, exported as `sl.LocalisedString`. It
+is the SDMX Information Model's LocalisedString, in the IM's spelling;
+`text` is the IM's `label` and `lang` its `locale`. The suite design
+"Text model: add LocalisedString per the SDMX Information Model" (the StatCat
+Suite hub, `docs/design/localised-string.md`) sets its shape; GH-309 carries
+that design's second stage.
 
-- It is an attrs `@frozen` class, not a `str` subclass: it compares and
-  hashes by both fields, and its `repr` is `LocalizedText(text=…, lang=…)`.
-- `lang` goes through `normalize_tag`, so a malformed one raises `ValueError`.
-- `InternationalString.pick(*langs) -> LocalizedText | None` works as `get`
+- It is a frozen `msgspec.Struct` with `gc=False`. It compares and hashes by
+  both fields, and its `repr` is `LocalisedString(text=…, lang=…)`. It
+  defines no `__str__`, `__format__` or `__bool__`: callers read `.text`.
+- `__post_init__` raises `TypeError` unless `text` is a `str`, and passes
+  `lang` through `normalize_tag` unless it is in a set of tags already seen
+  in normalised form (`_SEEN_TAGS`, cleared at 1,024). msgspec runs it on
+  construction, `msgspec.json.decode`, `msgspec.convert` and
+  `msgspec.structs.replace`, so every value holds a normalised tag.
+- A malformed tag raises `InvalidTagError`, a `ValueError`, which
+  `normalize_tag` and so every `lang=` parameter raise. Its message names the
+  hyphen form of a tag written with `_` ("did you mean 'fr-ca'?").
+- `InternationalString.pick(*langs) -> LocalisedString | None` works as `get`
   does (each requested tag normalised, the first one present wins) and
   returns the tag that answered. So a caller asking for `("fr-ca", "fr",
   "en")` learns which tag answered.
-
-The name avoids the query language's `Label` (`query/_expr.py`).
+- **JSON form, a suite contract** (StatCat-Suite/statcatlib#88):
+  `{"text": "Population", "lang": "en"}`, keys in that order, with the stored
+  lowercase tag and no display case. `msgspec.json.encode(value)` writes it.
 
 ## As built
 
@@ -302,8 +314,9 @@ No memo was added.
 
 ## Breaking changes
 
-- `InternationalString`, `LocalizedText` and every `lang=` refuse a malformed
-  tag with `ValueError`, and two keys of one tag likewise.
+- `InternationalString`, `LocalisedString` and every `lang=` refuse a
+  malformed tag with `InvalidTagError`, a `ValueError`; two keys of one tag
+  raise `ValueError`.
 - `InternationalString.__getitem__` raises `KeyError` for a malformed tag,
   where it raised nothing for an absent one before; `__contains__` returns
   `False` for one.
@@ -328,10 +341,9 @@ to:
    differs from GH-280's request for RFC canonical case;
 2. refuse `_` and whitespace in sdmxlib and repair them at its own CKAN
    boundary, where its decision 2 says it fixes them;
-3. define `LocalizedText`'s JSON form, and show tags in canonical case to
-   people if it wants to.
+3. show tags in canonical case to people if it wants to.
 
-Its answer sets the JSON form as `{"text": "…", "lang": "fr-ca"}`, with the
-stored tag and no display case. Its reader of stored maps rebuilds each through
+The JSON form of a `LocalisedString`, `{"text": "…", "lang": "fr-ca"}` with
+the stored tag and no display case, is a suite contract (D7). Its reader of stored maps rebuilds each through
 `InternationalString.of()` and so re-checks tags; it will ask for a public
 constructor that skips the check only if a profile shows the cost.

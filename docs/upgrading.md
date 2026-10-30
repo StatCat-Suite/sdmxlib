@@ -30,15 +30,16 @@ lowercase, and well-formed by RFC 5646
   `sl.InternationalString(**{"fr-CA": "…"}).langs` is `["fr-ca"]`. Lookups
   normalise the tag they are given, so `s["fr-CA"]` still finds it. A label
   column `sl.polars.label` adds is named in lowercase too: `REF_AREA_label_fr-ca`.
-- `InternationalString`, `LocalizedText`, `AnnotationURL`, `RegionValue` and
-  every `lang=` / `langs=` parameter raise `ValueError` for a tag that is not
-  well-formed: `""`, `fr_CA`, `" en"`, and the four grandfathered tags RFC 5646
+- `InternationalString`, `LocalisedString`, `AnnotationURL`, `RegionValue`
+  and every `lang=` / `langs=` parameter raise `sl.InvalidTagError`, a
+  `ValueError`, for a tag that is not well-formed: `""`, `fr_CA`, `" en"`, and the four grandfathered tags RFC 5646
   spells in mixed case (`en-GB-oed`, `sgn-BE-FR`, `sgn-BE-NL`, `sgn-CH-DE`).
-  `InternationalString` also refuses two texts whose tags normalise to one
-  (`FR` and `fr`).
+  For a tag written with `_`, the message names the hyphen form ("did you
+  mean 'fr-ca'?"). `InternationalString` also refuses, with `ValueError`, two
+  texts whose tags normalise to one (`FR` and `fr`).
 - `s[tag]` raises `KeyError` for a malformed tag, chained from the
-  `ValueError`; `tag in s` is `False` for one, and for anything that is not a
-  `str`. `s.get(tag)` raises `ValueError`.
+  `InvalidTagError`; `tag in s` is `False` for one, and for anything that is
+  not a `str`. `s.get(tag)` raises `InvalidTagError`.
 - A read refuses an artefact carrying an empty `xml:lang`, a malformed tag or
   two texts of one tag, where it used to keep the key `""`, the tag as given,
   or the last text. In a header, such a tag reads as no header and a recorded
@@ -49,9 +50,10 @@ lowercase, and well-formed by RFC 5646
   stored under the tag `_default`.
 - An overlay with a malformed tag is refused by `read_overlay`.
 
-New: `sl.LocalizedText(text, lang)`, and
-`InternationalString.pick(*langs) -> LocalizedText | None`, which returns the
-text with the tag that answered.
+New: `sl.LocalisedString(text, lang)`, the SDMX Information Model's
+LocalisedString, and `InternationalString.pick(*langs) -> LocalisedString |
+None`, which returns the text with the tag that answered. Read its text as
+`.text`; it encodes to JSON as `{"text": "…", "lang": "fr"}`.
 
 A store built before this from a source that sent another case, an empty tag
 or a malformed one answers Python reads and SQL lookups differently.

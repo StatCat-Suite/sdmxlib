@@ -93,7 +93,7 @@ from sdmxlib.model.datastructure import (
     MetadataAttributeUsage,
     TimeDimension,
 )
-from sdmxlib.model.istring import InternationalString, LocalizedText, normalize_tag
+from sdmxlib.model.istring import InternationalString, InvalidTagError, LocalisedString, normalize_tag
 from sdmxlib.model.link import Link
 from sdmxlib.model.errors import Refusal
 from sdmxlib.model.header import ActionType, Header, MetadataHeader, Party, Sender
@@ -198,6 +198,7 @@ __all__ = [
     "InMemoryRegistry",
     "InclusionMode",
     "InternationalString",
+    "InvalidTagError",
     "ItemExpr",
     "ItemList",
     "ItemMap",
@@ -205,7 +206,7 @@ __all__ = [
     "KeyValue",
     "Level",
     "Link",
-    "LocalizedText",
+    "LocalisedString",
     "Maintainable",
     "MaintainableArtefact",
     "MapDataType",

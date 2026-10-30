@@ -42,7 +42,7 @@ def _is_frozen(cls: type) -> bool:
 
 def test_the_sweep_sees_every_model_class():
     """Exact, so a class added or lost moves it: the sweeps below say nothing about a class they miss."""
-    assert len(_model_classes()) == 111
+    assert len(_model_classes()) == 110
 
 
 def test_every_model_class_is_frozen():

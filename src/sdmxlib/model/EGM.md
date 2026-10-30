@@ -91,8 +91,8 @@ hierarchical roll-ups.
   `MetadataStructure` (`metadatastructure.py`), `Metadataflow`
   (`metadataflow.py`), `MetadataSet` and `ReportedAttribute`
   (`metadataset.py`), and `Header` (`header.py`).
-- Shared value types: `InternationalString`, `LocalizedText` and
-  `normalize_tag` (`istring.py`), `Annotation` and `Annotations`
+- Shared value types: `InternationalString`, `LocalisedString`,
+  `InvalidTagError` and `normalize_tag` (`istring.py`), `Annotation` and `Annotations`
   (`annotations.py`) and `Link` (`link.py`).
 - `PathIndex` and `PathNavigation` (`_tree.py`): nested items keyed by path,
   shared by `CategoryScheme`, `Hierarchy` and `MetadataStructure`.
@@ -116,8 +116,9 @@ hierarchical roll-ups.
 
 - Every language tag the model holds is in the form `normalize_tag` returns:
   lowercase and RFC 5646 well-formed (GH-280). `InternationalString`,
-  `LocalizedText`, `AnnotationURL.lang` and `RegionValue.lang` normalise as
-  they are built and raise `ValueError` for a malformed tag, and an
+  `LocalisedString`, `AnnotationURL.lang` and `RegionValue.lang` normalise as
+  they are built and raise `InvalidTagError` (a `ValueError`) for a malformed
+  tag, and an
   `InternationalString` refuses two texts of one tag. Every public `lang` /
   `langs` parameter normalises the same way
   (`tests/unit/test_language_tags.py` lists them).
@@ -127,7 +128,10 @@ hierarchical roll-ups.
   `@frozen(unsafe_hash=False)`, so it compares by value and cannot be hashed;
   key collections by `urn`. To change one, make a copy with `attrs.evolve`.
   Derived state set in `__attrs_post_init__` goes through
-  `object.__setattr__`.
+  `object.__setattr__`. `LocalisedString` is the one exception: a frozen
+  `msgspec.Struct`, built on every `InternationalString` lookup, where attrs
+  cost twice as much per lookup (the suite design's
+  `bench_lookup_fair.py`).
 - A `Ref` is built only from an `SdmxUrn`. `__attrs_post_init__` rejects
   anything else and suggests `Ref.to` (for an artefact) or `SdmxUrn.make` (for
   a child item).
