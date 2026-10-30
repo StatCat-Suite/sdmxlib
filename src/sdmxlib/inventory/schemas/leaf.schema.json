@@ -1,0 +1,176 @@
+{
+  "$ref": "#/$defs/Leaf",
+  "$defs": {
+    "Leaf": {
+      "title": "Leaf",
+      "description": "``inventory/leaves/<sha256>.json``: one product's editions that are not retired.\n\nAttributes:\n    format_version: `INVENTORY_FORMAT`.\n    product_id: The product.\n    kind: ``data`` or ``structure``.\n    lifecycle: ``final`` or ``revisable``.\n    editions: Its entries, sorted by ``edition_id``.",
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "type": "string"
+        },
+        "product_id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "data",
+            "structure"
+          ]
+        },
+        "lifecycle": {
+          "enum": [
+            "final",
+            "revisable"
+          ]
+        },
+        "editions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LeafEntry"
+          }
+        }
+      },
+      "required": [
+        "format_version",
+        "product_id",
+        "kind",
+        "lifecycle",
+        "editions"
+      ]
+    },
+    "LeafEntry": {
+      "title": "LeafEntry",
+      "description": "One edition of a product, as the Inventory records it.\n\nAttributes:\n    edition_id: The edition.\n    previous: Its manifest's ``previous``.\n    state: Its state (spec §6.4).\n    manifest_sha256: The SHA-256 of its ``manifest.json``.\n    schema_version: The store schema it was written at.\n    state_changed_at: When it took its state.\n    release_at: For an embargoed entry, when it may be released, or None\n        for no scheduled release; None in every other state.\n    structure_source: Where its structures came from, when a registry is\n        authoritative.\n    artefacts: Its manifest's artefacts and partials, by URN; optional\n        in 1.0.",
+      "type": "object",
+      "properties": {
+        "edition_id": {
+          "type": "string"
+        },
+        "previous": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "enum": [
+            "embargoed",
+            "live",
+            "superseded",
+            "withdrawn"
+          ]
+        },
+        "manifest_sha256": {
+          "type": "string"
+        },
+        "schema_version": {
+          "type": "string"
+        },
+        "state_changed_at": {
+          "type": "string"
+        },
+        "release_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "structure_source": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/StructureSource"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "artefacts": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/PartialRecord"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "edition_id",
+        "previous",
+        "state",
+        "manifest_sha256",
+        "schema_version",
+        "state_changed_at"
+      ]
+    },
+    "StructureSource": {
+      "title": "StructureSource",
+      "description": "Where an edition's structures came from when a registry is authoritative.\n\nAttributes:\n    registry: The registry's URL.\n    query: The query that fetched the closure.\n    retrieved_at: When.\n    fingerprints: The artefact fingerprints retrieved, by URN.",
+      "type": "object",
+      "properties": {
+        "registry": {
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "retrieved_at": {
+          "type": "string"
+        },
+        "fingerprints": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {}
+        }
+      },
+      "required": [
+        "registry",
+        "query",
+        "retrieved_at"
+      ]
+    },
+    "PartialRecord": {
+      "title": "PartialRecord",
+      "description": "One artefact of an edition as its manifest fingerprints it.\n\nAttributes:\n    fingerprint: The artefact fingerprint.\n    partial_of: For a partial, the fingerprint of the full artefact it was cut from.",
+      "type": "object",
+      "properties": {
+        "fingerprint": {
+          "type": "string"
+        },
+        "partial_of": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "fingerprint"
+      ]
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "$ref": "#/$defs/Current",
+  "$defs": {
+    "Current": {
+      "title": "Current",
+      "description": "``CURRENT``: a hint naming the newest root, which a reader verifies and probes beyond.\n\nAttributes:\n    seq: The newest root's sequence number, as last written.\n    root_sha256: The SHA-256 of that root's bytes, lowercase hex.\n    restore_epoch: ``catalog.json``'s, when this was written.",
+      "type": "object",
+      "properties": {
+        "seq": {
+          "type": "integer"
+        },
+        "root_sha256": {
+          "type": "string"
+        },
+        "restore_epoch": {
+          "type": "integer",
+          "default": 0
+        }
+      },
+      "required": [
+        "seq",
+        "root_sha256"
+      ]
+    }
+  }
+}
