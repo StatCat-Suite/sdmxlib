@@ -1882,7 +1882,7 @@ class BundleRegistry(SessionFactory):
             # Same type the destination field declares (MetadataSection.value).
             value: ReportedAttributeValue | None
             if value_kind == "i18n":
-                value = InternationalString.of(dict(i18n_val)) if i18n_val else None
+                value = InternationalString._from_normalized(dict(i18n_val)) if i18n_val else None
             else:
                 value = scalar_val
             sections.append(

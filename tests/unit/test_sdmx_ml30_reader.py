@@ -937,16 +937,14 @@ def test_codelist_name_carries_non_en_fr_tags():
     assert cl.name["es"] == "Frecuencia"
 
 
-def test_region_coded_language_tags_parsed_verbatim():
-    """Region-coded BCP-47 tags (pt-BR, zh-Hans, es-419) parse without case
-    folding or normalisation — the exact attribute value is the dict key."""
+def test_region_coded_language_tags_are_read_lowercase():
+    """Region-coded tags (pt-BR, zh-Hans, es-419) are stored lowercase (GH-280),
+    and found under any case."""
     code = _load_complete().codelists["CL_FREQ"].codes["A"]
     assert code.name["pt-BR"] == "Anual"
     assert code.name["zh-Hans"] == "每年"
     assert code.name["es-419"] == "Anual"
-    # And the case is preserved as written: "pt-BR" not "pt-br" or "PT-BR".
-    assert "pt-br" not in code.name.langs
-    assert "PT-BR" not in code.name.langs
+    assert code.name.langs[3:] == ["pt-br", "zh-hans", "es-419"]
 
 
 def test_region_coded_tags_round_trip_verbatim():

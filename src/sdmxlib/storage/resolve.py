@@ -84,16 +84,15 @@ def json_to_istring(value: str | None) -> InternationalString:
     """
     if not value or value == "{}":
         return InternationalString.EMPTY
-    return InternationalString.of(_ISTRING_DECODER.decode(value))
+    return InternationalString._from_normalized(_ISTRING_DECODER.decode(value))
 
 
 def map_to_istring(value: dict[str, str] | None) -> InternationalString:
     """A DuckDB `MAP` result as an `InternationalString`.
 
-    `of` returns the shared empty for an empty map, so the `None` check is the
-    only branch left here (#377).
+    The store holds normalised tags, so they are trusted (GH-280).
     """
-    return InternationalString.of(value) if value else InternationalString.EMPTY
+    return InternationalString._from_normalized(value) if value else InternationalString.EMPTY
 
 
 def annotation_rows(cur: duckdb.DuckDBPyConnection, where: str, params: Sequence[object]) -> dict[str, Annotations]:
@@ -167,10 +166,10 @@ def annotations_from_joined_rows(
         if current is None:
             return
         db_id, ann_id, title, ann_type, value = current
-        # `of` yields the shared empty when there is no text, which is ~98% of
+        # This yields the shared empty when there is no text, which is ~98% of
         # annotations on a real bundle — 585,675 of them against 10,064 text
         # rows on the 2021 Census Profile bundle (#377).
-        text = InternationalString.of(texts)
+        text = InternationalString._from_normalized(texts)
         result.append(
             Annotation(id=ann_id, title=title, type=ann_type, urls=tuple(urls.get(db_id, ())), text=text, value=value)
         )
@@ -653,7 +652,7 @@ def _map_istring(value: object) -> InternationalString:
     """A MAP read inside a struct — a plain dict, unlike `istring_sql`'s JSON text."""
     if not isinstance(value, dict) or not value:
         return InternationalString.EMPTY
-    return InternationalString.of({str(k): str(v) for k, v in value.items()})
+    return InternationalString._from_normalized({str(k): str(v) for k, v in value.items()})
 
 
 def _sentinels(value: object) -> tuple[SentinelValue, ...]:

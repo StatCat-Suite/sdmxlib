@@ -73,6 +73,12 @@ target format cannot carry.
 - A refused artefact is never partly built. References to it stay unresolved.
 - A malformed value in a payload raises `SdmxParseError`, never a bare
   `ValueError`.
+- Every language tag is read through `_tags.py`, so a malformed tag, an
+  empty `xml:lang` or two texts of one tag refuse the artefact carrying them
+  (GH-280). An SDMX-ML `xml:lang` has its whitespace collapsed, as the
+  schema's `xs:language` does, and is English when absent. In a header, such
+  a tag reads as no header and a `ReadGap`, as any header the model cannot
+  hold does.
 - Gaps in dimension positions are accepted, with a base of 0 or 1. Only
   positions that contradict document order, or a repeated position, are
   refused.

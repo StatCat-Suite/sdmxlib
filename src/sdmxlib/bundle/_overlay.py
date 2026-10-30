@@ -37,7 +37,7 @@ from sdmxlib.model._refshape import item_fields
 from sdmxlib.model.annotations import Annotation
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.collections import ArtefactList, ItemList, SdmxItem
-from sdmxlib.model.istring import InternationalString
+from sdmxlib.model.istring import InternationalString, _normalized, normalize_tag
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.storage._manifest import Manifest, read_manifest
@@ -100,6 +100,15 @@ class OverlayAnnotation(msgspec.Struct, frozen=True, kw_only=True, forbid_unknow
     value: str | None = None
     text: dict[str, str] = msgspec.field(default_factory=dict)
 
+    def __post_init__(self) -> None:
+        """Refuse a malformed tag in `text`, or two of one tag; msgspec reports it as the document's decode error.
+
+        Raises:
+            ValueError: If a key of `text` is not a well-formed language tag,
+                or two keys normalise to one tag.
+        """
+        _normalized(self.text)
+
 
 class OverlayEntry(msgspec.Struct, frozen=True, kw_only=True, forbid_unknown_fields=True):
     """One change: which targets, what to do, to annotations of which type.
@@ -135,7 +144,9 @@ class OverlayText(msgspec.Struct, frozen=True, kw_only=True, forbid_unknown_fiel
         op: ``set`` writes `text` as the `lang` text; ``remove`` drops the
             `lang` text. A name keeps at least one language.
         field: ``name`` or ``description``.
-        lang: The language tag it acts on.
+        lang: The language tag it acts on. A malformed one raises
+            `ValueError` (`normalize_tag`); `fold_overlays` applies it
+            normalised.
         text: What ``set`` writes; absent for ``remove``.
         scope: As `OverlayEntry`'s.
     """
@@ -146,6 +157,14 @@ class OverlayText(msgspec.Struct, frozen=True, kw_only=True, forbid_unknown_fiel
     lang: str
     text: str | None = None
     scope: str | None = None
+
+    def __post_init__(self) -> None:
+        """Refuse a malformed `lang`; msgspec reports it as the document's decode error.
+
+        Raises:
+            ValueError: If `lang` is not a well-formed language tag.
+        """
+        normalize_tag(self.lang)
 
 
 class Overlay(msgspec.Struct, frozen=True, kw_only=True, forbid_unknown_fields=True, omit_defaults=True):
@@ -196,9 +215,6 @@ def read_overlay(path: str | Path) -> Overlay:
             msg = f"{path}: text {n} ({text.op} {text.field} {text.lang}) " + (
                 "gives no text" if text.text is None else "removes, so gives no text"
             )
-            raise OverlayError(msg)
-        if not text.lang:
-            msg = f"{path}: text {n} ({text.op} {text.field}) names no language"
             raise OverlayError(msg)
     return overlay
 
@@ -474,10 +490,11 @@ class _Plan:
             if current is None:
                 held: object = getattr(owner, text.field, None)
                 current = dict(held.as_dict()) if isinstance(held, InternationalString) else {}
+            lang = normalize_tag(text.lang)
             if text.op == "set" and text.text is not None:
-                current[text.lang] = text.text
+                current[lang] = text.text
             else:
-                current.pop(text.lang, None)
+                current.pop(lang, None)
             fields[text.field] = current
         if "name" in fields and not fields["name"]:
             msg = f"{urn}: removing the last language of its name; a name keeps at least one"

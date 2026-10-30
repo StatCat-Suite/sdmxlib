@@ -13,6 +13,7 @@ import weakref
 
 import duckdb
 
+from sdmxlib.model.istring import normalize_tag
 from sdmxlib.storage.schema import sdmx_cursor
 
 # Per-thread cursor store for the projections below (#80). Held weakly so a
@@ -52,7 +53,11 @@ def code_map(
     held, and the SQL one silently shrank the map. `sdmxlib.polars.label` builds a
     `replace_strict` from it, so a dropped code became a null column value
     rather than a visible failure (#398).
+
+    Raises:
+        ValueError: If `lang` is not a well-formed language tag.
     """
+    lang = normalize_tag(lang)
     cur = _thread_cursor(conn)
     rows = cur.execute(
         """

@@ -96,6 +96,9 @@ publishes through `write_manifest(extensions=...)`.
 - `check_on_open` writes a stamp only after a clean `receive` check, and only
   to a path made of exactly two plain components under the stamps directory.
 - `settle_lake` never deletes files from `data/`.
+- `check_bundle`'s `tags` check, at `publish` and `receive`, reports every
+  stored language tag `normalize_tag` would change or refuse: a store built
+  before GH-280 from a source that sent one.
 - A publication with a lake is refused when a coded column holds a value
   outside its codelist. The survey scans every binding before refusing, and
   stores availability only when nothing is refused.

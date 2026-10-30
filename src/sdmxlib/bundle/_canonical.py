@@ -79,7 +79,7 @@ def _plain(value: object, path: str) -> _Plain:
         case Ref():
             return str(value.urn)
         case InternationalString():
-            return {lang: value[lang] for lang in value}
+            return dict(value.items())
         case Annotations() | ItemList() | list() | tuple():
             return [_plain(item, f"{path}[{i}]") for i, item in enumerate(value)]
         case set() | frozenset():

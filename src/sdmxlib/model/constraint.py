@@ -6,6 +6,7 @@ from enum import Enum
 from typing import ClassVar
 
 from attrs import Attribute, field, frozen
+from attrs.converters import optional
 
 from sdmxlib._time import as_utc
 from sdmxlib.model._invariants import enforce
@@ -14,7 +15,7 @@ from sdmxlib.model.annotations import Annotations
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.codelist import CascadeSelection
 from sdmxlib.model.errors import ValidationError, ValidationIssue
-from sdmxlib.model.istring import InternationalString
+from sdmxlib.model.istring import InternationalString, normalize_tag
 from sdmxlib.model.link import Link, to_links
 from sdmxlib.model.organisation import Agency, _to_agency, _to_annotations, _to_istring
 from sdmxlib.model.ref import Ref, refuse_urn_text, to_optional_ref, to_ref, to_refs
@@ -135,6 +136,8 @@ class RegionValue:
             2.1 has `true` / `false` only.
         lang: The language of a multilingual text value. SDMX 3.x prohibits
             it on a dimension's value, so only a component's may carry one.
+            Normalised by `normalize_tag`, so a malformed one raises
+            `ValueError`.
         valid_from: When the value starts to apply, as written
             (`StandardTimePeriodType`, so `2020-Q1` too). 3.x prohibits it on
             a component's value, so only a dimension's may carry one.
@@ -143,7 +146,7 @@ class RegionValue:
 
     value: str
     cascade: CascadeSelection = field(default=CascadeSelection.SELF_ONLY, converter=_cascade)
-    lang: str | None = None
+    lang: str | None = field(default=None, converter=optional(normalize_tag))
     valid_from: str | None = None
     valid_to: str | None = None
 

@@ -12,6 +12,7 @@ import attrs
 import msgspec
 
 from sdmxlib.formats._refuse import Identity, build_each
+from sdmxlib.formats._tags import message_language
 from sdmxlib.model._resolvers import document_binding
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.category import Categorisation, CategoryScheme
@@ -505,6 +506,13 @@ def _read(data: bytes, index: dict[str, object]) -> StructureMessage:
     # rather than failing the document (#435).
     refused: list[Refusal] = []
     payload, meta = _decode(data, refused)
+    with message_language(None if meta is None else meta.content_languages):
+        return _build(data, payload, meta, index, refused)
+
+
+def _build(
+    data: bytes, payload: StructureDataJson, meta: MetaJson | None, index: dict[str, object], refused: list[Refusal]
+) -> StructureMessage:
     header, header_lost = from_meta(meta)
 
     # ── Phase 1: parse leaf artefacts (no refs to other artefacts) ──────────

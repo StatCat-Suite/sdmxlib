@@ -80,6 +80,9 @@ of the store that publication ships (`_trim.py`).
 
 ## Invariants
 
+- The store holds language tags in the form `normalize_tag` returns, and the
+  readers trust them (`InternationalString._from_normalized`). `_tags.py`'s
+  `stale_tags` finds any that is not, for `check_bundle` (GH-280).
 - `SCHEMA_VERSION` (`schema.py`, currently `"2.51"`) is written to
   `sdmx._meta` with `INSERT OR REPLACE`. statcatlib reads it, so changing it
   affects that repo.

@@ -46,6 +46,7 @@ from sdmxlib.formats._arrow import frame_of
 from sdmxlib.formats.sdmx_json import data_v1, data_v2
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.datastructure import ComponentRole, DataStructure, Dimension, MeasureDimension
+from sdmxlib.model.istring import normalize_tag
 from sdmxlib.model.ref import Ref
 from sdmxlib.model.representation import Facet
 from sdmxlib.polars import _TEXT_TYPE_MAP, validation_report
@@ -667,8 +668,9 @@ class ObsQuery(Query[ObsRow]):
 
         Raises:
             ValueError: If the query has no `structure` — a message is
-                written from one.
+                written from one — or `lang` is not a well-formed tag.
         """
+        lang = normalize_tag(lang)
         root = self.plan.root
         dsd = root.dsd if isinstance(root, Observations) else None
         if not isinstance(root, Observations) or dsd is None:

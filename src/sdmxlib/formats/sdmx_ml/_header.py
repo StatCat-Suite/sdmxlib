@@ -17,13 +17,12 @@ from lxml import etree
 from typing_extensions import TypedDict
 
 from sdmxlib.formats._coerce import to_datetime, to_enum
+from sdmxlib.formats._tags import XML_LANG, xml_texts
 from sdmxlib.model.errors import ReadGap, SdmxParseError, ValidationError
 from sdmxlib.model.header import ActionType, Header, MetadataHeader, Party, Sender
 from sdmxlib.model.istring import InternationalString
 from sdmxlib.model.organisation import Contact, MetadataProvider
 from sdmxlib.model.ref import Ref
-
-XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
 
 #: What a header-less message is written with: ``ID``, ``Test``, ``Prepared``
 #: and the sender's id, which `StructureHeaderType` requires.
@@ -221,8 +220,8 @@ def _common(el: etree._Element, *, com: str) -> _HeaderFields:
 
 
 def _read_texts(parent: etree._Element, tag: str) -> InternationalString:
-    texts = {child.get(XML_LANG, "en"): child.text or "" for child in parent.findall(tag)}
-    return InternationalString(**texts)
+    """A header text. A header is no artefact, so a bad tag fails the read."""
+    return xml_texts(parent.findall(tag), etree.QName(tag).localname)
 
 
 def _read_contacts(el: etree._Element, *, com: str, mes: str) -> tuple[Contact, ...]:

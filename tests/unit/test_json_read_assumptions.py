@@ -10,7 +10,8 @@ document is validated before it is read.
 * **The schema still holds** — the key is optional. The artefact is read,
   unless the model requires what SDMX-JSON 2.0 leaves out: an identifiable's
   id and an item map's target, which the information model makes mandatory,
-  and a component's id, which #477 derives from its concept.
+  a text's language, which a `name` left without its `names` no longer
+  states (GH-280), and a component's id, which #477 derives from its concept.
 
 The walk visits each key shape once, so a new DTO field or schema rule is a
 new case, not a silent pass.
@@ -130,6 +131,20 @@ _REFUSED_THOUGH_OPTIONAL: dict[str, str] = {
     f"{_DSD}/groups": "the maximal DSD's group attribute then names a group the DSD lacks",
 }
 
+#: The language maps an SDMX-JSON text carries beside its singular field.
+_LANGUAGE_MAPS = frozenset({"names", "descriptions", "texts", "departments", "roles"})
+
+
+def _leaves_a_lone_text(shape: str) -> bool:
+    """Optional, and still refused: without its map, the singular text states no language (GH-280).
+
+    The maximal message is in two languages, so its ``contentLanguages`` cannot
+    give the text one. In the header that is a loss, as any header the model
+    cannot hold is.
+    """
+    return shape.rsplit("/", 1)[-1] in _LANGUAGE_MAPS and shape[:-1] in _SHAPES and not shape.startswith("meta/")
+
+
 #: A component's id is optional, and defaults to its concept's (#477): read under it.
 _COMPONENT_ID: frozenset[str] = frozenset(
     {
@@ -156,6 +171,7 @@ _CASES = [pytest.param(shape, id=shape) for shape in _SHAPES]
 def test_the_walk_reaches_every_shape() -> None:
     """The discrimination check: items, components, maps, links and the header are all visited."""
     assert len(_SHAPES) == 2359
+    assert sum(_leaves_a_lone_text(shape) for shape in _SHAPES) == 160
     for shape in (*_ASSUMED_AT.values(), *_REFUSED_THOUGH_OPTIONAL, *_COMPONENT_ID, "meta/sender/id"):
         assert shape in _SHAPES, f"{shape} is no longer in the maximal message"
     assert any(shape.endswith("/links/[]/href") for shape in _SHAPES)
@@ -177,7 +193,11 @@ def test_removing_a_key_reads_as_the_schema_says(shape: str) -> None:
     msg = sl.parse(_without(_SHAPES[shape]), strict=False)
 
     assert isinstance(msg, StructureMessage)
-    refuse = (required and not _kept_though_required(shape)) or shape in _REFUSED_THOUGH_OPTIONAL
+    refuse = (
+        (required and not _kept_though_required(shape))
+        or shape in _REFUSED_THOUGH_OPTIONAL
+        or _leaves_a_lone_text(shape)
+    )
     if refuse:
         assert len(msg.refused) == 1, f"{shape} is {'required' if required else 'optional'} and not refused"
     else:

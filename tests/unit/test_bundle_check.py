@@ -18,7 +18,7 @@ from tests.support.bundles import FLOW, make_bundle
 pytestmark = pytest.mark.unit
 
 _PRODUCER = Producer(name="test-builder", version="1.0")
-_ALL = ("manifest", "files", "lake", "bindings", "references", "fingerprints", "availability")
+_ALL = ("manifest", "files", "lake", "bindings", "references", "tags", "fingerprints", "availability")
 
 
 def _published(root: Path, *, rows: int = 200_000, closed: bool = True) -> Path:

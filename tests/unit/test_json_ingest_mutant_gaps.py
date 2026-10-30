@@ -84,10 +84,11 @@ def _all_texts(msg: StructureMessage) -> dict[str, InternationalString]:
 
 
 def test_a_singular_text_without_its_map_is_read() -> None:
-    """A producer may send `name` alone; the reader falls back to it (`ingest_istr`)."""
+    """A producer may send `name` alone; it reads in the message's one language (`ingest_istr`, GH-280)."""
     full = as_structure(sl.parse(_written()))
     doc = json.loads(_written())
     dropped = _strip_maps(doc)
+    doc["meta"]["contentLanguages"] = ["en"]
     singular = as_structure(sl.parse(json.dumps(doc).encode()))
     expected, got = _all_texts(full), _all_texts(singular)
     assert expected.keys() == got.keys()
@@ -426,6 +427,7 @@ def test_a_category_scheme_map_s_singular_texts_are_read() -> None:
     (csm,) = doc["data"]["categorySchemeMaps"]
     assert {"name", "names", "description", "descriptions"} <= csm.keys(), "the case lost its subject"
     del csm["names"], csm["descriptions"]
+    doc["meta"]["contentLanguages"] = ["en"]
     (read,) = _read(doc).category_scheme_maps
     assert read.name
     assert read.description

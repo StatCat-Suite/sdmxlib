@@ -442,7 +442,7 @@ def test_an_overlay_without_texts_encodes_as_in_format_1_1() -> None:
     [
         ({"selector": "*", "op": "set", "field": "name", "lang": "fr"}, "gives no text"),
         ({"selector": "*", "op": "remove", "field": "name", "lang": "fr", "text": "x"}, "removes, so gives no text"),
-        ({"selector": "*", "op": "set", "field": "name", "lang": "", "text": "x"}, "names no language"),
+        ({"selector": "*", "op": "set", "field": "name", "lang": "", "text": "x"}, "not a well-formed language tag"),
         ({"selector": "*", "op": "set", "field": "title", "lang": "fr", "text": "x"}, "not an overlay document"),
     ],
 )

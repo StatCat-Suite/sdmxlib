@@ -81,7 +81,7 @@ from sdmxlib.model.datastructure import (
 )
 from sdmxlib.model.errors import Refusal, SdmxParseError, ValidationError, ValidationIssue
 from sdmxlib.model.hierarchy import HierarchicalCode, HierarchicalCodelist, Hierarchy, HierarchyAssociation, Level
-from sdmxlib.model.istring import InternationalString
+from sdmxlib.model.istring import InternationalString, normalize_tag
 from sdmxlib.model.link import Link
 from sdmxlib.model.mapping import (
     CategorySchemeMap,
@@ -210,8 +210,8 @@ def _read_name_and_description(
     for field, lang, text in rows:
         texts[field][lang] = text
     return (
-        InternationalString.of(texts["name"]) if texts["name"] else InternationalString(),
-        InternationalString.of(texts["description"]) if texts["description"] else InternationalString(),
+        InternationalString._from_normalized(texts["name"]),
+        InternationalString._from_normalized(texts["description"]),
     )
 
 
@@ -2861,7 +2861,11 @@ def code_map_for_dsd(
     Single JOIN query — no N+1. Per-call cursor as in `code_map`, and the same
     id fallback: a code with no name in `lang` is labelled by its id rather
     than dropped, so this agrees with `Codelist.code_map` (#398).
+
+    Raises:
+        ValueError: If `lang` is not a well-formed language tag.
     """
+    lang = normalize_tag(lang)
     cur = _thread_cursor(conn)
     rows = cur.execute(
         """

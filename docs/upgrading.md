@@ -19,6 +19,50 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## Language tags are lowercase and well-formed
+
+Every language tag sdmxlib holds is in the form `sl.normalize_tag` returns:
+lowercase, and well-formed by RFC 5646
+([GH-280](https://github.com/StatCat-Suite/sdmxlib/issues/280)). The design is
+[`docs/design/language-tags.md`](https://github.com/StatCat-Suite/sdmxlib/blob/main/docs/design/language-tags.md).
+
+- Keys and returned tags are lowercase:
+  `sl.InternationalString(**{"fr-CA": "…"}).langs` is `["fr-ca"]`. Lookups
+  normalise the tag they are given, so `s["fr-CA"]` still finds it. A label
+  column `sl.polars.label` adds is named in lowercase too: `REF_AREA_label_fr-ca`.
+- `InternationalString`, `LocalisedString`, `AnnotationURL`, `RegionValue`,
+  `Link.hreflang` and every `lang=` / `langs=` parameter raise `sl.InvalidTagError`, a
+  `ValueError`, for a tag that is not well-formed: `""`, `fr_CA`, `" en"`, and the four grandfathered tags RFC 5646
+  spells in mixed case (`en-GB-oed`, `sgn-BE-FR`, `sgn-BE-NL`, `sgn-CH-DE`).
+  For a tag written with `_`, the message names the hyphen form ("did you
+  mean 'fr-ca'?"). `InternationalString` also refuses, with `ValueError`, two
+  texts whose tags normalise to one (`FR` and `fr`).
+- `s[tag]` raises `KeyError` for a malformed tag, chained from the
+  `InvalidTagError`; `tag in s` is `False` for one, and for anything that is
+  not a `str`. `s.get(tag)` raises `InvalidTagError`.
+- A read refuses an artefact carrying an empty `xml:lang`, a malformed tag or
+  two texts of one tag, where it used to keep the key `""`, the tag as given,
+  or the last text. In a header, such a tag reads as no header and a recorded
+  loss.
+- SDMX-JSON: a singular `name`, `description` or annotation `text` with no
+  language map is read in the language `meta.contentLanguages` declares when
+  it declares exactly one, and refuses the artefact otherwise. It used to be
+  stored under the tag `_default`.
+- An overlay with a malformed tag is refused by `read_overlay`.
+
+New: `sl.LocalisedString(text, lang)`, the SDMX Information Model's
+LocalisedString, and `InternationalString.pick(*langs) -> LocalisedString |
+None`, which returns the text with the tag that answered. Read its text as
+`.text`; it encodes to JSON as `{"text": "…", "lang": "fr"}`.
+
+A store built before this from a source that sent another case, an empty tag
+or a malformed one answers Python reads and SQL lookups differently.
+`check_bundle` reports each such tag under its `tags` check; rebuild the store
+from its sources. A store built from the registries surveyed in the design
+holds only lowercase two-letter tags and needs nothing.
+
+---
+
 ## A date map names one frequency source
 
 An `EpochMap` or `DatePatternMap` names a frequency dimension or a target

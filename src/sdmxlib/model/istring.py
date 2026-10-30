@@ -1,20 +1,200 @@
-"""InternationalString — dict-like multilingual string."""
+"""InternationalString — dict-like multilingual string — and the language tags that key it."""
 
+import re
 import sys
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from typing import ClassVar, Self
+
+import msgspec
+
+#: The RFC 5646 language-tag grammar, as the SDMX-JSON 2.1 structure schema
+#: writes it: the `localisedText` `patternProperties` key in
+#: `tests/schemas/sdmx_json/2.1/sdmx-json-structure-schema.json`, without its
+#: `^` and `$`. `tests/unit/test_language_tags.py` asserts the two are equal.
+TAG_PATTERN = (
+    r"((?:(en-GB-oed|i-ami|i-bnn|i-default|i-enochian|i-hak|i-klingon|i-lux|i-mingo|i-navajo|i-pwn|"
+    r"i-tao|i-tay|i-tsu|sgn-BE-FR|sgn-BE-NL|sgn-CH-DE)|(art-lojban|cel-gaulish|no-bok|no-nyn|zh-guoyu|"
+    r"zh-hakka|zh-min|zh-min-nan|zh-xiang))|((?:([A-Za-z]{2,3}(-(?:[A-Za-z]{3}(-[A-Za-z]{3}){0,2})"
+    r")?)|[A-Za-z]{4}|[A-Za-z]{5,8})(-(?:[A-Za-z]{4}))?(-(?:[A-Za-z]{2}|[0-9]{3}))?(-(?:[A-Za-z0-9]{5,8}|"
+    r"[0-9][A-Za-z0-9]{3}))*(-(?:[0-9A-WY-Za-wy-z](-[A-Za-z0-9]{2,8})+))*(-(?:x(-[A-Za-z0-9]{1,8})"
+    r"+))?)|(?:x(-[A-Za-z0-9]{1,8})+))"
+)
+_TAG_RE = re.compile(TAG_PATTERN)
+
+#: The longest tag `normalize_tag` matches. The registries send two letters;
+#: the cap bounds what an untrusted source can make the pattern read.
+MAX_TAG_LENGTH = 256
+
+#: How much of a refused tag an error message quotes.
+_QUOTED = 64
+
+
+class InvalidTagError(ValueError):
+    """A language tag that is not well-formed (RFC 5646).
+
+    Raised by `normalize_tag`, so by every `lang` / `langs` parameter and by
+    `LocalisedString`. A `ValueError` only: as a `KeyError` it would be read as
+    an absent key by code that catches `KeyError`, such as `Mapping.get`.
+
+    Attributes:
+        lang: The refused tag, cut to its first 64 characters.
+    """
+
+    def __init__(self, lang: str) -> None:
+        """Name the refused tag, and its hyphen form when it is well-formed."""
+        self.lang = lang[:_QUOTED]
+        msg = f"{self.lang!r} is not a well-formed language tag (RFC 5646), such as 'en' or 'fr-ca'"
+        hyphenated = lang.replace("_", "-")
+        if hyphenated != lang and _well_formed(hyphenated) is not None:
+            msg = f"{msg}; did you mean {hyphenated.lower()!r}?"
+        super().__init__(msg)
+
+
+def _well_formed(tag: str) -> str | None:
+    """`tag` lowercased if it is a well-formed tag, else None."""
+    # ASCII first: `str.lower` maps some non-ASCII letters to ASCII ones (the
+    # Kelvin sign to "k"), which would turn a malformed tag into a valid one.
+    # Two ASCII letters are always a well-formed tag, and are every tag the
+    # surveyed registries send, so they skip the match: it halved what
+    # checking costs a parse (`docs/design/language-tags.md`, "As built").
+    # `tests/unit/test_language_tags.py` checks the two agree on every pair.
+    if len(tag) == 2 and tag.isascii() and tag.isalpha():
+        return tag.lower()
+    if len(tag) <= MAX_TAG_LENGTH and tag.isascii():
+        lowered = tag.lower()
+        if _TAG_RE.fullmatch(lowered):
+            return lowered
+    return None
+
+
+def normalize_tag(tag: str) -> str:
+    """The one stored spelling of a language tag: lowercase, and well-formed.
+
+    `tag` is lowercased and accepted when it matches the RFC 5646 grammar
+    (`TAG_PATTERN`). Nothing else is changed: whitespace, an underscore for a
+    hyphen and an empty string are refused, as are the four grandfathered
+    tags RFC 5646 spells in mixed case (`en-GB-oed`, `sgn-BE-FR`, `sgn-BE-NL`,
+    `sgn-CH-DE`), whose lowercase forms do not match. The check is for
+    well-formedness only: `qq-zz` passes, and a deprecated subtag is kept.
+
+    Args:
+        tag: A language tag, such as ``"en"`` or ``"fr-CA"``.
+
+    Returns:
+        `tag` in lowercase.
+
+    Raises:
+        TypeError: If `tag` is not a `str`.
+        InvalidTagError: If `tag` is not a well-formed language tag, or is
+            longer than `MAX_TAG_LENGTH`. The message quotes at most 64
+            characters of it, and names the hyphen form of a tag written with
+            `_`.
+
+    Example:
+        normalize_tag("fr-CA")  # "fr-ca"
+        normalize_tag("fr_CA")  # InvalidTagError: ... did you mean 'fr-ca'?
+    """
+    if not isinstance(tag, str):
+        msg = f"a language tag is a str, not {type(tag).__name__}"
+        raise TypeError(msg)
+    lowered = _well_formed(tag)
+    if lowered is None:
+        raise InvalidTagError(tag)
+    return lowered
+
+
+#: Tags `LocalisedString` has already checked, in normalised form. Cleared
+#: when it holds `_SEEN_TAGS_MAX`, so an input with many distinct tags costs a
+#: full check per tag while common ones return to the fast path. `in` and
+#: `add` on a set are atomic, so no lock is needed.
+_SEEN_TAGS: set[str] = set()
+_SEEN_TAGS_MAX = 1024
+
+
+class LocalisedString(msgspec.Struct, frozen=True, gc=False):
+    """One text and its language tag: the SDMX Information Model's LocalisedString.
+
+    `text` is the IM's `label`, and `lang` its `locale`. What
+    `InternationalString.pick` returns, so a caller asking for
+    ``("fr-ca", "fr", "en")`` learns which tag answered. Compares and hashes
+    by both fields. The query expressions `Localised` and `SideLocalised` are
+    unrelated: they select a localised field in the path language.
+
+    However it is built (directly, by `msgspec.json.decode`, `msgspec.convert`
+    or `msgspec.structs.replace`), `lang` holds the tag as `normalize_tag`
+    returns it, so ``LocalisedString("Annuel", "FR") == LocalisedString("Annuel",
+    "fr")``. It encodes as ``{"text": "Annuel", "lang": "fr"}``, keys in that
+    order: the JSON form the StatCat Suite shares.
+
+    It defines no `__str__`, `__format__` or `__bool__`: read the text as
+    `.text`. `str(v)` gives the repr, and every value is truthy, even with
+    empty text.
+
+    Attributes:
+        text: The text (IM: `label`).
+        lang: Its language tag (IM: `locale`), lowercase and well-formed.
+    """
+
+    text: str
+    lang: str
+
+    def __post_init__(self) -> None:
+        """Check `text` is a `str`, and normalise `lang`.
+
+        Raises:
+            TypeError: If `text` or `lang` is not a `str`.
+            InvalidTagError: If `lang` is not a well-formed tag.
+        """
+        # msgspec checks no types on direct construction, and `gc=False` is
+        # safe only while both fields are `str`.
+        if type(self.text) is not str:
+            msg = f"LocalisedString text is a str, not {type(self.text).__name__}"
+            raise TypeError(msg)
+        if self.lang in _SEEN_TAGS:
+            return
+        lang = normalize_tag(self.lang)
+        if lang != self.lang:
+            msgspec.structs.force_setattr(self, "lang", lang)
+        if len(_SEEN_TAGS) >= _SEEN_TAGS_MAX:
+            _SEEN_TAGS.clear()
+        _SEEN_TAGS.add(lang)
+
+
+def _normalized(pairs: Mapping[str, str]) -> dict[str, str]:
+    """`pairs` keyed by normalised, interned tags.
+
+    Raises:
+        ValueError: If a key is not a well-formed tag, or two keys normalise
+            to one tag: two texts for one language, which sdmxlib never
+            chooses between.
+    """
+    data: dict[str, str] = {}
+    for tag, text in pairs.items():
+        lang = normalize_tag(tag)
+        if lang in data:
+            msg = f"two texts for language {lang!r}"
+            raise ValueError(msg)
+        # Interned (#116): a small pool of tags repeats across thousands of
+        # strings built during a parse, and one shared `str` per tag saved
+        # 200-400 KiB on large XML messages.
+        data[sys.intern(lang)] = text
+    return data
 
 
 class InternationalString:
     """A multilingual string where language access is always explicit.
 
-    Stores key-value pairs of language code → text. Immutable after
-    construction (no ``__setitem__``).
+    Maps language tags to texts. Immutable after construction (no
+    ``__setitem__``). Every tag is normalised by `normalize_tag` as it enters,
+    so keys are lowercase and well-formed, and every lookup normalises the
+    tag it is asked for: ``s["FR-CA"]`` finds the text stored under
+    ``fr-ca``.
 
     Example:
         s = InternationalString(en="Annual", fr="Annuel")
         s["en"]  # "Annual"
         s.get("de", "en")  # "Annual" (fallback)
+        s.pick("de", "en")  # LocalisedString(text='Annual', lang='en')
         "fr" in s  # True
         s.langs  # ["en", "fr"]
     """
@@ -39,23 +219,46 @@ class InternationalString:
     EMPTY: ClassVar[InternationalString]
 
     def __init__(self, **kwargs: str) -> None:
-        # Intern lang codes (#116). High-cardinality keys repeated across
-        # thousands of istring constructions during parse — interning
-        # collapses them to a small finite pool of shared str objects,
-        # saving 200-400 KiB on large XML messages.
-        self._data: dict[str, str] = {sys.intern(k): v for k, v in kwargs.items()}
+        """Build from keyword arguments, one per language.
+
+        Raises:
+            ValueError: If a tag is not well-formed, or two normalise to one.
+        """
+        self._data: dict[str, str] = _normalized(kwargs)
 
     # ── Construction helpers ───────────────────────────────────────────────
 
     @classmethod
-    def of(cls, pairs: dict[str, str]) -> InternationalString:
-        """Build from an existing dict.
+    def of(cls, pairs: Mapping[str, str]) -> InternationalString:
+        """Build from an existing mapping.
 
         Returns the shared `EMPTY` for an empty mapping — the common case on a
         real bundle, and the one that used to allocate. Only for this
         exact class: a subclass gets its own fresh instance, since `EMPTY` is
         an `InternationalString` and returning it would be a type error the
         annotation cannot see.
+
+        Raises:
+            ValueError: If a tag is not well-formed, or two normalise to one.
+        """
+        data = _normalized(pairs)
+        if not data and cls is InternationalString:
+            return EMPTY
+        obj: Self = cls.__new__(cls)
+        obj._data = data
+        return obj
+
+    @classmethod
+    def _from_normalized(cls, pairs: dict[str, str]) -> InternationalString:
+        """Build from a map whose tags are already normalised, without checking them.
+
+        For the store readers, whose rows were normalised as they were
+        written, and for the format readers, which normalise each tag
+        themselves to refuse a bad one as a contradiction. `check_bundle`
+        reports a store holding a tag `normalize_tag` would change.
+
+        One call deep, as the store path's call-count bounds hold it
+        (`tests/bench/test_bundle_reads.py`).
         """
         if not pairs and cls is InternationalString:
             return EMPTY
@@ -68,18 +271,63 @@ class InternationalString:
     # ── Access ────────────────────────────────────────────────────────────
 
     def __getitem__(self, lang: str) -> str:
-        """Return the string for *lang*, raising KeyError if absent."""
-        return self._data[lang]
+        """Return the text for `lang`.
+
+        Raises:
+            KeyError: If no text is held for `lang`, or `lang` is not a
+                well-formed tag (chained from the `ValueError`).
+        """
+        try:
+            key = normalize_tag(lang)
+        except ValueError as exc:
+            raise KeyError(lang) from exc
+        return self._data[key]
 
     def get(self, *langs: str) -> str | None:
-        """Return the first available language in priority order, or None."""
+        """The text of the first of `langs` held, or None.
+
+        Raises:
+            InvalidTagError: If one of `langs` is not a well-formed tag.
+        """
         for lang in langs:
-            if lang in self._data:
-                return self._data[lang]
+            text = self._data.get(normalize_tag(lang))
+            if text is not None:
+                return text
         return None
 
+    def pick(self, *langs: str) -> LocalisedString | None:
+        """The first of `langs` held, with the tag that answered, or None.
+
+        Each tag is normalised, then matched exactly: asking for
+        ``("fr-CA", "fr")`` returns the ``fr`` text with ``lang="fr"`` when
+        only that is held.
+
+        Raises:
+            InvalidTagError: If one of `langs` is not a well-formed tag.
+        """
+        for lang in langs:
+            key = normalize_tag(lang)
+            text = self._data.get(key)
+            if text is not None:
+                return LocalisedString(text, key)
+        return None
+
+    def _text(self, lang: str) -> str | None:
+        """The text held under `lang`, a tag already normalised; not checked.
+
+        For loops that normalise one tag once and then look it up in each of
+        many strings, such as `Codelist.code_map`.
+        """
+        return self._data.get(lang)
+
     def __contains__(self, lang: object) -> bool:
-        return lang in self._data
+        """Whether a text is held for `lang`; False for a malformed tag or a non-`str`."""
+        if not isinstance(lang, str):
+            return False
+        try:
+            return normalize_tag(lang) in self._data
+        except ValueError:
+            return False
 
     def __iter__(self) -> Iterator[str]:
         return iter(self._data)

@@ -10,7 +10,7 @@ from sdmxlib.model._rules import id_type, maintained_by, named, version_type
 from sdmxlib.model.annotations import Annotations
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.collections import ItemList, to_itemlist
-from sdmxlib.model.istring import InternationalString
+from sdmxlib.model.istring import InternationalString, normalize_tag
 from sdmxlib.model.link import Link, to_links
 from sdmxlib.model.organisation import Agency, _to_agency, _to_annotations, _to_istring
 
@@ -80,8 +80,13 @@ class ValueList(MaintainableArtefact):
         return self.items.ids()
 
     def code_map(self, *, lang: str) -> dict[str, str]:
-        """``{value: label}`` in ``lang``, falling back to the value — `EnumerationLike.code_map`."""
-        return {item.id: item.name.get(lang) or item.id for item in self.items}
+        """``{value: label}`` in ``lang``, falling back to the value — `EnumerationLike.code_map`.
+
+        Raises:
+            ValueError: If `lang` is not a well-formed language tag.
+        """
+        key = normalize_tag(lang)
+        return {item.id: item.name._text(key) or item.id for item in self.items}
 
     def __len__(self) -> int:
         """How many values this list holds."""

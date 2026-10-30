@@ -17,7 +17,7 @@ from sdmxlib.model._rules import id_type, maintained_by, named, ncname_id_type, 
 from sdmxlib.model.annotations import Annotations
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.collections import ItemList, to_itemlist
-from sdmxlib.model.istring import InternationalString
+from sdmxlib.model.istring import InternationalString, normalize_tag
 from sdmxlib.model.link import Link, to_links
 from sdmxlib.model.organisation import Agency, _to_agency, _to_annotations, _to_istring
 from sdmxlib.model.ref import Ref, refuse_urn_text, to_ref
@@ -569,8 +569,12 @@ class Codelist(MaintainableArtefact):
 
         Falls back to the id rather than omitting the code, because a label map
         with holes in it silently drops rows when a caller joins on it.
+
+        Raises:
+            ValueError: If `lang` is not a well-formed language tag.
         """
-        return {c.id: c.name.get(lang) or c.id for c in self.codes}
+        key = normalize_tag(lang)
+        return {c.id: c.name._text(key) or c.id for c in self.codes}
 
     def broader_map(self) -> dict[str, str | None]:
         """``{code_id: parent_id}`` for every code; ``None`` for roots."""

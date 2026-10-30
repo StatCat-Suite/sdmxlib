@@ -4,8 +4,9 @@ from collections.abc import Iterable, Iterator, Sequence
 from typing import ClassVar, overload, override
 
 from attrs import field, frozen
+from attrs.converters import optional
 
-from sdmxlib.model.istring import InternationalString
+from sdmxlib.model.istring import InternationalString, normalize_tag
 from sdmxlib.model.istring import to_istring as _to_istring
 
 
@@ -22,14 +23,16 @@ class AnnotationURL:
 
     Attributes:
         url: The resource's URL.
-        lang: The language of the resource, None when it is not localised.
+        lang: The language of the resource, None when it is not localised;
+            normalised by `normalize_tag`, so a malformed one raises
+            `ValueError`.
         urn: The SDMX registry URN of what the link points at — SDMX-JSON's
             alone.
         type: The kind of resource, such as ``"PDF"`` — SDMX-JSON's alone.
     """
 
     url: str
-    lang: str | None = None
+    lang: str | None = field(default=None, converter=optional(normalize_tag))
     urn: str | None = None
     type: str | None = None
 

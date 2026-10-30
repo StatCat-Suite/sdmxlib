@@ -44,6 +44,7 @@ from sdmxlib.storage._manifest import (
     read_manifest,
 )
 from sdmxlib.storage._references import unresolved_references
+from sdmxlib.storage._tags import stale_tags
 from sdmxlib.storage.schema import StoreSchemaError
 
 #: Where a check runs: where the bundle is built, where it lands, or where a
@@ -105,6 +106,7 @@ def check_bundle(
     | lake: current files at their recorded size, no delete file, every referenced file listed | yes | yes | no |
     | bindings: the manifest's, each with the count it gives | yes | yes | no |
     | references: every stored reference names something in the store | yes | yes | no |
+    | tags: every stored language tag is in the form `normalize_tag` gives | yes | yes | no |
     | fingerprints: recomputed, equal to the manifest's | yes | with `fingerprints` | no |
     | availability: coded columns hold codes; stored availability is the data's | yes | no | no |
     | expect: fingerprints equal to an earlier manifest's | with `expect` | with `expect` | with `expect` |
@@ -248,7 +250,11 @@ def _steps(
     if at != "open":
         if (root / "lake.ducklake").exists():
             steps.append(("lake", partial(_lake, root, manifest, reg)))
-        steps += [("bindings", partial(_bindings, manifest, reg)), ("references", partial(_references, reg))]
+        steps += [
+            ("bindings", partial(_bindings, manifest, reg)),
+            ("references", partial(_references, reg)),
+            ("tags", partial(_tags, reg)),
+        ]
     if at == "publish" or fingerprints:
         steps.append(("fingerprints", partial(_fingerprints, root, manifest, reg)))
     if at == "publish":
@@ -667,6 +673,19 @@ def _bindings(manifest: Manifest, reg: BundleRegistry) -> list[Finding]:
         if count != declared[urn]:
             findings.append(Finding("bindings", urn, f"{count} observations, the manifest says {declared[urn]}"))
     return findings
+
+
+def _tags(reg: BundleRegistry) -> list[Finding]:
+    """A store built before tags were normalised (GH-280) answers Python reads and SQL lookups differently."""
+    return [
+        Finding(
+            "tags",
+            where,
+            f"holds the language tag {tag[:64]!r}, which normalize_tag would change or refuse; "
+            "rebuild the store from its sources (docs/upgrading.md)",
+        )
+        for where, tag in stale_tags(reg.connection)
+    ]
 
 
 def _references(reg: BundleRegistry) -> list[Finding]:

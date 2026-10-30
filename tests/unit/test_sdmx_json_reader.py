@@ -345,7 +345,7 @@ def test_a_malformed_entry_is_refused_naming_its_artefact_and_field():
     Asserts on the *field name* — ours — rather than on msgspec's ``$.``
     path syntax, which a version bump could reword.
     """
-    ok = b'{"id": "OK", "agencyID": "AG", "version": "1.0", "name": "ok"}'
+    ok = b'{"id": "OK", "agencyID": "AG", "version": "1.0", "name": "ok", "names": {"en": "ok"}}'
     msg = read(b'{"data": {"codelists": [{"id": 5, "agencyID": "AG", "version": "1.0"}, ' + ok + b"]}}")
     (refusal,) = msg.refused
     assert refusal.artefact_class == "Codelist"
