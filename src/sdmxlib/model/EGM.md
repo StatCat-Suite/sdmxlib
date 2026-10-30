@@ -116,10 +116,10 @@ hierarchical roll-ups.
 
 - Every language tag the model holds is in the form `normalize_tag` returns:
   lowercase and RFC 5646 well-formed (GH-280). `InternationalString`,
-  `LocalisedString`, `AnnotationURL.lang` and `RegionValue.lang` normalise as
-  they are built and raise `InvalidTagError` (a `ValueError`) for a malformed
-  tag, and an
-  `InternationalString` refuses two texts of one tag. Every public `lang` /
+  `LocalisedString`, `AnnotationURL.lang`, `RegionValue.lang` and
+  `Link.hreflang` normalise as they are built and raise `InvalidTagError` (a
+  `ValueError`) for a malformed tag, and an `InternationalString` refuses two
+  texts of one tag. Every public `lang` /
   `langs` parameter normalises the same way
   (`tests/unit/test_language_tags.py` lists them).
   `InternationalString._from_normalized` skips the check, for the store

@@ -141,7 +141,7 @@ that each refuses a malformed tag.
 | `InternationalString(**kw)`, `InternationalString.of(map)` | keys as given; two equal keys keep the last | each key through `normalize_tag`; a malformed key raises `ValueError`; two keys that normalise to one tag raise `ValueError` (D4) |
 | SDMX-ML texts (`_common.read_istring`, metadata, annotation texts) | `child.get(XML_LANG, SCHEMA_DEFAULT_LANG)` | an absent `xml:lang` is `en`; a present one is normalised; an empty or malformed one, or two texts of one tag, refuses the artefact |
 | SDMX-ML header texts (`sdmx_ml/_header.py`) | `child.get(XML_LANG, "en")` | as above. A header is no artefact, so a refused tag reads as no header and a `ReadGap`, as any header the model cannot hold does |
-| `AnnotationURL.lang`, `RegionValue.lang` (both may be absent) | as given, or `None` | `None` stays `None`; a present tag is normalised; a malformed one refuses the artefact |
+| `AnnotationURL.lang`, `RegionValue.lang`, `Link.hreflang` (all may be absent) | as given, or `None` | `None` stays `None`; a present tag is normalised; a malformed one refuses the artefact |
 | SDMX-JSON `names`, `descriptions`, annotation `texts`, metadata values | map keys as given | each key normalised; a malformed one, or two keys of one tag, refuses the artefact |
 | SDMX-JSON singular `name`, `description` or `text` with no map | stored under the tag `_default` | read in the language `meta.contentLanguages` declares when it declares exactly one; refuses the artefact otherwise |
 | SDMX-JSON `meta.contentLanguages` | as given | each normalised; a malformed one fails the read with `SdmxParseError` |

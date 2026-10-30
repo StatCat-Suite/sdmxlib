@@ -193,9 +193,11 @@ def _ingest_meta_name(
     legacy output before the name/names split). A bare string with no map is
     refused, as `ingest_istr` refuses it: it states no language.
     """
-    if isinstance(name, dict):
-        return texts(((k, v) for k, v in name.items() if isinstance(v, str)), field)
-    return ingest_istr(name, names, field)
+    if not isinstance(name, dict):
+        return ingest_istr(name, names, field)
+    if names:
+        return ingest_istr(None, names, field)
+    return texts(((k, v) for k, v in name.items() if isinstance(v, str)), field)
 
 
 def _from_reported_attribute(attr: ReportedAttributeJson) -> ReportedAttribute:

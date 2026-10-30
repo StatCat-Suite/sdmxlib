@@ -37,7 +37,7 @@ from sdmxlib.model._refshape import item_fields
 from sdmxlib.model.annotations import Annotation
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.collections import ArtefactList, ItemList, SdmxItem
-from sdmxlib.model.istring import InternationalString, normalize_tag
+from sdmxlib.model.istring import InternationalString, _normalized, normalize_tag
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.storage._manifest import Manifest, read_manifest
@@ -101,13 +101,13 @@ class OverlayAnnotation(msgspec.Struct, frozen=True, kw_only=True, forbid_unknow
     text: dict[str, str] = msgspec.field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Refuse a malformed tag in `text`; msgspec reports it as the document's decode error.
+        """Refuse a malformed tag in `text`, or two of one tag; msgspec reports it as the document's decode error.
 
         Raises:
-            ValueError: If a key of `text` is not a well-formed language tag.
+            ValueError: If a key of `text` is not a well-formed language tag,
+                or two keys normalise to one tag.
         """
-        for lang in self.text:
-            normalize_tag(lang)
+        _normalized(self.text)
 
 
 class OverlayEntry(msgspec.Struct, frozen=True, kw_only=True, forbid_unknown_fields=True):

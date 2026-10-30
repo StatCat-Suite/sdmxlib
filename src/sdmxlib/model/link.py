@@ -2,7 +2,10 @@
 
 from collections.abc import Iterable
 
-from attrs import frozen
+from attrs import field, frozen
+from attrs.converters import optional
+
+from sdmxlib.model.istring import normalize_tag
 
 
 @frozen
@@ -27,16 +30,17 @@ class Link:
         url: The linked resource's URL.
         urn: The linked object's SDMX registry URN, where it has one.
         type: The kind of link, such as ``"PDF"`` or ``"text"``.
-        hreflang: The language of the linked resource. SDMX-JSON's alone:
-            SDMX-ML's ``LinkType`` has no language, so an SDMX-ML write
-            drops it (declared in `formats/gaps.py`).
+        hreflang: The language of the linked resource, normalised by
+            `normalize_tag`; a malformed one raises `InvalidTagError`.
+            SDMX-JSON's alone: SDMX-ML's ``LinkType`` has no language, so an
+            SDMX-ML write drops it (declared in `formats/gaps.py`).
     """
 
     rel: str
     url: str
     urn: str | None = None
     type: str | None = None
-    hreflang: str | None = None
+    hreflang: str | None = field(default=None, converter=optional(normalize_tag))
 
 
 def to_links(value: Iterable[Link] | None) -> tuple[Link, ...]:

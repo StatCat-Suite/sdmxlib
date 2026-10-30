@@ -167,6 +167,7 @@ against requirements 1–3 and a lifecycle:
 | `RestRegistry._settled` (`latest` → pinned) | `api/registry.py` | **no lock**; concurrent eviction may race, untested | 256, FIFO | `_forget` |
 | `RestRegistry._refused` | `api/registry.py` | no lock | **unbounded** | never |
 | `functools.cache` / `lru_cache` | `api/federated.py` (unbounded), `model/urn.py`, others | n/a; pure functions of immutable input | per site | never |
+| `istring._SEEN_TAGS` (tags `LocalisedString` has checked) | `model/istring.py` | no: two threads may both check one tag, a repeat of a pure check that costs less than waiting would; `in` and `add` on a set are atomic | `_SEEN_TAGS_MAX` (1,024) tags | itself, when full; set out in the suite design `docs/design/localised-string.md` (StatCat Suite hub), D6 |
 
 New work goes through `SingleFlight` and does not copy the locking of
 `_FIFOCache` or `LazyCodelist`.

@@ -8,7 +8,8 @@ differently. This finds each such tag, once per distinct value.
 
 The columns are found in ``information_schema`` rather than listed, so a table
 added later is covered: every ``MAP(VARCHAR, VARCHAR)`` is keyed by language
-but for the binding's column maps, every ``lang`` column holds one, and a
+but for the binding's column maps, every ``lang`` and ``hreflang`` column
+holds one, and a
 sentinel value's struct holds a ``name`` and a ``description`` map.
 """
 
@@ -60,7 +61,7 @@ def stale_tags(conn: duckdb.DuckDBPyConnection) -> list[tuple[str, str]]:
         col = _quoted(column)
         if data_type == _MAP and (table, column) not in _NOT_LANGUAGE_MAPS:
             selects.append(f"SELECT ?, unnest(map_keys({col})) FROM {source}")
-        elif data_type == "VARCHAR" and column == "lang":
+        elif data_type == "VARCHAR" and column in {"lang", "hreflang"}:
             selects.append(f"SELECT ?, {col} FROM {source} WHERE {col} IS NOT NULL")
         elif data_type == _SENTINELS:
             selects += [

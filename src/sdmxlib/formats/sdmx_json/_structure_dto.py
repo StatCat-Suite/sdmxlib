@@ -12,6 +12,7 @@ from datetime import date
 import msgspec
 from typing_extensions import TypedDict
 
+from sdmxlib.formats._tags import tag
 from sdmxlib.formats.sdmx_json._dto import (
     Annotation,
     Link,
@@ -305,7 +306,13 @@ def read_links(links: list[Link] | None) -> tuple[ModelLink, ...]:
         uri_link = None
     return tuple(
         [
-            ModelLink(rel=link.rel, url=link.href, urn=link.urn, type=link.type, hreflang=link.hreflang)
+            ModelLink(
+                rel=link.rel,
+                url=link.href,
+                urn=link.urn,
+                type=link.type,
+                hreflang=None if link.hreflang is None else tag(link.hreflang, "hreflang"),
+            )
             for link in links
             if link.rel != SELF_REL and link is not uri_link
         ]

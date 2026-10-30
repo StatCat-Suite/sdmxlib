@@ -438,7 +438,7 @@ class ComponentTable:
 
     def _fill_entry(self, entry: dict[str, object], code: Code) -> None:
         """Write one resolved *code*'s name, ``parent`` and annotations into *entry*."""
-        entry["name"] = code.name.get(self._lang) or code.id
+        entry["name"] = code.name._text(self._lang) or code.id
         # A value's hierarchy edge (#365). `parent` is a first-class property of
         # this object in the 1.0, 2.0 and 2.1 data schemas, and omitting it made
         # every hierarchical codelist arrive flat: the .Stat Data Explorer groups

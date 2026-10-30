@@ -30,8 +30,8 @@ lowercase, and well-formed by RFC 5646
   `sl.InternationalString(**{"fr-CA": "…"}).langs` is `["fr-ca"]`. Lookups
   normalise the tag they are given, so `s["fr-CA"]` still finds it. A label
   column `sl.polars.label` adds is named in lowercase too: `REF_AREA_label_fr-ca`.
-- `InternationalString`, `LocalisedString`, `AnnotationURL`, `RegionValue`
-  and every `lang=` / `langs=` parameter raise `sl.InvalidTagError`, a
+- `InternationalString`, `LocalisedString`, `AnnotationURL`, `RegionValue`,
+  `Link.hreflang` and every `lang=` / `langs=` parameter raise `sl.InvalidTagError`, a
   `ValueError`, for a tag that is not well-formed: `""`, `fr_CA`, `" en"`, and the four grandfathered tags RFC 5646
   spells in mixed case (`en-GB-oed`, `sgn-BE-FR`, `sgn-BE-NL`, `sgn-CH-DE`).
   For a tag written with `_`, the message names the hyphen form ("did you

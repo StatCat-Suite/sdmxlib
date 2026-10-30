@@ -30,11 +30,14 @@ from sdmxlib import q
 from sdmxlib.bundle._overlay import OverlayError, OverlayText, read_overlay
 from sdmxlib.formats.sdmx_json import writer as json_writer
 from sdmxlib.formats.sdmx_json._data_common import AnnotationPool, ComponentTable, display_names
+from sdmxlib.formats.sdmx_json._dto import Link as JsonLink
+from sdmxlib.formats.sdmx_json._structure_dto import read_links
 from sdmxlib.formats.sdmx_json.data_v1 import write_sdmx_json_data as write_v1
 from sdmxlib.formats.sdmx_json.data_v2 import write_sdmx_json_data as write_v2
+from sdmxlib.formats.sdmx_json.metadata import _ingest_meta_name
 from sdmxlib.formats.sdmx_ml30.writer import write as write30
 from sdmxlib.model.istring import _SEEN_TAGS, _SEEN_TAGS_MAX, MAX_TAG_LENGTH, TAG_PATTERN
-from sdmxlib.model.validation import SdmxParseError
+from sdmxlib.model.validation import SdmxConformanceError, SdmxParseError
 from sdmxlib.storage import readers
 from sdmxlib.storage._projections import code_map
 from sdmxlib.storage._tags import stale_tags
@@ -619,6 +622,28 @@ def test_an_overlay_with_a_malformed_tag_is_refused(overlay: dict[str, object], 
         read_overlay(path)
 
 
+def test_an_overlay_annotation_with_two_texts_of_one_tag_is_refused(tmp_path: Path) -> None:
+    entry = {"selector": "*", "op": "set", "type": "T", "annotation": {"text": {"en": "A", "EN": "B"}}}
+    path = tmp_path / "overlay.json"
+    path.write_text(json.dumps({"format_version": "1.1", "id": "o", "entries": [entry]}))
+    with pytest.raises(OverlayError, match="two texts for language 'en'"):
+        read_overlay(path)
+
+
+def test_a_link_language_is_normalised_and_a_malformed_one_refused() -> None:
+    assert sl.Link(rel="r", url="u", hreflang="FR-CA").hreflang == "fr-ca"
+    (link,) = read_links([JsonLink(rel="r", href="u", hreflang="FR-CA")])
+    assert link.hreflang == "fr-ca"
+    with pytest.raises(SdmxConformanceError, match="fr_CA"):
+        read_links([JsonLink(rel="r", href="u", hreflang=_BAD)])
+
+
+def test_a_metadata_set_names_map_wins_over_a_legacy_name_map() -> None:
+    name = _ingest_meta_name({"en": "Old"}, {"en": "New", "fr": "Nouveau"}, "name")
+    assert name.as_dict() == {"en": "New", "fr": "Nouveau"}
+    assert _ingest_meta_name({"en": "Old"}, None, "name").as_dict() == {"en": "Old"}
+
+
 def test_stale_tags_finds_each_kind_of_column(store: sl.LocalRegistry) -> None:
     """A sabotage check: a clean store reports nothing, and one bad tag of each kind is found."""
     assert stale_tags(store.connection) == []
@@ -627,7 +652,11 @@ def test_stale_tags_finds_each_kind_of_column(store: sl.LocalRegistry) -> None:
     try:
         conn.execute("UPDATE sdmx.code SET name = MAP {'EN': 'C'}")
         conn.execute("INSERT INTO sdmx.localized_text (owner_urn, field, lang, text) VALUES ('u', 'name', '', 'x')")
-        assert stale_tags(conn) == [("code.name", "EN"), ("localized_text.lang", "")]
+        conn.execute(
+            "INSERT INTO sdmx.link (owner_urn, owner_artefact_urn, position, rel, url, hreflang) "
+            "VALUES ('u', 'u', 0, 'r', 'x', 'FR')"
+        )
+        assert stale_tags(conn) == [("code.name", "EN"), ("link.hreflang", "FR"), ("localized_text.lang", "")]
     finally:
         conn.execute("ROLLBACK")
     assert stale_tags(conn) == []

@@ -241,7 +241,12 @@ class InternationalString:
         Raises:
             ValueError: If a tag is not well-formed, or two normalise to one.
         """
-        return cls._from_normalized(_normalized(pairs))
+        data = _normalized(pairs)
+        if not data and cls is InternationalString:
+            return EMPTY
+        obj: Self = cls.__new__(cls)
+        obj._data = data
+        return obj
 
     @classmethod
     def _from_normalized(cls, pairs: dict[str, str]) -> InternationalString:
