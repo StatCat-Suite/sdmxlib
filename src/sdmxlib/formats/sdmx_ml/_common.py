@@ -23,6 +23,7 @@ from typing_extensions import TypedDict
 
 from sdmxlib.formats._coerce import to_datetime, to_enum, to_float, to_int
 from sdmxlib.formats._refuse import build_each_xml, refuse_xml
+from sdmxlib.formats._tags import XML_LANG, optional_xml_tag, xml_texts
 from sdmxlib.formats.sdmx_ml._closed_world import BY_STRUCTURE_NS, check_artefact, required
 from sdmxlib.model._container import inner_id, member_id
 from sdmxlib.model.annotations import Annotation, Annotations, AnnotationURL
@@ -78,25 +79,15 @@ from sdmxlib.model.validation import SdmxConformanceError, check_writable
 from sdmxlib.model.valuelist import ValueItem, ValueList
 from sdmxlib.model.version import is_final
 
-XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
-
 #: Why a 2.1 constraint on metadata is refused (`ReaderHelpers.constrains_metadata`).
 METADATA_CONSTRAINT = (
     "a metadata constraint — a 2.1 constraint attached to metadata or holding a metadata key set or region — "
     "which sdmxlib does not model, as it does not model 3.x's MetadataConstraint"
 )
 
-#: The language of a `TextType` or `XHTMLType` element with no ``xml:lang``.
-#: Not a library default: every SDMX-ML schema declares the attribute
-#: ``default="en"``, so the element *is* English. The readers dropped it
-#: instead, and an artefact named only that way lost its name unreported (#422).
-SCHEMA_DEFAULT_LANG = "en"
-
-# Shared empty value-type singletons used by reader hot paths to avoid
-# constructing fresh attrs instances for the (very common) no-data case.
-# Safe because both classes are immutable from the user's perspective —
-# the underlying ``_data`` dict is never mutated by reader code paths.
-_EMPTY_ISTRING = InternationalString()
+# A shared empty value-type singleton used by reader hot paths to avoid
+# constructing a fresh attrs instance for the (very common) no-data case.
+# Safe because the class is immutable from the user's perspective.
 _EMPTY_ANNOTATIONS = Annotations()
 
 
@@ -458,12 +449,7 @@ class ReaderHelpers:
         spells it ``""``, rather than vanishing in one format and not the
         other (#452).
         """
-        langs: dict[str, str] = {}
-        for child in el.findall(f"{prefix}:{child_tag}", namespaces=self._ns):
-            langs[child.get(XML_LANG, SCHEMA_DEFAULT_LANG)] = child.text or ""
-        if not langs:
-            return _EMPTY_ISTRING
-        return InternationalString(**langs)
+        return xml_texts(el.findall(f"{prefix}:{child_tag}", namespaces=self._ns), child_tag)
 
     @staticmethod
     def _multilingual(tf_el: etree._Element) -> bool:
@@ -531,24 +517,21 @@ class ReaderHelpers:
             # Every non-empty one, with its language (#422). Empty elements carry
             # nothing — Eurostat ships ~830,000 of them — and are not a URL.
             urls = [
-                AnnotationURL(url_el.text, url_el.get(XML_LANG))
+                AnnotationURL(url_el.text, optional_xml_tag(url_el, "AnnotationURL"))
                 for url_el in ann_el.findall("com:AnnotationURL", namespaces=self._ns)
                 if url_el.text and url_el.text.strip()
             ]
             # 3.0 added AnnotationValue; a 2.1 document has no such element, so
             # `find` returns None and this needs no version branch (#368).
             value_el = ann_el.find("com:AnnotationValue", namespaces=self._ns)
-            text_langs: dict[str, str] = {}
-            for text_el in ann_el.findall("com:AnnotationText", namespaces=self._ns):
-                if text_el.text:
-                    text_langs[text_el.get(XML_LANG, SCHEMA_DEFAULT_LANG)] = text_el.text
+            text_els = [t for t in ann_el.findall("com:AnnotationText", namespaces=self._ns) if t.text]
             items.append(
                 Annotation(
                     id=ann_el.get("id"),
                     title=title_el.text if title_el is not None else None,
                     type=type_el.text if type_el is not None else None,
                     urls=urls,
-                    text=InternationalString(**text_langs) if text_langs else _EMPTY_ISTRING,
+                    text=xml_texts(text_els, "AnnotationText"),
                     value=value_el.text if value_el is not None else None,
                 )
             )
@@ -1411,7 +1394,7 @@ class ReaderHelpers:
                     if (cascade := v.get("cascadeValues")) is not None
                     else None
                 ),
-                lang=v.get(_XML_LANG),
+                lang=optional_xml_tag(v, "Value"),
                 valid_from=v.get("validFrom"),
                 valid_to=v.get("validTo"),
             )
@@ -2050,7 +2033,7 @@ class WriterHelpers:
             value_el.set("cascadeValues", cascade.value)
         if v3:
             if value.lang is not None:
-                value_el.set(_XML_LANG, value.lang)
+                value_el.set(XML_LANG, value.lang)
             _set_validity(value_el, value.valid_from, value.valid_to)
 
     def write_ref(self, parent: etree._Element, ref: Ref[object]) -> None:
@@ -2456,6 +2439,3 @@ def _set_validity(el: etree._Element, valid_from: str | None, valid_to: str | No
 def _value_order(value: RegionValue) -> tuple[str, str]:
     """Document order for a value set: by value, then language."""
     return value.value, value.lang or ""
-
-
-_XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"

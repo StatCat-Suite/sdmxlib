@@ -1,10 +1,10 @@
 # Language tags
 
-**Status:** proposed for
-[GH-280](https://github.com/StatCat-Suite/sdmxlib/issues/280); not built.
-Revised after an EGM review whose reports are in
-[`egm/language-tags/`](egm/language-tags/).
-**Date:** 2026-10-29
+**Status:** built for
+[GH-280](https://github.com/StatCat-Suite/sdmxlib/issues/280). Revised after
+an EGM review whose reports are in [`egm/language-tags/`](egm/language-tags/),
+and as it was built: "As built" below lists what changed.
+**Date:** 2026-10-29; built 2026-10-30
 
 ## Problem
 
@@ -142,9 +142,10 @@ that each refuses a malformed tag.
 |---|---|---|
 | `InternationalString(**kw)`, `InternationalString.of(map)` | keys as given; two equal keys keep the last | each key through `normalize_tag`; a malformed key raises `ValueError`; two keys that normalise to one tag raise `ValueError` (D4) |
 | SDMX-ML texts (`_common.read_istring`, metadata, annotation texts) | `child.get(XML_LANG, SCHEMA_DEFAULT_LANG)` | an absent `xml:lang` is `en`; a present one is normalised; an empty or malformed one, or two texts of one tag, refuses the artefact |
-| SDMX-ML header texts (`sdmx_ml/_header.py`) | `child.get(XML_LANG, "en")` | as above. A header is no artefact, so a refused tag fails the read with `SdmxParseError` |
+| SDMX-ML header texts (`sdmx_ml/_header.py`) | `child.get(XML_LANG, "en")` | as above. A header is no artefact, so a refused tag reads as no header and a `ReadGap`, as any header the model cannot hold does |
 | `AnnotationURL.lang`, `RegionValue.lang` (both may be absent) | as given, or `None` | `None` stays `None`; a present tag is normalised; a malformed one refuses the artefact |
 | SDMX-JSON `names`, `descriptions`, annotation `texts`, metadata values | map keys as given | each key normalised; a malformed one, or two keys of one tag, refuses the artefact |
+| SDMX-JSON singular `name`, `description` or `text` with no map | stored under the tag `_default` | read in the language `meta.contentLanguages` declares when it declares exactly one; refuses the artefact otherwise |
 | SDMX-JSON `meta.contentLanguages` | as given | each normalised; a malformed one fails the read with `SdmxParseError` |
 | Bundle overlay `lang` | as given | normalised; a malformed one is refused as the overlay is read |
 | Store readers (`storage/readers.py`, `lazy.py`, `_projections.py`) | rows as stored | built through the internal `InternationalString._from_normalized`, which skips the check: what the store holds was normalised as it was written (D6) |
@@ -206,6 +207,53 @@ found under, in `sdmxlib.model.istring`, exported as `sl.LocalizedText`.
 
 The name avoids the query language's `Label` (`query/_expr.py`).
 
+## As built
+
+Building it settled four points the decisions above left open, and corrected
+one.
+
+- **A lone SDMX-JSON `name`.** SDMX-JSON 1.0, 2.0 and 2.1 require `name` and
+  leave `names` optional, so a `name` alone is schema-valid. It states no
+  language, though the information model holds every text as a
+  `LocalisedString` with a locale (SDMX 3.1 Section 2). The owner decided on
+  2026-10-30 to read it in the language `meta.contentLanguages` declares when
+  it declares exactly one, and to refuse it otherwise. The SDMX-TWG's own
+  metadata sample (`tests/fixtures/sdmx_metadata/sdmx_twg_constructed_sample.json`)
+  sends three such names with `contentLanguages: ["en"]`. None of the surveyed
+  registries' 3.3 million structure texts is one.
+- **Whitespace in `xml:lang`.** `xs:language` derives from `xs:token`, so a
+  schema validator collapses its whitespace: `xml:lang=" en "` is `en`. The
+  SDMX-ML reader strips XML whitespace before `normalize_tag`, which stays
+  strict; the SDMX-JSON reader strips nothing. Decided by the owner on
+  2026-10-30.
+- **The header.** Both readers already read a header the model cannot hold
+  as no header and a `ReadGap`, so a bad header tag does the same. D3 first
+  said it fails the read.
+- **Exact duplicate keys in SDMX-JSON.** msgspec keeps the last of two equal
+  keys in a JSON object, so D4 refuses two keys that differ in case but
+  cannot see an exact duplicate. The survey found none.
+- **Metadata messages.** Neither metadata reader refuses one metadata set at
+  a time, so a bad tag in a metadata set fails the read, as any other
+  contradiction there does.
+
+The readers normalise through `formats/_tags.py`, which turns a bad tag
+into the `SdmxConformanceError` that `build_each` refuses an artefact for.
+`check_bundle`'s `tags` check finds the store's tag columns in
+`information_schema`, so a column added later is covered.
+
+**Cost.** Parsing pays one check per text, about 0.5 µs each. Measured on
+2026-10-30 against `main`, three interleaved runs each:
+
+| document | checks | main | branch |
+|---|---|---|---|
+| ECB 2.1 codelists, SDMX-ML, 39 MB | 197,337 | 1.32 s | 1.44 s |
+| OECD 3.0 codelists, SDMX-ML, 78 MB | 361,808 | 2.39 s | 2.56 s |
+| OECD 3.0 codelists, SDMX-JSON, 128 MB | 362,010 | 0.83 s | 0.98 s |
+
+Every check in these documents is a two-letter code. Returning a two-letter
+ASCII tag lowercased without the pattern match brings OECD's two reads to
+2.47 s and 0.92 s. That is left for the owner to decide; no memo was added.
+
 ## Alternatives considered
 
 - **Keep tags as given and compare case-insensitively at lookup.** Rejected.
@@ -237,8 +285,9 @@ The name avoids the query language's `Label` (`query/_expr.py`).
   bounded.
 - **Cost on the hot path.** One census codelist read builds 1,159,902
   `InternationalString`s (`istring.py`). Mitigation: store reads skip the
-  check (D6), so only parsing a document pays it. Whether parsing needs a memo
-  is decided by a profile, not assumed. If one is added, it goes through
+  check (D6), so only parsing a document pays it: 7–18% on the documents
+  measured under "As built". Whether parsing needs a memo is decided by a
+  profile, not assumed. If one is added, it goes through
   `SingleFlight`, as `docs/design/caching.md` requires, and a test asserts the
   count of grammar checks.
 - **One bad tag refuses a large artefact.** This is the existing refusal

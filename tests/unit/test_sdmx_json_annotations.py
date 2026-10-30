@@ -156,17 +156,29 @@ def test_item_and_component_annotations_round_trip() -> None:
     assert present(rt_dim.annotations.first("DIM")).title == "on-dim"
 
 
-def test_reader_accepts_bare_text_string() -> None:
-    """A non-conformant producer emitting a scalar ``text`` still parses."""
+def _bare_text(content_languages: list[str] | None) -> bytes:
+    """A dataflow whose annotation has a scalar ``text`` and no ``texts`` map."""
     df = Dataflow(id="DF", maintainer="T", version="1.0", name={"en": "F"})
-    msg = write_json(StructureMessage.containing(df))
-    # Splice a bare-string-text annotation the way an external tool might.
-    doc = msgspec.json.decode(msg)
+    doc = msgspec.json.decode(write_json(StructureMessage.containing(df)))
     doc["data"]["dataflows"][0]["annotations"] = [{"type": "X", "text": "plain"}]
-    rt = read_json(msgspec.json.encode(doc))
+    if content_languages is not None:
+        doc["meta"]["contentLanguages"] = content_languages
+    return msgspec.json.encode(doc)
+
+
+def test_a_bare_text_takes_the_one_language_the_message_declares() -> None:
+    """A scalar ``text`` states no language; ``contentLanguages`` naming one gives it (GH-280)."""
+    rt = read_json(_bare_text(["en"]))
     ann = rt.dataflows["DF"].annotations.first("X")
     assert ann is not None
-    assert ann.text.get("_default") == "plain"
+    assert ann.text == InternationalString(en="plain")
+
+
+def test_a_bare_text_in_a_message_of_no_one_language_refuses_the_artefact() -> None:
+    rt = read_json(_bare_text(None))
+    assert len(rt.dataflows) == 0
+    (refusal,) = rt.refused
+    assert "contentLanguages" in refusal.reason
 
 
 # Guard: SDMX-ML round-trip already handles annotations; here we only assert the

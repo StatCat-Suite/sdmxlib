@@ -80,8 +80,12 @@ serialisers in `structure_values.py`.
   `check_writable(..., "json")`, or for a constraint with a date-time period
   that has no zone. Both checks finish before any encoding.
 - Pretty printing uses `msgspec.json.format(indent=2)`.
-- A singular `name` with no `names` map is read under the `_default`
-  language.
+- A singular `name` (or `description`, `text`) with no map states no
+  language. It is read in the language `meta.contentLanguages` declares when
+  it declares exactly one, and refuses the artefact otherwise (GH-280). A
+  malformed `contentLanguages` entry fails the read. msgspec keeps the last
+  of two equal keys in a JSON object, so an exact duplicate key cannot be
+  seen; two keys of one tag in different case refuse the artefact.
 - `read_observations` (`data.py`) raises `SdmxParseError` for bytes that are
   not a readable data message, with msgspec's error as `__cause__`: a wrong
   shape, an observation key or attribute position outside its declaration, a

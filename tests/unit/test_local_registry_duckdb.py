@@ -455,11 +455,12 @@ def test_dsd_code_map():
 
 #: A `lang` that rewrote the old statement and left it valid: interpolated, it
 #: closed the map subscript, put a constant in the label and commented out the
-#: rest of the line (GH-262). Bound, it is a language no code has a name in.
+#: rest of the line (GH-262). It is bound as a value, and is now refused before
+#: that as a tag that is not well-formed (GH-280).
 _HOSTILE_LANG = "zz'], 'INJECTED') AS label --"
 
 
-def test_a_lang_is_bound_as_a_value_in_every_code_map() -> None:
+def test_a_hostile_lang_is_refused_by_every_code_map() -> None:
     with LocalRegistry(":memory:") as local:
         local.add(_make_cl())
         cl_urn = Codelist.urn_for(agency="SDMX", id="CL_FREQ", version="1.0")
@@ -468,9 +469,15 @@ def test_a_lang_is_bound_as_a_value_in_every_code_map() -> None:
         dsd_urn = DataStructure.urn_for(agency="SDMX", id="DSD_TEST", version="1.0")
         ids = {"A": "A", "Q": "Q", "M": "M"}
 
-        assert present(local.get(cl_urn)).code_map(lang=_HOSTILE_LANG) == ids
-        assert local.code_map(cl_urn, lang=_HOSTILE_LANG) == ids
-        assert local.dsd_code_map(dsd_urn, lang=_HOSTILE_LANG) == {"FREQ": ids}
+        # A well-formed tag no code has a name in reads each code as its id.
+        assert local.code_map(cl_urn, lang="zz") == ids
+        for code_map in (
+            lambda: present(local.get(cl_urn)).code_map(lang=_HOSTILE_LANG),
+            lambda: local.code_map(cl_urn, lang=_HOSTILE_LANG),
+            lambda: local.dsd_code_map(dsd_urn, lang=_HOSTILE_LANG),
+        ):
+            with pytest.raises(ValueError, match="not a well-formed language tag"):
+                code_map()
 
 
 # ── Roots and children ───────────────────────────────────────────────────────

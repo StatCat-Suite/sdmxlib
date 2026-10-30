@@ -152,7 +152,7 @@ def _annotation_to_dict(ann: Annotation) -> AnnotationDict:
     if ann.urls:
         d["urls"] = [_annotation_url_to_dict(u) for u in ann.urls]
     if ann.text:
-        d["text"] = {lang: ann.text[lang] for lang in ann.text}
+        d["text"] = ann.text.as_dict()
     return d
 
 
@@ -183,7 +183,7 @@ def _value_to_dict(field_name: str, val: object) -> object:
     if val is None:
         return None
     if isinstance(val, InternationalString):
-        d = {lang: val[lang] for lang in val}
+        d = val.as_dict()
         return d or None
     if isinstance(val, Annotations):
         items = [_annotation_to_dict(a) for a in val]

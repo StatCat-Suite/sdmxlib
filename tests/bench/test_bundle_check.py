@@ -21,11 +21,11 @@ pytestmark = [pytest.mark.bench, pytest.mark.bundle]
     [
         pytest.param(
             "publish",
-            ("manifest", "files", "lake", "bindings", "references", "fingerprints", "availability"),
+            ("manifest", "files", "lake", "bindings", "references", "tags", "fingerprints", "availability"),
             marks=pytest.mark.recompute,
             id="publish",
         ),
-        pytest.param("receive", ("manifest", "files", "lake", "bindings", "references"), id="receive"),
+        pytest.param("receive", ("manifest", "files", "lake", "bindings", "references", "tags"), id="receive"),
         pytest.param("open", ("manifest", "files"), id="open"),
     ],
 )

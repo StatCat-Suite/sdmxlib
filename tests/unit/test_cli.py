@@ -33,7 +33,7 @@ def _published(root: Path, *, closed: bool = True) -> Path:
 def test_a_clean_bundle_exits_0_and_says_what_it_checked(tmp_path: Path) -> None:
     result = _RUNNER.invoke(app, ["bundle", "check", str(_published(tmp_path / "b")), "--at", "receive"])
     assert result.exit_code == 0, result.output
-    assert result.output.strip().endswith("0 findings; checked manifest, files, lake, bindings, references")
+    assert result.output.strip().endswith("0 findings; checked manifest, files, lake, bindings, references, tags")
 
 
 def test_findings_are_printed_and_exit_1(tmp_path: Path) -> None:
@@ -42,7 +42,7 @@ def test_findings_are_printed_and_exit_1(tmp_path: Path) -> None:
     assert result.exit_code == 1
     lines = result.output.strip().splitlines()
     assert sum(line.startswith("[references] ") for line in lines) == 2
-    checked = "manifest, files, lake, bindings, references, fingerprints, availability"
+    checked = "manifest, files, lake, bindings, references, tags, fingerprints, availability"
     assert lines[-1].endswith(f"2 findings; checked {checked}")
 
 

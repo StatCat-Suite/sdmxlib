@@ -35,7 +35,8 @@ from typing import cast
 from lxml import etree
 
 from sdmxlib.formats._coerce import to_datetime
-from sdmxlib.formats.sdmx_ml._common import SCHEMA_DEFAULT_LANG, flag
+from sdmxlib.formats._tags import texts, xml_tag, xml_texts
+from sdmxlib.formats.sdmx_ml._common import flag
 from sdmxlib.formats.sdmx_ml._header import read_metadata_header, write_header
 from sdmxlib.model.collections import ArtefactList, ItemList
 from sdmxlib.model.errors import SdmxParseError
@@ -83,10 +84,10 @@ def _write_istring_children(
     tag: str,
     namespace: str,
 ) -> None:
-    for lang in s:
+    for lang, text in s.items():
         el = etree.SubElement(parent, f"{{{namespace}}}{tag}")
         el.set(XML_LANG, lang)
-        el.text = s[lang]
+        el.text = text
 
 
 def _write_attribute_value(parent: etree._Element, value: ReportedAttributeValue | None) -> None:
@@ -254,37 +255,29 @@ def write(msg: MetadataMessage, *, pretty_print: bool = False) -> bytes:
 
 
 def _read_istring(parent: etree._Element, *, tag: str, namespace: str = COM) -> InternationalString:
-    langs: dict[str, str] = {}
-    for child in parent.findall(f"{{{namespace}}}{tag}"):
-        if child.text:
-            langs[child.get(XML_LANG, SCHEMA_DEFAULT_LANG)] = child.text
-    return InternationalString(**langs)
+    return xml_texts((child for child in parent.findall(f"{{{namespace}}}{tag}") if child.text), tag)
 
 
 def _read_attribute_value(el: etree._Element) -> ReportedAttributeValue | None:
     # Multilingual <com:Text> children take precedence.
     text_children = el.findall(_c("Text"))
     if text_children:
-        langs: dict[str, str] = {}
-        for child in text_children:
-            if child.text:
-                langs[child.get(XML_LANG, SCHEMA_DEFAULT_LANG)] = child.text
-        return InternationalString(**langs)
+        return xml_texts((child for child in text_children if child.text), "Text")
     # XHTML <com:StructuredText> — collected as InternationalString too;
     # the inner XHTML markup is preserved as the text content of each locale.
     structured_children = el.findall(_c("StructuredText"))
     if structured_children:
-        langs = {}
+        langs: list[tuple[str, str]] = []
         for child in structured_children:
-            lang = child.get(XML_LANG, SCHEMA_DEFAULT_LANG)
+            lang = xml_tag(child, "StructuredText")
             # Reconstitute inner content (may include XHTML markup).
             inner = etree.tostring(child, encoding="unicode", with_tail=False)
             # Strip the outer <StructuredText> wrapper to keep just the markup.
             opening_close = inner.find(">")
             closing_open = inner.rfind("<")
             content = inner[opening_close + 1 : closing_open] if opening_close != -1 and closing_open != -1 else ""
-            langs[lang] = content
-        return InternationalString(**langs)
+            langs.append((lang, content))
+        return texts(langs, "StructuredText")
     # Scalar <md:Value>.
     v_el = el.find(_md("Value"))
     if v_el is not None and v_el.text is not None:

@@ -30,7 +30,8 @@ from tests.support.xsd_defaults import without_defaults
 
 #: Attributes that identify an element among its siblings, so paths stay stable
 #: when order changes.
-_IDENTIFYING = ("id", "agencyID", "version", "{http://www.w3.org/XML/1998/namespace}lang")
+_XML_LANG = "{http://www.w3.org/XML/1998/namespace}lang"
+_IDENTIFYING = ("id", "agencyID", "version", _XML_LANG)
 
 #: Elements that describe the *transmission* rather than the artefacts, and so
 #: are legitimately regenerated rather than preserved.
@@ -62,7 +63,7 @@ def _local(name: object) -> str:
 def _identity(el: etree._Element) -> str:
     """Element name plus the attributes that distinguish it from its siblings."""
     bits = [_local(el.tag)]
-    bits.extend(f"{_local(key)}={value}" for key in _IDENTIFYING if (value := el.get(key)) is not None)
+    bits.extend(f"{_local(key)}={_case(key, value)}" for key in _IDENTIFYING if (value := el.get(key)) is not None)
     return "|".join(bits)
 
 
@@ -81,8 +82,13 @@ def _comparable_attributes(el: etree._Element) -> dict[str, str]:
             continue
         if key == "urn" and _restates_identity(el, value):
             continue
-        out[key] = _normalise_value(value)
+        out[key] = _normalise_value(_case(raw_key, value))
     return out
+
+
+def _case(key: object, value: str) -> str:
+    """A language tag in lowercase: RFC 5646 tags are case-insensitive, and sdmxlib writes them lowercase (GH-280)."""
+    return value.lower() if key == _XML_LANG else value
 
 
 def _normalise_value(value: str) -> str:

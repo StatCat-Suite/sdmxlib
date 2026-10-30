@@ -8,6 +8,7 @@ builds on: the istring split, annotation convert, and — critically — the
 import msgspec
 import pytest
 
+from sdmxlib.formats._tags import message_language
 from sdmxlib.formats.sdmx_json import _dto
 from sdmxlib.formats.sdmx_json._dto import (
     Annotation,
@@ -21,6 +22,7 @@ from sdmxlib.formats.sdmx_json._dto import (
 from sdmxlib.model.annotations import Annotation as ModelAnnotation
 from sdmxlib.model.annotations import Annotations
 from sdmxlib.model.istring import InternationalString
+from sdmxlib.model.validation import SdmxConformanceError
 
 pytestmark = pytest.mark.unit
 
@@ -58,7 +60,7 @@ def test_emit_ingest_istr_roundtrip() -> None:
     name, names = emit_istr(v)
     assert name == "Frequency"  # primary = first language
     assert names == {"en": "Frequency", "fr": "Fréquence"}
-    assert ingest_istr(name, names) == {"en": "Frequency", "fr": "Fréquence"}
+    assert ingest_istr(name, names, "name") == v
 
 
 def test_emit_istr_empty_is_none_none() -> None:
@@ -66,10 +68,14 @@ def test_emit_istr_empty_is_none_none() -> None:
     assert emit_istr(InternationalString()) == (None, None)
 
 
-def test_ingest_istr_singular_only_uses_default_lang() -> None:
-    # Producer sent `name` but no `names` map — key under the _default sentinel.
-    assert ingest_istr("Freq", None) == {_dto._DEFAULT_LANG: "Freq"}
-    assert ingest_istr(None, None) == {}
+def test_ingest_istr_singular_only_takes_the_message_language() -> None:
+    # Producer sent `name` but no `names` map: it is in the message's one
+    # declared language, and refused when the message declares none (GH-280).
+    with message_language(["EN"]):
+        assert ingest_istr("Freq", None, "name") == InternationalString(en="Freq")
+    with pytest.raises(SdmxConformanceError, match="contentLanguages"):
+        ingest_istr("Freq", None, "name")
+    assert ingest_istr(None, None, "name") is InternationalString.EMPTY
 
 
 def test_emit_istr_shares_map_not_copy() -> None:

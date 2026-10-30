@@ -132,7 +132,7 @@
     },
     "OverlayText": {
       "title": "OverlayText",
-      "description": "One language of a name or description, set or removed. Only `fold_overlays` applies it.\n\nA name is structure: it feeds search and every label map, so a change to\none is written into a new publication rather than applied as a response\nis served (design §5.4).\n\nAttributes:\n    selector: ``*``, a class name, ``AGENCY:ID``, or a URN, as for an entry.\n    op: ``set`` writes `text` as the `lang` text; ``remove`` drops the\n        `lang` text. A name keeps at least one language.\n    field: ``name`` or ``description``.\n    lang: The language tag it acts on.\n    text: What ``set`` writes; absent for ``remove``.\n    scope: As `OverlayEntry`'s.",
+      "description": "One language of a name or description, set or removed. Only `fold_overlays` applies it.\n\nA name is structure: it feeds search and every label map, so a change to\none is written into a new publication rather than applied as a response\nis served (design §5.4).\n\nAttributes:\n    selector: ``*``, a class name, ``AGENCY:ID``, or a URN, as for an entry.\n    op: ``set`` writes `text` as the `lang` text; ``remove`` drops the\n        `lang` text. A name keeps at least one language.\n    field: ``name`` or ``description``.\n    lang: The language tag it acts on. A malformed one raises\n        `ValueError` (`normalize_tag`); `fold_overlays` applies it\n        normalised.\n    text: What ``set`` writes; absent for ``remove``.\n    scope: As `OverlayEntry`'s.",
       "type": "object",
       "properties": {
         "selector": {

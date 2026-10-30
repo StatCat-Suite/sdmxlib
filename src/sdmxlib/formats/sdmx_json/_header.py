@@ -3,8 +3,9 @@
 ``meta`` holds a message's id, test flag, preparation time, sender, receivers
 and names. It has no source, no sender time zone, and none of a metadata
 header's four; `formats.gaps` declares each. ``contentLanguages`` and
-``links`` are the message's own wire facts, not header content, and are not
-read.
+``links`` are the message's own wire facts, not header content.
+``contentLanguages`` is read only to give a lone ``name`` its language
+(`formats._tags.message_language`); ``links`` is not read.
 
 A message without a header is written with the placeholders SDMX-ML uses, so
 the same message always serialises to the same bytes, and read back as no
@@ -18,7 +19,6 @@ from sdmxlib.formats.sdmx_json._structure_ingest import from_contact
 from sdmxlib.formats.sdmx_ml._header import MESSAGE
 from sdmxlib.model.errors import ReadGap, ValidationError
 from sdmxlib.model.header import Header, MetadataHeader, Party, Sender
-from sdmxlib.model.istring import InternationalString
 
 #: What a header-less message is written with, as SDMX-ML writes it but with
 #: the zone every SDMX-JSON schema requires on ``prepared``.
@@ -52,6 +52,7 @@ class MetaJson(WireStruct, rename=_camel_rename):
     receivers: list[PartyJson] | None = None
     name: str | None = None
     names: dict[str, str] | None = None
+    content_languages: list[str] | None = None
 
 
 def to_meta(header: Header | None, *, schema: str | None) -> MetaJson:
@@ -89,8 +90,8 @@ def from_meta(meta: MetaJson | None) -> tuple[Header | None, ReadGap | None]:
     None, and no loss, when there is none or it holds only the placeholders.
     A ``meta`` missing a key its schema requires (an id, ``prepared``, a
     party's id), or holding what the model cannot (a ``prepared`` that is no
-    date-time), is None and a loss, as SDMX-ML's header is: it fails nothing,
-    and is not dropped silently.
+    date-time) or a text whose language it cannot read, is None and a loss,
+    as SDMX-ML's header is: it fails nothing, and is not dropped silently.
     """
     if meta is None or _is_placeholder(meta):
         return None, None
@@ -104,7 +105,7 @@ def from_meta(meta: MetaJson | None) -> tuple[Header | None, ReadGap | None]:
             prepared=to_datetime(meta.prepared, what="meta.prepared"),
             sender=_sender(meta.sender) if meta.sender is not None else Sender(id=""),
             receivers=tuple(_read_party(receiver) for receiver in meta.receivers or ()),
-            name=InternationalString(**ingest_istr(meta.name, meta.names)),
+            name=ingest_istr(meta.name, meta.names, "name"),
         )
     except (ValidationError, ValueError) as exc:
         return None, _lost(str(exc))
@@ -142,7 +143,7 @@ def _is_placeholder(meta: MetaJson) -> bool:
 def _read_party(party: PartyJson) -> Party:
     return Party(
         id=party.id or "",
-        name=InternationalString(**ingest_istr(party.name, party.names)),
+        name=ingest_istr(party.name, party.names, "name"),
         contacts=tuple(from_contact(contact) for contact in party.contacts or ()),
     )
 

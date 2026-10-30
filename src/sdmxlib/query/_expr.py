@@ -30,6 +30,7 @@ import attrs
 
 from sdmxlib._time import to_storage
 from sdmxlib.model._label_match import Fold
+from sdmxlib.model.istring import normalize_tag
 from sdmxlib.model.version import sort_key as version_sort_key
 from sdmxlib.query._common import Descending, canonical_key
 from sdmxlib.query._joins import STRUCTURAL_SCHEMA, KeyRank, PathError, RootJoin, trim
@@ -1209,14 +1210,16 @@ class Str[R: RowKind](Col[R]):
 class Label[R: RowKind](Str[R]):
     """One language of a localised label — `name["en"]`.
 
-    Prose, so it carries the two folding rungs an id does not.
+    Prose, so it carries the two folding rungs an id does not. The tag is
+    normalised (`normalize_tag`), so `name["FR-CA"]` reads the stored `fr-ca`
+    and a malformed tag raises `ValueError` as the subscript is written.
     """
 
     __slots__ = ("_lang",)
 
     def __init__(self, path: tuple[str, ...], table: str, column: str, lang: str) -> None:
         super().__init__(path, table, column)
-        self._lang = lang
+        self._lang = normalize_tag(lang)
 
     @property
     def lang(self) -> str:

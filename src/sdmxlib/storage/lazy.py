@@ -28,7 +28,7 @@ from sdmxlib.model.codelist import (
 )
 from sdmxlib.model.collections import ItemList
 from sdmxlib.model.hierarchy import HierarchicalCode, Hierarchy, Level
-from sdmxlib.model.istring import InternationalString
+from sdmxlib.model.istring import InternationalString, normalize_tag
 from sdmxlib.model.link import Link
 from sdmxlib.model.organisation import Agency
 from sdmxlib.model.ref import Ref
@@ -584,8 +584,13 @@ class LazyCodelist:
         first caller runs the SQL projection, concurrent
         callers for the same ``lang`` block on the lock and then return the
         hot cache rather than each re-running the query. The returned dict
-        is the cached instance — treat it as read-only.
+        is the cached instance — treat it as read-only. Keyed by the
+        normalised tag, so ``"EN"`` and ``"en"`` share one map.
+
+        Raises:
+            ValueError: If `lang` is not a well-formed language tag.
         """
+        lang = normalize_tag(lang)
         cached = self._code_map_cache.get(lang)
         if cached is not None:
             return cached

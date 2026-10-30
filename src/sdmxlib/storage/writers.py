@@ -84,7 +84,7 @@ def _istring_to_map(s: InternationalString | None) -> dict[str, str]:
     """Convert an InternationalString to a Python dict for MAP insertion."""
     if not s:
         return {}
-    return {lang: s[lang] for lang in s}
+    return s.as_dict()
 
 
 def _to_arrow_array(values: list[object]) -> pa.Array:
@@ -288,7 +288,7 @@ def _put_artefact_localized_text(
         istring: InternationalString | None = getattr(artefact, field, None)
         if not istring:
             continue
-        rows.extend((owner_urn, field, lang, istring[lang]) for lang in istring)
+        rows.extend((owner_urn, field, lang, text) for lang, text in istring.items())
     if not rows:
         return
     _execute_bulk_insert(conn, "localized_text", ("owner_urn", "field", "lang", "text"), rows)
@@ -344,8 +344,8 @@ class _AnnotationBatch:
                 (local_idx, position, u.url, u.lang, u.urn, u.type) for position, u in enumerate(ann.urls)
             )
             if ann.text:
-                for lang in ann.text:
-                    self.text_rows.append((local_idx, lang, ann.text[lang]))
+                for lang, text in ann.text.items():
+                    self.text_rows.append((local_idx, lang, text))
 
     def flush(self, conn: duckdb.DuckDBPyConnection) -> None:
         if self.link_rows:

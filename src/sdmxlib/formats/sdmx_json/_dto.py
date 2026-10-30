@@ -42,16 +42,11 @@ from datetime import datetime
 
 import msgspec
 
+from sdmxlib.formats._tags import current_message_language, tag, texts
 from sdmxlib.model.annotations import Annotation as _ModelAnnotation
 from sdmxlib.model.annotations import Annotations, AnnotationURL
 from sdmxlib.model.istring import InternationalString
 from sdmxlib.model.validation import SdmxConformanceError, _first_xml_incompatible
-
-# Sentinel language used when a producer sends a singular ``name`` with no
-# ``names`` map — we can't know the real language tag, so we mirror the
-# dict-reader's behaviour and key it under ``_default``.
-_DEFAULT_LANG = "_default"
-
 
 # ── Wire-name convention ─────────────────────────────────────────────────────
 # Struct fields are snake_case; `rename=_camel_rename` maps them to the SDMX-JSON
@@ -104,13 +99,16 @@ def emit_istr(v: InternationalString | None) -> tuple[str | None, dict[str, str]
     return v.emit_pair() if v is not None else (None, None)
 
 
-def ingest_istr(name: str | None, names: dict[str, str] | None) -> dict[str, str]:
-    """Reconstruct a lang→text map from a wire ``(name, names)`` pair.
+def ingest_istr(name: str | None, names: dict[str, str] | None, field: str) -> InternationalString:
+    """An ``InternationalString`` from a wire ``(name, names)`` pair.
 
-    Prefers the full ``names`` map. Falls back to ``{_DEFAULT_LANG: name}`` when
-    only the singular ``name`` is present (a producer that omitted ``names``),
-    mirroring the dict-reader. Empty when neither is present. The caller builds
-    an ``InternationalString`` from the result.
+    The ``names`` map is the text, one entry per language, each tag
+    normalised (GH-280). A singular ``name`` with no ``names`` states no
+    language, though the schemas allow it, and the information model holds
+    every text under its locale. It takes the message's language when
+    ``meta.contentLanguages`` declares exactly one
+    (`formats._tags.current_message_language`), and is refused otherwise.
+    Empty when neither is present.
 
     Rejects text XML cannot represent. JSON permits ``\u0000`` in a string and
     XML does not, so without this check the two readers disagreed about what a
@@ -120,27 +118,40 @@ def ingest_istr(name: str | None, names: dict[str, str] | None) -> dict[str, str
     #190 established for non-conformant references.
 
     Args:
-        name: The singular ``name`` field, if present.
-        names: The full language map, if present.
+        name: The singular field, such as ``name``, if present.
+        names: The full language map, such as ``names``, if present.
+        field: The singular field's wire name, to name it in a refusal.
 
     Returns:
-        The lang→text map.
+        The text in every language the map gives.
 
     Raises:
-        SdmxConformanceError: If any value contains a character XML forbids.
+        SdmxConformanceError: If a value contains a character XML forbids, a
+            tag is not well-formed, two tags normalise to one, or ``name``
+            comes with no map in a message that declares no single language.
     """
-    out = names or ({_DEFAULT_LANG: name} if name else {})
-    for lang, text in out.items():
+    if not names:
+        if not name:
+            return InternationalString.EMPTY
+        lang = current_message_language()
+        if lang is None:
+            detail = (
+                f"a {field!r} with no {field + 's'!r} map states no language, and meta.contentLanguages "
+                "does not declare exactly one; SDMX holds every text under its language"
+            )
+            raise SdmxConformanceError(field, detail)
+        names = {lang: name}
+    for lang, text in names.items():
         bad = _first_xml_incompatible(text)
         if bad is not None:
-            where = f"name[{lang}]"
+            where = f"{field}[{lang}]"
             detail = (
                 f"contains U+{ord(bad):04X}, which XML cannot represent. SDMX string "
                 "types are XSD types, so this value has no valid SDMX-ML form — JSON "
                 "accepts it but the artefact could never be serialised back to XML."
             )
             raise SdmxConformanceError(where, detail)
-    return out
+    return texts(names.items(), field + "s")
 
 
 # ── Wire Struct base ─────────────────────────────────────────────────────────
@@ -286,7 +297,11 @@ def _annotation_urls(a: Annotation) -> list[AnnotationURL]:
     ``AnnotationURL``s, each localised by ``hreflang`` and carrying the
     link's ``urn`` and ``type`` (#422).
     """
-    urls = [AnnotationURL(link.href, link.hreflang, link.urn, link.type) for link in a.links or [] if link.href]
+    urls = [
+        AnnotationURL(link.href, None if link.hreflang is None else tag(link.hreflang, "hreflang"), link.urn, link.type)
+        for link in a.links or []
+        if link.href
+    ]
     if not urls and a.url:
         urls.append(AnnotationURL(a.url))
     return urls
@@ -309,7 +324,7 @@ def ingest_annotations(annotations: list[Annotation] | None) -> Annotations:
                 title=a.title,
                 type=a.type,
                 urls=_annotation_urls(a),
-                text=ingest_istr(a.text, a.texts),
+                text=ingest_istr(a.text, a.texts, "text"),
                 value=a.value,
             )
             for a in annotations

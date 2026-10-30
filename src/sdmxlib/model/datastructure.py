@@ -17,7 +17,7 @@ from sdmxlib.model.codelist import Code, Codelist, CodelistLike, EnumerationLike
 from sdmxlib.model.collections import ItemList, to_itemlist, to_itemlist_opt
 from sdmxlib.model.concept import Concept, ConceptScheme
 from sdmxlib.model.errors import SdmxParseError
-from sdmxlib.model.istring import InternationalString
+from sdmxlib.model.istring import InternationalString, normalize_tag
 from sdmxlib.model.link import Link, to_links
 from sdmxlib.model.organisation import Agency, _to_agency, _to_annotations, _to_istring
 from sdmxlib.model.ref import Ref, refuse_urn_text, to_optional_ref
@@ -932,7 +932,11 @@ class DataStructure(MaintainableArtefact):
         single-flight at the source; iterating its codes instead would build a
         `Code` and an `InternationalString` per row to read one string off each
         (CL_GEOGRAPHY: 78k codes, ~16s). `sdmxlib.polars` takes the same path.
+
+        Raises:
+            ValueError: If `lang` is not a well-formed language tag.
         """
+        lang = normalize_tag(lang)
         return {
             comp.id: enumeration.code_map(lang=lang)
             for comp in [*self.dimensions, *self.attributes, *self.measures]
@@ -940,11 +944,16 @@ class DataStructure(MaintainableArtefact):
         }
 
     def column_labels(self, *, lang: str) -> dict[str, str]:
-        """Map component ids to human labels from their concepts."""
+        """Map component ids to human labels from their concepts.
+
+        Raises:
+            ValueError: If `lang` is not a well-formed language tag.
+        """
+        key = normalize_tag(lang)
         result: dict[str, str] = {}
         for comp in [*self.dimensions, *self.attributes, *self.measures]:
             if isinstance(comp.concept, Ref) and comp.concept.resolved:
-                result[comp.id] = comp.concept_identity.name.get(lang) or comp.id
+                result[comp.id] = comp.concept_identity.name._text(key) or comp.id
             else:
                 result[comp.id] = comp.id
         return result

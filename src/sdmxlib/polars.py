@@ -21,6 +21,7 @@ from typing import Literal, Protocol, runtime_checkable
 import polars as pl
 
 from sdmxlib.model.datastructure import Attribute, DataStructure, Dimension, Measure, MeasureDimension
+from sdmxlib.model.istring import normalize_tag
 from sdmxlib.model.ref import Ref
 from sdmxlib.model.representation import Facet
 
@@ -321,7 +322,8 @@ def label(
     still passed through untouched.
 
     Raises:
-        ValueError: If not one of the DSD's components names a column of `df`.
+        ValueError: If not one of the DSD's components names a column of `df`,
+            or a language is not a well-formed tag.
 
     Example:
         labelled = slpl.label(pl.scan_csv("data.csv"), dsd, lang="en").collect()
@@ -329,7 +331,7 @@ def label(
     schema_cols = set(df.collect_schema().names())
     named = dict(columns or {})
     components = _components(dsd)
-    languages = [lang] if isinstance(lang, str) else list(lang)
+    languages = [normalize_tag(each) for each in ([lang] if isinstance(lang, str) else lang)]
     if not languages:
         msg = "label() needs at least one language."
         raise ValueError(msg)
@@ -398,9 +400,13 @@ def structure_frame(dsd: DataStructure, *, lang: str) -> pl.DataFrame:
     ``role`` is one of ``"dimension"``, ``"time_dimension"``,
     ``"attribute"``, ``"measure"``.
 
+    Raises:
+        ValueError: If `lang` is not a well-formed language tag.
+
     Example:
         meta = slpl.structure_frame(dsd, lang="en")
     """
+    lang = normalize_tag(lang)
     rows: list[dict[str, object]] = []
 
     for i, dim in enumerate(dsd.dimensions, start=1):

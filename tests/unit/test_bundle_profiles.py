@@ -36,7 +36,7 @@ from tests.support.bundles import FLOW, make_bundle
 pytestmark = pytest.mark.unit
 
 _PRODUCER = Producer(name="t", version="0")
-_RECEIVE = ("manifest", "files", "lake", "bindings", "references")
+_RECEIVE = ("manifest", "files", "lake", "bindings", "references", "tags")
 
 
 def _published(root: Path, rows: int = 200_000) -> Path:
@@ -126,7 +126,7 @@ def test_receive_with_a_lookup_checks_data_in_the_blob_store(tmp_path: Path, has
         return store[entry.path]
 
     report = check_bundle(root, at="receive", lookup=lookup)
-    assert report.checked == ("manifest", "files", "remote", "lake", "bindings", "references")
+    assert report.checked == ("manifest", "files", "remote", "lake", "bindings", "references", "tags")
     assert report.ok
     assert asked == sorted(store), "every data entry, and only those"
     assert sorted(hashed) == ["lake.ducklake", "meta.duckdb"]

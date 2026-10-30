@@ -26,7 +26,7 @@ from sdmxlib.model.codelist import Code, CodelistLike, codes_for_all
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import Component, DataStructure, Dimension
 from sdmxlib.model.errors import SdmxParseError
-from sdmxlib.model.istring import InternationalString
+from sdmxlib.model.istring import InternationalString, normalize_tag
 from sdmxlib.model.ref import Ref
 
 from ._dto import ENCODER, _camel_rename
@@ -337,7 +337,7 @@ class ComponentTable:
         # component id -> its own annotation indices, resolved once here since
         # the component set is fixed at construction.
         self._component_annotations: dict[str, list[int]] = {}
-        self._lang = lang
+        self._lang = normalize_tag(lang)
         self._kind = kind
         self._time_dim_id = time_dim_id
         # FREQ-driven period bounds (issue #149): the frequency dimension id,
@@ -757,7 +757,11 @@ def display_names(
     consumers like .Stat read the dataflow's display name to title
     the dataset — falling through to the DSD only matters when the
     caller passed ``Ref.unresolved(...)``.
+
+    Raises:
+        ValueError: If `lang` is not a well-formed language tag.
     """
+    lang = normalize_tag(lang)
     # Either the resolved Dataflow or the DSD — both are nameable, and the
     # dataflow wins when it has a name (SDMX-JSON data messages wrap a flow).
     src: Dataflow | DataStructure = dsd

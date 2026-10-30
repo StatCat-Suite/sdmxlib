@@ -39,6 +39,7 @@ from hypothesis import assume, given, settings
 from sdmxlib.local.registry import LocalRegistry
 from sdmxlib.model.codelist import Codelist
 from sdmxlib.model.hierarchy import Hierarchy
+from sdmxlib.model.istring import normalize_tag
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.query.accessors import q
 from tests.support import sql_ast
@@ -157,7 +158,7 @@ def test_a_hostile_value_never_reaches_the_sql_text(cl: Codelist, needle: str):
                 c.annotations.any(q.annotation.type == "note", q.annotation.title == v)
             ),
             lambda v: present(lazy).codes.filter(c.id.is_in([v])),
-            lambda v: present(lazy).codes.filter(c.name[v] == "x"),
+            *([lambda v: present(lazy).codes.filter(c.name[v] == "x")] if _well_formed(needle) else []),
             lambda v: present(lazy).codes.filter(c.annotations.any(q.annotation.type == v, q.annotation.title == "x")),
         ):
             sql, params = build(needle).to_sql()
@@ -168,6 +169,19 @@ def test_a_hostile_value_never_reaches_the_sql_text(cl: Codelist, needle: str):
             # A "value must survive intact" check would be asserting the
             # absence of escaping, which is the opposite of what we want.
             assert params, "a filtered query bound nothing at all"
+        # A language subscript refuses a tag that is not well-formed (GH-280),
+        # so only a well-formed needle reaches the SQL above.
+        if not _well_formed(needle):
+            with pytest.raises(ValueError, match="not a well-formed language tag"):
+                c.name[needle]
+
+
+def _well_formed(tag: str) -> bool:
+    try:
+        normalize_tag(tag)
+    except ValueError:
+        return False
+    return True
 
 
 # ── The invariants discriminate ──────────────────────────────────────────────

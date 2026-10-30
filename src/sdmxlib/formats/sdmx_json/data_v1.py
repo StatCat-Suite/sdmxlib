@@ -59,6 +59,7 @@ from sdmxlib.formats.sdmx_json._dto import ENCODER, _camel_rename, prepared_text
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.model.errors import SdmxParseError
+from sdmxlib.model.istring import normalize_tag
 from sdmxlib.model.ref import Ref
 
 ActionLiteral = Literal["Information", "Append", "Replace", "Delete"]
@@ -114,6 +115,7 @@ def write_sdmx_json_data(
         ValueError: If the DSD does not declare a single OBS_VALUE
             measure (multi-measure DSDs are deferred to a follow-up).
     """
+    lang = normalize_tag(lang)
     dim_cols, dim_phys, attr_cols, attr_phys, _measure_id, measure_col = resolve_columns(dsd)
 
     time_dim_id = dsd.time_dimension.id if dsd.time_dimension is not None else "TIME_PERIOD"

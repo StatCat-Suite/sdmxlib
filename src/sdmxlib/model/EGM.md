@@ -91,8 +91,9 @@ hierarchical roll-ups.
   `MetadataStructure` (`metadatastructure.py`), `Metadataflow`
   (`metadataflow.py`), `MetadataSet` and `ReportedAttribute`
   (`metadataset.py`), and `Header` (`header.py`).
-- Shared value types: `InternationalString` (`istring.py`), `Annotation` and
-  `Annotations` (`annotations.py`) and `Link` (`link.py`).
+- Shared value types: `InternationalString`, `LocalizedText` and
+  `normalize_tag` (`istring.py`), `Annotation` and `Annotations`
+  (`annotations.py`) and `Link` (`link.py`).
 - `PathIndex` and `PathNavigation` (`_tree.py`): nested items keyed by path,
   shared by `CategoryScheme`, `Hierarchy` and `MetadataStructure`.
 - `ApiVersion` (`rest_api.py`): the SDMX-REST generation (`"2.1"` or `"3.0"`), which changes
@@ -113,6 +114,15 @@ hierarchical roll-ups.
 
 ## Invariants
 
+- Every language tag the model holds is in the form `normalize_tag` returns:
+  lowercase and RFC 5646 well-formed (GH-280). `InternationalString`,
+  `LocalizedText`, `AnnotationURL.lang` and `RegionValue.lang` normalise as
+  they are built and raise `ValueError` for a malformed tag, and an
+  `InternationalString` refuses two texts of one tag. Every public `lang` /
+  `langs` parameter normalises the same way
+  (`tests/unit/test_language_tags.py` lists them).
+  `InternationalString._from_normalized` skips the check, for the store
+  readers and the format readers, which check tags themselves.
 - Every domain class is attrs `@frozen`. An artefact or item is
   `@frozen(unsafe_hash=False)`, so it compares by value and cannot be hashed;
   key collections by `urn`. To change one, make a copy with `attrs.evolve`.

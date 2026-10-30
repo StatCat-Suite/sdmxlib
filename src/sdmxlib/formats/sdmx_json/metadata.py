@@ -28,6 +28,7 @@ import attrs
 import msgspec
 
 from sdmxlib.formats._coerce import to_datetime
+from sdmxlib.formats._tags import message_language, texts
 from sdmxlib.model.collections import ArtefactList, ItemList
 from sdmxlib.model.errors import SdmxParseError
 from sdmxlib.model.istring import InternationalString
@@ -43,7 +44,7 @@ from sdmxlib.model.organisation import Agency
 from sdmxlib.model.ref import Ref
 from sdmxlib.model.urn import SdmxUrn
 
-from ._dto import _DEFAULT_LANG, ENCODER, Link, WireStruct, _camel_rename, emit_istr
+from ._dto import ENCODER, Link, WireStruct, _camel_rename, emit_istr, ingest_istr
 from ._header import MetaJson, from_metadata_meta, to_meta
 from ._losses import undeclared
 from ._structure_dto import read_links, read_uri, uri_links
@@ -179,25 +180,22 @@ def _to_metadata_set(ms: MetadataSet) -> MetadataSetJson:
 def _ingest_value(raw: ValueJson) -> ReportedAttributeValue | None:
     """Wire union → model value (``{lang: text}`` dict → InternationalString)."""
     if isinstance(raw, dict):
-        return InternationalString.of({k: v for k, v in raw.items() if isinstance(v, str)})
+        return texts(((k, v) for k, v in raw.items() if isinstance(v, str)), "value")
     return raw
 
 
-def _ingest_meta_name(name: str | dict[str, str] | None, names: dict[str, str] | None) -> InternationalString:
+def _ingest_meta_name(
+    name: str | dict[str, str] | None, names: dict[str, str] | None, field: str
+) -> InternationalString:
     """MetadataSet name → InternationalString.
 
-    Prefers the ``names`` map. Tolerates a dict under ``name`` (our own legacy
-    output before the name/names split) and a bare string (single-language
-    shorthand used by some samples), keyed under ``_default`` — never a
-    hard-coded language.
+    Prefers the ``names`` map, and tolerates a dict under ``name`` (our own
+    legacy output before the name/names split). A bare string with no map is
+    refused, as `ingest_istr` refuses it: it states no language.
     """
-    if names:
-        return InternationalString.of(names)
     if isinstance(name, dict):
-        return InternationalString.of({k: v for k, v in name.items() if isinstance(v, str)})
-    if isinstance(name, str) and name:
-        return InternationalString.of({_DEFAULT_LANG: name})
-    return InternationalString()
+        return texts(((k, v) for k, v in name.items() if isinstance(v, str)), field)
+    return ingest_istr(name, names, field)
 
 
 def _from_reported_attribute(attr: ReportedAttributeJson) -> ReportedAttribute:
@@ -229,8 +227,8 @@ def _from_metadata_set(ms: MetadataSetJson) -> MetadataSet:
         maintainer=Agency(id=ms.agency_id),
         structure=_structure_ref(ms),
         version=ms.version or _DEFAULT_SET_VERSION,
-        name=_ingest_meta_name(ms.name, ms.names),
-        description=_ingest_meta_name(ms.description, ms.descriptions),
+        name=_ingest_meta_name(ms.name, ms.names, "name"),
+        description=_ingest_meta_name(ms.description, ms.descriptions, "description"),
         # Writer emits validFrom/validTo; parse them back so they round-trip (#159).
         valid_from=_parse_dt(ms.valid_from),
         valid_to=_parse_dt(ms.valid_to),
@@ -257,8 +255,9 @@ def read(data: bytes) -> MetadataMessage:
     """
     doc = msgspec.json.decode(data, type=MetadataMessageJson)
     dtos = (doc.data or MetadataDataJson()).metadata_sets
-    sets = [_from_metadata_set(ms) for ms in dtos]
-    header, header_lost = from_metadata_meta(doc.meta)
+    with message_language(None if doc.meta is None else doc.meta.content_languages):
+        sets = [_from_metadata_set(ms) for ms in dtos]
+        header, header_lost = from_metadata_meta(doc.meta)
     lost = [] if header_lost is None else [header_lost]
     for built, raw, dto in zip(sets, _raw_metadata_sets(data), dtos, strict=False):
         lost.extend(undeclared(str(built.urn), raw, dto))
