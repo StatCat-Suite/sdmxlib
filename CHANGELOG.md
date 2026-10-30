@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.79.0] - 2026-10-30
+
+### Breaking Changes
+
+- **model**: Normalise language tags to one lowercase, well-formed form (GH-280)
+- **model**: Name the value type LocalisedString after the SDMX IM, and add InvalidTagError (GH-280)
+- **model**: Make InternationalString a Mapping of LocalisedString (GH-309)
+
+### Bug Fixes
+
+- **model**: Normalise link hreflang and keep a metadata set's names map first (GH-280)
+- **model**: Print the competitor report's names as text, and state current behaviour in two docs (GH-309)
+
+### Documentation
+
+- **design**: Design language-tag normalisation, with its EGM review (GH-280)
+- **design**: Record the SDMX-JSON tag survey and statcatlib's agreement (GH-280)
+
+### Performance
+
+- **model**: Return a two-letter ASCII tag without the pattern match (GH-280)
+
 ## [0.78.0] - 2026-10-29
 
 ### Breaking Changes
