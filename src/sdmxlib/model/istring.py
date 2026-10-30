@@ -1,9 +1,12 @@
 """InternationalString — dict-like multilingual string — and the language tags that key it."""
 
+import functools
+import os
 import re
 import sys
-from collections.abc import Iterator, Mapping
-from typing import ClassVar, Self
+from collections.abc import Callable, ItemsView, Iterator, KeysView, Mapping, Sequence, ValuesView
+from pathlib import Path
+from typing import ClassVar, Self, overload, override
 
 import msgspec
 
@@ -103,6 +106,49 @@ def normalize_tag(tag: str) -> str:
     return lowered
 
 
+class MissingTagError(KeyError):
+    """No text is held for any of the tags asked for.
+
+    A `KeyError`, raised by `InternationalString.__getitem__` for a
+    well-formed tag it does not hold.
+
+    Attributes:
+        langs: The tags asked for, normalised.
+        held: The tags the string holds.
+    """
+
+    def __init__(self, langs: Sequence[str], held: Sequence[str], /) -> None:
+        """Record what was asked for and what is held."""
+        self.langs = tuple(langs)
+        self.held = tuple(held)
+        super().__init__(self.langs, self.held)
+
+    @override
+    def __str__(self) -> str:
+        # `KeyError.__str__` quotes its argument; the message reads plainly.
+        asked = ", ".join(map(repr, self.langs))
+        held = ", ".join(map(repr, self.held)) or "nothing"
+        return f"no text for {asked}; held: {held}"
+
+
+def tag_alias(lang: str) -> str:
+    """`lang` as it is written inside a generated name: normalised, with ``-`` as ``_``.
+
+    For every name that joins a base name and a tag, such as the column
+    ``name_fr_ca``. A tag never contains ``_`` or ``--``, so the alias can be
+    read back given the base name, and never contains ``__``, which separates
+    a suffix that is not a tag (``title__lang``).
+
+    Raises:
+        TypeError: If `lang` is not a `str`.
+        InvalidTagError: If `lang` is not a well-formed tag.
+
+    Example:
+        tag_alias("fr-CA")  # "fr_ca"
+    """
+    return normalize_tag(lang).replace("-", "_")
+
+
 #: Tags `LocalisedString` has already checked, in normalised form. Cleared
 #: when it holds `_SEEN_TAGS_MAX`, so an input with many distinct tags costs a
 #: full check per tag while common ones return to the fast path. `in` and
@@ -164,6 +210,7 @@ def _normalized(pairs: Mapping[str, str]) -> dict[str, str]:
     """`pairs` keyed by normalised, interned tags.
 
     Raises:
+        TypeError: If a text is not a `str`.
         ValueError: If a key is not a well-formed tag, or two keys normalise
             to one tag: two texts for one language, which sdmxlib never
             chooses between.
@@ -171,6 +218,9 @@ def _normalized(pairs: Mapping[str, str]) -> dict[str, str]:
     data: dict[str, str] = {}
     for tag, text in pairs.items():
         lang = normalize_tag(tag)
+        if not isinstance(text, str):
+            msg = f"the text for {lang!r} is a str, not {type(text).__name__}"
+            raise TypeError(msg)
         if lang in data:
             msg = f"two texts for language {lang!r}"
             raise ValueError(msg)
@@ -181,22 +231,28 @@ def _normalized(pairs: Mapping[str, str]) -> dict[str, str]:
     return data
 
 
-class InternationalString:
-    """A multilingual string where language access is always explicit.
+class InternationalString(Mapping[str, LocalisedString]):
+    """A multilingual string: a mapping from language tag to `LocalisedString`.
 
-    Maps language tags to texts. Immutable after construction (no
-    ``__setitem__``). Every tag is normalised by `normalize_tag` as it enters,
-    so keys are lowercase and well-formed, and every lookup normalises the
-    tag it is asked for: ``s["FR-CA"]`` finds the text stored under
-    ``fr-ca``.
+    Immutable after construction. Every tag is normalised by `normalize_tag`
+    as it enters, so keys are lowercase and well-formed, and every lookup
+    normalises the tag it is asked for: ``s["FR-CA"]`` finds the text stored
+    under ``fr-ca``. The texts are held as `str`; a `LocalisedString` is built
+    when a lookup returns one. `as_dict` gives the texts themselves.
+
+    A malformed tag raises `InvalidTagError` from every lookup, `in`
+    included, and a tag that is not a `str` raises `TypeError`, as an
+    unhashable key does on a `dict`. A well-formed tag that is not held
+    raises `MissingTagError` from ``s[tag]``, gives None (or the default)
+    from `get` and `pick`, and is not `in` the string.
 
     Example:
         s = InternationalString(en="Annual", fr="Annuel")
-        s["en"]  # "Annual"
-        s.get("de", "en")  # "Annual" (fallback)
+        s["en"].text  # "Annual"
+        s.get("de")  # None
         s.pick("de", "en")  # LocalisedString(text='Annual', lang='en')
         "fr" in s  # True
-        s.langs  # ["en", "fr"]
+        s.as_dict()  # {"en": "Annual", "fr": "Annuel"}
     """
 
     __slots__ = ("_data",)
@@ -206,11 +262,11 @@ class InternationalString:
     #:
     #: Sharing one is safe because this class is genuinely immutable — no
     #: `__setitem__`, no mutating method, `_data` reachable only through
-    #: `__slots__`. The two ways out of that are `as_dict(copy=False)` and
-    #: `emit_pair()`, which hand back the backing map and document it as
-    #: read-only; a caller that mutates either would now corrupt every empty
-    #: istring in the process rather than just its own.
-    #: `tests/unit/test_istring_empty_is_shared.py` holds that contract.
+    #: `__slots__`. The two ways out of that are `_backing()` and
+    #: `_emit_pair()`, private to sdmxlib, which hand back the backing map and
+    #: treat it as read-only; a caller that mutated either would corrupt every
+    #: empty istring in the process rather than just its own.
+    #: `tests/unit/test_shared_empty_values.py` holds that contract.
     #:
     #: Worth having because the empty case is not a corner: the 2021 Census Profile
     #: bundle carries 585,675 annotations and 10,064 annotation-text rows, so
@@ -229,19 +285,20 @@ class InternationalString:
     # ── Construction helpers ───────────────────────────────────────────────
 
     @classmethod
-    def of(cls, pairs: Mapping[str, str]) -> InternationalString:
-        """Build from an existing mapping.
+    def of(cls, pairs: InternationalString | Mapping[str, str]) -> InternationalString:
+        """Build from an `InternationalString`, which is copied, or a mapping from tag to text.
 
-        Returns the shared `EMPTY` for an empty mapping — the common case on a
-        real bundle, and the one that used to allocate. Only for this
+        Returns the shared `EMPTY` for an empty mapping, the common case on a
+        real bundle, so it allocates nothing. Only for this
         exact class: a subclass gets its own fresh instance, since `EMPTY` is
         an `InternationalString` and returning it would be a type error the
         annotation cannot see.
 
         Raises:
+            TypeError: If a text is not a `str`, such as a `LocalisedString`.
             ValueError: If a tag is not well-formed, or two normalise to one.
         """
-        data = _normalized(pairs)
+        data = dict(pairs._data) if isinstance(pairs, InternationalString) else _normalized(pairs)
         if not data and cls is InternationalString:
             return EMPTY
         obj: Self = cls.__new__(cls)
@@ -268,45 +325,58 @@ class InternationalString:
         obj._data = {sys.intern(k): v for k, v in pairs.items()}
         return obj
 
-    # ── Access ────────────────────────────────────────────────────────────
+    # ── Lookup ────────────────────────────────────────────────────────────
 
-    def __getitem__(self, lang: str) -> str:
-        """Return the text for `lang`.
-
-        Raises:
-            KeyError: If no text is held for `lang`, or `lang` is not a
-                well-formed tag (chained from the `ValueError`).
-        """
-        try:
-            key = normalize_tag(lang)
-        except ValueError as exc:
-            raise KeyError(lang) from exc
-        return self._data[key]
-
-    def get(self, *langs: str) -> str | None:
-        """The text of the first of `langs` held, or None.
+    @override
+    def __getitem__(self, lang: str, /) -> LocalisedString:
+        """The text held for `lang`, with its tag.
 
         Raises:
-            InvalidTagError: If one of `langs` is not a well-formed tag.
+            TypeError: If `lang` is not a `str`.
+            InvalidTagError: If `lang` is not a well-formed tag.
+            MissingTagError: If no text is held for `lang`.
         """
-        for lang in langs:
-            text = self._data.get(normalize_tag(lang))
-            if text is not None:
-                return text
-        return None
+        key = normalize_tag(lang)
+        text = self._data.get(key)
+        if text is None:
+            raise MissingTagError((key,), tuple(self._data))
+        return LocalisedString(text, key)
+
+    @overload
+    def get(self, lang: str, /) -> LocalisedString | None: ...
+    @overload
+    def get(self, lang: str, default: LocalisedString, /) -> LocalisedString: ...
+    @overload
+    def get[T](self, lang: str, default: T, /) -> LocalisedString | T: ...
+    @override
+    def get[T](self, lang: str, default: T | None = None, /) -> LocalisedString | T | None:
+        """The text held for `lang`, with its tag, or `default`.
+
+        Raises:
+            TypeError: If `lang` is not a `str`.
+            InvalidTagError: If `lang` is not a well-formed tag.
+        """
+        key = normalize_tag(lang)
+        text = self._data.get(key)
+        return default if text is None else LocalisedString(text, key)
 
     def pick(self, *langs: str) -> LocalisedString | None:
         """The first of `langs` held, with the tag that answered, or None.
 
         Each tag is normalised, then matched exactly: asking for
         ``("fr-CA", "fr")`` returns the ``fr`` text with ``lang="fr"`` when
-        only that is held.
+        only that is held. Every tag is checked before any is looked up, so
+        a malformed one raises even after a held one.
 
         Raises:
+            TypeError: If no tag is given, or one is not a `str`.
             InvalidTagError: If one of `langs` is not a well-formed tag.
         """
-        for lang in langs:
-            key = normalize_tag(lang)
+        if not langs:
+            msg = "pick() needs at least one language tag"
+            raise TypeError(msg)
+        keys = [normalize_tag(lang) for lang in langs]
+        for key in keys:
             text = self._data.get(key)
             if text is not None:
                 return LocalisedString(text, key)
@@ -320,18 +390,25 @@ class InternationalString:
         """
         return self._data.get(lang)
 
-    def __contains__(self, lang: object) -> bool:
-        """Whether a text is held for `lang`; False for a malformed tag or a non-`str`."""
-        if not isinstance(lang, str):
-            return False
-        try:
-            return normalize_tag(lang) in self._data
-        except ValueError:
-            return False
+    @override
+    def __contains__(self, lang: object, /) -> bool:
+        """Whether a text is held for `lang`.
 
+        Raises:
+            TypeError: If `lang` is not a `str`.
+            InvalidTagError: If `lang` is not a well-formed tag.
+        """
+        if not isinstance(lang, str):
+            msg = f"a language tag is a str, not {type(lang).__name__}"
+            raise TypeError(msg)
+        return normalize_tag(lang) in self._data
+
+    @override
     def __iter__(self) -> Iterator[str]:
+        """The held tags, in insertion order."""
         return iter(self._data)
 
+    @override
     def __len__(self) -> int:
         return len(self._data)
 
@@ -340,31 +417,35 @@ class InternationalString:
 
     @property
     def langs(self) -> list[str]:
-        """List of available language codes."""
+        """The held tags, in insertion order."""
         return list(self._data)
 
-    def items(self) -> Iterator[tuple[str, str]]:
-        """Iterate over (lang, text) pairs in insertion order."""
-        return iter(self._data.items())
+    # ── Views ─────────────────────────────────────────────────────────────
 
-    def as_dict(self, *, copy: bool = True) -> dict[str, str]:
-        """The language→text mapping.
+    @override
+    def keys(self) -> KeysView[str]:
+        """The held tags; ``tag in s.keys()`` checks `tag` as ``tag in s`` does."""
+        return KeysView(self)
 
-        Fast path for serialisers that need the whole map: a direct ``dict``
-        copy avoids the ``items()`` iterator + ``dict(generator)`` overhead on
-        hot per-item paths (annotation/name/description emit).
+    @override
+    def values(self) -> ValuesView[LocalisedString]:
+        """A `LocalisedString` per held tag."""
+        return _Values(self)
 
-        Args:
-            copy: When True (default) return a shallow copy that is safe to
-                mutate. When False return the backing map directly — no copy —
-                for the serialise hot path, where the result feeds a transient,
-                immediately-discarded output structure and is never mutated.
-                Callers passing ``copy=False`` must treat the result as
-                read-only.
-        """
-        return dict(self._data) if copy else self._data
+    @override
+    def items(self) -> ItemsView[str, LocalisedString]:
+        """``(tag, LocalisedString)`` per held tag."""
+        return _Items(self)
 
-    def emit_pair(self) -> tuple[str | None, dict[str, str] | None]:
+    def as_dict(self) -> dict[str, str]:
+        """A new ``dict`` from tag to text, for serialisers and columnar output."""
+        return dict(self._data)
+
+    def _backing(self) -> dict[str, str]:
+        """The backing map itself, uncopied: read-only, for sdmxlib's serialise hot path."""
+        return self._data
+
+    def _emit_pair(self) -> tuple[str | None, dict[str, str] | None]:
         """``(best-match string, full lang→text map)`` for the SDMX-JSON split.
 
         The serialise hot path's single-call primitive: collapses the
@@ -381,17 +462,70 @@ class InternationalString:
 
     # ── Equality & repr ───────────────────────────────────────────────────
 
+    @override
     def __eq__(self, other: object) -> bool:
+        """Equal to an `InternationalString` holding the same texts under the same tags; never to a ``dict``."""
         if isinstance(other, InternationalString):
             return self._data == other._data
         return NotImplemented
 
+    @override
     def __hash__(self) -> int:
         return hash(tuple(sorted(self._data.items())))
 
+    @override
     def __repr__(self) -> str:
-        pairs = ", ".join(f"{k}={v!r}" for k, v in self._data.items())
-        return f"InternationalString({pairs})"
+        return f"InternationalString.of({self._data!r})"
+
+
+class _Values(ValuesView[LocalisedString]):
+    """`InternationalString.values`: builds each value from the stored map, without normalising a held tag again."""
+
+    __slots__ = ("_data",)
+
+    def __init__(self, mapping: InternationalString) -> None:
+        super().__init__(mapping)
+        self._data = mapping._data
+
+    @override
+    def __iter__(self) -> Iterator[LocalisedString]:
+        for lang, text in self._data.items():
+            yield LocalisedString(text, lang)
+
+    @override
+    def __contains__(self, value: object) -> bool:
+        if not isinstance(value, LocalisedString):
+            return False
+        return self._data.get(value.lang) == value.text
+
+
+class _Items(ItemsView[str, LocalisedString]):
+    """`InternationalString.items`: as `_Values`; membership checks its tag as ``tag in s`` does."""
+
+    __slots__ = ("_data", "_istring")
+
+    def __init__(self, mapping: InternationalString) -> None:
+        super().__init__(mapping)
+        self._data = mapping._data
+        self._istring = mapping
+
+    @override
+    def __iter__(self) -> Iterator[tuple[str, LocalisedString]]:
+        for lang, text in self._data.items():
+            yield lang, LocalisedString(text, lang)
+
+    @override
+    def __contains__(self, item: object) -> bool:
+        match item:
+            case (lang, value):
+                pass
+            case _:
+                return False
+        if not isinstance(lang, str):
+            msg = f"a language tag is a str, not {type(lang).__name__}"
+            raise TypeError(msg)
+        found = self._istring.get(lang)
+        return found is not None and found == value
 
 
 #: See `InternationalString.EMPTY`. Bound after the class body because it is an
@@ -400,6 +534,49 @@ EMPTY = InternationalString()
 InternationalString.EMPTY = EMPTY
 
 
-def to_istring(v: InternationalString | dict[str, str]) -> InternationalString:
-    """Attrs converter: accept either an InternationalString or a plain dict."""
-    return InternationalString.of(v) if isinstance(v, dict) else v
+def to_istring(v: InternationalString | Mapping[str, str]) -> InternationalString:
+    """Attrs converter: an `InternationalString` as it is, or one built from a mapping from tag to text."""
+    return v if isinstance(v, InternationalString) else InternationalString.of(v)
+
+
+def _audited[**P, R](method: Callable[P, R], name: str, out: str) -> Callable[P, R]:
+    """`method`, writing each new ``file:line`` that calls it to `out` before it runs."""
+    seen: set[str] = set()
+
+    @functools.wraps(method)
+    def audited(*args: P.args, **kwargs: P.kwargs) -> R:
+        caller = sys._getframe(1)
+        site = f"{caller.f_code.co_filename}:{caller.f_lineno}\t{name}"
+        if site not in seen:
+            seen.add(site)
+            with Path(out).open("a", encoding="utf-8") as f:
+                f.write(site + "\n")
+        return method(*args, **kwargs)
+
+    return audited
+
+
+def _install_audit() -> None:
+    """The migration audit: with ``SDMXLIB_ISTRING_AUDIT`` set, log each site reading an `InternationalString`.
+
+    Read once, at import. Every call of ``[]``, `get`, `pick`, `values` and
+    `items` appends its caller's ``file:line`` and the method to the file
+    ``SDMXLIB_ISTRING_AUDIT_OUT`` names, once per site and process, and runs
+    as before. A test run under it lists the call sites a change to what
+    these return reaches (GH-309).
+
+    Raises:
+        RuntimeError: If ``SDMXLIB_ISTRING_AUDIT`` is set and
+            ``SDMXLIB_ISTRING_AUDIT_OUT`` is not.
+    """
+    if not os.environ.get("SDMXLIB_ISTRING_AUDIT"):
+        return
+    out = os.environ.get("SDMXLIB_ISTRING_AUDIT_OUT")
+    if not out:
+        msg = "SDMXLIB_ISTRING_AUDIT is set: name the file to write in SDMXLIB_ISTRING_AUDIT_OUT"
+        raise RuntimeError(msg)
+    for name in ("__getitem__", "get", "pick", "values", "items"):
+        setattr(InternationalString, name, _audited(getattr(InternationalString, name), name, out))
+
+
+_install_audit()

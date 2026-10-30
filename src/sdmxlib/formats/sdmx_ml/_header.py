@@ -101,7 +101,7 @@ def _write_metadata_fields(el: etree._Element, header: MetadataHeader, *, mes: s
 
 
 def _write_texts(parent: etree._Element, tag: str, texts: InternationalString) -> None:
-    for lang, value in texts.items():
+    for lang, value in texts._backing().items():
         child = etree.SubElement(parent, tag)
         child.set(XML_LANG, lang)
         child.text = value

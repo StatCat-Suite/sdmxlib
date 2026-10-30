@@ -139,7 +139,7 @@ def test_from_dict_codelist_scalars():
 def test_from_dict_codelist_name_coerced():
     cl = from_dict(Codelist, {"id": "CL_FREQ", "agency_id": "SDMX", "name": {"en": "Frequency"}})
     assert isinstance(cl.name, InternationalString)
-    assert cl.name.get("en") == "Frequency"
+    assert cl.name["en"].text == "Frequency"
 
 
 def test_from_dict_codes_recursive():
@@ -153,7 +153,7 @@ def test_from_dict_codes_recursive():
         ],
     }
     cl = from_dict(Codelist, data)
-    assert cl.codes["A"].name.get("en") == "Annual"
+    assert cl.codes["A"].name["en"].text == "Annual"
     assert cl.codes["Q"].id == "Q"
 
 
@@ -225,8 +225,8 @@ def test_round_trip_codelist():
     d = to_dict(cl)
     cl2 = from_dict(Codelist, d)
     assert cl2.id == cl.id
-    assert cl2.name.get("en") == "Frequency"
-    assert cl2.codes["A"].name.get("en") == "Annual"
+    assert cl2.name["en"].text == "Frequency"
+    assert cl2.codes["A"].name["en"].text == "Annual"
 
 
 def test_round_trip_dimension_with_ref():
@@ -256,7 +256,7 @@ def test_round_trip_dsd():
     d = to_dict(dsd)
     dsd2 = from_dict(DataStructure, d)
     assert dsd2.id == "CPI"
-    assert dsd2.name.get("en") == "Consumer Price Index"
+    assert dsd2.name["en"].text == "Consumer Price Index"
     assert dsd2.dimensions["FREQ"].id == "FREQ"
     assert dsd2.dimensions.ids() == ["FREQ", "REF_AREA"]
     assert dsd2.attributes["CONF_STATUS"].attachment is AttachmentLevel.OBSERVATION

@@ -185,7 +185,7 @@ def test_name_predicates_agree_with_the_oracle(cl: Codelist, data: st.DataObject
     if not langs:
         return
     lang = data.draw(st.sampled_from(langs), label="lang")
-    values = [c.name.get(lang) for c in codes if c.name.get(lang)]
+    values = [found.text for c in codes if (found := c.name.get(lang)) is not None and found.text]
     if not values:
         return
     target = data.draw(st.sampled_from(values), label="target")

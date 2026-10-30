@@ -132,7 +132,7 @@ def test_round_trip_via_top_level():
     cl = sl.Codelist(id="CL_FREQ", maintainer="SDMX", name={"en": "Frequency"})
     cl2 = sl.from_dict(sl.Codelist, sl.to_dict(cl))
     assert cl2.id == cl.id
-    assert cl2.name.get("en") == "Frequency"
+    assert cl2.name["en"].text == "Frequency"
 
 
 # ── validate / validate_references ───────────────────────────────────────────

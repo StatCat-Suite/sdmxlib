@@ -403,7 +403,7 @@ def test_a_folded_french_name_reads_back_and_the_earlier_publication_keeps_its_o
 
 def test_the_most_specific_text_wins(tmp_path: Path) -> None:
     _, folded, _, _ = _folded(tmp_path, _texts(_text(_CODE_A, text="by urn"), _text("Code", text="by class")))
-    assert _code_a(folded).name.get("fr") == "by urn"
+    assert _code_a(folded).name["fr"].text == "by urn"
 
 
 def test_a_description_language_is_removed_and_a_names_last_one_is_refused(tmp_path: Path) -> None:

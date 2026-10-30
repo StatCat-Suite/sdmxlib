@@ -65,16 +65,16 @@ def test_codelists_parsed():
 def test_codelist_names_multilingual():
     msg = read(_minimal())
     cl = msg.codelists["CL_FREQ"]
-    assert cl.name["en"] == "Frequency"
-    assert cl.name["fr"] == "Fréquence"
+    assert cl.name["en"].text == "Frequency"
+    assert cl.name["fr"].text == "Fréquence"
 
 
 def test_codelist_codes():
     msg = read(_minimal())
     cl = msg.codelists["CL_FREQ"]
     assert cl.codes.ids() == ["A", "Q", "M", "Q1"]
-    assert cl.codes["A"].name["en"] == "Annual"
-    assert cl.codes["Q1"].name["en"] == "Q1 sub-code"
+    assert cl.codes["A"].name["en"].text == "Annual"
+    assert cl.codes["Q1"].name["en"].text == "Q1 sub-code"
 
 
 def test_codelist_hierarchy():
@@ -147,7 +147,7 @@ def test_data_structure_parsed():
 def test_dsd_name():
     msg = read(_minimal())
     dsd = msg.data_structures["DSD_TEST"]
-    assert dsd.name["en"] == "Test Data Structure"
+    assert dsd.name["en"].text == "Test Data Structure"
 
 
 def test_dsd_dimensions():
@@ -195,7 +195,7 @@ def test_dsd_dimension_concept_resolved():
     dim = dsd.dimensions["FREQ"]
     assert dim.concept is not None
     assert dim.concept.resolved
-    assert dim.concept().name["en"] == "Frequency"
+    assert dim.concept().name["en"].text == "Frequency"
 
 
 def test_dsd_time_dimension():
@@ -245,7 +245,7 @@ def test_dsd_measures():
     measure = dsd.measures["OBS_VALUE"]
     assert measure.concept is not None
     assert measure.concept.resolved
-    assert measure.concept().name["en"] == "Observation Value"
+    assert measure.concept().name["en"].text == "Observation Value"
 
 
 def test_dsd_annotations():
@@ -254,7 +254,7 @@ def test_dsd_annotations():
     assert "SOURCE" in dsd.annotations
     ann = dsd.annotations.first("SOURCE")
     assert ann is not None
-    assert ann.text["en"] == "Test fixture"
+    assert ann.text["en"].text == "Test fixture"
 
 
 def test_dsd_codes_shortcut():
@@ -431,7 +431,7 @@ def test_dataflows_parsed():
     df = msg.dataflows["DF_TEST"]
     assert df.id == "DF_TEST"
     assert df.agency_id == "TEST"
-    assert df.name["en"] == "Test Dataflow"
+    assert df.name["en"].text == "Test Dataflow"
 
 
 def test_dataflow_structure_resolved():
@@ -450,7 +450,7 @@ def test_category_schemes_parsed():
     msg = read(_minimal())
     assert len(msg.category_schemes) == 1
     cs = msg.category_schemes["CS_TEST"]
-    assert cs.name["en"] == "Test Category Scheme"
+    assert cs.name["en"].text == "Test Category Scheme"
 
 
 def test_category_scheme_hierarchy():
@@ -459,7 +459,7 @@ def test_category_scheme_hierarchy():
     assert "CAT_A" in cs.categories
     cat_a = cs.categories["CAT_A"]
     assert "CAT_A1" in cat_a.categories
-    assert cat_a.categories["CAT_A1"].name["en"] == "Category A1"
+    assert cat_a.categories["CAT_A1"].name["en"].text == "Category A1"
 
 
 # ── Categorisations ───────────────────────────────────────────────────────────
@@ -469,7 +469,7 @@ def test_categorisations_parsed():
     msg = read(_minimal())
     assert len(msg.categorisations) == 1
     cat = msg.categorisations["CAT_DF_TEST"]
-    assert cat.name["en"] == "DF_TEST categorisation"
+    assert cat.name["en"].text == "DF_TEST categorisation"
 
 
 def test_categorisation_source_resolved():
@@ -495,7 +495,7 @@ def test_representation_maps_parsed():
     # Named for the set it is in (#421), as `<id>@<set>`.
     assert rm.id == "MAP_FREQ@SS_TEST"
     assert rm.agency_id == "TEST"
-    assert rm.name["en"] == "Frequency map"
+    assert rm.name["en"].text == "Frequency map"
 
 
 def test_representation_map_source_resolved():
@@ -577,7 +577,7 @@ def test_a_constraint_without_type_is_actual_as_the_schema_defaults():
 def test_constraint_name():
     msg = read(_minimal())
     cc = msg.constraints["CC_TEST"]
-    assert cc.name["en"] == "Test Constraint"
+    assert cc.name["en"].text == "Test Constraint"
 
 
 def test_constraint_attachment_resolved():
@@ -682,8 +682,8 @@ def test_agency_scheme_agencies():
     msg = read(_minimal())
     scheme = msg.agency_schemes[0]
     assert scheme.agencies.ids() == ["SDMX", "TEST"]
-    assert scheme.agencies["SDMX"].name["en"] == "SDMX"
-    assert scheme.agencies["TEST"].name["en"] == "Test Agency"
+    assert scheme.agencies["SDMX"].name["en"].text == "SDMX"
+    assert scheme.agencies["TEST"].name["en"].text == "Test Agency"
 
 
 def test_agency_scheme_roundtrip():
@@ -784,7 +784,7 @@ def test_hierarchy_levels_flattened_from_xsd_chain():
     msg = read(_with_hierarchy())
     levels = msg.hierarchies["HCL_GEO"].levels
     assert levels.ids() == ["COUNTRY", "PROVINCE", "CITY"]
-    assert levels["COUNTRY"].name.get("en") == "Country"
+    assert levels["COUNTRY"].name["en"].text == "Country"
 
 
 def test_hierarchy_level_coding_format_parsed():

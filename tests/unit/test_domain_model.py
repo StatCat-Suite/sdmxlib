@@ -146,7 +146,7 @@ def test_provision_agreement_urn_classmethod():
 def test_code_construction():
     code = Code(id="A", name=InternationalString(en="Annual"))
     assert code.id == "A"
-    assert code.name["en"] == "Annual"
+    assert code.name["en"].text == "Annual"
     assert code.parent_id is None
 
 
@@ -310,7 +310,7 @@ def test_codelist_drop_missing_raises():
 def test_concept_construction():
     c = _make_concept()
     assert c.id == "FREQ"
-    assert c.name["en"] == "FREQ"
+    assert c.name["en"].text == "FREQ"
     assert c.core_representation is None
 
 
@@ -872,7 +872,7 @@ def test_categorisation_construction():
 def test_agency_construction():
     a = Agency(id="ESTAT", name=InternationalString(en="Eurostat"))
     assert a.id == "ESTAT"
-    assert a.name["en"] == "Eurostat"
+    assert a.name["en"].text == "Eurostat"
 
 
 def test_data_provider_construction():
@@ -928,7 +928,7 @@ def test_representation_pattern_match_on_dimension():
 def test_codelist_name_dict_coerced_to_istring():
     cl = Codelist(id="CL_FREQ", maintainer="SDMX", name={"en": "Frequency"})
     assert isinstance(cl.name, InternationalString)
-    assert cl.name.get("en") == "Frequency"
+    assert cl.name["en"].text == "Frequency"
 
 
 def test_codelist_codes_list_coerced_to_itemlist():
@@ -945,7 +945,7 @@ def test_codelist_codes_list_coerced_to_itemlist():
 def test_concept_name_dict_coerced_to_istring():
     c = Concept(id="FREQ", name={"en": "Frequency", "fr": "Fréquence"})
     assert isinstance(c.name, InternationalString)
-    assert c.name.get("fr") == "Fréquence"
+    assert c.name["fr"].text == "Fréquence"
 
 
 def test_concept_scheme_concepts_list_coerced_to_itemlist():

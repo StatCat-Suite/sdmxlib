@@ -19,6 +19,51 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## `InternationalString` is a mapping of `LocalisedString`
+
+`sl.InternationalString` is a `Mapping[str, sl.LocalisedString]`, and every
+per-language lookup returns a `LocalisedString`, the text with its tag
+([GH-309](https://github.com/StatCat-Suite/sdmxlib/issues/309)). Read the text
+as `.text`.
+
+```python
+import sdmxlib as sl
+
+name = sl.InternationalString(en="Annual", fr="Annuel")
+name["fr"].text                   # was name["fr"]
+name.pick("de", "en")             # was name.get("de", "en"): the first tag held
+name.as_dict().get("en", "")      # was name.get("en", ""): text, or a default
+dict(name.items())                # {'en': LocalisedString(...), 'fr': ...}; as_dict() gives texts
+```
+
+- `name[tag]`, `name.get(tag)`, `name.pick(*tags)`, `name.values()` and the
+  values of `name.items()` return `LocalisedString`. `as_dict()` returns a
+  new `dict` from tag to text, and loses its `copy` parameter.
+- `get(tag, default)` follows `Mapping.get`: the second argument is the value
+  returned when `tag` is not held. Before, `get` took several tags and
+  returned the text of the first held; `pick(*tags)` does that now, and
+  `pick()` with no tag raises `TypeError`.
+- A malformed tag raises `sl.InvalidTagError` from `[]`, `get`, `pick` and
+  `in`, a tag that is not a `str` raises `TypeError`, and `pick` checks every
+  tag before it looks any up. A well-formed tag that is not held raises
+  `sl.MissingTagError`, a `KeyError`, from `[]`; it names the tags asked for
+  and held.
+- A `LocalisedString` defines no `__str__`, `__format__` or `__bool__`.
+  `f"{name['fr']}"` writes `LocalisedString(text='Annuel', lang='fr')`,
+  `name["fr"] == "Annuel"` is `False`, and every value is truthy, so
+  `name.get("fr") or fallback` no longer falls back on empty text.
+- An `InternationalString` equals only another `InternationalString`, and
+  `isinstance(name, Mapping)` is now true.
+- `repr(name)` is `InternationalString.of({'en': 'Annual'})`, valid Python for
+  every tag. `InternationalString.of()` copies an `InternationalString` and
+  refuses a text that is not a `str`.
+- A generated name writes its tag with `_` for `-`, through the new
+  `sl.tag_alias`: `name["fr-ca"]` in the path language projects the column
+  `name_fr_ca`, and `sl.polars.label` adds `REF_AREA_label_fr_ca`. A projected
+  label is text, as is `structure_frame`'s `concept` column.
+
+---
+
 ## Language tags are lowercase and well-formed
 
 Every language tag sdmxlib holds is in the form `sl.normalize_tag` returns:
@@ -28,18 +73,15 @@ lowercase, and well-formed by RFC 5646
 
 - Keys and returned tags are lowercase:
   `sl.InternationalString(**{"fr-CA": "…"}).langs` is `["fr-ca"]`. Lookups
-  normalise the tag they are given, so `s["fr-CA"]` still finds it. A label
-  column `sl.polars.label` adds is named in lowercase too: `REF_AREA_label_fr-ca`.
+  normalise the tag they are given, so `s["fr-CA"]` still finds it.
 - `InternationalString`, `LocalisedString`, `AnnotationURL`, `RegionValue`,
-  `Link.hreflang` and every `lang=` / `langs=` parameter raise `sl.InvalidTagError`, a
-  `ValueError`, for a tag that is not well-formed: `""`, `fr_CA`, `" en"`, and the four grandfathered tags RFC 5646
-  spells in mixed case (`en-GB-oed`, `sgn-BE-FR`, `sgn-BE-NL`, `sgn-CH-DE`).
+  `Link.hreflang` and every `lang=` / `langs=` parameter raise
+  `sl.InvalidTagError`, a `ValueError`, for a tag that is not well-formed:
+  `""`, `fr_CA`, `" en"`, and the four grandfathered tags RFC 5646 spells in
+  mixed case (`en-GB-oed`, `sgn-BE-FR`, `sgn-BE-NL`, `sgn-CH-DE`).
   For a tag written with `_`, the message names the hyphen form ("did you
   mean 'fr-ca'?"). `InternationalString` also refuses, with `ValueError`, two
   texts whose tags normalise to one (`FR` and `fr`).
-- `s[tag]` raises `KeyError` for a malformed tag, chained from the
-  `InvalidTagError`; `tag in s` is `False` for one, and for anything that is
-  not a `str`. `s.get(tag)` raises `InvalidTagError`.
 - A read refuses an artefact carrying an empty `xml:lang`, a malformed tag or
   two texts of one tag, where it used to keep the key `""`, the tag as given,
   or the last text. In a header, such a tag reads as no header and a recorded
@@ -51,9 +93,8 @@ lowercase, and well-formed by RFC 5646
 - An overlay with a malformed tag is refused by `read_overlay`.
 
 New: `sl.LocalisedString(text, lang)`, the SDMX Information Model's
-LocalisedString, and `InternationalString.pick(*langs) -> LocalisedString |
-None`, which returns the text with the tag that answered. Read its text as
-`.text`; it encodes to JSON as `{"text": "…", "lang": "fr"}`.
+LocalisedString, which every `InternationalString` lookup returns (above). It
+encodes to JSON as `{"text": "…", "lang": "fr"}`.
 
 A store built before this from a source that sent another case, an empty tag
 or a malformed one answers Python reads and SQL lookups differently.

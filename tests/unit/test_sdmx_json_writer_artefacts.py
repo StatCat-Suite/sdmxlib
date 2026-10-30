@@ -76,8 +76,8 @@ def test_provision_agreement_json_round_trip() -> None:
     rt = roundtrip_json(StructureMessage(provision_agreements=[pa]))
     assert rt.provision_agreements.ids() == ["PA_X"]
     rt_pa = rt.provision_agreements["PA_X"]
-    assert rt_pa.name.get("en") == "ECB provides DF_X"
-    assert rt_pa.description.get("en") == "Optional description for coverage"
+    assert rt_pa.name["en"].text == "ECB provides DF_X"
+    assert rt_pa.description["en"].text == "Optional description for coverage"
     assert rt_pa.dataflow is not None
     assert rt_pa.dataflow.urn.id == "DF_X"
     assert rt_pa.data_provider is not None
@@ -168,8 +168,8 @@ def test_hierarchy_with_levels_json_round_trip() -> None:
     rt = roundtrip_json(StructureMessage(hierarchies=[h]))
     assert rt.hierarchies.ids() == ["H_GEO"]
     rt_h = rt.hierarchies["H_GEO"]
-    assert rt_h.name.get("en") == "Geography"
-    assert rt_h.description.get("en") == "Multi-level test hierarchy"
+    assert rt_h.name["en"].text == "Geography"
+    assert rt_h.description["en"].text == "Multi-level test hierarchy"
     assert sorted(lv.id for lv in rt_h.levels) == ["Continent", "Country"]
     # Tree roots and nested children survive
     assert rt_h.tree.ids() == ["EUROPE"]
@@ -215,14 +215,14 @@ def test_agency_scheme_all_optional_fields_json_round_trip() -> None:
     )
     rt = roundtrip_json(StructureMessage(agency_schemes=[scheme]))
     rt_scheme = rt.agency_schemes["AGENCIES"]
-    assert rt_scheme.description.get("en") == "All agencies"
+    assert rt_scheme.description["en"].text == "All agencies"
     assert rt_scheme.valid_from is not None
     assert rt_scheme.valid_to is not None
     rt_agency = rt_scheme.agencies["ACME"]
-    assert rt_agency.description.get("en") == "Maintainer agency"
+    assert rt_agency.description["en"].text == "Maintainer agency"
     rt_contact = rt_agency.contacts[0]
-    assert rt_contact.department.get("en") == "IT"
-    assert rt_contact.role.get("en") == "Maintainer"
+    assert rt_contact.department["en"].text == "IT"
+    assert rt_contact.role["en"].text == "Maintainer"
     assert rt_contact.phones == ("+1 555 0100",)
     assert rt_contact.emails == ("support@example.com",)
 
@@ -255,10 +255,10 @@ def test_data_provider_scheme_all_optional_fields_json_round_trip() -> None:
     )
     rt = roundtrip_json(StructureMessage(data_provider_schemes=[scheme]))
     rt_scheme = rt.data_provider_schemes["DATA_PROVIDERS"]
-    assert rt_scheme.description.get("en") == "All data providers"
+    assert rt_scheme.description["en"].text == "All data providers"
     rt_provider = rt_scheme.providers["ECB"]
-    assert rt_provider.description.get("en") == "Eurozone central bank"
-    assert rt_provider.contacts[0].department.get("en") == "Statistics"
+    assert rt_provider.description["en"].text == "Eurozone central bank"
+    assert rt_provider.contacts[0].department["en"].text == "Statistics"
 
 
 def test_two_hierarchies_over_one_codelist_json_round_trip() -> None:

@@ -64,8 +64,8 @@ def test_re_adding_replaces_rather_than_accumulating() -> None:
     urn = sl.Codelist.urn_for(agency="AG", id="CL", version="1.0")
     stored = reg.get(urn)
     assert stored is not None
-    names = [cl.name["en"] for cl in reg.get_all(sl.Codelist)]
-    assert names == ["second"], f"get() says {stored.name['en']!r} and get_all() says {names}"
+    names = [cl.name["en"].text for cl in reg.get_all(sl.Codelist)]
+    assert names == ["second"], f"get() says {stored.name['en'].text!r} and get_all() says {names}"
     assert len(reg) == 1
 
 
@@ -83,7 +83,7 @@ def test_a_replacement_keeps_its_original_position() -> None:
     reg.add(_codelist("A", "A-updated"))
 
     assert [cl.id for cl in reg.get_all(sl.Codelist)] == ["A", "B", "C"]
-    assert [cl.name["en"] for cl in reg.get_all(sl.Codelist)] == ["A-updated", "B", "C"]
+    assert [cl.name["en"].text for cl in reg.get_all(sl.Codelist)] == ["A-updated", "B", "C"]
 
 
 @pytest.mark.parametrize(

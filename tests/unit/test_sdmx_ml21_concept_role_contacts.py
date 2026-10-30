@@ -83,8 +83,8 @@ def test_ml21_contacts_round_trip_and_are_xsd_valid() -> None:
         next(iter(back.data_provider_schemes)).providers["P"],
     ):
         (c,) = org.contacts
-        assert c.department.get("en") == "IT"
-        assert c.role.get("en") == "Owner"
+        assert c.department["en"].text == "IT"
+        assert c.role["en"].text == "Owner"
         assert c.phones == ("+1 555",)
         assert c.faxes == ("+1 556",)
         assert c.x400s == ("/C=US/A=X",)

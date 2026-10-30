@@ -84,7 +84,7 @@ def _write_istring_children(
     tag: str,
     namespace: str,
 ) -> None:
-    for lang, text in s.items():
+    for lang, text in s._backing().items():
         el = etree.SubElement(parent, f"{{{namespace}}}{tag}")
         el.set(XML_LANG, lang)
         el.text = text

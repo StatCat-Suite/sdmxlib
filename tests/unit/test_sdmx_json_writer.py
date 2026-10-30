@@ -273,8 +273,8 @@ def test_roundtrip_multilingual_names():
     rt = roundtrip_json(orig)
     cl = rt.codelists["SDMX:CL_AREA"]
     eu = cl.codes["EU"]
-    assert eu.name.get("en") == "European Union"
-    assert eu.name.get("fr") == "Union européenne"
+    assert eu.name["en"].text == "European Union"
+    assert eu.name["fr"].text == "Union européenne"
 
 
 # ── XML 2.1 → JSON → re-parse ─────────────────────────────────────────────────

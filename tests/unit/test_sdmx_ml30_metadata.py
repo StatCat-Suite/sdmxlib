@@ -53,8 +53,8 @@ def test_msd_xml_round_trip_preserves_attribute_metadata() -> None:
     parsed = out.metadata_structures[0]
     assert parsed.id == "MSD_FOOTNOTES"
     assert parsed.agency_id == "STATCAN"
-    assert parsed.name["en"] == "Footnote MSD"
-    assert parsed.description["en"] == "Defines footnote text slots"
+    assert parsed.name["en"].text == "Footnote MSD"
+    assert parsed.description["en"].text == "Defines footnote text slots"
 
     attr = parsed.attributes["FOOTNOTE_TEXT"]
     assert attr.min_occurs == 0
@@ -130,7 +130,7 @@ def test_metadataflow_xml_round_trip() -> None:
     assert len(out.metadataflows) == 1
     parsed = out.metadataflows[0]
     assert parsed.id == "MDF_FOOTNOTES"
-    assert parsed.name["en"] == "Footnote flow"
+    assert parsed.name["en"].text == "Footnote flow"
     assert isinstance(parsed.structure, Ref)
     assert parsed.structure.urn.id == "MSD_FOOTNOTES"
     # Cross-resolved within the same message via the parser's index

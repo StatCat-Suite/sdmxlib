@@ -171,7 +171,7 @@ def international_strings(draw: st.DrawFn, *, allow_empty: bool = True) -> Inter
     Args:
         draw: Hypothesis draw function.
         allow_empty: Whether the empty (no-language) case may be generated. It
-            is a distinct code path — `emit_pair` returns ``(None, None)`` for
+            is a distinct code path — `_emit_pair` returns ``(None, None)`` for
             it — so it is on by default.
 
     Returns:

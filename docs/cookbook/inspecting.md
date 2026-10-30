@@ -94,7 +94,7 @@ with sl.RestRegistry(sl.Provider.SDMX_GLOBAL) as reg:
     print(f"Reference area: {area_label}")
 
     # Or build it yourself for a single dimension
-    freq_codes = {code.id: code.name.get("en", code.id) for code in dsd.dimensions["FREQ"].representation().codes}
+    freq_codes = {code.id: code.name.as_dict().get("en", code.id) for code in dsd.dimensions["FREQ"].representation().codes}
     print(freq_codes)
 ```
 
@@ -285,7 +285,7 @@ with sl.RestRegistry(sl.Provider.SDMX_GLOBAL) as reg:
     # Direct children of a specific code (SKOS narrower)
     section_a = cl.codes["A"]
     divisions = cl.narrower("A")
-    print(f"Section A — {section_a.name.get('en')}: {divisions.ids()}")
+    print(f"Section A — {section_a.name['en'].text}: {divisions.ids()}")
 
     # All descendants (transitive)
     all_under_a = cl.narrower_transitive("A")  # ItemList[Code]

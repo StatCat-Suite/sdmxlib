@@ -132,7 +132,7 @@ with sl.LocalRegistry("bis_cbpol.duckdb") as local:
     # Navigate dimensions → codelists (resolved to LazyCodelist)
     freq_cl = dsd.dimensions["FREQ"].codelist
     print(type(freq_cl).__name__)  # LazyCodelist
-    print(freq_cl.codes["M"].name["en"])  # "Monthly"
+    print(freq_cl.codes["M"].name["en"].text)  # "Monthly"
 
     # Aggregate helpers work too
     cm = dsd.code_map(lang="en")  # {dim_id: {code_id: label}}

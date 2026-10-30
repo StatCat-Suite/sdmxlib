@@ -161,3 +161,28 @@ the 2.1 name, above). The deviations, roots and hops together:
 | `parent`, `children`, `ancestors`, `descendants`, `described_by` | — | relationships, not things |
 
 If a new name is not on that list and is not an IM class name, it is a defect.
+
+## Model classes and fields
+
+The same rule names the model (GH-309; the suite design "Text model: add
+LocalisedString per the SDMX Information Model", StatCat Suite hub
+`docs/design/localised-string.md`, D1, D2 and D8):
+
+- **A model class takes its IM class name, in the IM's spelling,** unless a
+  reason is stated here. `LocalisedString` and `OrganisationUnit` keep the
+  British spelling; `normalize_tag` and the `localized_text` table, which are
+  not IM classes, keep theirs.
+- **A field may take a Pythonic name** when its docstring gives the IM name as
+  "IM: `<name>`". sdmxlib already shortens `conceptIdentity` to `concept` and
+  `localRepresentation` to `representation`.
+- **A language tag is always `lang`, or `langs` for several**, in every
+  parameter and model field. `locale` appears only on `DatePatternMap`, whose
+  value is a parser locale (`fr_CA`) and is never checked as a tag.
+- **A generated name that joins a base name and a tag writes the tag through
+  `tag_alias`**: `name_fr_ca`, `REF_AREA_label_en_t_fr`. A tag never contains
+  `_` or `--`, so the alias reads back given the base name and never contains
+  `__`, which separates a suffix that is not a tag (`title__lang`).
+
+| name | stands for | why |
+| --- | --- | --- |
+| `LocalisedString.text`, `.lang` | IM `label`, `locale` | the names the store (`sdmx.localized_text`), the overlays and every `lang=` parameter already use; `label` would sit beside the query language's `Label`, and `locale` reads as a POSIX locale, which `normalize_tag` refuses |

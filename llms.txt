@@ -574,16 +574,19 @@ sl.to_json(metadata)                     # the SDMX-JSON metadata schema
 ## InternationalString
 
 ```python
-name = geo.name
-name["en"]                # KeyError if absent
-name.get("fr")            # None if absent
-name.get("de", "en")      # first present, in priority order
+name = geo.name           # a Mapping[str, LocalisedString]
+name["en"].text           # the text; MissingTagError (a KeyError) if absent
+name.get("fr")            # LocalisedString(text=..., lang='fr'), or None if absent
+name.pick("de", "en")     # the first tag held, as a LocalisedString
 print(name.langs)  # ['en', 'fr']
-name.as_dict()            # {'en': ..., 'fr': ...}
+name.as_dict()            # {'en': ..., 'fr': ...}: the texts
 sl.InternationalString(en="Frequency", fr="Fréquence")
 ```
 
-Constructors take a plain dict wherever an `InternationalString` goes.
+Constructors take a plain dict wherever an `InternationalString` goes. A
+lookup returns a `LocalisedString`, the text with its tag: read `.text`;
+`f"{value}"` writes its repr. A malformed tag (`fr_CA`) raises
+`InvalidTagError` from every lookup, `in` included.
 
 ## Federation
 
@@ -619,7 +622,7 @@ cannot be reached raises `sl.RegistryUnavailable` naming itself.
 | `Annotation`, `Link` | Annotations, and SDMX 3.x links (beside `uri`) |
 | `Ref[T]`, `SdmxUrn[T]`, `SdmxRef` | Reference, identity, partial identity for lookup |
 | `ItemList[T]`, `ArtefactList[T]` | Immutable collections |
-| `InternationalString` | Multilingual text |
+| `InternationalString`, `LocalisedString` | Multilingual text, and one text with its tag |
 | `RestRegistry`, `FmrRegistry`, `LocalRegistry`, `InMemoryRegistry`, `FederatedRegistry` | Sources |
 | `LazyCodelist`, `LazyHierarchy` | Store-backed codelist and hierarchy; walks return `Query` |
 | `Query`, `Select`, `ObsQuery` | The path language: rows, projections, observations |

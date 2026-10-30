@@ -55,7 +55,7 @@ def test_basic_construction():
     h = _make_hierarchy()
     assert h.id == "H_GEO"
     assert h.agency_id == "TEST"
-    assert h.name.get("en") == "Geographic Hierarchy"
+    assert h.name["en"].text == "Geographic Hierarchy"
 
 
 def test_tree_roots():
@@ -179,7 +179,7 @@ def test_validate_bad_id():
 def test_level_construction():
     lv = Level(id="SECTOR", name={"en": "Sector"})
     assert lv.id == "SECTOR"
-    assert lv.name.get("en") == "Sector"
+    assert lv.name["en"].text == "Sector"
 
 
 def test_hierarchy_with_levels():
@@ -190,7 +190,7 @@ def test_hierarchy_with_levels():
     h = Hierarchy(name={"en": "H_NAICS"}, id="H_NAICS", maintainer="TEST", levels=levels)
     assert len(h.levels) == 2
     assert h.levels["SECTOR"].id == "SECTOR"
-    assert h.levels["SUBSEC"].name.get("en") == "Subsector"
+    assert h.levels["SUBSEC"].name["en"].text == "Subsector"
 
 
 def test_has_formal_levels_default_false():

@@ -288,7 +288,7 @@ def _put_artefact_localized_text(
         istring: InternationalString | None = getattr(artefact, field, None)
         if not istring:
             continue
-        rows.extend((owner_urn, field, lang, text) for lang, text in istring.items())
+        rows.extend((owner_urn, field, lang, text) for lang, text in istring._backing().items())
     if not rows:
         return
     _execute_bulk_insert(conn, "localized_text", ("owner_urn", "field", "lang", "text"), rows)
@@ -344,7 +344,7 @@ class _AnnotationBatch:
                 (local_idx, position, u.url, u.lang, u.urn, u.type) for position, u in enumerate(ann.urls)
             )
             if ann.text:
-                for lang, text in ann.text.items():
+                for lang, text in ann.text._backing().items():
                     self.text_rows.append((local_idx, lang, text))
 
     def flush(self, conn: duckdb.DuckDBPyConnection) -> None:

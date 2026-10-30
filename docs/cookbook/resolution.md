@@ -45,7 +45,7 @@ with sl.RestRegistry(sl.Provider.ECB) as reg:
     stubs = reg.query(sl.q.dataflow).filter(sl.q.dataflow.agency == "ECB").collect()
 
     for df in stubs:
-        print(df.id, df.name.get("en", ""))
+        print(df.id, df.name.as_dict().get("en", ""))
 ```
 
 ```
@@ -84,7 +84,7 @@ with sl.RestRegistry(sl.Provider.ECB) as reg:
     dsd = reg.get(sl.DataStructure.urn_for(agency="ECB", id="ECB_EXR1"))
 
     # Own fields are populated
-    print(dsd.id, dsd.name.get("en"))
+    print(dsd.id, dsd.name["en"].text)
     for dim in dsd.dimensions.filter(sl.item("is_enumerated")):
         print(f"  {dim.id}  resolved={dim.representation.resolved}")
 ```

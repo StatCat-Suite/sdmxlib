@@ -121,7 +121,7 @@ def test_browse_lists_what_has_rows_here(reg) -> None:
     rather than "which dataflows exist" — the second is `query(q.dataflow)`."""
     entries = reg.browse()
     assert [e.binding.table_location for e in entries] == ["data.obs"]
-    assert entries[0].name.get("en") == "flow"
+    assert entries[0].name["en"].text == "flow"
 
 
 # ── identity in, this registry's structure out ────────────────────────────

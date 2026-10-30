@@ -296,7 +296,7 @@ Notes on the moving parts:
 ```python
 with sl.LocalRegistry("lake.duckdb") as local:
     for entry in local.browse():
-        name = entry.name["en"] if entry.name else "(no name)"
+        name = entry.name["en"].text if entry.name else "(no name)"
         print(f"{entry.dataflow_urn} — {name}  [source={entry.source_registry}]")
 ```
 

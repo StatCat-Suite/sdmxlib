@@ -170,7 +170,7 @@ def test_reading_a_2_1_metadata_structure_recovers_its_attributes():
     assert len(msg.metadata_structures) == 1, "the artefact must not vanish"
     msd = msg.metadata_structures[0]
     assert (msd.id, msd.agency_id, msd.version) == ("MSD_X", "AG", "1.0")
-    assert msd.name.get("en") == "Quality report MSD"
+    assert msd.name["en"].text == "Quality report MSD"
 
     # Two ReportStructures, concatenated in document order.
     assert [a.id for a in msd.attributes] == ["CONTACT", "QUALITY"]

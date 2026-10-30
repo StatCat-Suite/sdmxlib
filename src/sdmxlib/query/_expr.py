@@ -30,7 +30,7 @@ import attrs
 
 from sdmxlib._time import to_storage
 from sdmxlib.model._label_match import Fold
-from sdmxlib.model.istring import normalize_tag
+from sdmxlib.model.istring import normalize_tag, tag_alias
 from sdmxlib.model.version import sort_key as version_sort_key
 from sdmxlib.query._common import Descending, canonical_key
 from sdmxlib.query._joins import STRUCTURAL_SCHEMA, KeyRank, PathError, RootJoin, trim
@@ -1212,7 +1212,8 @@ class Label[R: RowKind](Str[R]):
 
     Prose, so it carries the two folding rungs an id does not. The tag is
     normalised (`normalize_tag`), so `name["FR-CA"]` reads the stored `fr-ca`
-    and a malformed tag raises `ValueError` as the subscript is written.
+    and a malformed tag raises `InvalidTagError` as the subscript is written.
+    It projects text (VARCHAR), with the tag in the column name.
     """
 
     __slots__ = ("_lang",)
@@ -1229,14 +1230,14 @@ class Label[R: RowKind](Str[R]):
     @property
     @override
     def column(self) -> builtins.str:
-        """`name_en`, not `name` — the language is part of the output name.
+        """`name_en`, not `name` — the language is part of the output name, as `tag_alias` writes it (`name_fr_ca`).
 
         Two languages of one label are the case that forces this: `select(
         name["en"], name["fr"])` projects two columns, and without the suffix
         both are called `name` and one silently wins. The physical column is
         still `name`; `physical` is what the compiler reads.
         """
-        return f"{self._column}_{self._lang}" if self._lang else self._column
+        return f"{self._column}_{tag_alias(self._lang)}" if self._lang else self._column
 
     @property
     @override

@@ -57,7 +57,7 @@ def test_codelist_basic():
     assert cl.id == "CL_FREQ"
     assert cl.agency_id == "SDMX"
     assert cl.version == "1.0"
-    assert cl.name.get("en") == "Frequency"
+    assert cl.name["en"].text == "Frequency"
     # SDMX-JSON 2.1 carries no isFinal — defaults to False on read.
     assert cl.is_final is False
 
@@ -69,14 +69,14 @@ def test_codelist_codes():
 
 def test_code_name():
     code = load_json("minimal").codelists["SDMX:CL_FREQ"].codes["A"]
-    assert code.name.get("en") == "Annual"
+    assert code.name["en"].text == "Annual"
 
 
 def test_code_multilingual():
     cl = load_json("with_categories").codelists["SDMX:CL_AREA"]
     eu = cl.codes["EU"]
-    assert eu.name.get("en") == "European Union"
-    assert eu.name.get("fr") == "Union européenne"
+    assert eu.name["en"].text == "European Union"
+    assert eu.name["fr"].text == "Union européenne"
 
 
 def test_codelist_multiple():
@@ -120,7 +120,7 @@ def test_dsd_id():
     assert dsd.id == "DSD_TEST"
     assert dsd.agency_id == "TEST"
     assert dsd.version == "1.0"
-    assert dsd.name.get("en") == "Test Data Structure"
+    assert dsd.name["en"].text == "Test Data Structure"
 
 
 def test_dimension_ids():
@@ -234,8 +234,8 @@ def test_dataflow_structure_resolved():
 
 def test_dataflow_multilingual_name():
     df = load_json("with_categories").dataflows["TEST:DF_PRICES"]
-    assert df.name.get("en") == "Price Statistics Dataflow"
-    assert df.name.get("fr") == "Statistiques des prix"
+    assert df.name["en"].text == "Price Statistics Dataflow"
+    assert df.name["fr"].text == "Statistiques des prix"
 
 
 def test_multiple_dataflows():

@@ -90,7 +90,7 @@ def test_json_metadata_round_trip_with_metadataflow_ref() -> None:
     assert contact.children["CONTACT_ORG_UNIT"].value == "STAT-D2"
     name_val = contact.children["CONTACT_NAME"].value
     assert isinstance(name_val, InternationalString)
-    assert name_val["en"] == "CPI Statistics Unit"
+    assert name_val["en"].text == "CPI Statistics Unit"
 
     assert parsed.attributes["FREQ"].value == "M"
     assert parsed.attributes["POSTAL_CODE"].value == 2721
@@ -137,7 +137,7 @@ def test_xml_metadata_round_trip_with_metadataflow_ref() -> None:
     assert contact.children["CONTACT_ORG_UNIT"].value == "STAT-D2"
     name_val = contact.children["CONTACT_NAME"].value
     assert isinstance(name_val, InternationalString)
-    assert name_val["fr"] == "Unite des stats IPC"
+    assert name_val["fr"].text == "Unite des stats IPC"
 
     assert parsed.attributes["FREQ"].value == "M"
     # Scalar numeric round-trips through XML as a string (Value text content

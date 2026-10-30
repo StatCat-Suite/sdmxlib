@@ -65,8 +65,8 @@ def test_reported_attribute_value_scalar_passes_through() -> None:
 def test_reported_attribute_value_dict_coerces_to_international_string() -> None:
     a = ReportedAttribute(id="X", value={"en": "Hello", "fr": "Bonjour"})
     assert isinstance(a.value, InternationalString)
-    assert a.value["en"] == "Hello"
-    assert a.value["fr"] == "Bonjour"
+    assert a.value["en"].text == "Hello"
+    assert a.value["fr"].text == "Bonjour"
 
 
 def test_reported_attribute_recursive_children() -> None:
@@ -196,7 +196,7 @@ def test_footnote_shape_one_set_per_footnote() -> None:
     assert {t.urn.item_id for t in set_a.targets} == {"1", "5", "12"}
     val = set_a.attributes["FOOTNOTE_TEXT"].value
     assert isinstance(val, InternationalString)
-    assert val["en"] == "Statistics Canada is …"
+    assert val["en"].text == "Statistics Canada is …"
 
 
 # ── Storage round-trip ──────────────────────────────────────────────────
@@ -222,7 +222,7 @@ def test_metadata_set_storage_round_trip_with_targets() -> None:
     assert {t.urn.item_id for t in out.targets} == {"1", "5"}
     val = out.attributes["FOOTNOTE_TEXT"].value
     assert isinstance(val, InternationalString)
-    assert val["en"] == "Hello"
+    assert val["en"].text == "Hello"
 
 
 def test_metadata_set_storage_round_trip_preserves_structure_kind_mpa() -> None:
@@ -289,7 +289,7 @@ def test_metadata_set_storage_round_trip_with_nested_attributes() -> None:
     assert quality.children["COVERAGE"].value == "full"
     note_val = quality.children["NOTE"].value
     assert isinstance(note_val, InternationalString)
-    assert note_val["en"] == "x"
+    assert note_val["en"].text == "x"
 
 
 def test_metadata_set_storage_round_trip_with_repeated_siblings() -> None:

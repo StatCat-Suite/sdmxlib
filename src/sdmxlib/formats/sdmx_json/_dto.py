@@ -91,12 +91,12 @@ def emit_istr(v: InternationalString | None) -> tuple[str | None, dict[str, str]
 
     Returns ``(None, None)`` for an empty/absent istring so ``omit_defaults``
     drops both the singular and plural fields. Delegates to
-    `InternationalString.emit_pair`, which does the empty-check + best-match +
+    `InternationalString._emit_pair`, which does the empty-check + best-match +
     backing-map fetch in one call (the map is shared, not copied: it feeds a
     transient DTO that msgspec encodes and we then discard, so it is never
     mutated).
     """
-    return v.emit_pair() if v is not None else (None, None)
+    return v._emit_pair() if v is not None else (None, None)
 
 
 def ingest_istr(name: str | None, names: dict[str, str] | None, field: str) -> InternationalString:

@@ -152,11 +152,11 @@ def _write_contact(parent: etree._Element, contact: Contact) -> None:
         el.set("id", contact.id)
     if contact.name:
         _helpers.write_istring(el, contact.name)
-    for lang, text in contact.department.items():
+    for lang, text in contact.department._backing().items():
         dept_el = etree.SubElement(el, _s("Department"))
         dept_el.set("{http://www.w3.org/XML/1998/namespace}lang", lang)
         dept_el.text = text
-    for lang, text in contact.role.items():
+    for lang, text in contact.role._backing().items():
         role_el = etree.SubElement(el, _s("Role"))
         role_el.set("{http://www.w3.org/XML/1998/namespace}lang", lang)
         role_el.text = text

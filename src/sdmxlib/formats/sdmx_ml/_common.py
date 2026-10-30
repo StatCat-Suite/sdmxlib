@@ -1789,7 +1789,8 @@ class WriterHelpers:
     ) -> None:
         """Append com:Name (or com:Description) children for each language."""
         tag = self._c_name if child_tag == "Name" else self._c_description
-        for lang, text in istring.items():
+        texts = istring._backing() if isinstance(istring, InternationalString) else istring
+        for lang, text in texts.items():
             el = etree.SubElement(parent, tag)
             el.set(XML_LANG, lang)
             el.text = text
@@ -1836,7 +1837,7 @@ class WriterHelpers:
                 url_el.text = url.url
                 if url.lang is not None and self.grammar != "2.1":
                     url_el.set(XML_LANG, url.lang)
-            for lang, text in ann.text.items():
+            for lang, text in ann.text._backing().items():
                 text_el = etree.SubElement(ann_el, self._c_annotation_text)
                 text_el.set(XML_LANG, lang)
                 text_el.text = text

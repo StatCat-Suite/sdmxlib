@@ -102,7 +102,7 @@ h["CA.ON.OTTAWA"].code()  # Ref[Code] → Code
 def print_tree(h: sl.Hierarchy, path: str, indent: int = 0) -> None:
     node = h[path]
     # A node shows its code's name: a hierarchical code has none of its own.
-    label = node.code().name.get("en", node.id)
+    label = node.code().name.as_dict().get("en", node.id)
     print("  " * indent + f"[{node.id}] {label}")
     for child in h.narrower(path):
         print_tree(h, h.path_of(child), indent + 1)

@@ -325,8 +325,8 @@ def test_codelist_only_roundtrip():
 def test_codelist_multilingual_roundtrip():
     rt = as_structure(parse(write(_codelist_msg())))
     code_a = rt.codelists["CL_FREQ"].codes["A"]
-    assert code_a.name.get("en") == "Annual"
-    assert code_a.name.get("fr") == "Annuel"
+    assert code_a.name["en"].text == "Annual"
+    assert code_a.name["fr"].text == "Annuel"
 
 
 def test_codelist_version_roundtrip():

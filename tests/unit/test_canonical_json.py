@@ -79,7 +79,7 @@ def _complete(obj: object, plain: object, path: str) -> int:
             assert plain == str(obj.urn), path
             return 0
         case InternationalString():
-            assert plain == {lang: obj[lang] for lang in obj}, path
+            assert plain == obj.as_dict(), path
             return 0
         case Annotations() | ItemList() | list() | tuple():
             assert isinstance(plain, list), path

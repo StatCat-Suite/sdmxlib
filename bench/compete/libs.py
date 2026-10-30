@@ -194,10 +194,9 @@ def _after_class(urn: str) -> str:
 def _summary_sdmxlib(message: StructureMessage) -> Summary:
     codes: Codes = {}
     for codelist in message.codelists:
-        # A name read without a language is held language-unknown, never
-        # guessed as English: there is no default language.
+        # The English name, or None: there is no default language.
         codes[(codelist.maintainer.id, codelist.id, codelist.version)] = {
-            code.id: (code.name.get("en", "_default"), code.parent_id) for code in codelist.codes
+            code.id: (name.text if (name := code.name.get("en")) else None, code.parent_id) for code in codelist.codes
         }
     components: Components = {}
     for dsd in message.data_structures:

@@ -295,7 +295,7 @@ def _report_probe() -> None:
             assert isinstance(back, StructureMessage)
             codes = {code.id: code for codelist in back.codelists for code in codelist.codes}
             french = codes.get(_FRENCH_ONLY)
-            seen = {language: french.name[language] for language in french.name} if french is not None else None
+            seen = french.name.as_dict() if french is not None else None
             print(f"    {lib:7}: {line}; after its own {fmt} write, sdmxlib reads {_FRENCH_ONLY}'s name as {seen}")
 
 
