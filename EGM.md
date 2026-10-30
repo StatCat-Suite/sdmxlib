@@ -41,7 +41,7 @@ Each `bench/` tool has a `README.md`.
   `local/` or `api/`. Its domain types do no I/O; its one behavioural class,
   `rollup.AncestorMap`, queries DuckDB. `formats/` owns parsing and
   serialisation of the SDMX wire formats; edition and manifest JSON is read
-  and written in `storage/` and `bundle/`. `query/` imports nothing from
+  and written in `storage/` and `edition/`. `query/` imports nothing from
   `local/`.
 - Every domain object in `sdmxlib.model` is an attrs `@frozen` class; an
   artefact is equal by value and keyed by URN, and a change is an
