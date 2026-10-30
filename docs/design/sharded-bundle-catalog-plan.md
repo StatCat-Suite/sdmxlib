@@ -10,7 +10,7 @@
 
 StatCat-Suite publishes SDMX products as sdmxlib bundles. A bundle is one directory per product holding a sequence of publications. Each publication is an immutable token directory with the structures (`meta.duckdb`), the observations (`lake.ducklake` over shared Parquet data files) and a manifest that lists every file and fingerprint. Today one sdmxlib-rest server opens one bundle. The target is a catalog the size of Statistics Canada's CODR (Canadian Open Data Repository, the store behind its data tables) served through the .Stat Suite. That is about 7,000 tables, with tens to a few hundred of them released each weekday at 08:30, under embargo until then, served by Kubernetes pods that each hold only the bundles their routing slice needs.
 
-[`sharded-bundle-catalog.md`](sharded-bundle-catalog.md) (the specification, fifth revision) defines the formats and behaviour: manifest 2.x, fingerprints, the catalog index, routing, pools, cache keys, publication and garbage collection. This plan orders the remaining work into phases so that every repository stays releasable at the end of each phase. It specifies Phases 1 to 3 to implementation level, states the contracts and gating tests of Phases 4 to 6, and outlines Phases 7 to 9, which are re-planned once Phase 6 is merged.
+[`sharded-bundle-catalog.md`](sharded-bundle-catalog.md) (the specification, now in its sixth revision) defines the formats and behaviour: manifest 2.x, fingerprints, the catalog index, routing, pools, cache keys, publication and garbage collection. This plan orders the remaining work into phases so that every repository stays releasable at the end of each phase. It specifies Phases 1 to 3 to implementation level, states the contracts and gating tests of Phases 4 to 6, and outlines Phases 7 to 9, which are re-planned once Phase 6 is merged.
 
 Phase 0, the specification's fifth revision, is merged (PR #222). sdmxlib 0.75.0 is released with tier-3 reads, store-neutral verification, tiered pulls, the fingerprint comparison and the derived tables (GH-180 to GH-184). Phase 1 and measurement track M are done, released in sdmxlib 0.76.0; sdmxlib 0.77.0 is current.
 
@@ -46,7 +46,7 @@ A serving pod opens one bundle. At catalog scale that fails in four ways (specif
 *   A Postgres DuckLake catalog on the serving path (specification §14).
 *   The `labels.duckdb` split, shelved after GH-139 measured labels at 31 MB of the census `meta.duckdb`.
 *   Cross-bundle queries in sdmxlib-rest. A service that composes bundles calls sdmxlib-rest once per bundle (specification §7.6).
-*   Renaming `token` to `publication` (specification open question 2) and detached manifest signatures (open question 3).
+*   Detached manifest signatures (specification open question 3). The rename this plan left out is done: the specification's sixth revision renames the bundle, publication and token to the product, edition and `edition_id`, with manifest 3.0 and the Inventory in place of the catalog index (specification §6 and §18, from the statcatlib RFC [Products, editions and the Inventory](https://github.com/StatCat-Suite/statcatlib/blob/main/docs/design/products-editions-inventory.md)). Phases 4 to 6 read the Inventory where this plan says index.
 *   Producing the 7,000 real CODR bundles. That is the producers' work; this program builds and tests on synthetic ones.
 *   Choosing the workflow engine that runs the publish and release jobs. The jobs are CLI commands any orchestrator can call.
 
