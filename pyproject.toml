@@ -143,6 +143,10 @@ dev = [
   "polars>=2.0.0",
   "pytest>=9.0.2",
   "jsonschema[format-nongpl]>=4.21.0",
+  # The Delta-backed Inventory prototype the conformance suite also runs
+  # against (GH-252): a test fixture proving the spec's escape route, not a
+  # supported backend. Capped below the next minor, as delta-rs breaks on one.
+  "deltalake>=1.6.6,<1.7",
   "pytest-benchmark>=4.0.0",
   "pytest-cov>=7.1.0",
   "pytest-xdist>=3.8.0",

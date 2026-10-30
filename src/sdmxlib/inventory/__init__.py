@@ -9,7 +9,8 @@ validation, the state-transition rules and a reader; statcatlib writes it.
   functions, which refuse another major format and a document that breaks
   the format's rules. `schema` gives each document's shipped JSON Schema.
 - **Rules** (`record`, `release`, `release_due`, `cancel`,
-  `supersede_pending`, `rollback`, `retire`, `reinstate`, `next_root`):
+  `supersede_pending`, `rollback`, `retire`, `reinstate`, `repairable`,
+  `next_root`):
   pure functions over a product's leaf that return the next one or raise
   `TransitionError`, naming the rule.
 - **Reading** (`LiveInventory`, `FullInventory`): the read protocol over a
@@ -64,6 +65,7 @@ from sdmxlib.inventory._rules import (
     reinstate,
     release,
     release_due,
+    repairable,
     retire,
     rollback,
     supersede_pending,
@@ -110,6 +112,7 @@ __all__ = [
     "reinstate",
     "release",
     "release_due",
+    "repairable",
     "retire",
     "rollback",
     "root_path",
