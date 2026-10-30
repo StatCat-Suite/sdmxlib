@@ -239,7 +239,7 @@ rather than a graph to navigate; this API exists alongside `get_all()` for that
 difference.
 
 **`collect()` is for object graphs, `frame()` is for volume**, and the gap is
-large: on a real bundle's 579,951-code codelist, `frame()` is **158 ms** and
+large: on a real edition's 579,951-code codelist, `frame()` is **158 ms** and
 `collect()` is **2372 ms**. Both run the same statement over the same columns;
 the difference is 579,951 Python objects. If you are about to loop over
 `collect()` pulling two fields out of each artefact, `select()` those two

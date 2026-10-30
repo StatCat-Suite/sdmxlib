@@ -6,10 +6,10 @@ separate install, so the library itself carries no CLI dependency:
 ```sh
 uv tool install sdmxlib-cli
 # or: pip install sdmxlib-cli
-sdmxlib bundle check path/to/publication --at publish
+sdmxlib edition check path/to/edition --at publish
 ```
 
-`sdmxlib bundle check` runs `sdmxlib.bundle.check_bundle` at the profile
+`sdmxlib edition check` runs `sdmxlib.edition.check_edition` at the profile
 `--at` names. `publish` checks the manifest, every file's checksum, the
 DuckLake catalog, the bindings' observation counts, the structural closure
 and the fingerprints. `receive` checks data files by size and leaves the

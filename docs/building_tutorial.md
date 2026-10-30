@@ -2,7 +2,7 @@
 
 A practical guide to creating SDMX structural metadata from scratch.
 Covers the common patterns: defining codelists, building data structure
-definitions, packaging for publication, and round-tripping through XML.
+definitions, packaging for edition, and round-tripping through XML.
 
 ---
 
@@ -393,7 +393,7 @@ print(b"CL_FREQ" in xml)  # True — the URN is serialized
 
 This is common when your agency publishes data using dimensions
 defined by international standards. You reference them by URN without
-needing to bundle copies of the cross-domain codelists.
+needing to edition copies of the cross-domain codelists.
 
 ---
 

@@ -152,8 +152,8 @@ An ordered list of sources, each serving some of `{artefact, rows, bytes}`;
 first hit wins; caches earlier in the chain fill on the way back.
 
 ```
-LocalRegistry("meta.duckdb")          [Session, DuckDB]
-LocalRegistry.bundle("/srv/…")        [Session, DuckDB + lake]
+LocalRegistry("metadata.duckdb")          [Session, DuckDB]
+LocalRegistry.edition("/srv/…")        [Session, DuckDB + lake]
 RestRegistry(FMR)                     [Session, Rest]
 RestRegistry(FMR, store=b)   [Session, Bundle(b), Rest]
 FederatedRegistry(routing={...})      [Session, Routed({ESTAT: …, ECB: …})]
@@ -242,9 +242,9 @@ registry already owns.
 constructor when only arguments differ. So `FmrRegistry` stays a subclass of
 `RestRegistry`. The reason is that `sql()`, `add()` and `download()` must be
 *absent*, not raising, and only a type can do that. The same rule made
-`BundleRegistry` a type (GH-122): a published bundle opens read-only, so its
-`add()` and `sql()` disappear, and `LocalRegistry.bundle(path)` returns a
-`BundleRegistry`, which `LocalRegistry` extends with the writes. Until then a
+`EditionRegistry` a type (GH-122): a published bundle opens read-only, so its
+`add()` and `sql()` disappear, and `LocalRegistry.edition(path)` returns a
+`EditionRegistry`, which `LocalRegistry` extends with the writes. Until then a
 bundle differed from a store only in wiring, and `bundle(path)` returned a
 `LocalRegistry`. (`write_observations()` was on this list. It is a
 `LocalRegistry` method, the way a builder writes a publication's rows, and
@@ -350,9 +350,9 @@ predicates pushed into the key, `fetch_to()` is a `store=` plus
 
 ### 3.1 The core
 
-As built — checked with `hasattr` against `BundleRegistry` (B), `LocalRegistry`
+As built — checked with `hasattr` against `EditionRegistry` (B), `LocalRegistry`
 (L), `RestRegistry` (R) and `FederatedRegistry` (F). `LocalRegistry` extends
-`BundleRegistry`, so every B row is also an L row. Where the build departed
+`EditionRegistry`, so every B row is also an L row. Where the build departed
 from the design, the rule column says so.
 
 | entry | takes | returns | B | L | R | F | rule |
@@ -373,7 +373,7 @@ from the design, the rule column says so.
 | `write_observations` | rows | — | | Y | | | write — into this registry's lake; refuses without one (GH-198) |
 | `sql(text, **params)` | SQL | `RawSql` | | Y | | | escape hatch — needs a database of record |
 | `execute(sql, params)` | one statement | rows | Y | Y | | | a statement on this thread's handle |
-| `bundle(path)` | a directory | `BundleRegistry` | Y | Y | | | construction — opens a published bundle, read-only (GH-122) |
+| `bundle(path)` | a directory | `EditionRegistry` | Y | Y | | | construction — opens a published bundle, read-only (GH-122) |
 | `build(path)` | a directory | `LocalRegistry` | | Y | | | construction — starts a publication (GH-123) |
 | `from_connection(conn)` | a DuckDB connection | the registry | Y | Y | | | construction |
 | `manifest` / `data_path` / `lake_alias` | — | bundle facts | Y | Y | | | the manifest `bundle()` read, where the lake reads its files, the lake's catalog name |
@@ -473,8 +473,8 @@ duplicate, not a curated entry point.
 ### 3.4 Construction
 
 ```python
-sl.LocalRegistry("meta.duckdb")
-sl.LocalRegistry.bundle("/srv/census-2021")
+sl.LocalRegistry("metadata.duckdb")
+sl.LocalRegistry.edition("/srv/census-2021")
 sl.RestRegistry(sl.Provider.ECB)
 sl.RestRegistry(FMR, store=bundle)
 sl.FederatedRegistry(routing={"ESTAT": a, "ECB": b}, default=c)
@@ -489,7 +489,7 @@ notebook use.
 ### 4.1 REST facade — `/data/{flow}/{key}` as streamed SDMX-CSV
 
 ```python
-reg = sl.LocalRegistry.bundle(settings.bundle_dir)     # startup, once
+reg = sl.LocalRegistry.edition(settings.bundle_dir)     # startup, once
 
 @app.get("/data/dataflow/{agency}/{flow_id}/{version}/{key}")
 def data(agency: str, flow_id: str, version: str, key: str, request: Request):
@@ -569,7 +569,7 @@ bundle.add(sl.DataflowBinding.from_dsd(dsd, dataflow=flow_ref, schema="data", ta
 "Fetch remotely, land locally" is a chain whose cache is the artefact being
 built. Confirms the type split too: `add` is absent on
 `RestRegistry`, and `write_observations` is on `LocalRegistry`, whose
-publication has a lake. `LocalRegistry.bundle(path)` *opens* a published bundle, read-only;
+publication has a lake. `LocalRegistry.edition(path)` *opens* a published bundle, read-only;
 its builder writes it through `LocalRegistry.build(path)`.
 
 ### 4.5 Browse, which stays separate

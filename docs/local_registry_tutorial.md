@@ -276,7 +276,7 @@ with sl.LocalRegistry("bis_cbpol.duckdb") as local:
 !!! warning "Keep eager reads of large artefacts off the request path"
 
     It builds a Python object per item and resolves each one's references, so
-    it costs what the object graph weighs. Measured on a real bundle:
+    it costs what the object graph weighs. Measured on a real edition:
 
     | artefact | items | eager `get()` | retained |
     | --- | --- | --- | --- |

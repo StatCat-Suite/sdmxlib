@@ -1,16 +1,16 @@
-"""Synthetic bundles: conforming, published, any shape, from a seed.
+"""Synthetic editions: conforming, sealed, any shape, from a seed.
 
-Real bundles of interesting size are built from data that cannot be published
-as fixtures. A synthetic one can: `synthetic_bundle` builds a bundle from a
+Real editions of interesting size are built from data that cannot be published
+as fixtures. A synthetic one can: `synthetic_edition` builds an edition from a
 `Shape` — how many codes each dimension has and how deep and wide its
 hierarchy is, which `Hierarchy` artefacts sit over its codelist, how many
-observations, in which languages — and publishes it
-with `write_manifest`, so it passes `check_bundle`. `profile_bundle` reads a
-`Shape` off a real bundle (counts and fan-outs, never values), so a stress
-bundle can mimic one that cannot leave the building.
+observations, in which languages — and seals it
+with `seal`, so it passes `check_edition`. `profile_edition` reads a
+`Shape` off a real edition (counts and fan-outs, never values), so a stress
+edition can mimic one that cannot leave the building.
 
 **Deterministic from a seed.** The same seed and shape give the same artefacts
-and the same observation rows. Not the same files: a publication's token is
+and the same observation rows. Not the same files: an edition id is
 new each time and DuckDB's bytes vary between builds, as for any
 rebuild.
 
@@ -27,7 +27,7 @@ import duckdb
 from attrs import field, frozen
 
 from sdmxlib._duckdb import first
-from sdmxlib.bundle import Manifest, Producer, write_manifest
+from sdmxlib.edition import Manifest, Producer, seal
 from sdmxlib.local.registry import LocalRegistry
 from sdmxlib.model.annotations import Annotation
 from sdmxlib.model.binding import DataflowBinding
@@ -41,7 +41,7 @@ from sdmxlib.model.representation import Facet
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.storage._synthetic import distinct_periods, observations_from, observations_sql
 
-__all__ = ["Dim", "HierarchyShape", "Shape", "profile_bundle", "synthetic_bundle"]
+__all__ = ["Dim", "HierarchyShape", "Shape", "profile_edition", "synthetic_edition"]
 
 _AGENCY = "SYNTHETIC"
 _SCHEMA = "obs"
@@ -151,7 +151,7 @@ class Dim:
 
 @frozen
 class Shape:
-    """What a synthetic bundle looks like, and what `profile_bundle` reads off a real one.
+    """What a synthetic edition looks like, and what `profile_edition` reads off a real one.
 
     Attributes:
         dimensions: The key dimensions, in key order.
@@ -172,10 +172,10 @@ class Shape:
     annotated: float = 0.0
 
 
-def synthetic_bundle(path: str | Path, shape: Shape, *, seed: int = 0) -> Manifest:
-    """Build and publish a bundle of `shape` at `path`, deterministically from `seed`.
+def synthetic_edition(path: str | Path, shape: Shape, *, seed: int = 0) -> Manifest:
+    """Build and seal an edition of `shape` at `path`, deterministically from `seed`.
 
-    The bundle's first publication, ``<path>/<token>/``, beside its ``data/``.
+    The edition's first edition, ``<path>/<edition_id>/``, beside its ``data/``.
 
     One dataflow, ``SYNTHETIC:DF_SYNTHETIC(1.0)``, on a DSD with a dimension
     per `Dim` (``DIM_1``, ``DIM_2``, …, each with its codelist), ``TIME_PERIOD``,
@@ -183,13 +183,13 @@ def synthetic_bundle(path: str | Path, shape: Shape, *, seed: int = 0) -> Manife
     binding; and the manifest, whose ``product`` records the shape and seed.
 
     Args:
-        path: The bundle directory to create; must not exist or be empty.
+        path: The product directory to create; must not exist or be empty.
         shape: What to build.
         seed: Chooses the hierarchies, the annotations, and which keys the
             observations take.
 
     Returns:
-        The manifest written; the publication is ``<path>/<manifest.token>/``.
+        The manifest written; the edition is ``<path>/<manifest.edition_id>/``.
 
     Raises:
         FileExistsError: If `path` exists and is not empty.
@@ -198,7 +198,7 @@ def synthetic_bundle(path: str | Path, shape: Shape, *, seed: int = 0) -> Manife
     """
     root = Path(path)
     if root.exists() and any(root.iterdir()):
-        msg = f"{root} exists and is not empty; synthetic_bundle creates a new bundle"
+        msg = f"{root} exists and is not empty; synthetic_edition creates a new edition"
         raise FileExistsError(msg)
     radices = [d.codes for d in shape.dimensions] + [shape.periods]
     space = math.prod(radices)
@@ -211,17 +211,17 @@ def synthetic_bundle(path: str | Path, shape: Shape, *, seed: int = 0) -> Manife
     root.mkdir(parents=True, exist_ok=True)
     draws = _Draws(seed)
     artefacts, dsd, flow = _structures(shape, draws, _Draws(seed, "hierarchies"))
-    with LocalRegistry.build(root) as bundle:
-        bundle.add_all(artefacts)
-        rows = bundle.connection.sql(_observations_sql(shape, space, draws))
-        bundle.write_observations(schema=_SCHEMA, table=_TABLE, source=rows)
-        bundle.add(DataflowBinding.from_dsd(dsd, dataflow=Ref.to(flow), schema=_SCHEMA, table=_TABLE))
-        publication = bundle.publication
-    return write_manifest(
-        publication,
-        bundle_id=f"synthetic-{seed}",
-        producer=Producer(name="sdmxlib.testing.synthetic_bundle", version="1"),
-        product={
+    with LocalRegistry.build(root) as builder:
+        builder.add_all(artefacts)
+        rows = builder.connection.sql(_observations_sql(shape, space, draws))
+        builder.write_observations(schema=_SCHEMA, table=_TABLE, source=rows)
+        builder.add(DataflowBinding.from_dsd(dsd, dataflow=Ref.to(flow), schema=_SCHEMA, table=_TABLE))
+        edition_dir = builder.edition_dir
+    return seal(
+        edition_dir,
+        product_id=f"synthetic-{seed}",
+        producer=Producer(name="sdmxlib.testing.synthetic_edition", version="1"),
+        producer_fields={
             "seed": seed,
             "dimensions": [[d.codes, d.depth, list(d.fanout)] for d in shape.dimensions],
             "observations": shape.observations,
@@ -448,8 +448,8 @@ def _observations_sql(shape: Shape, space: int, draws: _Draws) -> str:
     )
 
 
-def profile_bundle(path: str | Path, flow: SdmxUrn[Dataflow]) -> Shape:
-    """The `Shape` of one dataflow in a published bundle: counts and fan-outs, never values.
+def profile_edition(path: str | Path, flow: SdmxUrn[Dataflow]) -> Shape:
+    """The `Shape` of one dataflow in a sealed edition: counts and fan-outs, never values.
 
     Reads each enumerated key dimension's codelist size, hierarchy depth and
     fan-out, and the `Hierarchy` artefacts associated with it; the observation
@@ -466,16 +466,16 @@ def profile_bundle(path: str | Path, flow: SdmxUrn[Dataflow]) -> Shape:
     (`multi_parent`, capped below 1).
 
     Args:
-        path: The bundle directory.
+        path: The product directory.
         flow: The dataflow to profile.
 
     Returns:
-        A shape `synthetic_bundle` can build a stand-in from.
+        A shape `synthetic_edition` can build a stand-in from.
 
     Raises:
-        ValueError: If the dataflow or its structure is not in the bundle.
+        ValueError: If the dataflow or its structure is not in the edition.
     """
-    with LocalRegistry.bundle(path) as reg:
+    with LocalRegistry.edition(path) as reg:
         dsd = reg.dsd(flow)
         binding = reg.binding_for(flow)
         if dsd is None or binding is None:

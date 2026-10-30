@@ -7,7 +7,7 @@ dimension's distinct lake values. This is the framework-free core of the
 SDMX REST ``/availability`` response for ``context=dataflow``,
 ``componentID=all`` — no HTTP layer, no async.
 
-The producer side (a bundle builder) calls this at bundle-build time to
+The producer side (an edition builder) calls this at bundle-build time to
 pre-bake availability caches; the consumer side (a downstream SDMX REST
 service) calls the same function to serve ``/availability`` live. Both then serialise with
 `sdmxlib.formats.sdmx_json_1_0.writer.write_contentconstraint`, so the two
@@ -22,7 +22,7 @@ Example:
     from sdmxlib.builders.contentconstraint import build_dataflow_constraint
     from sdmxlib.formats.sdmx_json_1_0.writer import write_contentconstraint
 
-    with sl.LocalRegistry.bundle(bundle_uri) as reg:
+    with sl.LocalRegistry.edition(bundle_uri) as reg:
         cc = build_dataflow_constraint(reg, dataflow_urn, name={"en": "Availability"})
         cache_bytes = write_contentconstraint(cc)
 """
@@ -31,7 +31,7 @@ from typing import Literal
 
 import duckdb
 
-from sdmxlib.local.registry import BundleRegistry, LocalRegistry
+from sdmxlib.local.registry import EditionRegistry, LocalRegistry
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.constraint import (
     ComponentValueSet,
@@ -51,7 +51,7 @@ from sdmxlib.rest import ComponentFilter, parse_components
 
 
 def build_dataflow_constraint(
-    registry: BundleRegistry,
+    registry: EditionRegistry,
     dataflow_urn: SdmxUrn[Dataflow],
     *,
     name: InternationalString | dict[str, str],
@@ -73,7 +73,7 @@ def build_dataflow_constraint(
     right source for an "actual availability" statement.
 
     Args:
-        registry: An open registry: a published `BundleRegistry` or a `LocalRegistry`. Used to look up the
+        registry: An open registry: a published `EditionRegistry` or a `LocalRegistry`. Used to look up the
             binding and (when ``conn`` is omitted) the DuckDB connection.
         dataflow_urn: URN of the dataflow to describe.
         name: The constraint's name, in each language it has. Required: SDMX
@@ -135,7 +135,7 @@ def build_dataflow_constraint(
 
 
 def build_component_availability(
-    registry: BundleRegistry,
+    registry: EditionRegistry,
     dataflow_urn: SdmxUrn[Dataflow],
     *,
     name: InternationalString | dict[str, str],
@@ -169,14 +169,14 @@ def build_component_availability(
     `tests/bench/test_availability_scan_shape.py` keeps that answer attached to
     evidence, and fails if a DuckDB release ever reverses it.
 
-    A published bundle's stored availability (`BundleRegistry.availability`)
+    A sealed edition's stored availability (`EditionRegistry.availability`)
     removes work without changing the answer. A dimension whose selected
     values include every value it holds excludes no row, so its constraint is
     dropped before scanning; a dimension left with no constraint at all takes
     its values from the stored availability, with no scan. An attribute
     always scans, since stored availability lists dimensions only, and so
     does every component of a `LocalRegistry`, whose stored availability may
-    belong to the publication it extends.
+    belong to the edition it extends.
 
     The two modes differ only in which filter applies while enumerating a
     component ``C``:
@@ -188,7 +188,7 @@ def build_component_availability(
       leave the cube non-empty if added to the key.
 
     Args:
-        registry: An open registry: a published `BundleRegistry` or a `LocalRegistry`.
+        registry: An open registry: a published `EditionRegistry` or a `LocalRegistry`.
         dataflow_urn: URN of the dataflow to describe.
         name: The constraint's name, in each language it has. Required: SDMX
             requires one, and which language is the caller's to say (#492).
@@ -295,7 +295,7 @@ def build_component_availability(
     )
 
 
-def _resolve_key_slot_ids(registry: BundleRegistry, dataflow_urn: SdmxUrn[Dataflow], api: ApiVersion) -> list[str]:
+def _resolve_key_slot_ids(registry: EditionRegistry, dataflow_urn: SdmxUrn[Dataflow], api: ApiVersion) -> list[str]:
     """Resolve the DSD's key-dimension ids (SDMX-key order) for the dataflow.
 
     Mirrors the dataflow → DSD hop `LocalRegistry.dsd` does for labelling: fetch the
@@ -328,12 +328,12 @@ def _component_column(binding: DataflowBinding, component_id: str) -> str:
     return column
 
 
-def _held_values(registry: BundleRegistry, dataflow_urn: SdmxUrn[Dataflow]) -> dict[str, frozenset[str]]:
-    """The values each dimension holds, from the publication's stored availability; empty when it has none.
+def _held_values(registry: EditionRegistry, dataflow_urn: SdmxUrn[Dataflow]) -> dict[str, frozenset[str]]:
+    """The values each dimension holds, from the edition's stored availability; empty when it has none.
 
-    Only a published bundle's stored availability describes its data. A
+    Only a sealed edition's stored availability describes its data. A
     `LocalRegistry` started with ``build(previous=)`` holds the previous
-    publication's availability until `write_manifest` replaces it, while its
+    edition's availability until `seal` replaces it, while its
     lake may already hold other rows, so it reads as none here and every
     component scans.
     """

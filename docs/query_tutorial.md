@@ -146,7 +146,7 @@ use of the result is also a type error.
 The two differ by more than their return type, and the difference grows with
 the row count. `collect()` builds a Python object per row and loads what it
 references; `frame()` hands the columns to polars and builds nothing. Measured
-on a real bundle's largest codelist and largest hierarchy:
+on a real edition's largest codelist and largest hierarchy:
 
 | | rows | `.count()` | `.ids()` | `.frame()` | `.collect()` |
 | --- | --- | --- | --- | --- | --- |

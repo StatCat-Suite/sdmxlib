@@ -3,7 +3,7 @@
 ## Overview
 
 `sdmxlib.builders` holds pure, synchronous functions that build SDMX artefacts
-from a registry (a published `BundleRegistry` or a `LocalRegistry`) and a
+from a registry (a published `EditionRegistry` or a `LocalRegistry`) and a
 DuckDB connection. A producer can build an artefact ahead of time and store
 it, and a consumer can compute the same artefact live with byte-identical
 output.
@@ -46,7 +46,7 @@ output.
   `DataflowBinding`. The column is quoted with `_quote_identifier`; the table
   name `<database_role>.<table_location>` is interpolated from the binding
   unquoted.
-- `build_component_availability` over a published `BundleRegistry` reads its
+- `build_component_availability` over a published `EditionRegistry` reads its
   stored availability: it drops a key constraint that covers every held value
   of its dimension, and takes an unconstrained dimension's held values without
   a scan. Over a `LocalRegistry` it always scans.

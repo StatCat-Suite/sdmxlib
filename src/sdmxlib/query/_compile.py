@@ -444,7 +444,7 @@ def _member_collapse(
     assert that a constant appears in an array the outer row already carries.
     `? = ANY(s0.ancestor_ids)` says it without the join.
 
-    Measured on the 2021 Census Profile bundle (`hierarchy_node`, 1.88M rows), an
+    Measured on the 2021 Census Profile edition (`hierarchy_node`, 1.88M rows), an
     8,943-node subtree walk: 63.9 ms to 9.1 ms for `.ids()`, 145 ms to 41 ms
     for `.collect()`.
 
@@ -579,7 +579,7 @@ class _Scope:
         #:
         #: A hop join is planned from the paths a predicate names, so it exists
         #: only where it is needed. A root join has no path, so until #388 it
-        #: was emitted unconditionally — which on the 2021 Census Profile bundle made `count()`
+        #: was emitted unconditionally — which on the 2021 Census Profile edition made `count()`
         #: over 1.14 B observations 2600x the scan it decorates, for a join
         #: nothing selected from. DuckDB will not drop it itself: a `LEFT JOIN`
         #: is only row-preserving if the right side is unique on the key, and a
@@ -1527,7 +1527,7 @@ def _ranked_key(scope: _Scope, order: Sequence[OrderKey], column: str) -> Sql | 
     tiebreak breaks holds one value of it, so its rank decides nothing, and
     leaving it out leaves out its codelist's join. A partition stream ordered
     by geography otherwise builds `CL_GEOGRAPHY`'s 579,951 positions once per
-    partition, 40 % of its time on the census bundle.
+    partition, 40 % of its time on the census edition.
     """
     if any(key.column.column == column and not scope._rel(tuple(key.column.path)) for key in order):
         return None

@@ -265,7 +265,7 @@ def _put_artefact_localized_text(
     """Insert localized_text rows for an artefact's name + description.
 
     Collects rows across both fields and all languages into a single bulk
-    insert — bilingual bundles previously paid one ``execute`` per
+    insert — bilingual editions previously paid one ``execute`` per
     (field, lang) tuple (issue #139).
 
     **Arrow rather than ``executemany``, and the difference is not small.**
@@ -522,7 +522,7 @@ def _item_urn_prefix(artefact: SupportsUrn, artefact_urn: str, item_class: str) 
     `_make_item_urn` parses the owner's URN and builds an `SdmxUrn` *per item*,
     and every caller loops over one artefact's items — so both are constant
     across the loop and only `item_id` varies. Writing the largest hierarchy in
-    the 2021 Census Profile bundle went from **499,143 parses to 1** (#139).
+    the 2021 Census Profile edition went from **499,143 parses to 1** (#139).
 
     **That count is the whole claim; end-to-end wall clock does not move
     measurably.** Interleaved A/B/A runs of the same write came out 6.60 s /
@@ -782,7 +782,7 @@ def _delete_artefact_cascade(conn: duckdb.DuckDBPyConnection, urn: str, artefact
     `_CASCADE` for every artefact — 40 `DELETE`s, of which roughly 34 were
     guaranteed no-ops, because writing a Dataflow cannot have left rows in
     `code`, `hierarchy_node` or thirty others. Measured on 627 MetadataSets
-    from the 2021 Census Profile bundle: re-ingest ran 25,080 `DELETE`s and took
+    from the 2021 Census Profile edition: re-ingest ran 25,080 `DELETE`s and took
     35.6 s against 10.1 s for the same artefacts written fresh.
 
     Two thirds of that cost is not the `DELETE`s themselves. Each binds `urn`
@@ -816,7 +816,7 @@ def _delete_artefact_cascade(conn: duckdb.DuckDBPyConnection, urn: str, artefact
     # what `SideLabel` documents on the read side — so its owner *is* the
     # artefact URN and the `OR owner_urn LIKE` half it used to carry matched
     # nothing while costing a full scan. `annotation` genuinely holds item
-    # URNs (585,663 of 585,675 rows in a real bundle), so it carries the
+    # URNs (585,663 of 585,675 rows in a real edition), so it carries the
     # artefact it belongs to as its own column instead.
     conn.execute("DELETE FROM localized_text WHERE owner_urn = ?", p)
     conn.execute("DELETE FROM version_rewrite WHERE urn = ?", p)
@@ -2900,7 +2900,7 @@ def drop_artefact(conn: duckdb.DuckDBPyConnection, urn: str) -> bool:
 def clear_availability(conn: duckdb.DuckDBPyConnection) -> None:
     """Delete every stored availability.
 
-    A publication started from another (`LocalRegistry.build(previous=)`)
+    An edition started from another (`LocalRegistry.build(previous=)`)
     holds that one's rows until this runs.
     """
     conn.execute("DELETE FROM availability_value")

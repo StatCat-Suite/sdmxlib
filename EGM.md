@@ -6,10 +6,10 @@ sdmxlib fetches, models, stores and queries SDMX: structural metadata,
 reference metadata and observation data, from SDMX REST APIs, SDMX files or a
 local DuckDB store. Users navigate a typed graph of frozen artefacts by
 attribute access, query it with the `sl.q` path language, and read
-observations through `obs()` as Polars frames. A published *bundle* (a DuckDB
-metadata store, a DuckLake of observations and a `bundle.manifest.json`) is
+observations through `obs()` as Polars frames. A published *edition* (a DuckDB
+metadata store, a DuckLake of observations and a `manifest.json`) is
 the unit the sibling repositories build on: statcatlib publishes catalogs of
-bundles, and sdmxlib-rest serves one over SDMX REST.
+editions, and sdmxlib-rest serves one over SDMX REST.
 
 This repository holds two distributions released together at one version:
 `sdmxlib` (`src/`) and `sdmxlib-cli` (`cli/`). `README.md` is the user guide
@@ -19,11 +19,11 @@ design documents are under `docs/design/`.
 ## Subdirectories & System Boundaries
 
 - src: [`./src/EGM.md`](./src/EGM.md) - the `sdmxlib` package: model, wire
-  formats, DuckDB storage and bundles, the query language, the REST
+  formats, DuckDB storage and editions, the query language, the REST
   registries. Its index is [`./src/sdmxlib/EGM.md`](./src/sdmxlib/EGM.md).
-- cli: [`./cli/EGM.md`](./cli/EGM.md) - `sdmxlib-cli`, the `sdmxlib bundle`
+- cli: [`./cli/EGM.md`](./cli/EGM.md) - `sdmxlib-cli`, the `sdmxlib edition`
   commands (`check`, `fetch`, `copy`, `files`) as thin wrappers over
-  `sdmxlib.bundle`.
+  `sdmxlib.edition`.
 - tools: [`./tools/EGM.md`](./tools/EGM.md) - repository gates run from the
   justfile (docstring style, prose style, the `Any` ratchet, the package-index
   allow-list), the XSD table generator, the MkDocs issue-link hook and the
@@ -40,8 +40,8 @@ Each `bench/` tool has a `README.md`.
 - Layering: `sdmxlib.model` imports nothing from `formats/`, `storage/`,
   `local/` or `api/`. Its domain types do no I/O; its one behavioural class,
   `rollup.AncestorMap`, queries DuckDB. `formats/` owns parsing and
-  serialisation of the SDMX wire formats; bundle and manifest JSON is read
-  and written in `storage/` and `bundle/`. `query/` imports nothing from
+  serialisation of the SDMX wire formats; edition and manifest JSON is read
+  and written in `storage/` and `edition/`. `query/` imports nothing from
   `local/`.
 - Every domain object in `sdmxlib.model` is an attrs `@frozen` class; an
   artefact is equal by value and keyed by URN, and a change is an
@@ -64,10 +64,10 @@ Each `bench/` tool has a `README.md`.
 ## Global Side Effects
 
 - DuckDB database files and DuckLake catalogs: a `LocalRegistry` store, a
-  bundle's `<token>/meta.duckdb` and its shared `data/` directory.
+  edition's `<edition_id>/metadata.duckdb` and its shared `data/` directory.
 - HTTP requests to SDMX REST endpoints (`api/`), and reads from object
-  stores for a remote bundle's data files.
-- Files written by publishing (`bundle.manifest.json`, last), by copies, and
+  stores for a remote edition's data files.
+- Files written by publishing (`manifest.json`, last), by copies, and
   by an observation query's `sink_*`.
 - Thread-local DuckDB cursors; spill files in the system temp directory.
 
@@ -75,7 +75,7 @@ Each `bench/` tool has a `README.md`.
 
 - Inner loop: `just check` (lint, format, docstrings, prose, `Any`, indexes,
   workflows, pyrefly) and `just test` (unit tests).
-- The gate: `just ci`, run locally; it adds the integration, docs, bundle
+- The gate: `just ci`, run locally; it adds the integration, docs, edition
   and object-store tiers and `just audit`. The hosted workflows are
   `check.yml` (`just check`), `docs.yml`, `fuzz.yml`, `zizmor.yml`,
   `scorecard.yml` and `release.yml`. None blocks a merge, except that `main`

@@ -1678,7 +1678,7 @@ class Query[R: RowKind, A = object]:
 
         | where the rows are | bounded? |
         | --- | --- |
-        | a bundle, or any file-backed store | yes — the figures above |
+        | an edition, or any file-backed store | yes — the figures above |
         | fetched, into a file-backed `store=` | yes, after a full download |
         | fetched, into a `RestRegistry`'s own in-memory store | **no** — materialised in RAM first |
 
@@ -1895,7 +1895,7 @@ class Query[R: RowKind, A = object]:
             ).collect()
 
         Not always faster than one `select(col).unique()` per column. On
-        the 2021 Census Profile bundle (519M rows, six dimensions) one scan lost 2.8x unfiltered
+        the 2021 Census Profile edition (519M rows, six dimensions) one scan lost 2.8x unfiltered
         and won 1.1-4.8x under a filter, so it is an option to take when a
         filter narrows the scan, not a replacement.
 
@@ -2430,7 +2430,7 @@ class Select[R: RowKind, A = object]:
 
         | where the rows are | bounded? |
         | --- | --- |
-        | a bundle, or any file-backed store | yes — the figures above |
+        | an edition, or any file-backed store | yes — the figures above |
         | fetched, into a file-backed `store=` | yes, after a full download |
         | fetched, into a `RestRegistry`'s own in-memory store | **no** — materialised in RAM first |
 

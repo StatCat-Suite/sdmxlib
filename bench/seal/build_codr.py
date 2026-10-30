@@ -16,7 +16,7 @@ from pathlib import Path
 import duckdb
 
 import sdmxlib as sl
-from sdmxlib.bundle import Producer, write_manifest
+from sdmxlib.edition import Producer, seal
 
 AGENCY = "STC"
 PID = "14100287"
@@ -115,8 +115,8 @@ def main(raw: Path, product: Path) -> None:
         )
         registry.write_observations(schema=SCHEMA, table=TABLE, source=source)
         registry.add(sl.DataflowBinding.from_dsd(dsd, dataflow=sl.Ref.to(flow), schema=SCHEMA, table=TABLE))
-        edition = registry.publication
-    write_manifest(edition, bundle_id=PID, producer=Producer(name="seal-measure", version="0"), lifecycle="live")
+        edition = registry.edition_dir
+    seal(edition, product_id=PID, producer=Producer(name="seal-measure", version="0"), lifecycle="revisable")
     sys.stdout.write(f"first edition {edition.name}: before {latest}, {time.perf_counter() - start:.0f} s\n")
 
 

@@ -240,7 +240,7 @@ def adopt(base: duckdb.DuckDBPyConnection, handle: duckdb.DuckDBPyConnection) ->
     A DuckDB cursor shares no session state with the connection it came from.
     A store's read cursor is one, and a query on it takes a handle of its own
     with `cursor_for`; without this that handle would miss the store's hooks,
-    such as the ``USE`` that points it at a bundle in a shared engine.
+    such as the ``USE`` that points it at an edition in a shared engine.
 
     Returns:
         `handle`, for chaining.

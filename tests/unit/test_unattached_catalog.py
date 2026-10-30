@@ -2,7 +2,7 @@
 
 §5.17 read this as a hole in §2's absence rule: `obs()`,
 `write_observations()` and `browse()` "need a lake, which only
-`LocalRegistry.bundle()` attaches — so on `LocalRegistry("meta.duckdb")` they
+`LocalRegistry.edition()` attaches — so on `LocalRegistry("metadata.duckdb")` they
 must *raise*, which §2 says only a type can prevent."
 
 **Measured, the premise does not hold.** `write_observations` refuses on a
@@ -14,7 +14,7 @@ lake.
 
 What needs the lake is a **binding**, when its `database_role` names one. That
 is data, and data cannot be checked by a type — so §2's rule was never in
-tension and `BundleRegistry` does not need to exist for this reason.
+tension and `EditionRegistry` does not need to exist for this reason.
 
 What *was* wrong is the refusal. A bundle's binding read through a plain
 registry reached DuckDB as ``Binder Error: Catalog "lake" does not exist!``,
@@ -95,7 +95,7 @@ def test_write_observations_without_a_lake_says_where_one_comes_from(reg) -> Non
         reg.write_observations(schema="data", table="obs", source=pl.DataFrame({"REF_AREA": ["CA"]}))
     message = str(caught.value)
     assert "no lake" in message
-    assert "LocalRegistry.build(bundle)" in message
+    assert "LocalRegistry.build(product)" in message
 
 
 # ── the refusal that was actually missing ─────────────────────────────────
@@ -103,7 +103,7 @@ def test_write_observations_without_a_lake_says_where_one_comes_from(reg) -> Non
 
 def test_an_unattached_catalog_is_named(reg) -> None:
     """Was ``Binder Error: Catalog "lake" does not exist!`` — true, and useless
-    to a caller who does not know that `lake` is what `bundle()` attaches."""
+    to a caller who does not know that `lake` is what `edition()` attaches."""
     reg.add(_binding("lake"))
     with pytest.raises(KeyError) as caught:
         reg.obs(_FLOW)
@@ -111,7 +111,7 @@ def test_an_unattached_catalog_is_named(reg) -> None:
     message = str(caught.value)
     assert "AG:DF(1.0)" in message, "which dataflow"
     assert "lake.data.obs" in message, "and where it thinks its rows are"
-    assert "bundle(" in message, "and the constructor that attaches it"
+    assert "edition(" in message, "and the constructor that attaches it"
 
 
 def test_the_refusal_lists_what_is_attached(reg) -> None:
@@ -145,7 +145,7 @@ def test_a_bundle_binding_works_in_a_bundle(tmp_path) -> None:
             source=pl.DataFrame({"REF_AREA": ["ON"], "OBS_VALUE": [1.0]}),
         )
         writer.add(DataflowBinding.from_dsd(_DSD, dataflow=Ref.to(_FLOW), schema="data", table="obs"))
-        publication = writer.publication
+        publication = writer.edition_dir
 
-    with sl.LocalRegistry.bundle(publish(publication)) as bundled:
+    with sl.LocalRegistry.edition(publish(publication)) as bundled:
         assert bundled.obs(_FLOW).count() == 1

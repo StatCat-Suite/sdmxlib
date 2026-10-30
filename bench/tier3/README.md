@@ -12,7 +12,7 @@ just bench-tier3-update <publication>   # also overwrite baselines.json
 
 The publication's files go to Azurite, pinned by digest as the object-store
 tier pins it (`tests/stores/_stores.py`); a pod's copy of tiers 1 and 2 opens
-them with `LocalRegistry.bundle(path, remote=...)`. Each setting runs in a
+them with `LocalRegistry.edition(path, remote=...)`. Each setting runs in a
 fresh process that reads one geography, one characteristic and the count twice,
 then in a second fresh process, which is a pod restart. DuckDB's HTTP log gives
 the GET count and bytes of each read; `duckdb_external_file_cache()` the bytes

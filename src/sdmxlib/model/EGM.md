@@ -173,7 +173,7 @@ hierarchical roll-ups.
   `ItemList.to_dict` and `ArtefactList.to_dict` return `dict[Any, T]`, and
   `ItemExpr.is_in`'s `Collection[Any]`.
 - Modules whose names start with `_` are internal to sdmxlib.
-  `formats/`, `storage/`, `local/`, `bundle/`, `api/` and `query/` import
+  `formats/`, `storage/`, `local/`, `edition/`, `api/` and `query/` import
   them. `_label_match.py` holds string-matching SQL fragments used only by
   `query/`.
 

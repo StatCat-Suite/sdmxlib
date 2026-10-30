@@ -1,6 +1,6 @@
 """The render version of each wire format sdmxlib writes, for cache keys (GH-132).
 
-A served response's bytes depend on the bundle and on the code that writes
+A served response's bytes depend on the edition and on the code that writes
 them. The effective token covers the bundle and its overlays; the render
 version covers the writer. A server that caches what it writes keys on both,
 so a writer fix gives new keys and the old entries age out, and a release

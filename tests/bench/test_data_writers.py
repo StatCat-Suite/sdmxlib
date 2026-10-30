@@ -225,7 +225,7 @@ def _load_census_geo_codelist() -> Codelist | None:
     path = _bundle.bundle_path()
     if path is None:
         return None
-    with LocalRegistry.bundle(path) as registry:
+    with LocalRegistry.edition(path) as registry:
         binding = registry.locate(next(iter(registry.get_all(DataflowBinding))))
         if binding.series_attributes_location is None:
             return None

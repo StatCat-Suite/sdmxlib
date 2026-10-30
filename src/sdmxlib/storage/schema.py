@@ -200,7 +200,11 @@ from sdmxlib._duckdb import first
 #:
 #: 2.51 holds a reported attribute's place in its set (GH-197):
 #: ``metadata_value.ordinal``, the document order the tree is rebuilt in.
-SCHEMA_VERSION = "2.51"
+#:
+#: 2.52 names an unsealed edition's ``_meta`` keys as manifest 3.0 does
+#: (GH-250): ``edition_id`` and ``previous``, where 2.51 had
+#: ``publication_token`` and ``previous_token``.
+SCHEMA_VERSION = "2.52"
 
 
 #: The `Representation` sum type, as columns — **defined once and interpolated
@@ -392,7 +396,7 @@ CREATE TABLE IF NOT EXISTS annotation (
     -- ``agency:id(version)`` tail is shared. Recovering the artefact from
     -- the owner therefore needed ``LIKE '%=SUFFIX.%'``, whose leading
     -- wildcard no index can serve: clearing one artefact's annotations
-    -- scanned all 585,675 rows of a real bundle, 22.5 ms a time.
+    -- scanned all 585,675 rows of a real edition, 22.5 ms a time.
     owner_artefact_urn TEXT NOT NULL,
     ordinal         INT NOT NULL,
     annotation_id   TEXT,
@@ -1543,8 +1547,8 @@ def get_schema_version(conn: duckdb.DuckDBPyConnection) -> str | None:
 def meta_value(conn: duckdb.DuckDBPyConnection, key: str) -> str | None:
     """The value of `key` in ``sdmx._meta``, or None if the key or the schema is missing.
 
-    Keys: ``schema_version``; ``publication_token`` and ``previous_token``,
-    which `LocalRegistry.build` writes into a publication's store.
+    Keys: ``schema_version``; ``edition_id`` and ``previous``,
+    which `LocalRegistry.build` writes into an edition's store.
     """
     try:
         row = first(conn.execute("SELECT value FROM sdmx._meta WHERE key = ?", [key]))
@@ -1578,12 +1582,12 @@ class ScanIntegrityError(Exception):
     It matters because it is otherwise **invisible**. A store in this state
     answers `SELECT … WHERE col = ?` with a subset and reports success, so a
     read returns an artefact missing children and a re-persist bakes the loss
-    in. The bundle that prompted this returned 1 of 19 codelists and 0 of 349
+    in. The edition that prompted this returned 1 of 19 codelists and 0 of 349
     concepts for months.
 
     The probe is a sentinel, not a proof: it scans the spine, so a store
     damaged only in a child table still passes. It costs one query and would
-    have caught the case that motivated it on the day the bundle was built,
+    have caught the case that motivated it on the day the edition was built,
     which is the trade being made.
     """
 
@@ -1617,10 +1621,10 @@ class StoreSchemaError(Exception):
     """A store holds artefacts on a schema version this build does not read.
 
     Migration is *drop and rebuild*, which is only right for a cache that can
-    be fetched again. A bundle's ``meta.duckdb`` is the published record, and a
+    be fetched again. An edition's ``metadata.duckdb`` is the published record, and a
     store filled with ``add`` may have no source to fetch from, so a populated
     store on another version is refused rather than emptied: sdmxlib 0.68 to
-    0.70 opened a 0.67 bundle read-write and deleted every artefact in it,
+    0.70 opened a 0.67 edition read-write and deleted every artefact in it,
     silently, for the reader and for the older sdmxlib that built it.
     ``LocalRegistry(path, rebuild=True)`` asks for the rebuild.
     """
@@ -1635,7 +1639,7 @@ class ReadOnlySchemaError(StoreSchemaError):
     which names neither version and reads as a bug in the caller.
 
     First hit when 2.19 landed (#145): the bundle-assertion tier opens
-    `meta.duckdb` read-only by design, so 20 of `just ci`'s assertions died
+    `metadata.duckdb` read-only by design, so 20 of `just ci`'s assertions died
     on that DuckDB message. Any future bump would have done the same.
     """
 
@@ -1643,8 +1647,8 @@ class ReadOnlySchemaError(StoreSchemaError):
 def sdmx_catalog(conn: duckdb.DuckDBPyConnection) -> str:
     """The catalog whose ``sdmx`` schema `conn` reads: its current database.
 
-    A store opened on its own file reads the file's catalog. A bundle in a
-    shared `BundleEngine` reads its own ``<prefix>__meta`` catalog, which its
+    A store opened on its own file reads the file's catalog. An edition in a
+    shared `EditionEngine` reads its own ``<prefix>__metadata`` catalog, which its
     handle selected with `use_sdmx` (GH-133).
     """
     (catalog,) = first(conn.execute("SELECT current_database()")) or ("memory",)

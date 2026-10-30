@@ -279,11 +279,11 @@ The order reads the codelist the registry stores, so it holds for as long as
 that codelist does:
 
 - A codelist version that lists its codes in another order changes the order
-  of every dataflow it enumerates. Within one publication the codelist is
+  of every dataflow it enumerates. Within one edition the codelist is
   fixed, and so is the order.
 - A registry that does not hold the codelist sorts that dimension as text. So
   does `DuckDBDataStore.obs(binding)` without `dsd=`, for every dimension. One
-  dataflow can therefore come back in codelist order from its bundle and in
+  dataflow can therefore come back in codelist order from its edition and in
   text order from a store without its structures.
 - A cursor carries the key values alone, so `after()` accepts one taken under
   another order and continues in the current one. A page walk that spans a
@@ -291,7 +291,7 @@ that codelist does:
 
 That clause exists so `limit`/`offset` paging is stable, and on a codelist it
 is free. On observations it is not. Measured on the 4,261,081-row
-`CensusDivision` partition of the 2021 Census Profile bundle, three columns
+`CensusDivision` partition of the 2021 Census Profile edition, three columns
 selected, best of 3, DuckDB on 4 threads:
 
 | | ms |

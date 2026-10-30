@@ -37,7 +37,7 @@ def store(tmp_path):
     with LocalRegistry(":memory:") as registry:
         data_store = DuckDBDataStore.from_registry(registry)
         data_store.connection.execute(
-            f"ATTACH 'ducklake:{tmp_path / 'lake.ducklake'}' AS lake (DATA_PATH '{tmp_path}/data/')"
+            f"ATTACH 'ducklake:{tmp_path / 'tables.ducklake'}' AS lake (DATA_PATH '{tmp_path}/data/')"
         )
         yield data_store
 

@@ -18,7 +18,7 @@ from pathlib import Path
 import attrs
 import msgspec
 
-from sdmxlib.bundle import canonical_json
+from sdmxlib.edition import canonical_json
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.category import CategoryScheme
 from sdmxlib.model.collections import ArtefactList

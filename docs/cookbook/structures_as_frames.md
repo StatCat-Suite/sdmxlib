@@ -461,7 +461,7 @@ up three things the DSL keeps:
   statement.
 - **The scope filter is automatic.** A query reached through an artefact is
   already narrowed to the right URN. Forgetting that clause in hand-written SQL
-  returns rows from every codelist in the bundle, and nothing flags them as
+  returns rows from every codelist in the edition, and nothing flags them as
   wrong.
 
 The hatch is also a *terminal*: `reg.sql(...)` does not splice back into the

@@ -1,6 +1,6 @@
 """Opening a store whose scans lose rows refuses, rather than reading it (#400).
 
-A `meta.duckdb` in the wild answered `WHERE artefact_type = 'Codelist'` with
+A `metadata.duckdb` in the wild answered `WHERE artefact_type = 'Codelist'` with
 **1 of its 19 codelists**, and `WHERE scheme_urn = …` with **0 of 349
 concepts**. The rows were all there — `SELECT *` returned them, and so did the
 same queries with `SET disabled_optimizers='filter_pushdown'`. What was wrong

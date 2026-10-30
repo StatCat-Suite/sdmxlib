@@ -16,7 +16,7 @@ import msgspec
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.bundle import (
+from sdmxlib.edition import (
     Manifest,
     MergeHook,
     Overlay,
@@ -27,16 +27,16 @@ from sdmxlib.bundle import (
     Producer,
     applied,
     apply_overlays,
-    check_bundle,
+    check_edition,
     effective_token,
     fold_overlays,
     overlay_schema,
     read_manifest,
     read_overlay,
-    write_manifest,
+    seal,
 )
-from sdmxlib.bundle import _overlay as _overlay_module
-from sdmxlib.bundle._overlay import generate_overlay_schema
+from sdmxlib.edition import _overlay as _overlay_module
+from sdmxlib.edition._overlay import generate_overlay_schema
 from sdmxlib.model.annotations import Annotation
 from sdmxlib.model.urn import SdmxUrn
 from tests.support.bundles import DSD, make_bundle
@@ -175,9 +175,9 @@ def test_the_result_is_the_same_in_sdmx_ml_and_sdmx_json() -> None:
 
 def test_the_effective_token_moves_with_the_overlays_and_not_the_bundle(tmp_path: Path) -> None:
     publication = make_bundle(tmp_path / "b", 10)
-    manifest = write_manifest(publication, bundle_id="b", producer=Producer(name="t", version="1"))
+    manifest = seal(publication, product_id="b", producer=Producer(name="t", version="1"))
     one, two = _overlay(_entry("*", title="1"), overlay_id="one"), _overlay(_entry("*", title="2"), overlay_id="two")
-    assert effective_token(manifest, []) == manifest.token
+    assert effective_token(manifest, []) == manifest.edition_id
     tokens = {
         effective_token(manifest, [one]),
         effective_token(manifest, [two]),
@@ -185,11 +185,11 @@ def test_the_effective_token_moves_with_the_overlays_and_not_the_bundle(tmp_path
         effective_token(manifest, [two, one]),
     }
     assert len(tokens) == 4, "content and order both count"
-    assert manifest.token not in tokens
+    assert manifest.edition_id not in tokens
     assert effective_token(manifest, [one]) == effective_token(
         manifest, [_overlay(_entry("*", title="1"), overlay_id="one")]
     )
-    assert read_manifest(publication).token == manifest.token, "applying overlays never touches the bundle"
+    assert read_manifest(publication).edition_id == manifest.edition_id, "applying overlays never touches the bundle"
 
 
 @pytest.mark.parametrize(
@@ -221,25 +221,29 @@ def test_a_document_that_is_not_an_overlay_is_refused(tmp_path: Path, document: 
 
 def test_fold_writes_overlays_into_a_new_publication(tmp_path: Path) -> None:
     root = make_bundle(tmp_path / "b", 10, extra=(_FREQ,))
-    before = write_manifest(root, bundle_id="b", producer=Producer(name="t", version="1"), product={"edition": 1})
+    before = seal(root, product_id="b", producer=Producer(name="t", version="1"), producer_fields={"edition": 1})
     after = fold_overlays(root, [_overlay(_entry("AG:CL_FREQ", "set", "ORDER", "folded"))])
-    assert after.token != before.token
-    assert after.previous_token == before.token
-    assert (after.bundle_id, after.producer, after.product) == (before.bundle_id, before.producer, before.product)
-    folded = root.parent / after.token
-    with sl.LocalRegistry.bundle(folded) as reg:
+    assert after.edition_id != before.edition_id
+    assert after.previous == before.edition_id
+    assert (after.product_id, after.producer, after.producer_fields) == (
+        before.product_id,
+        before.producer,
+        before.producer_fields,
+    )
+    folded = root.parent / after.edition_id
+    with sl.LocalRegistry.edition(folded) as reg:
         assert _titles(reg.get(_FREQ.urn, eager=True), "ORDER") == ["folded"]
-    with sl.LocalRegistry.bundle(root) as reg:
+    with sl.LocalRegistry.edition(root) as reg:
         assert _titles(reg.get(_FREQ.urn, eager=True), "ORDER") == _titles(_FREQ, "ORDER") == ["kept"], (
             "the earlier publication is untouched"
         )
     for publication in (root, folded):
-        report = check_bundle(publication, at="publish")
+        report = check_edition(publication, at="publish")
         assert report.ok, "\n".join(map(str, report.findings))
 
 
 def test_the_shipped_schema_is_the_models() -> None:
-    assert overlay_schema() == generate_overlay_schema(), "regenerate src/sdmxlib/bundle/overlay.schema.json"
+    assert overlay_schema() == generate_overlay_schema(), "regenerate src/sdmxlib/edition/overlay.schema.json"
 
 
 def test_an_artefact_level_overlay_does_not_walk_the_items(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -271,7 +275,7 @@ def test_an_artefact_level_overlay_does_not_walk_the_items(monkeypatch: pytest.M
 
 
 def _manifest(tmp_path: Path) -> Manifest:
-    return write_manifest(make_bundle(tmp_path / "b", 10), bundle_id="b", producer=Producer(name="t", version="1"))
+    return seal(make_bundle(tmp_path / "b", 10), product_id="b", producer=Producer(name="t", version="1"))
 
 
 def _replace(existing: list[Annotation], new: Annotation) -> list[Annotation]:
@@ -319,19 +323,19 @@ def test_the_token_covers_each_hook(tmp_path: Path) -> None:
     assert base != effective_token(manifest, overlays, merge={"LABEL": _hook(), "NOTE": _hook(name="other")})
     assert base != effective_token(manifest, overlays, merge={"LABEL": _hook(), "ORDER": _hook()}), "another type"
     assert base == effective_token(manifest, overlays, merge={"NOTE": _hook(), "LABEL": _hook()}), "order of the map"
-    assert effective_token(manifest, [], merge={"LABEL": _hook()}) == manifest.token, "no overlays, no hooks line"
+    assert effective_token(manifest, [], merge={"LABEL": _hook()}) == manifest.edition_id, "no overlays, no hooks line"
 
 
 def test_the_token_is_the_documented_hash(tmp_path: Path) -> None:
-    """`docs/bundle.md` §5.4, recomputed from its words."""
+    """`docs/edition.md` §5.4, recomputed from its words."""
     manifest = _manifest(tmp_path)
     overlay = _overlay(_entry("*"))
     digest = hashlib.sha256(msgspec.json.encode(overlay, order="sorted")).hexdigest()
     hooks = "LABEL=tests:replace@1,NOTE=tests:replace@2"
-    text = f"v2\n{manifest.token}\n{hooks}\n{digest}"
+    text = f"v3\n{manifest.edition_id}\n{hooks}\n{digest}"
     merge = {"NOTE": _hook("2"), "LABEL": _hook()}
     assert effective_token(manifest, [overlay], merge=merge) == hashlib.sha256(text.encode()).hexdigest()
-    plain = f"v2\n{manifest.token}\ndefault\n{digest}"
+    plain = f"v3\n{manifest.edition_id}\ndefault\n{digest}"
     assert effective_token(manifest, [overlay]) == hashlib.sha256(plain.encode()).hexdigest()
 
 
@@ -350,9 +354,9 @@ def test_an_annotation_type_with_a_separator_cannot_carry_a_hook(tmp_path: Path)
 
 def test_fold_applies_only_the_audiences_entries(tmp_path: Path) -> None:
     root = make_bundle(tmp_path / "b", 10, extra=(_FREQ,))
-    write_manifest(root, bundle_id="b", producer=Producer(name="t", version="1"))
+    seal(root, product_id="b", producer=Producer(name="t", version="1"))
     after = fold_overlays(root, [_SCOPED], audience="public")
-    with sl.LocalRegistry.bundle(root.parent / after.token) as reg:
+    with sl.LocalRegistry.edition(root.parent / after.edition_id) as reg:
         folded = reg.get(_FREQ.urn, eager=True)
         assert folded is not None
         kinds = {a.type for a in folded.annotations}
@@ -380,13 +384,13 @@ _CODE_A = "urn:sdmx:org.sdmx.infomodel.codelist.Code=AG:CL_FREQ(1.0).A"
 
 def _folded(tmp_path: Path, *overlays: Overlay, audience: str | None = None) -> tuple[Path, Path, Manifest, Manifest]:
     root = make_bundle(tmp_path / "b", 10, extra=(_FREQ,))
-    before = write_manifest(root, bundle_id="b", producer=Producer(name="t", version="1"))
+    before = seal(root, product_id="b", producer=Producer(name="t", version="1"))
     after = fold_overlays(root, list(overlays), audience=audience)
-    return root, root.parent / after.token, before, after
+    return root, root.parent / after.edition_id, before, after
 
 
 def _code_a(publication: Path) -> sl.Code:
-    with sl.LocalRegistry.bundle(publication) as reg:
+    with sl.LocalRegistry.edition(publication) as reg:
         codelist = reg.get(_FREQ.urn, eager=True)
         assert codelist is not None
         return codelist.codes["A"]
@@ -398,7 +402,7 @@ def test_a_folded_french_name_reads_back_and_the_earlier_publication_keeps_its_o
     assert _code_a(root).name.as_dict() == {"en": "Annual"}
     fingerprints = {a.urn: a.fingerprint for a in before.artefacts}, {a.urn: a.fingerprint for a in after.artefacts}
     assert fingerprints[0][str(_FREQ.urn)] != fingerprints[1][str(_FREQ.urn)], "the codelist's content changed"
-    assert check_bundle(folded, at="publish").ok
+    assert check_edition(folded, at="publish").ok
 
 
 def test_the_most_specific_text_wins(tmp_path: Path) -> None:
@@ -425,7 +429,7 @@ def test_serving_refuses_a_name_change_and_names_fold(tmp_path: Path) -> None:
     overlay = _texts(_text(_CODE_A))
     with pytest.raises(OverlayError, match="fold_overlays"):
         apply_overlays([_FREQ], [overlay])
-    manifest = write_manifest(make_bundle(tmp_path / "b", 10), bundle_id="b", producer=Producer(name="t", version="1"))
+    manifest = seal(make_bundle(tmp_path / "b", 10), product_id="b", producer=Producer(name="t", version="1"))
     with pytest.raises(OverlayError, match="fold_overlays"):
         effective_token(manifest, [overlay])
     scoped = _texts(_text(_CODE_A, scope="internal"))

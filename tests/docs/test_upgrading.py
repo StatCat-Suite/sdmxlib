@@ -20,7 +20,7 @@ import inspect
 import pytest
 
 import sdmxlib as sl
-from sdmxlib import bundle
+from sdmxlib import edition
 from tests.support.narrow import present
 from tests.support.repo import ROOT
 
@@ -66,7 +66,7 @@ def test_a_name_the_guide_calls_removed_is_removed(name: str) -> None:
     "name",
     [
         "LocalRegistry",
-        "BundleRegistry",
+        "EditionRegistry",
         "RestRegistry",
         "FederatedRegistry",
         "DataFormat",
@@ -192,12 +192,12 @@ def test_bundle_reads_and_build_writes() -> None:
     `require_manifest=` and returns a type with no writes; `build()` opens for
     writing."""
     parameters = inspect.signature(
-        sl.LocalRegistry.bundle, annotation_format=annotationlib.Format.FORWARDREF
+        sl.LocalRegistry.edition, annotation_format=annotationlib.Format.FORWARDREF
     ).parameters
     assert "require_manifest" not in parameters
-    assert issubclass(sl.LocalRegistry, sl.BundleRegistry)
+    assert issubclass(sl.LocalRegistry, sl.EditionRegistry)
     assert [
-        name for name in ("add", "add_all", "drop", "replace", "ingest", "sql") if hasattr(sl.BundleRegistry, name)
+        name for name in ("add", "add_all", "drop", "replace", "ingest", "sql") if hasattr(sl.EditionRegistry, name)
     ] == []
     assert callable(sl.LocalRegistry.build)
 
@@ -205,12 +205,12 @@ def test_bundle_reads_and_build_writes() -> None:
 def test_build_starts_publications_over_a_shared_data_directory() -> None:
     """The guide's bundle-layout section (GH-123): `build()` takes `previous=`
     and `resume=`, the manifest is format 2 with the layout fields, and
-    `copy_bundle` exists."""
+    `copy_edition` exists."""
     parameters = inspect.signature(sl.LocalRegistry.build, annotation_format=annotationlib.Format.FORWARDREF).parameters
     assert {"previous", "resume"} <= parameters.keys()
-    assert bundle.FORMAT_VERSION.partition(".")[0] == "2"
-    assert {"root", "carried_from"} <= set(bundle.BundleFile.__struct_fields__)
-    assert {"previous_token", "data_path"} <= set(bundle.Manifest.__struct_fields__)
+    assert edition.FORMAT_VERSION.partition(".")[0] == "3"
+    assert {"root", "carried_from"} <= set(edition.EditionFile.__struct_fields__)
+    assert {"previous", "data_path"} <= set(edition.Manifest.__struct_fields__)
 
 
 def test_the_manifest_records_engines_artefacts_tiers_and_md5() -> None:
@@ -221,16 +221,16 @@ def test_the_manifest_records_engines_artefacts_tiers_and_md5() -> None:
         "ducklake_version",
         "ducklake_spec_version",
         "artefacts",
-    } <= set(bundle.Manifest.__struct_fields__)
-    assert {"digests", "tier"} <= set(bundle.BundleFile.__struct_fields__)
-    assert {"structural_version", "fingerprint", "structure_fingerprint"} <= set(bundle.BindingCount.__struct_fields__)
-    assert {"canonical_form", "content_fingerprint"} <= set(bundle.Manifest.__struct_fields__)
-    assert "fingerprint" in bundle.ArtefactEntry.__struct_fields__
-    assert {"stability", "partial"} <= set(bundle.ArtefactEntry.__struct_fields__)
-    for function in (bundle.write_manifest, bundle.copy_bundle):
+    } <= set(edition.Manifest.__struct_fields__)
+    assert {"digests", "tier"} <= set(edition.EditionFile.__struct_fields__)
+    assert {"structural_version", "fingerprint", "structure_fingerprint"} <= set(edition.BindingCount.__struct_fields__)
+    assert {"canonical_form", "content_fingerprint"} <= set(edition.Manifest.__struct_fields__)
+    assert "fingerprint" in edition.ArtefactEntry.__struct_fields__
+    assert {"stability", "partial"} <= set(edition.ArtefactEntry.__struct_fields__)
+    for function in (edition.seal, edition.copy_edition):
         assert "tiers" in inspect.signature(function, annotation_format=annotationlib.Format.FORWARDREF).parameters
-    written = inspect.signature(bundle.write_manifest, annotation_format=annotationlib.Format.FORWARDREF)
+    written = inspect.signature(edition.seal, annotation_format=annotationlib.Format.FORWARDREF)
     assert {"lifecycle", "expire_snapshots"} <= written.parameters.keys()
     assert issubclass(sl.StoreFormatError, Exception)
-    assert bundle.StoreFormatError is sl.StoreFormatError
-    assert callable(bundle.copy_bundle)
+    assert edition.StoreFormatError is sl.StoreFormatError
+    assert callable(edition.copy_edition)

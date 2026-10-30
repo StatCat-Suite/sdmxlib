@@ -45,7 +45,7 @@ def test_detects_only_supported_versions_message():
 
 
 def test_ignores_unrelated_duckdb_error():
-    assert not _is_ducklake_version_mismatch(duckdb.IOException("No such file: lake.ducklake"))
+    assert not _is_ducklake_version_mismatch(duckdb.IOException("No such file: tables.ducklake"))
     assert not _is_ducklake_version_mismatch(ValueError("ducklake something else entirely"))
 
 
@@ -78,7 +78,7 @@ def _data_store_with_conn(conn: _FakeConn, monkeypatch: pytest.MonkeyPatch) -> D
     # the fake provides. Installed as the fake it is, not typed as the real one.
     monkeypatch.setattr(ds, "_conn", conn, raising=False)
     attach: dict[str, str | tuple[str, str]] = {
-        "lake": ("'ducklake:/tmp/lake.ducklake'", "(DATA_PATH '/tmp/parquet/')")
+        "lake": ("'ducklake:/tmp/tables.ducklake'", "(DATA_PATH '/tmp/parquet/')")
     }
     ds._attach = attach
     ds._extensions = ["ducklake"]
@@ -104,7 +104,7 @@ def test_attach_version_mismatch_raises_clear_error(monkeypatch: pytest.MonkeyPa
 
 
 def test_attach_unrelated_duckdb_error_propagates_unchanged(monkeypatch: pytest.MonkeyPatch) -> None:
-    original = duckdb.IOException("IO Error: No such file: /tmp/lake.ducklake")
+    original = duckdb.IOException("IO Error: No such file: /tmp/tables.ducklake")
     ds = _data_store_with_conn(_FakeConn(original), monkeypatch)
 
     with pytest.raises(duckdb.IOException):

@@ -179,7 +179,7 @@ class SchemaInspector:
         matches NULL, so repeated NULL-keyed rows cannot multiply a join, and
         refusing a table for them would be refusing a harmless one.
 
-        A scan of the table — ~5 ms on the 2021 Census Profile bundle's 619-row geography
+        A scan of the table — ~5 ms on the 2021 Census Profile edition's 619-row geography
         sidecar, ~37 ms cold — so memoised single-flight beside `columns`, and
         dropped by `invalidate` with it.
 
@@ -211,7 +211,7 @@ class SchemaInspector:
 
         Read from the table's DuckLake catalog, where `write_observations`'
         ``partition_by`` records them, so the layout has one source of truth
-        that ships in the bundle. Only identity partitions: one keyed on a
+        that ships in the edition. Only identity partitions: one keyed on a
         transform (``year(ts)``) does not make the rows disjoint on the column
         itself. A table outside DuckLake, or unpartitioned, has none.
 

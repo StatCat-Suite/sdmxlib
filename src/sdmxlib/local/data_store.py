@@ -43,16 +43,16 @@ from sdmxlib.storage.schema import sdmx_catalog, use_sdmx
 
 if TYPE_CHECKING:
     # `local.registry` imports this module at runtime: a cycle.
-    from sdmxlib.local.registry import BundleRegistry
+    from sdmxlib.local.registry import EditionRegistry
 
 
 class DuckLakeVersionError(Exception):  # mirrors RegistryUnavailable etc.
     """A DuckLake catalog's format is newer than the installed extension.
 
-    Raised when ATTACH-ing a bundle whose DuckLake catalog format exceeds
+    Raised when ATTACH-ing an edition whose DuckLake catalog format exceeds
     what the loaded ``ducklake`` extension supports. The fix is to align
     versions (upgrade ``duckdb`` >= 1.5.3 and/or the ``ducklake``
-    extension), not to migrate the bundle in place.
+    extension), not to migrate the edition in place.
     """
 
 
@@ -163,7 +163,7 @@ class DuckDBDataStore(SessionFactory):
         self._attach = attach
         self._extensions = extensions
         self._azure_credentials = azure_credentials
-        self._registry: BundleRegistry | None = None
+        self._registry: EditionRegistry | None = None
         self._conn: duckdb.DuckDBPyConnection | None = None
         self._owns_connection = True
         #: The catalog whose ``sdmx`` schema the handles read: the registry's,
@@ -206,7 +206,7 @@ class DuckDBDataStore(SessionFactory):
         return self._conn
 
     @property
-    def registry(self) -> BundleRegistry | None:
+    def registry(self) -> EditionRegistry | None:
         """The `LocalRegistry` whose connection is shared, or ``None``.
 
         Set when the data store was constructed via `from_registry`;
@@ -229,7 +229,7 @@ class DuckDBDataStore(SessionFactory):
     @classmethod
     def from_registry(
         cls,
-        registry: BundleRegistry,
+        registry: EditionRegistry,
         *,
         attach: dict[str, str | tuple[str, str]] | None = None,
         extensions: list[str] | None = None,
@@ -435,8 +435,8 @@ class DuckDBDataStore(SessionFactory):
 
         A binding names its table as ``<database_role>.<table_location>``, and
         the role is a DuckDB catalog. A registry opened with
-        `LocalRegistry.bundle` attaches the bundle's DuckLake as ``lake``; one
-        opened as a plain file attaches nothing, so a bundle's binding read
+        `LocalRegistry.edition` attaches the edition's DuckLake as ``lake``; one
+        opened as a plain file attaches nothing, so an edition's binding read
         through it reached DuckDB as
         ``Binder Error: Catalog "lake" does not exist!`` — naming neither the
         binding nor the fix.
@@ -473,8 +473,8 @@ class DuckDBDataStore(SessionFactory):
         msg = (
             f"{binding.dataflow.urn} is bound to {role}.{binding.table_location}, but no "
             f"catalog named {role!r} is attached here (attached: {', '.join(sorted(attached))}). "
-            f"A bundle's observations live in its DuckLake, which `LocalRegistry.bundle(path)` "
-            f"attaches and `LocalRegistry(path)` does not — open it as a bundle, or rebind the "
+            f"An edition's observations live in its DuckLake, which `LocalRegistry.edition(path)` "
+            f"attaches and `LocalRegistry(path)` does not — open it as an edition, or rebind the "
             f"dataflow to a table this registry can see."
         )
         raise KeyError(msg)
@@ -675,7 +675,7 @@ class DuckDBDataStore(SessionFactory):
                 as the table's ``SORTED BY`` before inserting, so DuckLake
                 writes the rows sorted, and sorts again whenever it flushes or
                 compacts. The layout lives in DuckLake's catalog, which ships
-                with the bundle; nothing here promises a reader rows in order.
+                with the edition; nothing here promises a reader rows in order.
                 Empty keeps the order the rows arrive in. An append keeps the
                 table's sort and refuses a ``sorted_by``. A target outside
                 DuckLake has no sort to set, and refuses one.
@@ -689,7 +689,7 @@ class DuckDBDataStore(SessionFactory):
             mode: ``"overwrite"`` replaces the table atomically;
                 ``"append"`` inserts into an existing table.
             lake_alias: ATTACH alias of the target lake. Defaults to
-                ``"lake"`` to match the conventional bundle layout.
+                ``"lake"`` to match the conventional edition layout.
         """
         _check_write_target(schema=schema, table=table, lake_alias=lake_alias, mode=mode)
 
@@ -823,8 +823,8 @@ def _already_attached(conn: duckdb.DuckDBPyConnection, alias: str, url: str) -> 
     """Whether `alias` is attached already, to the catalog `url` names.
 
     DuckDB shares one database instance between connections to the same file
-    in a process, so a second registry over a bundle sees the first's ``lake``:
-    a bundle checked or profiled while a server holds it open, and the bundle
+    in a process, so a second registry over an edition sees the first's ``lake``:
+    an edition checked or profiled while a server holds it open, and the edition
     tier's own fixtures. Attaching again fails ("database with name ... already
     exists"); attached to the same catalog, there is nothing to do.
 
@@ -875,7 +875,7 @@ def _azure_create_secret_sql(creds: dict[str, str]) -> str:
     * ``{"chain": "cli"|"env"|"managed_identity"}`` →
       ``PROVIDER 'credential_chain'``.
 
-    Each is a `StoreSecret`, the form `BundleEngine` takes.
+    Each is a `StoreSecret`, the form `EditionEngine` takes.
     """
     name = "sdmxlib_azure"
     if "connection_string" in creds:

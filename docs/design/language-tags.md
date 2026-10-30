@@ -181,7 +181,7 @@ attribute, would accept a schema-invalid document. sdmxlib never produces
 `und` itself. A caller or source that does not know a text's language passes
 `und`, which is a well-formed tag.
 
-### D6. Stores keep no check on read, and `check_bundle` reports stale ones
+### D6. Stores keep no check on read, and `check_edition` reports stale ones
 
 The store writers (`storage/writers.py`, the `localized_text` rows and the
 DuckDB name maps) write what `InternationalString` holds, which is normalised.
@@ -190,7 +190,7 @@ The store readers therefore trust their rows (D3) and pay no grammar check.
 No `SCHEMA_VERSION` bump: normalisation changes no tag the registries send,
 so a store built from them already holds normalised keys. A store built before
 GH-280 from a source that sent another case, `""` or a malformed tag would
-answer Python reads and SQL lookups differently. `check_bundle` reports any
+answer Python reads and SQL lookups differently. `check_edition` reports any
 stored tag that `normalize_tag` would change or refuse, scanning
 `localized_text` and the name-map keys once per check, and
 `docs/upgrading.md` says to rebuild such a store.
@@ -255,7 +255,7 @@ one.
 
 The readers normalise through `formats/_tags.py`, which turns a bad tag
 into the `SdmxConformanceError` that `build_each` refuses an artefact for.
-`check_bundle`'s `tags` check finds the store's tag columns in
+`check_edition`'s `tags` check finds the store's tag columns in
 `information_schema`, so a column added later is covered.
 
 **Cost.** Parsing pays one check per text. Every check in the measured

@@ -303,7 +303,7 @@ with sl.LocalRegistry("store.duckdb") as local:      # or ":memory:"; `with` ope
   artefact a rule refuses; bulk reads skip it into `local.refused`.
 - `add_all(..., rewrite_version=sl.versions.strip_leading_zeros)` accepts
   SDMX 2.1 versions (`"01.0"`) that 3.x cannot hold, recording each rewrite.
-- `LocalRegistry.bundle(path)` opens a published bundle — structure plus
+- `LocalRegistry.edition(path)` opens a sealed edition — structure plus
   observation tables.
 
 `RestRegistry(..., store=local)` keeps everything a REST registry fetches in

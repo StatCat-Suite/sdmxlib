@@ -390,7 +390,7 @@ bench-mem:
 bench-all: bench bench-mem
 
 # Needs $SDMXLIB_BENCH_BUNDLE pointing at a published bundle's publication
-# directory (one holding `bundle.manifest.json`), in the environment or a `.env`. Unset, the
+# directory (one holding `manifest.json`), in the environment or a `.env`. Unset, the
 # tier skips and says so on its own line. *Set and wrong* is an error — that
 # distinction is the issue: the previous real-data hook pointed at a workspace
 # that no longer existed and reported it as three skips in the tail of the

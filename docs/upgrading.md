@@ -19,6 +19,45 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## Bundles are products, publications are editions (manifest 3.0)
+
+The bundle, its publication and the publication's token are now the
+**product**, its **edition** and the **edition id**
+([GH-250](https://github.com/StatCat-Suite/sdmxlib/issues/250)), as the
+[sharded catalog spec](https://github.com/StatCat-Suite/sdmxlib/blob/main/docs/design/sharded-bundle-catalog.md)
+§18 sets out. The manifest is format **3.0** and the store schema **2.52**.
+
+**Rebuild every catalog by re-ingesting.** A 3.0 reader refuses a 2.x
+manifest, and there is no migrator before sdmxlib 1.0: build each product's
+first edition again from its source, with `LocalRegistry.build(product)` and
+`seal(...)`.
+
+| before | now |
+| --- | --- |
+| `sdmxlib.bundle` | `sdmxlib.edition` |
+| `bundle.manifest.json`, `meta.duckdb`, `lake.ducklake` | `manifest.json`, `metadata.duckdb`, `tables.ducklake` |
+| manifest `bundle_id`, `token`, `previous_token`, `product` | `product_id`, `edition_id`, `previous`, `producer_fields` |
+| `ArtefactEntry.cut_from` | `ArtefactEntry.partial_of` |
+| `BundleFile`, with `root: "publication"` and `tier: 1`, `2`, `3` | `EditionFile`, with `root: "edition"` and `tier: "required"`, `"lazy"`, `"remote"` |
+| lifecycle `"live"` | `"revisable"` |
+| `LocalRegistry.bundle(path)` → `BundleRegistry` | `LocalRegistry.edition(path)` → `EditionRegistry` |
+| `BundleEngine` | `EditionEngine` |
+| `builder.publication` | `builder.edition_dir` |
+| `write_manifest(path, bundle_id=, product=, cut_from=, …)` | `seal(path, product_id=, producer_fields=, partial_of=, …)` |
+| `check_bundle`, `fetch_bundle`, `build_bundle`, `copy_bundle`, `bundle_files`, `inventory` | `check_edition`, `fetch_edition`, `build_edition`, `copy_edition`, `edition_files`, `list_files` |
+| `sdmxlib.testing.synthetic_bundle`, `profile_bundle` | `synthetic_edition`, `profile_edition` |
+| `sdmxlib bundle check \| fetch \| copy \| files`, `--tiers 1,2,3` | `sdmxlib edition check \| fetch \| copy \| files`, `--tiers required,lazy,remote` |
+| store `_meta` keys `publication_token`, `previous_token` | `edition_id`, `previous` |
+| engine aliases `<prefix>__meta`, `<prefix>__lake` | `<prefix>__metadata`, `<prefix>__tables` |
+| receive stamp `<stamps>/<bundle_id>/<token>` | `<stamps>/<product_id>/<edition_id>` |
+
+`LocalRegistry.build(path, previous=, resume=)` keeps its name; `path` is
+the product directory. The effective token hashes `v3` and the edition id in
+place of `v2` and the token, so every effective token changes once. A
+fingerprint changes for no unchanged edition: `CANONICAL_FORM` stays `1`.
+
+---
+
 ## `InternationalString` is a mapping of `LocalisedString`
 
 `sl.InternationalString` is a `Mapping[str, sl.LocalisedString]`, and every
@@ -98,7 +137,7 @@ encodes to JSON as `{"text": "…", "lang": "fr"}`.
 
 A store built before this from a source that sent another case, an empty tag
 or a malformed one answers Python reads and SQL lookups differently.
-`check_bundle` reports each such tag under its `tags` check; rebuild the store
+`check_edition` reports each such tag under its `tags` check; rebuild the store
 from its sources. A store built from the registries surveyed in the design
 holds only lowercase two-letter tags and needs nothing.
 
@@ -193,11 +232,11 @@ sibling, and with it their result-store keys.
 
 - A bundle that holds several dataflows of one data structure gets new
   `structure_fingerprint`s when it is republished, and
-  `check_bundle(expect=...)` against a publication made before the upgrade
+  `check_edition(expect=...)` against a publication made before the upgrade
   reports them. A bundle with one dataflow per data structure, the census
   bundle among them, keeps its fingerprints.
 - `CANONICAL_FORM` stays `1`: the canonical text is unchanged.
-- `fetch_bundle` and `build_bundle` store this closure, so a sibling dataflow
+- `fetch_edition` and `build_edition` store this closure, so a sibling dataflow
   that a data structure's `references=parents` request returns is not kept.
 
 ## Observations come in codelist order
@@ -249,17 +288,17 @@ ships with the bundle, and nowhere on the binding
   DuckLake `SORTED BY`, takes DuckLake sort expressions (`"GEO"`,
   `"TIME_PERIOD DESC"`), and refuses a lake that is not DuckLake and an
   append.
-- `write_manifest(lifecycle="final")` merges each table's files and sorts
+- `seal(lifecycle="final")` merges each table's files and sorts
   nothing itself. A table sorted on `final` before now is sorted by setting
   `sorted_by` where it is written.
 
 ## Publishing refuses coded values outside their codelist, and stores availability
 
-The store schema is **2.49**: `meta.duckdb` holds each binding's availability
+The store schema is **2.49**: `metadata.duckdb` holds each binding's availability
 in two new tables. A bundle published on 2.48 is republished with this
 sdmxlib, which refuses to open it.
 
-`write_manifest` scans each binding's columns once:
+`seal` scans each binding's columns once:
 
 - **A coded value that is not a code refuses the publication.** A column a
   codelist or value list enumerates holds codes or `NULL`; an empty string
@@ -267,18 +306,18 @@ sdmxlib, which refuses to open it.
   value and row count. Write `NULL` for an absent value.
 - **Each binding's availability is stored**, the SDMX 3.1
   `AvailabilityConstraint` for the unfiltered query, read with
-  `BundleRegistry.availability(flow)`. `write_manifest(...,
+  `EditionRegistry.availability(flow)`. `seal(...,
   availability=False)` skips storing it; the coded columns are checked
   either way.
 
-`check_bundle(at="publish")` runs a new `availability` check, which rescans
+`check_edition(at="publish")` runs a new `availability` check, which rescans
 every row.
 
 ---
 
 ## A file's digests are a map by algorithm
 
-`BundleFile.digests` holds each file's digests by algorithm, lowercase hex,
+`EditionFile.digests` holds each file's digests by algorithm, lowercase hex,
 in place of the `sha256` and `md5` fields: `{"sha256": …, "md5": …,
 "crc32c": …}`. All three are required. CRC32C is new: the digest S3 keeps whole
 for a multipart upload and GCS keeps for every file. The manifest format stays
@@ -292,10 +331,10 @@ entry.sha256, entry.md5
 
 ```python
 # now
-from sdmxlib.bundle import BundleFile
+from sdmxlib.edition import EditionFile
 
-entry = BundleFile(
-    path="meta.duckdb",
+entry = EditionFile(
+    path="metadata.duckdb",
     size=3,
     digests={"sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
              "md5": "900150983cd24fb0d6963f7d28e17f72", "crc32c": "364b3fb7"},
@@ -315,7 +354,7 @@ RemoteFile(size, content_md5)
 
 ```python
 # now
-from sdmxlib.bundle import RemoteFile
+from sdmxlib.edition import RemoteFile
 
 remote = RemoteFile(1024, {"md5": "rL0Y20zC+Fzt72VPzMSk2A=="})
 ```
@@ -359,7 +398,7 @@ reg = sl.RestRegistry(
 
 The same holds for every option `HttpxOptions` forwards (`transport`,
 `mounts`, `auth`, `proxy`, `limits`, `cookies`, `params`) on `RestRegistry`,
-`FmrRegistry`, `SdmxClient` and `fetch_bundle`, and for the exceptions a
+`FmrRegistry`, `SdmxClient` and `fetch_edition`, and for the exceptions a
 caller catches: `httpx2.HTTPStatusError`, `httpx2.TransportError`.
 
 Two behaviours move with the package:
@@ -380,9 +419,9 @@ its token, and the `data/` every publication shares:
 
 ```text
 <bundle>/data/<schema>/<table>/ducklake-<uuid>.parquet
-<bundle>/<token>/bundle.manifest.json
-<bundle>/<token>/meta.duckdb
-<bundle>/<token>/lake.ducklake
+<bundle>/<token>/manifest.json
+<bundle>/<token>/metadata.duckdb
+<bundle>/<token>/tables.ducklake
 ```
 
 The manifest format is 2.0, and a 1.x manifest is refused with
@@ -392,61 +431,61 @@ follows.
 - `LocalRegistry.build(path)` takes the **bundle** directory, mints the
   token, creates `<path>/<token>/` and returns a builder whose
   `publication` is that directory. `build(path, previous=token)` copies that
-  publication's `meta.duckdb` and `lake.ducklake` and extends them, so the
+  publication's `metadata.duckdb` and `tables.ducklake` and extends them, so the
   lake writes only new data files. `build(path, resume=token)` reopens an
   unpublished publication for a second build step.
-- `write_manifest`, `LocalRegistry.bundle`, `check_bundle` and
-  `fold_overlays` take the **publication** directory, `builder.publication`.
-- `write_manifest` publishes a publication once. Writing it again raises
+- `seal`, `LocalRegistry.edition`, `check_edition` and
+  `fold_overlays` take the **publication** directory, `builder.edition_dir`.
+- `seal` publishes a publication once. Writing it again raises
   `ManifestError`; a change is a new publication with `previous=`.
 - `fold_overlays` writes a new publication beside the one it reads and
   returns its manifest; the publication it read is left as it was.
-- `fetch_bundle` and `synthetic_bundle` take the bundle directory and return
-  the manifest; the publication is `<path>/<manifest.token>/`.
-- New manifest fields, all written by `write_manifest`:
-  - `Manifest`: `previous_token`, `data_path`, `duckdb_version`,
+- `fetch_edition` and `synthetic_edition` take the bundle directory and return
+  the manifest; the publication is `<path>/<manifest.edition_id>/`.
+- New manifest fields, all written by `seal`:
+  - `Manifest`: `previous`, `data_path`, `duckdb_version`,
     `duckdb_storage_version`, `ducklake_version`, `ducklake_spec_version`,
     `canonical_form`, `content_fingerprint` and `artefacts` (one
     `ArtefactEntry` per artefact, with `stability`, `partial` and
     `fingerprint`);
-  - `BundleFile`: `root` (`"publication"` or `"data"`), `digests`, `tier`
+  - `EditionFile`: `root` (`"publication"` or `"data"`), `digests`, `tier`
     and `carried_from`;
   - `BindingCount`: `structural_version`, the URN of the data structure the
     binding was written against, and its table `fingerprint` and
-    `structure_fingerprint` (see [the bundle format](bundle.md), §9). A binding whose `structural_version` tag is
-    not `AGENCY:ID(VERSION)` makes `write_manifest` raise `ManifestError`.
-- `write_manifest(..., tiers={"search/": 2})` sets the placement tier of a
+    `structure_fingerprint` (see [the bundle format](edition.md), §9). A binding whose `structural_version` tag is
+    not `AGENCY:ID(VERSION)` makes `seal` raise `ManifestError`.
+- `seal(..., tiers={"search/": 2})` sets the placement tier of a
   producer's own files by path prefix.
-- `write_manifest` settles the lake before its inventory. It flushes rows
+- `seal` settles the lake before its inventory. It flushes rows
   DuckLake inlined into the catalog into data files and rewrites each table
   that holds delete files, so a small table now has a data file in `data/`.
   `lifecycle="final"` compacts each table to one sorted data file, and
-  `expire_snapshots=True` keeps only the current snapshot. `check_bundle`
+  `expire_snapshots=True` keeps only the current snapshot. `check_edition`
   reports a delete file in a published lake.
-- `LocalRegistry.bundle` refuses, before opening any file, a publication
+- `LocalRegistry.edition` refuses, before opening any file, a publication
   whose DuckDB storage version is newer than the running DuckDB writes, or
-  whose DuckLake format is newer than `sdmxlib.bundle.DUCKLAKE_SPEC_VERSION`.
+  whose DuckLake format is newer than `sdmxlib.edition.DUCKLAKE_SPEC_VERSION`.
   It raises the new `sl.StoreFormatError`, naming both versions. Older
   versions of either open.
-- `check_bundle` no longer reports a data file it does not list: `data/` is
+- `check_edition` no longer reports a data file it does not list: `data/` is
   shared, and a file there may belong to another publication. It reports a
   file the lake references and the manifest omits.
-- `write_manifest` rewrites `meta.duckdb` without `hierarchy_node`'s and
+- `seal` rewrites `metadata.duckdb` without `hierarchy_node`'s and
   `artefact_ref`'s primary keys, `hierarchy_node`'s `UNIQUE` and
   `artefact_ref`'s two indexes, which reads do not use; the census store
   halves. `LocalRegistry.build(path, previous=token)` restores them. A tool
-  that opens a published `meta.duckdb` for writing by any other route gets a
+  that opens a published `metadata.duckdb` for writing by any other route gets a
   store without those keys.
-- `LocalRegistry.bundle(path, engine=sl.BundleEngine(...))` holds many
+- `LocalRegistry.edition(path, engine=sl.EditionEngine(...))` holds many
   bundles in one DuckDB engine. Every bundle now attaches under a prefix of
-  its own, `<bundle_id>__<token>`, even without `engine=`, so its lake is
-  `<prefix>__lake` and no longer `lake`. `BundleRegistry.binding_for` and
+  its own, `<product_id>__<token>`, even without `engine=`, so its lake is
+  `<prefix>__tables` and no longer `lake`. `EditionRegistry.binding_for` and
   `browse()` return the binding naming that catalog (`database_role`), and
-  `BundleRegistry.locate(binding)` maps a binding read with `get_all`;
-  `BundleRegistry.lake_alias` names it. SQL built from a stored binding's
+  `EditionRegistry.locate(binding)` maps a binding read with `get_all`;
+  `EditionRegistry.lake_alias` names it. SQL built from a stored binding's
   `database_role` on a bundle registry must go through `locate`.
 - New: `sdmxlib.formats.render.render_version(media_type)`, the version of
-  each format's writer, for a server's cache keys (`docs/bundle.md` §5.5).
+  each format's writer, for a server's cache keys (`docs/edition.md` §5.5).
 - Overlay format 1.2 adds `texts`: `OverlayText` entries that set or
   remove one language of a name or description. Only `fold_overlays`
   applies them; `apply_overlays` and `effective_token` refuse an overlay
@@ -459,141 +498,141 @@ follows.
   per annotation type in place of a bare function:
   `MergeHook(package=..., name=..., version=..., fn=...)`. The effective
   token of a bundle with overlays changes for every bundle, since its hashed
-  text now starts with `v2` and carries a hooks line (`docs/bundle.md` §5.4);
+  text now starts with `v2` and carries a hooks line (`docs/edition.md` §5.4);
   with no overlays it is still the manifest's token.
-- `check_bundle(path, at=...)` takes a profile, `"publish"`, `"receive"` or
+- `check_edition(path, at=...)` takes a profile, `"publish"`, `"receive"` or
   `"open"`, and `references=` is gone: `publish` and `receive` run the
   references check and `open` does not. Pass `at="publish"` where you called
-  `check_bundle(path)`. `publish` also recomputes the fingerprints.
+  `check_edition(path)`. `publish` also recomputes the fingerprints.
   `Report` gains `at`. An extension `Check` takes the profile as a fourth
-  argument, `check(root, manifest, registry, at)`. `sdmxlib bundle check`
+  argument, `check(root, manifest, registry, at)`. `sdmxlib edition check`
   takes `--at` in place of `--no-references`. `check_on_open` runs `receive`
   once per token and manifest and `open` after, keeping a stamp.
-- `check_bundle`'s `references` check runs in SQL and loads no artefact.
+- `check_edition`'s `references` check runs in SQL and loads no artefact.
   A finding's subject is the URN of the artefact holding the reference,
   where it was a model path such as `Hierarchy:H.tree[CA].code`, and its
   detail reads `its <role> reference <target URN> is not in the bundle`.
-- `copy_bundle(source, destination, tiers=...)` and
-  `sdmxlib bundle copy --tiers 1,2` copy a publication, or the files of some
+- `copy_edition(source, destination, tiers=...)` and
+  `sdmxlib edition copy --tiers 1,2` copy a publication, or the files of some
   placement tiers, with its manifest last.
 
 ```python
-from sdmxlib.bundle import Producer, write_manifest
-from sdmxlib.testing import Dim, Shape, synthetic_bundle
+from sdmxlib.edition import Producer, seal
+from sdmxlib.testing import Dim, Shape, synthetic_edition
 
 # Stands in for your builder's first publication.
-first = synthetic_bundle("out/layout", Shape(dimensions=(Dim(codes=10),), observations=50))
+first = synthetic_edition("out/layout", Shape(dimensions=(Dim(codes=10),), observations=50))
 
 # The next publication extends it, in a directory of its own.
-with sl.LocalRegistry.build("out/layout", previous=first.token) as builder:
-    publication = builder.publication
-second = write_manifest(publication, bundle_id="layout", producer=Producer(name="my-builder", version="1.2"))
-assert second.previous_token == first.token
+with sl.LocalRegistry.build("out/layout", previous=first.edition_id) as builder:
+    publication = builder.edition_dir
+second = seal(publication, product_id="layout", producer=Producer(name="my-builder", version="1.2"))
+assert second.previous == first.edition_id
 
-with sl.LocalRegistry.bundle(publication) as published:
+with sl.LocalRegistry.edition(publication) as published:
     assert published.manifest is not None
 ```
 
 ---
 
-## A published bundle opens read-only, as a `BundleRegistry`
+## A published bundle opens read-only, as a `EditionRegistry`
 
-`LocalRegistry.bundle(path)` opens a **published** bundle, read-only, and
-returns a `BundleRegistry`. That type has the read methods (`get`,
+`LocalRegistry.edition(path)` opens a **published** bundle, read-only, and
+returns a `EditionRegistry`. That type has the read methods (`get`,
 `get_all`, `query`, `obs`, `dsd`, `binding_for`, `browse`, the label maps)
 and none of the writes: no `add`, `add_all`, `drop`, `replace`, `ingest`,
 `scan_csv`, `scan_json`, `transaction` or `sql`. The database opens with
 DuckDB's `read_only`, so any number of processes can hold one bundle open, and
-`check_bundle` can run beside a server.
+`check_edition` can run beside a server.
 
-- A directory without `bundle.manifest.json` is refused with `ManifestError`,
+- A directory without `manifest.json` is refused with `ManifestError`,
   and `require_manifest=` is gone.
 - A builder opens a new publication with `LocalRegistry.build(path)`, which
   is writable and returns a `LocalRegistry`, then publishes with
-  `write_manifest` (see the section above for the directories).
-- `write_manifest` refuses while a connection still holds one of the bundle's
+  `seal` (see the section above for the directories).
+- `seal` refuses while a connection still holds one of the bundle's
   databases for writing (a `.wal` file remains). Close every builder first.
-- A `check_bundle` extension receives a `BundleRegistry`. Annotate its
-  parameter `sl.BundleRegistry`; one annotated `LocalRegistry` no longer
+- A `check_edition` extension receives a `EditionRegistry`. Annotate its
+  parameter `sl.EditionRegistry`; one annotated `LocalRegistry` no longer
   type-checks.
-- Code that only reads should accept `sl.BundleRegistry`. `LocalRegistry` is
+- Code that only reads should accept `sl.EditionRegistry`. `LocalRegistry` is
   a subclass, so a writable store passes too.
 
 ```python
-from sdmxlib.bundle import Producer, write_manifest
-from sdmxlib.testing import Dim, Shape, synthetic_bundle
+from sdmxlib.edition import Producer, seal
+from sdmxlib.testing import Dim, Shape, synthetic_edition
 
 # Stands in for your builder's first publication.
-first = synthetic_bundle("out/read-only", Shape(dimensions=(Dim(codes=10),), observations=50))
+first = synthetic_edition("out/read-only", Shape(dimensions=(Dim(codes=10),), observations=50))
 
 # Building: writable. A builder adds and replaces through `build`.
-with sl.LocalRegistry.build("out/read-only", previous=first.token) as builder:
+with sl.LocalRegistry.build("out/read-only", previous=first.edition_id) as builder:
     flow = builder.browse()[0].dataflow_urn
-    publication = builder.publication
+    publication = builder.edition_dir
 
-write_manifest(publication, bundle_id="read-only", producer=Producer(name="my-builder", version="1.2"))
+seal(publication, product_id="read-only", producer=Producer(name="my-builder", version="1.2"))
 
 # Reading: read-only, and any number of processes at once.
-with sl.LocalRegistry.bundle(publication) as published:
+with sl.LocalRegistry.edition(publication) as published:
     assert published.obs(flow).count() == 50
 ```
 
 ---
 
-## sdmxlib owns `bundle.manifest.json`
+## sdmxlib owns `manifest.json`
 
-0.72.0 publishes a bundle as an artefact with `sdmxlib.bundle.write_manifest`, and
-`LocalRegistry.bundle` reads the manifest. A manifest records:
+0.72.0 publishes a bundle as an artefact with `sdmxlib.edition.seal`, and
+`LocalRegistry.edition` reads the manifest. A manifest records:
 
 - a `token` per publication, which caches key on;
 - a sha256 for every file;
 - the observation count per dataflow;
-- the store schema version, checked before `meta.duckdb` is opened.
+- the store schema version, checked before `metadata.duckdb` is opened.
 
-**A `bundle.manifest.json` that is not sdmxlib's is refused.** A builder that
+**A `manifest.json` that is not sdmxlib's is refused.** A builder that
 wrote its own file under that name, without a `format_version`, now gets
 `sl.ManifestError` when the bundle is opened. Republish the bundle with
 sdmxlib's writer, keeping any fields of your own in `product`:
 
 ```python
-from sdmxlib.bundle import Producer, write_manifest
+from sdmxlib.edition import Producer, seal
 
 # Stands in for your builder.
 with sl.LocalRegistry.build("out/my-bundle") as builder:
     builder.add(sl.Codelist(id="CL_A", maintainer="AG", version="1.0", name={"en": "A"}))
-    publication = builder.publication
+    publication = builder.edition_dir
 
-write_manifest(
+seal(
     publication,
-    bundle_id="my-bundle",
+    product_id="my-bundle",
     producer=Producer(name="my-builder", version="1.2"),
-    product={"vintage": "2021"},
+    producer_fields={"vintage": "2021"},
 )
 ```
 
 Write it last, once every builder has closed. A directory without a manifest
-is unpublished: `LocalRegistry.bundle` refuses it (see the sections above).
+is unpublished: `LocalRegistry.edition` refuses it (see the sections above).
 
 A manifest whose store schema differs from this sdmxlib's is refused with
-`sl.StoreSchemaError` before `meta.duckdb` is touched, as a store is (below).
+`sl.StoreSchemaError` before `metadata.duckdb` is touched, as a store is (below).
 
 New with it, none of them breaking:
 
-- `check_bundle` checks a bundle against its manifest and itself.
-- `fetch_bundle` lands one dataflow from an SDMX REST source as a bundle.
-- `sdmxlib.testing.synthetic_bundle` and `profile_bundle` build and profile
+- `check_edition` checks a bundle against its manifest and itself.
+- `fetch_edition` lands one dataflow from an SDMX REST source as a bundle.
+- `sdmxlib.testing.synthetic_edition` and `profile_edition` build and profile
   bundles.
 - `apply_overlays`, `effective_token` and `fold_overlays` handle annotation
   overlays.
 - The command line is a separate package, released with sdmxlib at the same
-  version: `uv tool install sdmxlib-cli` gives `sdmxlib bundle check` and
-  `sdmxlib bundle fetch`.
+  version: `uv tool install sdmxlib-cli` gives `sdmxlib edition check` and
+  `sdmxlib edition fetch`.
 
 ---
 
 ## A store on another schema version is refused, not emptied
 
-Opening a `LocalRegistry` (or `LocalRegistry.bundle`) whose store holds
+Opening a `LocalRegistry` (or `LocalRegistry.edition`) whose store holds
 artefacts on a different store schema version now raises `sl.StoreSchemaError`.
 From 0.68 to 0.70.1 it dropped and rebuilt the schema instead, which emptied a
 bundle built by 0.67 the moment a newer sdmxlib opened it, even only to read.
@@ -612,7 +651,7 @@ with (
 ```
 
 A bundle is never rebuilt: `bundle()` has no `rebuild=`, because its
-`meta.duckdb` is the published record.
+`metadata.duckdb` is the published record.
 
 ---
 

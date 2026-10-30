@@ -172,12 +172,12 @@ def test_labels_come_from_the_registry_s_own_codelists(reg) -> None:
 
 
 def test_a_bundle_opens_artefacts_and_observations_together(tmp_path) -> None:
-    """`LocalRegistry.bundle(path)` replaces `FederatedCatalog(uri)`.
+    """`LocalRegistry.edition(path)` replaces `FederatedCatalog(uri)`.
 
     A *constructor, not a type*: a bundle answers exactly what any other local
     registry answers, so it differs in wiring rather than in method set. The
     layout is the one a bundle builder writes and a downstream REST service
-    serves — `meta.duckdb` beside `lake.ducklake`, over the bundle's ``data/``.
+    serves — `metadata.duckdb` beside `tables.ducklake`, over the bundle's ``data/``.
     """
     import polars as pl
 
@@ -199,9 +199,9 @@ def test_a_bundle_opens_artefacts_and_observations_together(tmp_path) -> None:
             source=pl.DataFrame({"REF_AREA": ["ON", "QC"], "OBS_VALUE": [1.0, 2.0]}),
         )
         writer.add(DataflowBinding.from_dsd(dsd, dataflow=Ref.to(flow), schema="data", table="obs"))
-        publication = writer.publication
+        publication = writer.edition_dir
 
-    with LocalRegistry.bundle(publish(publication)) as reg:
+    with LocalRegistry.edition(publish(publication)) as reg:
         assert [e.binding.table_location for e in reg.browse()] == ["data.obs"]
         obs = reg.obs(flow.urn)
         assert obs.filter(obs.col("REF_AREA") == "QC").frame().to_dicts() == [{"REF_AREA": "QC", "OBS_VALUE": 2.0}]

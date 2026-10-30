@@ -91,7 +91,7 @@ import pytest
 
 import sdmxlib as sl
 from sdmxlib.builders.contentconstraint import build_component_availability
-from sdmxlib.local.registry import BundleRegistry
+from sdmxlib.local.registry import EditionRegistry
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.query.observations import ObsQuery
 from tests.bench import _bundle
@@ -126,7 +126,7 @@ def members(data_plane_registry, flow) -> list[tuple[str, str, int]]:
     return [(key.dimension_id, min(key.codes()), len(key.values)) for key in dimensions[:2]]
 
 
-def _one(reg: BundleRegistry, flow: SdmxUrn[sl.Dataflow], dimension: str, value: str) -> ObsQuery:
+def _one(reg: EditionRegistry, flow: SdmxUrn[sl.Dataflow], dimension: str, value: str) -> ObsQuery:
     obs = reg.obs(flow)
     return obs.filter(obs.col(dimension) == value)
 
@@ -135,9 +135,9 @@ def test_open_and_plan_the_first_obs(benchmark, data_plane_bundle: Path, flow):
     """Opening attaches the lake on first need; the first `obs()` also reads the table's partitions."""
 
     def read() -> tuple[str, ...]:
-        engine = sl.BundleEngine(threads=_bundle.threads())
+        engine = sl.EditionEngine(threads=_bundle.threads())
         try:
-            with sl.LocalRegistry.bundle(data_plane_bundle, engine=engine) as reg:
+            with sl.LocalRegistry.edition(data_plane_bundle, engine=engine) as reg:
                 return reg.obs(flow).plan.root.__partitions__
         finally:
             engine.close()
@@ -253,7 +253,7 @@ def level(data_plane_registry, flow, members, obs_shapes) -> Level:
     )
 
 
-def _in_level(reg: BundleRegistry, flow: SdmxUrn[sl.Dataflow], level: Level) -> ObsQuery:
+def _in_level(reg: EditionRegistry, flow: SdmxUrn[sl.Dataflow], level: Level) -> ObsQuery:
     obs = reg.obs(flow)
     return obs.filter(obs.col(level.component) == level.value)
 
@@ -376,7 +376,7 @@ def keys(data_plane_registry, flow, members) -> Keys:
 
 
 def _availability(
-    reg: BundleRegistry, flow: SdmxUrn[sl.Dataflow], key: str, component_id: str, mode: Literal["exact", "available"]
+    reg: EditionRegistry, flow: SdmxUrn[sl.Dataflow], key: str, component_id: str, mode: Literal["exact", "available"]
 ) -> dict[str, int]:
     """How many values each dimension `build_component_availability` enumerates has under ``key``."""
     constraint = build_component_availability(

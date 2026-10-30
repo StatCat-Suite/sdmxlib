@@ -22,7 +22,7 @@ import attrs
 import polars as pl
 
 import sdmxlib as sl
-from sdmxlib.bundle import Producer, copy_bundle, write_manifest
+from sdmxlib.edition import Producer, copy_edition, seal
 from sdmxlib.local.data_store import DuckDBDataStore
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.ref import Ref
@@ -463,9 +463,9 @@ def _facade() -> Generator[dict[str, Any]]:
     """For the page written for someone *serving* SDMX-REST.
 
     The one page that needs a whole vertical: structures, a binding, and rows
-    to stream. Built as a **real bundle** — `meta.duckdb` beside
-    `lake.ducklake`, over a shared ``data/`` — because the page's first line is
-    `LocalRegistry.bundle(...)`, and a fixture that handed it a plain store
+    to stream. Built as a **real bundle** — `metadata.duckdb` beside
+    `tables.ducklake`, over a shared ``data/`` — because the page's first line is
+    `LocalRegistry.edition(...)`, and a fixture that handed it a plain store
     instead would leave the one constructor a facade actually deploys with
     unexecuted.
 
@@ -510,7 +510,7 @@ def _facade() -> Generator[dict[str, Any]]:
         codes=[sl.Code(id="M", name={"en": "Monthly"})],
     )
     with in_a_directory_containing({}):
-        # Built as a bundle's first publication, then copied to `bundle/`, the
+        # Built as a product's first edition, then copied to `edition/`, the
         # path the page opens; its data files land in `data/` beside it.
         with sl.LocalRegistry.build("built") as writer:
             writer.add_all([areas, freq, dsd, flow])
@@ -528,12 +528,12 @@ def _facade() -> Generator[dict[str, Any]]:
                 ),
             )
             writer.add(DataflowBinding.from_dsd(dsd, dataflow=Ref.to(flow), schema="data", table="obs"))
-            publication = writer.publication
+            publication = writer.edition_dir
 
-        write_manifest(publication, bundle_id="tutorial", producer=Producer(name="docs-tests", version="0"))
-        bundle = Path("bundle")
-        copy_bundle(publication, bundle)
-        registry = sl.LocalRegistry.bundle(bundle)
+        seal(publication, product_id="tutorial", producer=Producer(name="docs-tests", version="0"))
+        edition = Path("edition")
+        copy_edition(publication, edition)
+        registry = sl.LocalRegistry.edition(edition)
         try:
             namespace = base()
             namespace["reg"] = registry
@@ -1600,7 +1600,7 @@ EXECUTED.add("README.md")
 
 @contextmanager
 def _bundle_page() -> Generator[dict[str, Any]]:
-    """`docs/bundle.md`: two published bundles, and a server's copy of one reading its data files remotely.
+    """`docs/edition.md`: two published bundles, and a server's copy of one reading its data files remotely.
 
     The object-store example's store is a ``file://`` URI over the published
     census bundle, which DuckDB reads as it reads ``abfss://``; the server's
@@ -1610,7 +1610,7 @@ def _bundle_page() -> Generator[dict[str, Any]]:
         root = Path(tmp)
         census = publish(make_bundle(root / "census", 10))
         pod = root / "pod" / "census" / census.name
-        copy_bundle(census, pod, tiers=(1, 2))
+        copy_edition(census, pod, tiers=("required", "lazy"))
         yield base() | {
             "census_path": census,
             "trade_path": publish(make_bundle(root / "trade", 3)),
@@ -1619,5 +1619,5 @@ def _bundle_page() -> Generator[dict[str, Any]]:
         }
 
 
-SETUPS["bundle.md"] = _bundle_page
-EXECUTED.add("bundle.md")
+SETUPS["edition.md"] = _bundle_page
+EXECUTED.add("edition.md")

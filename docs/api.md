@@ -46,11 +46,11 @@ Routing across multiple registries by agency. Every registry — REST, local, in
 
 Persistent DuckDB-backed structural store, the in-memory registry, and the data plane that shares the store's connection.
 
-::: sdmxlib.local.registry.BundleRegistry
+::: sdmxlib.local.registry.EditionRegistry
 
 ---
 
-::: sdmxlib.local.engine.BundleEngine
+::: sdmxlib.local.engine.EditionEngine
 
 ---
 
@@ -66,85 +66,85 @@ Persistent DuckDB-backed structural store, the in-memory registry, and the data 
 
 ---
 
-### Bundles
+### Editions
 
-A bundle published as an artefact: its manifest, a `token` per publication, and a checksum per file.
+An edition published as an artefact: its manifest, a `token` per edition, and a checksum per file.
 
-The format itself, field by field, is [the bundle format](bundle.md).
+The format itself, field by field, is [the edition format](edition.md).
 
-::: sdmxlib.bundle
-
----
-
-::: sdmxlib.bundle.write_manifest
+::: sdmxlib.edition
 
 ---
 
-::: sdmxlib.bundle.read_manifest
+::: sdmxlib.edition.seal
 
 ---
 
-::: sdmxlib.bundle.manifest_schema
+::: sdmxlib.edition.read_manifest
 
 ---
 
-::: sdmxlib.bundle.check_bundle
+::: sdmxlib.edition.manifest_schema
 
 ---
 
-::: sdmxlib.bundle.check_on_open
+::: sdmxlib.edition.check_edition
 
 ---
 
-::: sdmxlib.bundle.Report
+::: sdmxlib.edition.check_on_open
 
 ---
 
-::: sdmxlib.bundle.Finding
+::: sdmxlib.edition.Report
 
 ---
 
-::: sdmxlib.bundle.copy_bundle
+::: sdmxlib.edition.Finding
 
 ---
 
-::: sdmxlib.bundle.verify_remote
+::: sdmxlib.edition.copy_edition
 
 ---
 
-::: sdmxlib.bundle.RemoteFile
+::: sdmxlib.edition.verify_remote
 
 ---
 
-::: sdmxlib.bundle.content_md5
+::: sdmxlib.edition.RemoteFile
 
 ---
 
-::: sdmxlib.bundle.canonical_json
+::: sdmxlib.edition.content_md5
 
 ---
 
-::: sdmxlib.bundle.fetch_bundle
+::: sdmxlib.edition.canonical_json
 
 ---
 
-::: sdmxlib.bundle.Provenance
+::: sdmxlib.edition.fetch_edition
+
+---
+
+::: sdmxlib.edition.Provenance
 
 ---
 
 #### Annotation overlays
 
-Display annotations changed without a rebuild, the token a cache keys on when they are applied, and folding them into a bundle. Name and description changes (`OverlayText`) are folded only.
+Display annotations changed without a rebuild, the effective token a cache keys on when they are applied, and folding them into an edition. Name and description changes (`OverlayText`) are folded only.
 
-::: sdmxlib.bundle.apply_overlays
-
----
-
-::: sdmxlib.bundle.effective_token
+::: sdmxlib.edition.apply_overlays
 
 ---
 
-::: sdmxlib.bundle.overlay_digest
+::: sdmxlib.edition.effective_token
+
+---
+
+::: sdmxlib.edition.overlay_digest
 
 ---
 
@@ -156,59 +156,59 @@ Display annotations changed without a rebuild, the token a cache keys on when th
 
 ---
 
-::: sdmxlib.bundle.applied
+::: sdmxlib.edition.applied
 
 ---
 
-::: sdmxlib.bundle.MergeHook
+::: sdmxlib.edition.MergeHook
 
 ---
 
-::: sdmxlib.bundle.fold_overlays
+::: sdmxlib.edition.fold_overlays
 
 ---
 
-::: sdmxlib.bundle.read_overlay
+::: sdmxlib.edition.read_overlay
 
 ---
 
-::: sdmxlib.bundle.Overlay
+::: sdmxlib.edition.Overlay
 
 ---
 
-::: sdmxlib.bundle.OverlayEntry
+::: sdmxlib.edition.OverlayEntry
 
 ---
 
-::: sdmxlib.bundle.OverlayAnnotation
+::: sdmxlib.edition.OverlayAnnotation
 
 ---
 
-::: sdmxlib.bundle.OverlayText
+::: sdmxlib.edition.OverlayText
 
 ---
 
-::: sdmxlib.bundle.OverlayError
+::: sdmxlib.edition.OverlayError
 
 ---
 
-::: sdmxlib.bundle.overlay_schema
+::: sdmxlib.edition.overlay_schema
 
 ---
 
-### Synthetic bundles
+### Synthetic editions
 
-Conforming bundles of any shape, deterministic from a seed, for tests and stress runs; and the shape of a real one.
+Conforming editions of any shape, deterministic from a seed, for tests and stress runs; and the shape of a real one.
 
 ::: sdmxlib.testing
 
 ---
 
-::: sdmxlib.testing.synthetic_bundle
+::: sdmxlib.testing.synthetic_edition
 
 ---
 
-::: sdmxlib.testing.profile_bundle
+::: sdmxlib.testing.profile_edition
 
 ---
 
@@ -224,31 +224,31 @@ Conforming bundles of any shape, deterministic from a seed, for tests and stress
 
 ---
 
-::: sdmxlib.bundle.Manifest
+::: sdmxlib.edition.Manifest
 
 ---
 
-::: sdmxlib.bundle.BundleFile
+::: sdmxlib.edition.EditionFile
 
 ---
 
-::: sdmxlib.bundle.ArtefactEntry
+::: sdmxlib.edition.ArtefactEntry
 
 ---
 
-::: sdmxlib.bundle.BindingCount
+::: sdmxlib.edition.BindingCount
 
 ---
 
-::: sdmxlib.bundle.Producer
+::: sdmxlib.edition.Producer
 
 ---
 
-::: sdmxlib.bundle.ManifestError
+::: sdmxlib.edition.ManifestError
 
 ---
 
-::: sdmxlib.bundle.StoreFormatError
+::: sdmxlib.edition.StoreFormatError
 
 ---
 

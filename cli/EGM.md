@@ -13,4 +13,4 @@ description and `LICENSE` is a copy of sdmxlib's.
 
 - src: [./src/EGM.md](./src/EGM.md) - source root holding the `sdmxlib_cli`
   package ([./src/sdmxlib_cli/EGM.md](./src/sdmxlib_cli/EGM.md)), the
-  `sdmxlib bundle` commands over `sdmxlib.bundle`.
+  `sdmxlib edition` commands over `sdmxlib.edition`.

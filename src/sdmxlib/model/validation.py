@@ -1498,7 +1498,7 @@ def validate(msg: StructureMessage | MetadataMessage) -> None:
     target format can carry is `serialize`'s question (`check_serialisable`).
 
     Closed-world, as `validate_references` is: a reference must name an
-    artefact in the message, so a partial bundle — a dataflow without its DSD —
+    artefact in the message, so a partial edition — a dataflow without its DSD —
     fails, and is resolved against a richer registry instead.
 
     It warns with one `ImRuleWarning` on an IM rule between artefacts that no
@@ -1801,7 +1801,7 @@ def _collect_known_urns(artefacts: Iterable[MaintainableArtefact]) -> set[str]:
     `test_item_urns_cost_one_make_per_scheme_and_item_class` asserts that count
     rather than a duration.
 
-    What it does cost is one *string* per item, and at bundle scale that is
+    What it does cost is one *string* per item, and at edition scale that is
     worth stating: a 500,000-code codelist takes **215 to 229 ms** over three
     interleaved arms and holds 69 MB for the length of the call. That is the
     price of the fix rather than a regression — the arm without item expansion
@@ -2097,7 +2097,7 @@ def validate_references(msg: StructureMessage) -> None:
     """Check that all Refs within a message resolve to artefacts in that message.
 
     This is a closed-world check — every outgoing Ref must point to a URN
-    of an artefact also present in the message. Partial bundles (e.g. a
+    of an artefact also present in the message. Partial editions (e.g. a
     dataflow without its DSD) will fail and must use ref-resolution
     against a richer registry instead.
 
@@ -2125,7 +2125,7 @@ def reference_issues(
 
     `validate_references` over a collection rather than a message, and without
     the raise. ``also`` holds artefacts whose references are checked without
-    being targets themselves: a bundle's metadata sets, which a
+    being targets themselves: an edition's metadata sets, which a
     `StructureMessage` has no slot for, but whose metadataflows and targets
     must be in the store (GH-67).
 
@@ -3110,7 +3110,7 @@ def check_serialisable(msg: StructureMessage, *, version: str | None = None) -> 
     is valid SDMX-JSON, and storable, and refused here when the target is
     SDMX-ML.
 
-    A builder calls it before publishing, once per version its bundle will be
+    A builder calls it before publishing, once per version its edition will be
     served in, so a structure that cannot be written fails the build and not a
     server's first ``/structure`` request:
 

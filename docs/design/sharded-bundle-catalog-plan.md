@@ -179,7 +179,7 @@ The specification records the design alternatives and their rejections (ยง7.4, ย
 ## Additional Resources
 
 *   [`sharded-bundle-catalog.md`](sharded-bundle-catalog.md): the specification this plan builds.
-*   [`../bundle.md`](../bundle.md): the bundle format, manifest 2.1.
+*   [`../edition.md`](../edition.md): the edition format, manifest 3.0.
 *   [`caching.md`](caching.md): the rules every cache in this program follows.
 *   [GH-136](https://github.com/StatCat-Suite/sdmxlib/issues/136): the cross-repo tracking issue.
 *   [GH-221](https://github.com/StatCat-Suite/sdmxlib/issues/221): the incoming-reference closure, with the FMR measurement.
@@ -228,7 +228,7 @@ Issues: [GH-221](https://github.com/StatCat-Suite/sdmxlib/issues/221) (reference
     *   **Errors.** `FileExistsError` for a non-empty `path`; `TypeError` for a URN that is no dataflow; `ValueError` for a missing DSD, for `observations` naming a dataflow not built, and for a coded value outside its codelist, naming the dataflow, the component and the values.
     *   **`fetch_bundle`** calls it with `partials=False`.
 3.  **`bundle/_write.py`, `bundle/_check.py`, `manifest.schema.json`, `docs/bundle.md`** (GH-224). `write_manifest(cut_from=...)` writes `ArtefactEntry.cut_from` at manifest 2.1. `check_bundle(structures=<publication>)` checks each partial's `cut_from` and its codes and parents against the full artefact, at `publish` and `receive`, and is refused at `open`.
-4.  **Tests.** `tests/unit/test_rest_references.py` (direction on the wire and in the session), `tests/unit/test_bundle_build.py` (closure, cut, cascade, hierarchy, refusals), `tests/unit/test_bundle_cut_from.py` (`cut_from` and the `partials` check), and two FMR cassettes in `tests/integration/test_bundle_fetch_live.py`, over 3.0 and 2.1, loaded from `tests/integration/fmr/12.4.2/incoming.xml`.
+4.  **Tests.** `tests/unit/test_rest_references.py` (direction on the wire and in the session), `tests/unit/test_edition_build.py` (closure, cut, cascade, hierarchy, refusals), `tests/unit/test_edition_cut_from.py` (`cut_from` and the `partials` check), and two FMR cassettes in `tests/integration/test_edition_fetch_live.py`, over 3.0 and 2.1, loaded from `tests/integration/fmr/12.4.2/incoming.xml`.
 5.  **Release 0.76.0.** `docs/upgrading.md` covers store schema 2.51, GH-213's observation order and GH-228's sibling fingerprints. `resolve`'s new values and manifest 2.1 are additive and have no section.
 
 #### Phase 2a: statcatlib adopts sdmxlib 0.76 (StatCat-Suite/statcatlib#46, StatCat-Suite/statcatlib#47)

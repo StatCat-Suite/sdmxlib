@@ -63,7 +63,7 @@ come back as Polars frames.
 - Registry presents the remote graph as local attribute access.
 - Format layer in `sdmxlib/formats/` owns the SDMX wire formats' parsing and
   serialisation — model imports nothing from `formats/`. Bundle and manifest
-  JSON is read and written in `storage/` and `bundle/`.
+  JSON is read and written in `storage/` and `edition/`.
 - `sdmxlib/polars.py` is the user-facing Polars bridge (DataFrame construction,
   label maps, etc.); the structural query language (`sdmxlib/query/`) uses
   duckdb internally for execution and returns polars frames from `select()`.
@@ -81,7 +81,7 @@ that paper over query/layout problems. Non-negotiable summary:
   study in `caching.md`: a "58 s label map" that measured 8 ms).
 - **Decision hierarchy, in order:** (1) profile it, and stop if it is fast.
   (2) If physical layout at build time fixes it, fix that. (3) If the input is
-  immutable within a bundle or artefact version, **bake it** into the bundle
+  immutable within an edition or artefact version, **bake it** into the edition
   (like `code.depth` / `code.ancestor_ids`) instead of caching at runtime.
   (4) Only if the cost is genuinely per-process, add a runtime cache.
 - **A new runtime cache goes through `SingleFlight`** (`_singleflight.py`):
@@ -194,9 +194,9 @@ here lands there. Each has its own maintainers and agents: from here they are
 read-only, and a change they need is an issue on their tracker
 (`StatCat-Suite/<repo>#N`).
 
-- `../statcatlib` — the catalog bundle format. Publishes through
-  `sdmxlib.bundle` (`write_manifest(extensions=...)`, wrapping
-  `check_bundle`), injects a `SqlRelation` into the path language, and reads
+- `../statcatlib` — the catalog of products and its Inventory writer. Seals through
+  `sdmxlib.edition` (`seal(extensions=...)`, wrapping
+  `check_edition`), injects a `SqlRelation` into the path language, and reads
   `storage.schema.SCHEMA_VERSION`.
 - `../sdmxlib-rest` — an SDMX-REST server over a `LocalRegistry`: the model
   artefacts, `DataflowBinding`, `obs()` and `ObsQuery`.
@@ -221,8 +221,8 @@ Where to start:
 - `model/` — the frozen SDMX information model, `SdmxUrn`, `Ref[T]`.
 - `formats/` — every SDMX wire format; `formats/gaps.py` is what each cannot
   carry.
-- `storage/` and `local/` — the DuckDB store, `BundleRegistry` /
-  `LocalRegistry`; `bundle/` publishes and checks a bundle (`docs/bundle.md`).
+- `storage/` and `local/` — the DuckDB store, `EditionRegistry` /
+  `LocalRegistry`; `edition/` seals and checks an edition (`docs/edition.md`).
 - `query/` — the `sl.q` path language and `ObsQuery`.
 - `api/` — `RestRegistry`, `FederatedRegistry`, `Provider`.
 
@@ -250,14 +250,14 @@ just mutate-scope    # what only_mutate covers, and how big
 `just ci` includes `bench-bundle-assertions` — the real-bundle tests that
 *assert a property*, without the ones that only report a number and without
 the `recompute` ones, which redo publishing's work (`just bench-bundle` runs
-those). It reads the published 2021 Census Profile bundle
+those). It reads the sealed 2021 Census Profile edition
 StatCat-Suite/cpt-builder builds (`census-2021-cpt`, 2.0 GB) in place,
-read-only, from the publication `$SDMXLIB_BENCH_BUNDLE` names. It costs ~2 min
-on a machine holding that bundle and skips in ~0 s on one that is not,
+read-only, from the edition directory `$SDMXLIB_BENCH_BUNDLE` names. It costs ~2 min
+on a machine holding that edition and skips in ~0 s on one that is not,
 **saying so on its own line**. DuckDB in this tier runs on
 `SDMXLIB_BENCH_THREADS` threads (default 4). It is in the gate because it is
 the only tier that exercises `LocalRegistry`'s public API against a real
-bundle: #386 renamed a constructor parameter past a green `just check` and the
+edition: #386 renamed a constructor parameter past a green `just check` and the
 whole unit tier, and only this tier failed.
 
 **`just ci` is the gate, and it runs locally.** Hosted CI runs no tests.

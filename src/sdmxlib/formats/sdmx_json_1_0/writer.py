@@ -6,7 +6,7 @@ spelling predates the 2.1 rename to ``dataConstraints`` that the
 `sdmxlib.formats.sdmx_json.writer` (2.0) module emits. This module
 "downgrades" our SDMX-3-style `DataConstraint` to the 1.0 wire
 shape so the same domain object can be served on the legacy availability
-endpoint and pre-baked into bundle caches.
+endpoint and pre-baked into edition caches.
 
 The 1.0 contentConstraint differs from the 2.x dataConstraint in two
 ways we care about here:
@@ -17,7 +17,7 @@ ways we care about here:
 Determinism: cube-region key values are sorted by dimension id and each
 value list is sorted lexicographically, and no wall-clock timestamp is
 stamped unless the caller passes ``prepared`` explicitly. Two calls with
-the same inputs therefore produce byte-identical output — the bundle
+the same inputs therefore produce byte-identical output — the edition
 cache acceptance criterion.
 
 Part of the msgspec migration (milestone: SDMX-JSON dict+orjson → msgspec):
@@ -229,7 +229,7 @@ def write_contentconstraint(
             constraint produced by
             `sdmxlib.builders.contentconstraint.build_dataflow_constraint`).
         prepared: Value for ``meta.prepared``. ``None`` (the default) omits
-            it, keeping output byte-identical across builds — the bundle
+            it, keeping output byte-identical across builds — the edition
             cache determinism requirement. Pass a stable, build-derived
             instant when full 1.0-schema conformance is required (the schema
             lists ``prepared`` as required). Timezone-aware: the schema

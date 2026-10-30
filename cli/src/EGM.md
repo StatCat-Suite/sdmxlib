@@ -8,5 +8,5 @@ package, `sdmxlib_cli`.
 ## Subdirectories & Boundaries
 
 - sdmxlib_cli: [./sdmxlib_cli/EGM.md](./sdmxlib_cli/EGM.md) - the `sdmxlib`
-  typer app; `sdmxlib bundle check|fetch|copy|files` wrap `check_bundle`,
-  `fetch_bundle`, `copy_bundle` and `bundle_files` from `sdmxlib.bundle`.
+  typer app; `sdmxlib edition check|fetch|copy|files` wrap `check_edition`,
+  `fetch_edition`, `copy_edition` and `edition_files` from `sdmxlib.edition`.

@@ -2,7 +2,7 @@
 
 What sealing a product's next edition costs, phase by phase: `LocalRegistry.build(previous=)`
 copies the previous edition's store and puts back the keys the published store
-leaves out (GH-165), and `write_manifest` fingerprints, settles the lake,
+leaves out (GH-165), and `seal` fingerprints, settles the lake,
 counts and surveys each binding, and compacts the store again (GH-248). Not
 part of `just ci`: the census run reads the 2 GB published census bundle and
 takes about five minutes per seal.

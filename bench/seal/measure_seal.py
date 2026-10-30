@@ -1,4 +1,4 @@
-"""Time each phase of a seal: `LocalRegistry.build(previous=)`, a change, then `write_manifest` (GH-248).
+"""Time each phase of a seal: `LocalRegistry.build(previous=)`, a change, then `seal` (GH-248).
 
     uv run --with psutil python -m bench.seal.measure_seal census <product> <previous> <runs>
     uv run --with psutil python -m bench.seal.measure_seal codr <product> <previous> <runs> <csv>
@@ -28,10 +28,10 @@ from pathlib import Path
 import duckdb
 
 import sdmxlib as sl
-import sdmxlib.bundle._write as write_module
+import sdmxlib.edition._write as write_module
 import sdmxlib.local.registry as registry_module
 from bench.seal import build_codr
-from sdmxlib.bundle import Producer, write_manifest
+from sdmxlib.edition import Producer, seal
 
 #: The functions timed, by the module attribute each phase is called through.
 _WRAPPED = (
@@ -41,7 +41,7 @@ _WRAPPED = (
     (write_module, "binding_counts", "binding counts"),
     (write_module, "_survey_bindings", "binding survey"),
     (write_module, "compact_for_publication", "compact_for_publication"),
-    (write_module, "inventory", "file digests"),
+    (write_module, "list_files", "file digests"),
     (write_module, "_data_inventory", "data file digests"),
     (registry_module, "restore", "key restore"),
     (shutil, "copyfile", "copy"),
@@ -107,13 +107,13 @@ def _size(path: Path) -> int:
 def seal_once(kind: str, product: Path, previous: str, csv: Path | None) -> Run:
     run = _CURRENT
     run.reset()
-    manifest = json.loads((product / previous / "bundle.manifest.json").read_text())
+    manifest = json.loads((product / previous / "manifest.json").read_text())
     written = _WRITTEN()
     start = time.perf_counter()
     with sl.LocalRegistry.build(product, previous=previous) as registry:
         run.seconds["build(previous=)"] = time.perf_counter() - start
-        edition = registry.publication
-        run.store_bytes["restored"] = _size(edition / "meta.duckdb")
+        edition = registry.edition_dir
+        run.store_bytes["restored"] = _size(edition / "metadata.duckdb")
         if kind == "codr" and csv is not None:
             changed = time.perf_counter()
             latest = build_codr.latest_month(duckdb.connect(), csv)
@@ -123,19 +123,19 @@ def seal_once(kind: str, product: Path, previous: str, csv: Path | None) -> Run:
             registry.write_observations(schema=build_codr.SCHEMA, table=build_codr.TABLE, source=source, mode="append")
             run.seconds["change (append one month)"] = time.perf_counter() - changed
     sealing = time.perf_counter()
-    write_manifest(
+    seal(
         edition,
-        bundle_id=manifest["bundle_id"],
+        product_id=manifest["product_id"],
         producer=Producer(name="seal-measure", version="0"),
-        lifecycle="final" if kind == "census" else "live",
+        lifecycle="final" if kind == "census" else "revisable",
         expire_snapshots=kind == "census",
     )
-    run.seconds["write_manifest"] = time.perf_counter() - sealing
+    run.seconds["seal"] = time.perf_counter() - sealing
     run.seconds["seal total"] = time.perf_counter() - start
     run.written["seal total"] = _WRITTEN() - written
     run.edition = edition.name
-    run.store_bytes["previous"] = _size(product / previous / "meta.duckdb")
-    run.store_bytes["sealed"] = _size(edition / "meta.duckdb")
+    run.store_bytes["previous"] = _size(product / previous / "metadata.duckdb")
+    run.store_bytes["sealed"] = _size(edition / "metadata.duckdb")
     # Kilobytes on Linux, bytes on macOS.
     scale = 1 if sys.platform == "darwin" else 1024
     run.peak_rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * scale

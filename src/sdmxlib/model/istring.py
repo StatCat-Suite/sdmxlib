@@ -269,7 +269,7 @@ class InternationalString(Mapping[str, LocalisedString]):
     #: `tests/unit/test_shared_empty_values.py` holds that contract.
     #:
     #: Worth having because the empty case is not a corner: the 2021 Census Profile
-    #: bundle carries 585,675 annotations and 10,064 annotation-text rows, so
+    #: edition carries 585,675 annotations and 10,064 annotation-text rows, so
     #: ~98% of annotation texts are empty, and a read of one codelist built
     #: 1,159,902 `InternationalString`s (#377).
     EMPTY: ClassVar[InternationalString]
@@ -289,7 +289,7 @@ class InternationalString(Mapping[str, LocalisedString]):
         """Build from an `InternationalString`, which is copied, or a mapping from tag to text.
 
         Returns the shared `EMPTY` for an empty mapping, the common case on a
-        real bundle, so it allocates nothing. Only for this
+        real edition, so it allocates nothing. Only for this
         exact class: a subclass gets its own fresh instance, since `EMPTY` is
         an `InternationalString` and returning it would be a type error the
         annotation cannot see.
@@ -311,7 +311,7 @@ class InternationalString(Mapping[str, LocalisedString]):
 
         For the store readers, whose rows were normalised as they were
         written, and for the format readers, which normalise each tag
-        themselves to refuse a bad one as a contradiction. `check_bundle`
+        themselves to refuse a bad one as a contradiction. `check_edition`
         reports a store holding a tag `normalize_tag` would change.
 
         One call deep, as the store path's call-count bounds hold it

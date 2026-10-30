@@ -20,7 +20,7 @@ import msgspec
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.bundle import CANONICAL_FORM, canonical_json
+from sdmxlib.edition import CANONICAL_FORM, canonical_json
 from sdmxlib.model.annotations import Annotations
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.collections import ItemList
