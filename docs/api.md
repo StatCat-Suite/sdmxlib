@@ -68,7 +68,7 @@ Persistent DuckDB-backed structural store, the in-memory registry, and the data 
 
 ### Editions
 
-An edition published as an artefact: its manifest, a `token` per edition, and a checksum per file.
+An edition sealed as an artefact: its manifest, an `edition_id` per edition, and a checksum per file; and the product directory's editions, unsealed ones included.
 
 The format itself, field by field, is [the edition format](edition.md).
 
@@ -77,6 +77,30 @@ The format itself, field by field, is [the edition format](edition.md).
 ---
 
 ::: sdmxlib.edition.seal
+
+---
+
+::: sdmxlib.edition.list_editions
+
+---
+
+::: sdmxlib.edition.EditionInfo
+
+---
+
+::: sdmxlib.edition.discard
+
+---
+
+::: sdmxlib.edition.read_journal
+
+---
+
+::: sdmxlib.edition.clear_journal
+
+---
+
+::: sdmxlib.edition.JournalEntry
 
 ---
 
@@ -193,6 +217,142 @@ Display annotations changed without a rebuild, the effective token a cache keys 
 ---
 
 ::: sdmxlib.edition.overlay_schema
+
+---
+
+### The Inventory
+
+Which edition of each product in a catalog is live: the documents, the rules that move an edition between states, and the readers. The format and protocol are the [sharded catalog spec](design/sharded-bundle-catalog.md) §6; statcatlib writes the Inventory.
+
+::: sdmxlib.inventory
+
+---
+
+::: sdmxlib.inventory.LiveInventory
+
+---
+
+::: sdmxlib.inventory.LiveEdition
+
+---
+
+::: sdmxlib.inventory.FullInventory
+
+---
+
+::: sdmxlib.inventory.local_fetch
+
+---
+
+::: sdmxlib.inventory.record
+
+---
+
+::: sdmxlib.inventory.release
+
+---
+
+::: sdmxlib.inventory.release_due
+
+---
+
+::: sdmxlib.inventory.cancel
+
+---
+
+::: sdmxlib.inventory.supersede_pending
+
+---
+
+::: sdmxlib.inventory.rollback
+
+---
+
+::: sdmxlib.inventory.retire
+
+---
+
+::: sdmxlib.inventory.reinstate
+
+---
+
+::: sdmxlib.inventory.repairable
+
+---
+
+::: sdmxlib.inventory.head
+
+---
+
+::: sdmxlib.inventory.leaf_ref
+
+---
+
+::: sdmxlib.inventory.next_root
+
+---
+
+::: sdmxlib.inventory.TransitionError
+
+---
+
+::: sdmxlib.inventory.InventoryError
+
+---
+
+::: sdmxlib.inventory.Root
+
+---
+
+::: sdmxlib.inventory.Leaf
+
+---
+
+::: sdmxlib.inventory.LeafEntry
+
+---
+
+::: sdmxlib.inventory.CatalogDocument
+
+---
+
+::: sdmxlib.inventory.Current
+
+---
+
+::: sdmxlib.inventory.Event
+
+---
+
+::: sdmxlib.inventory.Tombstone
+
+---
+
+::: sdmxlib.inventory.schema
+
+---
+
+#### Conformance
+
+The protocol's guarantees as checks an implementation runs against its own writer.
+
+::: sdmxlib.inventory.conformance
+
+---
+
+::: sdmxlib.inventory.conformance.run
+
+---
+
+::: sdmxlib.inventory.conformance.Backend
+
+---
+
+::: sdmxlib.inventory.conformance.Snapshot
+
+---
+
+::: sdmxlib.inventory.conformance.ConflictError
 
 ---
 
