@@ -54,7 +54,24 @@ SDMX-ML 2.1 and 3.0 snapshots. They hold 37,269,892 `xml:lang` values.
 - No value is empty, and no text element omits `xml:lang`.
 
 GH-280's survey of 14 registries found the same in about 1.34 million values.
-Both surveys read SDMX-ML; SDMX-JSON responses are not surveyed.
+
+A third survey, on 2026-10-29, asked the sweep's endpoints for the same
+structure resources as SDMX-JSON: version 1.0 from a 2.1 REST API, 2.0 from a
+3.0 one. ECB and Eurostat answer 406 and serve structures only as SDMX-ML. BIS,
+IMF, OECD and the Global Registry returned 68 documents across seven
+endpoints, holding 3,338,729 `names`, `descriptions` and `texts` objects with
+3,608,652 keys, and a `meta.contentLanguages` list in each document.
+
+- Every key and every `contentLanguages` entry is a lowercase two-letter
+  code, 32 distinct: `en` throughout, IMF's and OECD's languages as above,
+  and EU-language codes from the Global Registry.
+- `normalize_tag` would change none of them and refuse none of them. The
+  check was run against inputs it must refuse (`fr_ca`, `""`, `e`, `en us`,
+  `sgn-be-fr`) and refused each.
+- No object holds two keys that differ only in case, and none repeats a key.
+
+SDMX-JSON data messages were not surveyed. Their structure sections carry
+texts of the same artefacts.
 
 ### What the formats allow
 
@@ -227,9 +244,10 @@ The name avoids the query language's `Label` (`query/_expr.py`).
 - **One bad tag refuses a large artefact.** This is the existing refusal
   mechanism, and `strict=False` keeps the rest of the message. No surveyed
   registry sends such a tag.
-- **Unsurveyed SDMX-JSON sources.** Both surveys read SDMX-ML. Mitigation:
-  before this ships, the sweep counts tag spellings in cached SDMX-JSON
-  responses too, and the result is recorded here.
+- **Unsurveyed sources.** The surveys cover SDMX-ML and SDMX-JSON structure
+  messages from the sweep's six registries (Evidence). A registry outside them,
+  or an SDMX-JSON data message, may send a tag these rules refuse; the refusal
+  names the artefact and the tag, and `strict=False` reads the rest.
 
 ## Breaking changes
 
@@ -244,14 +262,16 @@ The name avoids the query language's `Label` (`query/_expr.py`).
 - Keys and returned tags are lowercase: `InternationalString(**{"fr-CA":
   "…"}).langs` is `["fr-ca"]`.
 
-`docs/upgrading.md` gets an entry when this is built. No SDMX-ML registry in
-either survey sends anything these refuse or change.
+`docs/upgrading.md` gets an entry when this is built. No registry in the
+surveys, in SDMX-ML or SDMX-JSON, sends anything these refuse or change.
 
 ## Cross-repo contract
 
 statcatlib writes its own maps into the database sdmxlib writes, so "one
 spelling" holds only if both libraries store the same form through the same
-function. Before this is built, statcatlib agrees, on its tracker, to:
+function. statcatlib agreed in
+[StatCat-Suite/statcatlib#88](https://github.com/StatCat-Suite/statcatlib/issues/88#issuecomment-6510569518)
+to:
 
 1. store every tag in the form `sl.normalize_tag` returns, lowercase. That
    differs from GH-280's request for RFC canonical case;
@@ -259,3 +279,8 @@ function. Before this is built, statcatlib agrees, on its tracker, to:
    boundary, where its decision 2 says it fixes them;
 3. define `LocalizedText`'s JSON form, and show tags in canonical case to
    people if it wants to.
+
+Its answer sets the JSON form as `{"text": "…", "lang": "fr-ca"}`, with the
+stored tag and no display case. Its reader of stored maps rebuilds each through
+`InternationalString.of()` and so re-checks tags; it will ask for a public
+constructor that skips the check only if a profile shows the cost.
