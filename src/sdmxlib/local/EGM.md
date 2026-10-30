@@ -39,7 +39,9 @@ plane: it attaches the catalogs, serves observation reads and takes writes.
   the MSD does not define or allow that often (`validation.metadata_sets_advisories`).
 - `LocalRegistry.build(...)` (`registry.py`): creates an edition directory
   `<product>/<edition_id>` (a UUIDv7) over the shared `<product>/data/`. Takes
-  `previous=` or `resume=`. `resume=` reopens an unsealed edition and raises
+  `previous=` (copying the previous edition's `lazy`-tier files, or the
+  prefixes `carry=` names) or `resume=`. It refuses to start an edition while
+  the product has an unsealed one. `resume=` reopens an unsealed edition and raises
   `ManifestError` for a sealed one or one `build` did not start. The
   `edition_dir` property returns the edition directory.
 - `EditionEngine` (`engine.py`): shared in-memory DuckDB engine. Provides

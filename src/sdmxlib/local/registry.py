@@ -37,7 +37,7 @@ import shutil
 import threading
 import time
 import uuid
-from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
+from collections.abc import Callable, Collection, Generator, Iterable, Mapping, Sequence
 from contextlib import contextmanager
 from importlib import metadata
 from pathlib import Path
@@ -98,6 +98,7 @@ from sdmxlib.session import SessionFactory, adopt
 from sdmxlib.storage import readers, resolve, writers
 from sdmxlib.storage._kinds import CLASS_TO_NAME
 from sdmxlib.storage._kinds import NAME_TO_CLASS as _TYPE_REGISTRY
+from sdmxlib.storage._layout import refuse_second_unsealed
 from sdmxlib.storage._manifest import (
     DATA_PATH,
     MANIFEST_NAME,
@@ -660,12 +661,12 @@ class EditionRegistry(SessionFactory):
         #: The lake's ``DATA_PATH``, a local directory or a remote URI, ending
         #: in ``/``; None where no lake is attached through the registry.
         self._data_path: str | None = None
-        #: The manifest `bundle()` read, if the edition had one (GH-66).
+        #: The manifest `edition()` read, if the edition had one (GH-66).
         self._manifest: Manifest | None = None
         #: The catalog whose ``sdmx`` schema every handle reads: the file's own
         #: once open, or the edition's ``<prefix>__metadata`` in a `EditionEngine`.
         self._catalog: str | None = None
-        #: The engine `bundle()` attached this edition into, its prefix
+        #: The engine `edition()` attached this edition into, its prefix
         #: there, and whether this registry made the engine and closes it.
         self._engine: EditionEngine | None = None
         self._prefix: str | None = None
@@ -688,14 +689,31 @@ class EditionRegistry(SessionFactory):
         """Where the lake reads its data files: a local directory or a remote URI, ending in ``/``.
 
         The manifest's relative ``data_path`` resolved against the
-        edition, or against its remote root (`bundle`'s ``remote``). None
+        edition, or against its remote root (`edition`'s ``remote``). None
         for a registry with no lake of its own.
         """
         return self._data_path
 
     @property
+    def catalog_name(self) -> str:
+        """The name of the attached catalog this registry's ``sdmx`` schema is in.
+
+        ``<product_id>__<edition_id>__metadata`` for an edition in an
+        `EditionEngine`, so a caller with its own schema in the store runs
+        ``USE "<catalog_name>".<schema>`` on its cursors and keeps its SQL
+        unqualified; the store file's own catalog otherwise.
+
+        Raises:
+            ValueError: If the registry is not open.
+        """
+        if self._catalog is None:
+            msg = f"{self._uri} is not open, so no catalog is attached"
+            raise ValueError(msg)
+        return self._catalog
+
+    @property
     def manifest(self) -> Manifest | None:
-        """The edition manifest `bundle()` read, or None (not an edition, or unsealed).
+        """The edition manifest `edition()` read, or None (not an edition, or unsealed).
 
         Its ``token`` changes at every edition and never on a read, so it
         is what a cache or an ETag keys on.
@@ -2475,6 +2493,7 @@ class LocalRegistry(EditionRegistry):
         *,
         previous: str | None = None,
         resume: str | None = None,
+        carry: Collection[str] | None = None,
         source_registry: str | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
     ) -> Self:
@@ -2494,7 +2513,13 @@ class LocalRegistry(EditionRegistry):
         files. Without it, both start empty. Neither touches an earlier
         edition's directory, and nothing is ever deleted from ``data/``: files
         an earlier edition lists stay until garbage collection finds no
-        manifest listing them.
+        manifest listing them. Files outside the lake that the previous
+        manifest lists at tier ``lazy``, such as a ``search/`` index, are
+        copied too, so the builder keeps what it does not rebuild; `carry`
+        names the path prefixes to copy instead.
+
+        A product has one unsealed edition at a time: starting another while
+        one exists is refused, naming it.
 
         With `resume`, it reopens an edition `build` started and nobody has
         sealed yet, for a builder that writes in more than one step.
@@ -2506,6 +2531,9 @@ class LocalRegistry(EditionRegistry):
                 for a product's first.
             resume: The edition id of an unsealed edition to reopen, instead
                 of starting one.
+            carry: With `previous`, the path prefixes of the previous
+                edition's files outside the lake to copy in; by default every
+                file its manifest lists at tier ``lazy``.
             source_registry: Provenance tag for the artefacts added.
             resolve_cache_items: As the constructor.
 
@@ -2514,7 +2542,8 @@ class LocalRegistry(EditionRegistry):
 
         Raises:
             ManifestError: If `previous` is not a sealed edition of this
-                product, or `resume` is not an unsealed one.
+                product, `resume` is not an unsealed one, or the product
+                already has an unsealed edition and `resume` is not given.
             ValueError: If both `previous` and `resume` are given.
         """
         product = Path(path)
@@ -2525,6 +2554,7 @@ class LocalRegistry(EditionRegistry):
             return cls._resume(
                 product, resume, source_registry=source_registry, resolve_cache_items=resolve_cache_items
             )
+        refuse_second_unsealed(product)
         edition_id = str(uuid.uuid7())
         edition = product / edition_id
         if previous is not None:
@@ -2538,6 +2568,7 @@ class LocalRegistry(EditionRegistry):
             for name in (METADATA_NAME, TABLES_NAME):
                 if (source / name).exists():
                     shutil.copyfile(source / name, edition / name)
+            _carry(source, edition, extended, carry)
         else:
             edition.mkdir(parents=True)
         (product / "data").mkdir(exist_ok=True)
@@ -3039,3 +3070,24 @@ _RESOLVERS.update(
         "metadata_value": lambda reg: reg._sections_for_keys,
     }
 )
+
+
+def _carry(source: Path, edition: Path, manifest: Manifest, prefixes: Collection[str] | None) -> None:
+    """Copy the previous edition's files outside the lake into the new one (GH-258).
+
+    By default every edition file its manifest lists at tier ``lazy``; with
+    `prefixes`, those whose path starts with one of them. Each copy is
+    checked against the manifest's size.
+    """
+    for entry in manifest.files:
+        if entry.root != "edition" or entry.path in {METADATA_NAME, TABLES_NAME}:
+            continue
+        wanted = entry.tier == "lazy" if prefixes is None else any(entry.path.startswith(p) for p in prefixes)
+        if not wanted:
+            continue
+        target = edition / entry.path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source / entry.path, target)
+        if target.stat().st_size != entry.size:
+            msg = f"{source / entry.path} is {target.stat().st_size} bytes; its manifest lists {entry.size}"
+            raise ManifestError(msg)

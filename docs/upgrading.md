@@ -52,7 +52,14 @@ first edition again from its source, with `LocalRegistry.build(product)` and
 | receive stamp `<stamps>/<bundle_id>/<token>` | `<stamps>/<product_id>/<edition_id>` |
 
 `LocalRegistry.build(path, previous=, resume=)` keeps its name; `path` is
-the product directory. The effective token hashes `v3` and the edition id in
+the product directory. It now refuses to start an edition while the product
+has an unsealed one, naming it: resume that one, or `discard` it. With
+`previous=` it also copies the previous edition's `lazy`-tier files, such as
+`search/` (`carry=` to choose). `seal` writes `journal/<edition_id>.json`
+beside the editions before the manifest; a writer recording editions in an
+Inventory removes it with `clear_journal`. New: `list_editions`, `discard`,
+`read_journal`, `clear_journal`, `EditionRegistry.catalog_name` and
+`synthetic_edition(..., seal=False)`. The effective token hashes `v3` and the edition id in
 place of `v2` and the token, so every effective token changes once. A
 fingerprint changes for no unchanged edition: `CANONICAL_FORM` stays `1`.
 

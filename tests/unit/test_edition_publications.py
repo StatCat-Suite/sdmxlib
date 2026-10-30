@@ -129,7 +129,7 @@ def test_build_without_previous_starts_an_empty_publication(tmp_path: Path) -> N
 
 def test_extending_an_unpublished_publication_is_refused(tmp_path: Path) -> None:
     started = make_bundle(tmp_path / "b", 10)
-    with pytest.raises(ManifestError, match="not a sealed edition"):
+    with pytest.raises(ManifestError, match=rf"has an unsealed edition, {started.name}"):
         sl.LocalRegistry.build(started.parent, previous=started.name)
 
 

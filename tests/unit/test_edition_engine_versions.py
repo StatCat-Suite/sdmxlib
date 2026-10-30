@@ -240,7 +240,7 @@ def test_extending_a_publication_this_engine_cannot_read_is_refused(tmp_path: Pa
     _edit(publication, duckdb_storage_version=engine_storage_version() + 1)
     with pytest.raises(StoreFormatError):
         sl.LocalRegistry.build(publication.parent, previous=publication.name)
-    assert sorted(p.name for p in publication.parent.iterdir()) == sorted(["data", publication.name])
+    assert sorted(p.name for p in publication.parent.iterdir()) == sorted(["data", "journal", publication.name])
 
 
 # ── artefacts and bindings ────────────────────────────────────────────────
