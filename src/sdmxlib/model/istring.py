@@ -288,8 +288,8 @@ class InternationalString(Mapping[str, LocalisedString]):
     def of(cls, pairs: InternationalString | Mapping[str, str]) -> InternationalString:
         """Build from an `InternationalString`, which is copied, or a mapping from tag to text.
 
-        Returns the shared `EMPTY` for an empty mapping — the common case on a
-        real bundle, and the one that used to allocate. Only for this
+        Returns the shared `EMPTY` for an empty mapping, the common case on a
+        real bundle, so it allocates nothing. Only for this
         exact class: a subclass gets its own fresh instance, since `EMPTY` is
         an `InternationalString` and returning it would be a type error the
         annotation cannot see.

@@ -152,8 +152,8 @@ that each refuses a malformed tag.
 | `InternationalString.__getitem__(lang)` | exact key | normalised; a malformed tag raises `InvalidTagError`, a tag not held raises `MissingTagError` (a `KeyError`) |
 | `InternationalString.__contains__(lang)` | exact key | normalised; a malformed tag raises `InvalidTagError` and a non-`str` raises `TypeError`, as an unhashable key does on a `dict` |
 
-The last three rows are as amended by GH-309, which made `InternationalString`
-a `Mapping[str, LocalisedString]` (the suite design, D7). `InvalidTagError` is
+The last three rows follow the suite design's D7, which GH-309 built:
+`InternationalString` is a `Mapping[str, LocalisedString]`. `InvalidTagError` is
 a `ValueError` only, so generic code catching `KeyError` (`Mapping.get`,
 `ChainMap`) passes it on rather than reading a malformed tag as absent.
 
