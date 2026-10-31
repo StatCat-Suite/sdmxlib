@@ -478,6 +478,21 @@ RULES: tuple[Rule, ...] = (
         ),
     ),
     Rule(
+        "IM-5.3.2.2-6",
+        "5.3.2.2",
+        83,
+        "This facet indicates that an Attribute or a Measure has sentinel values with special meaning within their "
+        "data type.",
+        Warned(
+            (
+                Check(
+                    "_check_sentinel_values",
+                    "tests/unit/test_constraint_values.py::test_a_sentinel_value_of_another_type_warns",
+                ),
+            )
+        ),
+    ),
+    Rule(
         "IM-5.4.3.1-1",
         "5.4.3.1",
         85,
@@ -619,9 +634,13 @@ RULES: tuple[Rule, ...] = (
         102,
         "the content is a string value that must conform to the Representation specified for the "
         "MetadataAttribute in the MetadataStructureDefinition.",
-        NotChecked(
-            "an uncoded value against its attribute's text format: pysdmx and sdmx1 check none, and the XSD regex "
-            "dialect and SDMX time periods are undecided: GH-297"
+        Warned(
+            (
+                Check(
+                    "_check_metadata_set_values",
+                    "tests/unit/test_metadata_set_conformance.py::test_a_value_its_text_format_does_not_allow_warns",
+                ),
+            )
         ),
     ),
     # 8 — Hierarchy

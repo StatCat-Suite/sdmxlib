@@ -28,6 +28,7 @@ from typing import Any
 import attrs
 from attrs import frozen
 
+from sdmxlib._facets import FacetChecker
 from sdmxlib.model._container import inner_id
 from sdmxlib.model._invariants import advise, register, register_advisory
 from sdmxlib.model._items import spellings
@@ -1503,8 +1504,10 @@ def validate(msg: StructureMessage | MetadataMessage) -> None:
 
     It warns with one `ImRuleWarning` on an IM rule between artefacts that no
     wire schema can enforce: a dataflow bound to the latest minor version of
-    an evolving DSD with no dimension constraint (IM §5.3.2.1), and a data
-    constraint value its component's codelist does not hold (§12.3.3.1).
+    an evolving DSD with no dimension constraint (IM §5.3.2.1), a data
+    constraint value its component's codelist does not hold or its text
+    format does not allow (§12.3.3.1), and a sentinel value that is not of
+    its text format's type (§5.3.2.2).
 
     Args:
         msg: A `StructureMessage`; a `MetadataMessage` holds no references to check.
@@ -1532,7 +1535,9 @@ def validate(msg: StructureMessage | MetadataMessage) -> None:
     validate_references(msg)
     advisories: list[ValidationIssue] = []
     _check_evolving_structure_constraints(msg, advisories)
-    _check_constraint_values(msg, advisories)
+    checker = FacetChecker()
+    _check_constraint_values(msg, advisories, checker)
+    _check_sentinel_values(msg, advisories, checker)
     advise(advisories)
 
 
@@ -1556,15 +1561,18 @@ def metadata_sets_advisories(
             found[key] = lookup(urn)
         return found[key]
 
+    checker = FacetChecker()
     return [
         issue
         for artefact in artefacts
         if isinstance(artefact, MetadataSet)
-        for issue in metadata_set_advisories(artefact, cached)
+        for issue in metadata_set_advisories(artefact, cached, checker)
     ]
 
 
-def metadata_set_advisories(ms: MetadataSet, lookup: Callable[[SdmxUrn[object]], object]) -> list[ValidationIssue]:
+def metadata_set_advisories(
+    ms: MetadataSet, lookup: Callable[[SdmxUrn[object]], object], checker: FacetChecker
+) -> list[ValidationIssue]:
     """What a metadata set breaks of IM §7.4.2.1, against the structures `lookup` finds.
 
     For the registries, which hold a set beside its metadataflow and MSD: a
@@ -1575,6 +1583,7 @@ def metadata_set_advisories(ms: MetadataSet, lookup: Callable[[SdmxUrn[object]],
     Args:
         ms: The metadata set.
         lookup: A registry's `get`: an artefact by URN, or None.
+        checker: Checks reported values against their text formats.
 
     Returns:
         The rules the set breaks, for `_invariants.advise`.
@@ -1589,6 +1598,7 @@ def metadata_set_advisories(ms: MetadataSet, lookup: Callable[[SdmxUrn[object]],
     msd = None if structure.structure is None else lookup(structure.structure.urn)
     if isinstance(msd, MetadataStructure):
         _check_metadata_set_attributes(ms, msd, issues)
+        _check_metadata_set_values(ms, msd, issues, checker)
     return issues
 
 
@@ -1621,8 +1631,7 @@ def _check_metadata_set_attributes(ms: MetadataSet, msd: MetadataStructure, issu
     "The MetadataSet must conform to the MetadataStructureDefinition": each
     reported attribute is one the MSD defines at that place in its tree,
     reported between its `min_occurs` and `max_occurs` times, and a
-    presentational one carries no value. An uncoded value against its
-    attribute's text format is not checked (GH-297).
+    presentational one carries no value.
     """
 
     def walk(reported: Sequence[ReportedAttribute], slots: Sequence[MetadataAttribute], path: str) -> None:
@@ -1642,6 +1651,43 @@ def _check_metadata_set_attributes(ms: MetadataSet, msd: MetadataStructure, issu
                     message = f"gives {slot.id} a value, and {msd.urn} makes it presentational, holding none"
                     issues.append(ValidationIssue(path=f"{path}[{slot.id}].value", message=message))
                 walk(list(attribute.children), list(slot.children), f"{path}[{slot.id}].children")
+
+    walk(list(ms.attributes), list(msd.attributes), f"MetadataSet:{ms.id}.attributes")
+
+
+def _reported_texts(value: object) -> list[str]:
+    """A reported value as the texts its attribute's text format applies to: each language's, for a multilingual one."""
+    if isinstance(value, InternationalString):
+        return [localised.text for localised in value.values()]
+    if isinstance(value, bool):
+        return ["true" if value else "false"]
+    return [] if value is None else [str(value)]
+
+
+def _check_metadata_set_values(
+    ms: MetadataSet, msd: MetadataStructure, issues: list[ValidationIssue], checker: FacetChecker
+) -> None:
+    """Each reported value meets the text format its MSD gives the attribute (IM §7.4.2.1).
+
+    "The content is a string value that must conform to the Representation
+    specified for the MetadataAttribute." An XHTML value is markup and is not
+    read; a coded one is the codelist's to check.
+    """
+
+    def walk(reported: Sequence[ReportedAttribute], slots: Sequence[MetadataAttribute], path: str) -> None:
+        by_id = {slot.id: slot for slot in slots}
+        for attribute in reported:
+            slot = by_id.get(attribute.id)
+            if slot is None:
+                continue
+            facet = slot.representation
+            if isinstance(facet, Facet) and facet.type != DataType.XHTML:
+                for text in _reported_texts(attribute.value):
+                    broken = checker.breaks(facet, text)
+                    if broken is not None:
+                        message = f"reports {text!r}, which {broken} in the text format {msd.urn} gives {slot.id}"
+                        issues.append(ValidationIssue(path=f"{path}[{slot.id}].value", message=message))
+            walk(list(attribute.children), list(slot.children), f"{path}[{slot.id}].children")
 
     walk(list(ms.attributes), list(msd.attributes), f"MetadataSet:{ms.id}.attributes")
 
@@ -1697,26 +1743,43 @@ def _enumerations(dsd: DataStructure, msg: StructureMessage) -> dict[str, tuple[
     return out
 
 
-def _check_constraint_values(msg: StructureMessage, issues: list[ValidationIssue]) -> None:
-    """A cube region's values are items of the enumeration the DSD gives the component (IM §12.3.3.1).
+def _text_formats(dsd: DataStructure) -> dict[str, Facet]:
+    """Component id → its text format, for each component of `dsd` that has one, the time dimension's included."""
+    components = [*dsd.components, *([dsd.time_dimension] if dsd.time_dimension is not None else [])]
+    return {c.id: c.representation for c in components if isinstance(c.representation, Facet)}
+
+
+def _check_constraint_values(msg: StructureMessage, issues: list[ValidationIssue], checker: FacetChecker) -> None:
+    """A cube region's values fit the representation the DSD gives the component (IM §12.3.3.1).
 
     "The value in ComponentValue.value and MemberValue.value must be
     consistent with the Representation declared for the Component." A value
-    no schema can check: the representation is another artefact's. Checked
-    where the message holds the constraint's DSD and the component's codelist
-    or value list; a value set with `remove_prefix` holds values with the
-    codes' prefix removed and is not compared. A value against a text format
-    is not checked (GH-297).
+    no schema can check: the representation is another artefact's. An
+    enumerated component's value is an item of its codelist or value list,
+    checked where the message holds it; a value set with `remove_prefix`
+    holds values with the codes' prefix removed and is not compared. Any
+    other component's value meets its text format (`FacetChecker`).
     """
     for dc in msg.constraints:
         for dsd in _constrained_structures(dc, msg):
-            enumerations = _enumerations(dsd, msg)
+            enumerations, formats = _enumerations(dsd, msg), _text_formats(dsd)
             for r, region in enumerate(dc.regions):
                 selections: list[tuple[str, str, KeyValue | ComponentValueSet]] = [
                     (f"keys[{kv.dimension_id}]", kv.dimension_id, kv) for kv in region.keys
                 ]
                 selections += [(f"components[{c.component_id}]", c.component_id, c) for c in region.components]
                 for where, component_id, selection in selections:
+                    path = f"DataConstraint:{dc.id}.regions[{r}].{where}"
+                    if component_id in formats:
+                        for value in sorted(v.value for v in selection.values):
+                            broken = checker.breaks(formats[component_id], value)
+                            if broken is not None:
+                                message = (
+                                    f"selects {value!r}, which {broken} in the text format {dsd.urn} "
+                                    f"gives {component_id}"
+                                )
+                                issues.append(ValidationIssue(path=path, message=message))
+                        continue
                     if selection.remove_prefix or component_id not in enumerations:
                         continue
                     urn, items = enumerations[component_id]
@@ -1726,9 +1789,27 @@ def _check_constraint_values(msg: StructureMessage, issues: list[ValidationIssue
                             f"selects {', '.join(map(repr, unknown))}, which {urn} does not hold; {dsd.urn} "
                             f"enumerates {component_id} with it"
                         )
-                        issues.append(
-                            ValidationIssue(path=f"DataConstraint:{dc.id}.regions[{r}].{where}", message=message)
+                        issues.append(ValidationIssue(path=path, message=message))
+
+
+def _check_sentinel_values(msg: StructureMessage, issues: list[ValidationIssue], checker: FacetChecker) -> None:
+    """Each sentinel value is a value of its text format's type (IM §5.3.2.2).
+
+    A sentinel has "special meaning within their data type": `-1` for "not
+    applicable" is an Integer. It needs to meet none of the format's other
+    facets, since a value equal to it is exempt from them.
+    """
+    for dsd in msg.data_structures:
+        for component_id, facet in _text_formats(dsd).items():
+            for sentinel in facet.sentinel_values:
+                broken = checker.type_breaks(facet, sentinel.value)
+                if broken is not None:
+                    issues.append(
+                        ValidationIssue(
+                            path=f"DataStructure:{dsd.id}.{component_id}.sentinel_values",
+                            message=f"names the sentinel value {sentinel.value!r}, which {broken}",
                         )
+                    )
 
 
 def _late_binds_minor(version: str) -> bool:

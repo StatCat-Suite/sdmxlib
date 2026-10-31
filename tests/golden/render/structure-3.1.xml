@@ -721,13 +721,13 @@
               <str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT</str:ConceptIdentity>
               <str:LocalRepresentation>
                 <str:TextFormat startTime="2020-01" endTime="2030-12">
-                  <str:SentinelValue value="-1">
+                  <str:SentinelValue value="9999">
                     <com:Name xml:lang="en">TIME-SENTINEL-NAME-en</com:Name>
                     <com:Name xml:lang="fr">TIME-SENTINEL-NAME-fr</com:Name>
                     <com:Description xml:lang="en">TIME-SENTINEL-DESC-en</com:Description>
                     <com:Description xml:lang="fr">TIME-SENTINEL-DESC-fr</com:Description>
                   </str:SentinelValue>
-                  <str:SentinelValue value="NA">
+                  <str:SentinelValue value="9999-12-31">
                     <com:Name xml:lang="en">TIME-NA-NAME-en</com:Name>
                     <com:Name xml:lang="fr">TIME-NA-NAME-fr</com:Name>
                   </str:SentinelValue>

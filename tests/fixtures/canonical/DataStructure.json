@@ -837,7 +837,7 @@
             "en": "TIME-SENTINEL-NAME-en",
             "fr": "TIME-SENTINEL-NAME-fr"
           },
-          "value": "-1"
+          "value": "9999"
         },
         {
           "$class": "SentinelValue",
@@ -846,7 +846,7 @@
             "en": "TIME-NA-NAME-en",
             "fr": "TIME-NA-NAME-fr"
           },
-          "value": "NA"
+          "value": "9999-12-31"
         }
       ],
       "start_time": "2020-01",
