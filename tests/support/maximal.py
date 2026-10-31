@@ -290,11 +290,16 @@ def _enumeration_facet() -> Facet:
     return attrs.evolve(_facet(), decimals=None, is_multilingual=False)
 
 
-def _sentinels(marker: str) -> tuple[SentinelValue, ...]:
-    """A text format's sentinel values (#422) — never an enumeration or coding format's."""
+def _sentinels(marker: str, values: tuple[str, str] = ("-1", "NA")) -> tuple[SentinelValue, ...]:
+    """A text format's sentinel values (#422) — never an enumeration or coding format's.
+
+    Each is a value of the format's type (IM §5.3.2.2): a time format's are
+    time periods.
+    """
+    first, second = values
     return (
-        SentinelValue(value="-1", name=_text(f"{marker}-SENTINEL-NAME"), description=_text(f"{marker}-SENTINEL-DESC")),
-        SentinelValue(value="NA", name=_text(f"{marker}-NA-NAME")),
+        SentinelValue(value=first, name=_text(f"{marker}-SENTINEL-NAME"), description=_text(f"{marker}-SENTINEL-DESC")),
+        SentinelValue(value=second, name=_text(f"{marker}-NA-NAME")),
     )
 
 
@@ -589,7 +594,7 @@ def message() -> StructureMessage:
                     # A time format's bounds (#422).
                     start_time="2020-01",
                     end_time="2030-12",
-                    sentinel_values=_sentinels("TIME"),
+                    sentinel_values=_sentinels("TIME", ("9999", "9999-12-31")),
                 ),
                 annotations=_annotations("TD"),
                 uri="https://example.org/uri/td",

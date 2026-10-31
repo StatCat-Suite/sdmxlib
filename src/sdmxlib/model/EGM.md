@@ -51,8 +51,9 @@ hierarchical roll-ups.
   `applicable_hierarchies`, `unique_hierarchy`, `check_binding_drift` and
   `validate_binding` answer graph and drift questions. `add_all` can rewrite
   SDMX 2.1 versions (`version_rewrite.py`). A `MetadataSet` added beside its metadataflow and MSD is checked against them (IM §7.4.2.1,
-  GH-29): one `ImRuleWarning` per call names targets outside the flow's and attributes
-  the MSD does not define or allow that often (`validation.metadata_sets_advisories`).
+  GH-29): one `ImRuleWarning` per call names targets outside the flow's, attributes
+  the MSD does not define or allow that often, and values their text format does not
+  allow (`validation.metadata_sets_advisories`).
 - `Resolver`, `binding()` and `current()` (`_binding.py`), plus `MapResolver`
   and `document_binding` (`_resolvers.py`): the ContextVar binding that
   attaches every Ref built inside a block to a resolver.
@@ -105,10 +106,12 @@ hierarchical roll-ups.
   reference (`1.0+.0`) to a version the message holds that it binds to;
   `validate` then warns with one `ImRuleWarning` on a dataflow late-bound to
   an evolving DSD's minor versions with no dimension constraint (IM
-  §5.3.2.1, GH-27), and on a data constraint value that is no item of the
-  codelist or value list its DSD enumerates the component with (§12.3.3.1;
-  a `remove_prefix` value set, a codelist with extensions and a text format
-  are not compared; text formats are GH-297).
+  §5.3.2.1, GH-27), on a data constraint value that is no item of the
+  codelist or value list its DSD enumerates the component with, or that its
+  text format does not allow (§12.3.3.1; a `remove_prefix` value set and a
+  codelist with extensions are not compared), and on a sentinel value that
+  is not of its text format's type (§5.3.2.2). `sdmxlib._facets` checks a
+  value against a text format.
 - `sort_key`, `compliance`, `unwritable`, `is_final`, `unreferenceable` and
   `late_binds` (`version.py`): version ordering, which SDMX grammar (2.1 or
   3.x) accepts a version, and which versions a late-bound reference takes.
