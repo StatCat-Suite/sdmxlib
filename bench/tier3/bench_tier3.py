@@ -9,8 +9,9 @@ requests and their bytes, so the counts are what an object store would see.
 Without ``--remote`` the edition's files go to Azurite, whose timings are one
 machine's and carry no request latency. With ``--remote`` the bench reads an
 edition already uploaded to Azure Blob Storage, signing in through DuckDB's
-credential chain (``az login``, or the machine's managed identity), so its
-timings are a cloud region's when it runs in that region.
+credential chain (``az login``, or the machine's managed identity) or with a
+SAS token from the variable ``--sas-env`` names, so its timings are a cloud
+region's when it runs in that region.
 
     uv run python -m bench.tier3.bench_tier3 <edition>
     uv run python -m bench.tier3.bench_tier3 <edition> \
@@ -22,6 +23,7 @@ with ``--update``; prints the table either way.
 
 import json
 import multiprocessing
+import os
 import resource
 import sys
 import tempfile
@@ -78,7 +80,7 @@ def _worker(pod: Path, remote: str, secret: sl.StoreSecret, options: dict[str, s
     engine = sl.EditionEngine(secrets=[secret], threads=4)
     conn = engine.connection
     for name, value in options.items():
-        conn.execute(f"SET {name} = {value}")
+        conn.execute(f"SET GLOBAL {name} = {value}")
     conn.execute("SET redact_http_logs = false")
     conn.execute("CALL enable_logging('HTTP')")
     found: list[dict[str, object]] = []
@@ -108,7 +110,8 @@ def _worker(pod: Path, remote: str, secret: sl.StoreSecret, options: dict[str, s
             "SELECT coalesce(sum(nr_bytes) FILTER (loaded), 0), coalesce(sum(nr_bytes) FILTER (spilled), 0) "
             "FROM duckdb_external_file_cache()"
         ).fetchone() or (0, 0)
-    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    # ru_maxrss is in KiB on Linux and in bytes on macOS.
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * (1024 if sys.platform == "linux" else 1)
     found.append({"cache_bytes": cached[0], "spilled_bytes": cached[1], "peak_rss_bytes": peak})
     return found
 
@@ -119,13 +122,18 @@ def _run(pod: Path, remote: str, secret: sl.StoreSecret, options: dict[str, str]
         return pool.apply(_worker, (pod, remote, secret, options))
 
 
-def _measure(edition: Path, remote: str, secret: sl.StoreSecret) -> dict[str, dict[str, list[dict[str, object]]]]:
-    """Every setting at a start and a restart, over a pod's copy of `edition`'s tiers 1 and 2."""
+def _measure(
+    edition: Path, remote: str, secret: sl.StoreSecret, base: dict[str, str]
+) -> dict[str, dict[str, list[dict[str, object]]]]:
+    """Every setting, on top of the options in `base`, at a start and a restart, over a pod's copy of `edition`."""
     with tempfile.TemporaryDirectory() as tmp:
         pod = Path(tmp) / "pod" / "census" / edition.name
         copy_edition(edition, pod, tiers=("required", "lazy"))
         return {
-            name: {"start": _run(pod, remote, secret, options), "restart": _run(pod, remote, secret, options)}
+            name: {
+                "start": _run(pod, remote, secret, {**base, **options}),
+                "restart": _run(pod, remote, secret, {**base, **options}),
+            }
             for name, options in SETTINGS.items()
         }
 
@@ -139,9 +147,27 @@ def _on_azurite(edition: Path) -> dict[str, dict[str, list[dict[str, object]]]]:
     try:
         with httpx2.Client(base_url=store.base, timeout=600) as client:
             _stores.upload_publication(_stores.uploader(store, client), edition, bundle="census")
-        return _measure(edition, f"{_stores.root(store)}census/{edition.name}/", _stores.secret(store))
+        return _measure(edition, f"{_stores.root(store)}census/{edition.name}/", _stores.secret(store), {})
     finally:
         _stores.stop(store)
+
+
+def _azure_secret(account: str, sas_env: str | None) -> sl.StoreSecret:
+    """The secret reading `account`: the SAS token in `sas_env`, or DuckDB's credential chain when None.
+
+    A managed identity in the credential chain fails with "Failed to get token
+    from ChainedTokenCredential" on a query that opens many files, such as
+    the census edition's 22 observation files (GH-231). A SAS token makes no
+    token requests.
+    """
+    if sas_env is None:
+        return sl.StoreSecret("azure", provider="credential_chain", options={"account_name": account})
+    sas = os.environ.get(sas_env)
+    if not sas:
+        msg = f"--sas-env names {sas_env}, which is not set"
+        raise typer.BadParameter(msg)
+    connection = f"BlobEndpoint=https://{account}.blob.core.windows.net;SharedAccessSignature={sas.lstrip('?')}"
+    return sl.StoreSecret("azure", options={"connection_string": connection})
 
 
 def main(
@@ -153,6 +179,10 @@ def main(
     ] = None,
     account: Annotated[str | None, typer.Option(help="The storage account --remote is in.")] = None,
     region: Annotated[str | None, typer.Option(help="The Azure region the bench runs in, for --update.")] = None,
+    sas_env: Annotated[
+        str | None,
+        typer.Option(help="An environment variable holding a SAS token to read --remote with, in place of sign-in."),
+    ] = None,
     update: Annotated[bool, typer.Option(help="Overwrite the baselines file with these numbers.")] = False,
 ) -> None:
     """Measure tier-3 requests, bytes and time per DuckDB cache setting."""
@@ -163,9 +193,12 @@ def main(
         if account is None or region is None:
             msg = "--remote needs --account and --region"
             raise typer.BadParameter(msg)
-        secret = sl.StoreSecret("azure", provider="credential_chain", options={"account_name": account})
-        results = _measure(edition, remote, secret)
-        store, baselines = f"azure, {region}", _BASELINES_AZURE
+        secret = _azure_secret(account, sas_env)
+        # On Ubuntu the Azure extension's default transport fails with "Problem
+        # with the SSL CA cert"; the curl transport reads the system's bundle.
+        results = _measure(edition, remote, secret, {"azure_transport_option_type": "'curl'"})
+        store = f"azure, {region}, {'SAS' if sas_env else 'credential chain'}"
+        baselines = _BASELINES_AZURE
     for name, runs in results.items():
         for phase, rows in runs.items():
             for row in rows:
