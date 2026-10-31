@@ -1603,8 +1603,9 @@ def _bundle_page() -> Generator[dict[str, Any]]:
     """`docs/edition.md`: two published bundles, and a server's copy of one reading its data files remotely.
 
     The object-store example's store is a ``file://`` URI over the published
-    census bundle, which DuckDB reads as it reads ``abfss://``; the server's
-    copy holds tiers 1 and 2 only.
+    census bundle, which DuckDB reads as it reads ``az://``; the server's
+    copy holds tiers 1 and 2 only. Its Azure secret is created with a
+    placeholder SAS and never used.
     """
     with TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -1616,6 +1617,7 @@ def _bundle_page() -> Generator[dict[str, Any]]:
             "trade_path": publish(make_bundle(root / "trade", 3)),
             "pod_path": pod,
             "store_url": f"file://{census}/",
+            "sas": "sv=2026-01-01&sig=placeholder",
         }
 
 

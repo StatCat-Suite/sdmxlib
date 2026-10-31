@@ -87,10 +87,15 @@ class StoreSecret:
     own; its documentation lists each type's providers and options.
 
     Example:
-        A pod on Azure reading with its workload identity, and a bucket on an
-        S3-compatible server:
+        An Azure account read with a SAS token, and a bucket on an
+        S3-compatible server. DuckDB's ``credential_chain`` provider fails on
+        Azure with a managed identity on any query over 5 or more files
+        ([duckdb-azure#171](https://github.com/duckdb/duckdb-azure/issues/171)):
 
-            sl.StoreSecret("azure", provider="credential_chain", options={"account_name": "acct"})
+            sl.StoreSecret(
+                "azure",
+                options={"connection_string": "BlobEndpoint=https://acct.blob.core.windows.net;SharedAccessSignature=…"},
+            )
             sl.StoreSecret(
                 "s3",
                 options={"key_id": "…", "secret": "…", "endpoint": "minio:9000", "url_style": "path", "use_ssl": False},
