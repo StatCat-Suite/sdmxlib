@@ -649,6 +649,11 @@ Optional with `tests/support/narrow.py:present()`. Two rules are subtracted for
 the rules pyrefly 1.4 added are subtracted for `tests/` too, marked TEMPORARY
 with their counts, to come off one rule at a time; everything else is on.
 
+**Scripts under `bench/` and `tools/` take their arguments through typer**
+(GH-326): each option is a typed parameter of the function that uses it, so
+pyrefly checks every use. `tests/unit/test_script_arguments.py` runs every
+script's `--help` and counts the scripts.
+
 **Both linters run "everything on, then subtract, with a written reason."** ruff
 at `select = ["ALL"]` + an annotated `ignore` list; pyrefly at
 `preset = "all"` + an annotated `[errors]` deny-list. With that shape, a _new_

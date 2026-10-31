@@ -58,11 +58,12 @@ message header (#447), and nothing else.
 fails when the shipped module differs from it.
 """
 
-import argparse
 import sys
 from collections import defaultdict
 from pathlib import Path
+from typing import Annotated
 
+import typer
 from lxml import etree
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -226,7 +227,6 @@ class Schema:
             elif child.tag == f"{_XS}any":
                 is_open = True
         return names, is_open
-
 
     # ── attributes (#446) ───────────────────────────────────────────────────
 
@@ -499,20 +499,16 @@ def render() -> str:
     return "\n".join(lines) + "\n"
 
 
-def main() -> int:
+def main(*, check: Annotated[bool, typer.Option(help="Exit 1 if the shipped module is stale.")] = False) -> None:
     """Write the module, or with ``--check`` report whether it is stale."""
-    parser = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
-    parser.add_argument("--check", action="store_true", help="exit 1 if the shipped module is stale")
-    args = parser.parse_args()
     source = render()
-    if args.check:
+    if check:
         if TARGET.read_text(encoding="utf-8") != source:
             sys.stderr.write(f"{TARGET.relative_to(ROOT)} is stale; run tools/generate_allowed_children.py\n")
-            return 1
-        return 0
+            raise typer.Exit(1)
+        return
     TARGET.write_text(source, encoding="utf-8")
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    typer.run(main)

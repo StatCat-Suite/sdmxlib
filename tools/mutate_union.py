@@ -45,7 +45,6 @@ minutes per group. Keep groups to two or three files: that keeps the
 parent light.
 """
 
-import argparse
 import json
 import pathlib
 import shutil
@@ -53,6 +52,9 @@ import signal
 import subprocess
 import sys
 import types
+from typing import Annotated
+
+import typer
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
@@ -63,14 +65,14 @@ def _restore(pyproject: pathlib.Path, original: str) -> None:
     pyproject.write_text(original, encoding="utf-8")
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("module", help="module to mutate, e.g. src/sdmxlib/query/_compile.py")
-    parser.add_argument("groups", nargs="+", help="comma-separated test files, one group per argument")
-    parser.add_argument("--max-children", default="8")
-    args = parser.parse_args()
-
-    groups = [g.split(",") for g in args.groups]
+def main(
+    module: Annotated[str, typer.Argument(help="Module to mutate, e.g. src/sdmxlib/query/_compile.py.")],
+    groups: Annotated[list[str], typer.Argument(help="Comma-separated test files, one group per argument.")],
+    *,
+    max_children: Annotated[int, typer.Option(help="Forked mutant runners at once.")] = 8,
+) -> None:
+    """Mutate one module under each test group in turn and report the union of their kills."""
+    test_groups = [g.split(",") for g in groups]
     pyproject = ma.PYPROJECT
     original = pyproject.read_text(encoding="utf-8")
 
@@ -90,8 +92,8 @@ def main() -> int:
     surviving: set[str] | None = None
     totals: list[int] = []
     try:
-        for index, tests in enumerate(groups, 1):
-            pyproject.write_text(ma.rewrite(original, args.module, tests), encoding="utf-8")
+        for index, tests in enumerate(test_groups, 1):
+            pyproject.write_text(ma.rewrite(original, module, tests), encoding="utf-8")
             # `mutants/` caches verdicts keyed on the old config. Without this
             # wipe a later group inherits the previous one's results — and
             # worse, mutmut skips re-running mutants it already has a verdict
@@ -103,7 +105,7 @@ def main() -> int:
                 # Not bare `mutmut run`: the wrapper preloads the native extensions a
                 # forked child would otherwise abort loading, and credits import-time
                 # hits to the tests that can see them (#314, #458).
-                ["uv", "run", "python", "tools/mutmut_forksafe.py", "run", "--max-children", args.max_children],  # noqa: S607
+                ["uv", "run", "python", "tools/mutmut_forksafe.py", "run", "--max-children", str(max_children)],  # noqa: S607
                 cwd=ma.ROOT,
                 check=False,
                 capture_output=True,
@@ -162,8 +164,7 @@ def main() -> int:
         print("\n  real survivors (no group killed these):")
         for name in survivors:
             print(f"    {name}")
-    return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    typer.run(main)

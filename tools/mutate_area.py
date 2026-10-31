@@ -35,7 +35,6 @@ may well be killed by tests elsewhere. Do not quote a number from this as the
 module's score; use `just mutate` for that, with the caveats in the justfile.
 """
 
-import argparse
 import json
 import pathlib
 import re
@@ -43,6 +42,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from typing import Annotated
+
+import typer
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 PYPROJECT = ROOT / "pyproject.toml"
@@ -70,21 +72,20 @@ def rewrite(text: str, module: str, tests: list[str]) -> str:
     return out
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("module", help="source file to mutate, e.g. src/sdmxlib/model/codelist.py")
-    parser.add_argument("tests", nargs="+", help="test files the stats pass may run")
-    parser.add_argument("--max-children", default="8")
-    args = parser.parse_args()
-
-    module = pathlib.Path(args.module)
+def main(
+    module: Annotated[pathlib.Path, typer.Argument(help="Source file to mutate, e.g. src/sdmxlib/model/codelist.py.")],
+    tests: Annotated[list[str], typer.Argument(help="Test files the stats pass may run.")],
+    *,
+    max_children: Annotated[int, typer.Option(help="Forked mutant runners at once.")] = 8,
+) -> None:
+    """Mutate one module against the tests named, and print the tally."""
     if not (ROOT / module).is_file():
-        print(f"no such module: {module}", file=sys.stderr)
-        return 2
-    for test in args.tests:
+        msg = f"no such module: {module}"
+        raise typer.BadParameter(msg)
+    for test in tests:
         if not (ROOT / test).exists():
-            print(f"no such test path: {test}", file=sys.stderr)
-            return 2
+            msg = f"no such test path: {test}"
+            raise typer.BadParameter(msg)
 
     original = PYPROJECT.read_text(encoding="utf-8")
     # Kept outside the tree so an interrupted run cannot leave a stray file that
@@ -93,9 +94,9 @@ def main() -> int:
     backup.write_text(original, encoding="utf-8")
 
     print(f"mutating {module}")
-    print(f"  against {' '.join(args.tests)}")
+    print(f"  against {' '.join(tests)}")
     try:
-        PYPROJECT.write_text(rewrite(original, str(module), args.tests), encoding="utf-8")
+        PYPROJECT.write_text(rewrite(original, str(module), tests), encoding="utf-8")
         # `mutants/` caches results keyed on the old config; a stale cache here
         # would report the previous area's verdicts as if they were this one's.
         shutil.rmtree(ROOT / "mutants", ignore_errors=True)
@@ -103,7 +104,7 @@ def main() -> int:
             # Not bare `mutmut run`: the wrapper preloads the native extensions a
             # forked child would otherwise abort loading, and credits import-time
             # hits to the tests that can see them (#314, #458).
-            ["uv", "run", "python", "tools/mutmut_forksafe.py", "run", "--max-children", args.max_children],  # noqa: S607
+            ["uv", "run", "python", "tools/mutmut_forksafe.py", "run", "--max-children", str(max_children)],  # noqa: S607
             cwd=ROOT,
             check=False,
         )
@@ -126,7 +127,6 @@ def main() -> int:
         shutil.rmtree(backup.parent, ignore_errors=True)
 
     report(ROOT / "mutants" / "mutmut-cicd-stats.json")
-    return 0
 
 
 def report(stats_file: pathlib.Path) -> None:
@@ -154,4 +154,4 @@ def report(stats_file: pathlib.Path) -> None:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    typer.run(main)

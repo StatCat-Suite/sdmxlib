@@ -12,8 +12,10 @@ import json
 import sys
 import time
 from pathlib import Path
+from typing import Annotated
 
 import duckdb
+import typer
 
 import sdmxlib as sl
 from sdmxlib.edition import Producer, seal
@@ -103,7 +105,11 @@ def latest_month(conn: duckdb.DuckDBPyConnection, csv: Path) -> str:
     return str(row[0]) if row else ""
 
 
-def main(raw: Path, product: Path) -> None:
+def main(
+    raw: Annotated[Path, typer.Argument(help="The directory holding metadata.json and the table's CSV.")],
+    product: Annotated[Path, typer.Argument(help="The product directory to build the first edition in.")],
+) -> None:
+    """Build the table's first edition, every month but the latest, and seal it."""
     csv = raw / f"{PID}.csv"
     artefacts, dsd, flow = structures(raw)
     start = time.perf_counter()
@@ -121,4 +127,4 @@ def main(raw: Path, product: Path) -> None:
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]), Path(sys.argv[2]))
+    typer.run(main)

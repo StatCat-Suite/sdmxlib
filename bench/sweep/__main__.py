@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-import argparse
 import json
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Annotated
 from urllib.parse import urlsplit
+
+import typer
 
 from bench.sweep.capacity import measure
 from bench.sweep.endpoints import REGISTRIES, Endpoint, endpoints_of
@@ -18,76 +20,74 @@ from bench.sweep.report import SUMMARIES, delta, render, sweep, write
 OUT = Path(__file__).parent / "out"
 
 
+Registries = Annotated[list[str], typer.Argument(help=f"One or more of {', '.join(REGISTRIES)}, or 'all'.")]
+Resources = Annotated[list[str] | None, typer.Option("--resource", help="Only this resource; repeat for several.")]
+
+app = typer.Typer()
+
+
 def _registries(names: list[str]) -> list[str]:
     return list(REGISTRIES) if names == ["all"] else names
 
 
-def _fetch(args: argparse.Namespace) -> None:
+@app.command()
+def fetch(
+    registry: Registries,
+    *,
+    resource: Resources = None,
+    refresh: Annotated[bool, typer.Option(help="Download again what is already cached.")] = False,
+) -> None:
+    """Download bulk structure documents into the cache."""
     by_host: dict[str, list[Endpoint]] = {}
-    for name in _registries(args.registry):
+    for name in _registries(registry):
         for endpoint in endpoints_of(name):
             by_host.setdefault(urlsplit(endpoint.base).netloc, []).append(endpoint)
-    resources = tuple(args.resource) if args.resource else None
+    resources = tuple(resource) if resource else None
     # One thread per host: parallel across hosts, sequential within one.
     with ThreadPoolExecutor(max_workers=len(by_host)) as pool:
         futures = [
-            pool.submit(fetch_host, OUT, group, refresh=args.refresh, resources=resources) for group in by_host.values()
+            pool.submit(fetch_host, OUT, group, refresh=refresh, resources=resources) for group in by_host.values()
         ]
         for future in futures:
             future.result()
 
 
-def _run(args: argparse.Namespace) -> None:
-    capacity = measure(args.jobs)
+@app.command()
+def run(
+    registry: Registries,
+    *,
+    resource: Resources = None,
+    jobs: Annotated[
+        int | None, typer.Option(help="Documents at once; what this machine has free when omitted (capacity.py).")
+    ] = None,
+) -> None:
+    """Analyse cached documents and write the report and summary."""
+    capacity = measure(jobs)
     print(f"machine: {capacity.describe()}", flush=True)
-    for registry in _registries(args.registry):
-        report = sweep(OUT, registry, capacity=capacity, resources=set(args.resource) if args.resource else None)
-        full, summary = write(OUT, registry, report)
-        print(f"{registry}: {summary} (full report: {full})")
+    for name in _registries(registry):
+        report = sweep(OUT, name, capacity=capacity, resources=set(resource) if resource else None)
+        full, summary = write(OUT, name, report)
+        print(f"{name}: {summary} (full report: {full})")
 
 
-def _show(args: argparse.Namespace) -> None:
-    for registry in _registries(args.registry):
-        print(render(json.loads((SUMMARIES / f"{registry}.json").read_text())))
+@app.command()
+def show(registry: Registries) -> None:
+    """Print a committed summary's non-empty findings."""
+    for name in _registries(registry):
+        print(render(json.loads((SUMMARIES / f"{name}.json").read_text())))
 
 
-def _delta(args: argparse.Namespace) -> None:
-    before: object = json.loads(args.before.read_text()) if args.before.stat().st_size else {}
-    changes = delta(before, json.loads(args.after.read_text()))
-    print(f"# {args.after.stem}: {len(changes)} change(s)")
+@app.command("delta")
+def delta_command(
+    before: Annotated[Path, typer.Argument(help="The older summary; an empty file makes everything new.")],
+    after: Annotated[Path, typer.Argument(help="The newer summary.")],
+) -> None:
+    """Print what moved between two summaries (see `just sweep-delta`)."""
+    old: object = json.loads(before.read_text()) if before.stat().st_size else {}
+    changes = delta(old, json.loads(after.read_text()))
+    print(f"# {after.stem}: {len(changes)} change(s)")
     print("\n".join(changes))
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(prog="python -m bench.sweep")
-    commands = parser.add_subparsers(required=True)
-
-    fetch = commands.add_parser("fetch", help="download bulk structure documents into the cache")
-    fetch.add_argument("registry", nargs="+", help=f"one or more of {', '.join(REGISTRIES)}, or 'all'")
-    fetch.add_argument("--resource", action="append", help="only this resource (repeatable)")
-    fetch.add_argument("--refresh", action="store_true", help="re-download what is already cached")
-    fetch.set_defaults(run=_fetch)
-
-    run = commands.add_parser("run", help="analyse cached documents and write report + summary")
-    run.add_argument("registry", nargs="+", help=f"one or more of {', '.join(REGISTRIES)}, or 'all'")
-    run.add_argument("--resource", action="append", help="only this resource (repeatable)")
-    run.add_argument(
-        "--jobs", type=int, help="documents at once (default: what this machine has free — see capacity.py)"
-    )
-    run.set_defaults(run=_run)
-
-    show = commands.add_parser("show", help="print a committed summary's non-empty findings")
-    show.add_argument("registry", nargs="+", help=f"one or more of {', '.join(REGISTRIES)}, or 'all'")
-    show.set_defaults(run=_show)
-
-    compare = commands.add_parser("delta", help="what moved between two summaries (see `just sweep-delta`)")
-    compare.add_argument("before", type=Path, help="the older summary (empty file: everything is new)")
-    compare.add_argument("after", type=Path, help="the newer summary")
-    compare.set_defaults(run=_delta)
-
-    args = parser.parse_args()
-    args.run(args)
-
-
 if __name__ == "__main__":
-    main()
+    app()

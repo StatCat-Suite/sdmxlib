@@ -39,19 +39,21 @@ is the answer.
 Each arm is `label=comma,separated,test,files`. Two or more arms.
 """
 
-import argparse
 import json
 import pathlib
 import shutil
 import subprocess
 import sys
+from typing import Annotated
+
+import typer
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import mutate_area as ma
 
 
-def _run_arm(module: str, tests: list[str], max_children: str) -> dict[str, str]:
+def _run_arm(module: str, tests: list[str], max_children: int) -> dict[str, str]:
     """Mutate `module` against `tests`; return every mutant's verdict by name.
 
     `mutmut results --all` is what makes the comparison exact. Without `--all`
@@ -69,7 +71,7 @@ def _run_arm(module: str, tests: list[str], max_children: str) -> dict[str, str]
         # kills would be reported as this one's.
         shutil.rmtree(ma.ROOT / "mutants", ignore_errors=True)
         subprocess.run(  # noqa: S603
-            ["uv", "run", "python", "tools/mutmut_forksafe.py", "run", "--max-children", max_children],  # noqa: S607
+            ["uv", "run", "python", "tools/mutmut_forksafe.py", "run", "--max-children", str(max_children)],  # noqa: S607
             cwd=ma.ROOT,
             check=False,
             capture_output=True,
@@ -102,41 +104,41 @@ def _tally(verdicts: dict[str, str]) -> str:
     return "  ".join(f"{status}={count}" for status, count in sorted(counts.items()))
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("module", help="source file to mutate")
-    parser.add_argument("arms", nargs="+", help="label=test1,test2 — two or more")
-    parser.add_argument("--max-children", default="8")
-    args = parser.parse_args()
-
-    if not (ma.ROOT / args.module).is_file():
-        print(f"no such module: {args.module}", file=sys.stderr)
-        return 2
-    arms: list[tuple[str, list[str]]] = []
-    for arm in args.arms:
+def main(
+    module: Annotated[str, typer.Argument(help="Source file to mutate.")],
+    arms: Annotated[list[str], typer.Argument(help="label=test1,test2, two or more.")],
+    *,
+    max_children: Annotated[int, typer.Option(help="Forked mutant runners at once.")] = 8,
+) -> None:
+    """Mutate one module under two or more test suites and compare their kills."""
+    if not (ma.ROOT / module).is_file():
+        msg = f"no such module: {module}"
+        raise typer.BadParameter(msg)
+    suites: list[tuple[str, list[str]]] = []
+    for arm in arms:
         label, _, joined = arm.partition("=")
         if not joined:
-            print(f"arm must be label=tests: {arm}", file=sys.stderr)
-            return 2
+            msg = f"arm must be label=tests: {arm}"
+            raise typer.BadParameter(msg)
         tests = joined.split(",")
         for test in tests:
             if not (ma.ROOT / test).exists():
-                print(f"no such test path: {test}", file=sys.stderr)
-                return 2
-        arms.append((label, tests))
-    if len(arms) < 2:
-        print("need at least two arms to compare", file=sys.stderr)
-        return 2
+                msg = f"no such test path: {test}"
+                raise typer.BadParameter(msg)
+        suites.append((label, tests))
+    if len(suites) < 2:
+        msg = "need at least two arms to compare"
+        raise typer.BadParameter(msg)
 
-    print(f"comparing suites over {args.module}\n")
+    print(f"comparing suites over {module}\n")
     verdicts_by_arm: dict[str, dict[str, str]] = {}
-    for label, tests in arms:
-        verdicts = _run_arm(args.module, tests, args.max_children)
+    for label, tests in suites:
+        verdicts = _run_arm(module, tests, max_children)
         verdicts_by_arm[label] = verdicts
         print(f"  {label:12} {' '.join(pathlib.Path(t).name for t in tests)}")
         print(f"  {'':12} {len(verdicts)} mutants: {_tally(verdicts)}\n", flush=True)
 
-    labels = [label for label, _ in arms]
+    labels = [label for label, _ in suites]
     killed = {label: {n for n, s in v.items() if s == "killed"} for label, v in verdicts_by_arm.items()}
     # "no tests" is not a verdict about the code — it says this arm never
     # reached the mutant. Comparing suites over mutants one of them cannot
@@ -177,8 +179,7 @@ def main() -> int:
     report.parent.mkdir(exist_ok=True)
     report.write_text(json.dumps(verdicts_by_arm, indent=2, sort_keys=True), encoding="utf-8")
     print(f"\n  per-mutant verdicts written to {report.relative_to(ma.ROOT)}")
-    return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    typer.run(main)

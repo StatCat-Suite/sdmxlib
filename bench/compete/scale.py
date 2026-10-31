@@ -28,7 +28,6 @@ codelist are never held at once.
 
 from __future__ import annotations
 
-import argparse
 import gc
 import io
 import os
@@ -38,9 +37,11 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
+from typing import Annotated
 
 import duckdb
 import httpx2
+import typer
 
 from bench.compete.libs import Message, differences, dropped, fidelity, read, source_fidelity, summary, timed, write
 from sdmxlib.formats import serialize
@@ -235,18 +236,21 @@ def _writes(lib: str, message: Message, rounds: int, codes: int) -> list[str]:
     return out
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(prog="python -m bench.compete.scale", description=__doc__)
-    parser.add_argument("--rounds", type=int, default=3, help="rounds per measurement (median reported)")
-    parser.add_argument("--sizes", type=int, nargs="*", default=list(SIZES), help="synthetic codelist sizes, in codes")
-    parser.add_argument("--refresh", action="store_true", help="fetch the real codelists again")
-    args = parser.parse_args()
+def main(
+    *,
+    rounds: Annotated[int, typer.Option(help="Rounds per measurement (median reported).")] = 3,
+    sizes: Annotated[
+        list[int] | None,
+        typer.Option(help="A synthetic codelist size, in codes; repeat for several. SIZES when omitted."),
+    ] = None,
+    refresh: Annotated[bool, typer.Option(help="Fetch the real codelists again.")] = False,
+) -> None:
+    """Time sdmxlib and pysdmx over codelists of growing size."""
     # Line by line, so a long run shows its progress in a log rather than at the end.
     if isinstance(sys.stdout, io.TextIOWrapper):
         sys.stdout.reconfigure(line_buffering=True)
-    rounds: int = args.rounds
 
-    documents = [*_fetched(refresh=args.refresh), *_synthetic(tuple(args.sizes)), *_bundle()]
+    documents = [*_fetched(refresh=refresh), *_synthetic(tuple(sizes or SIZES)), *_bundle()]
     print(f"sdmxlib {version('sdmxlib')}  pysdmx {version('pysdmx')}  rounds={rounds}")
     print(f"run {datetime.now(UTC).isoformat(timespec='seconds')}; pysdmx timed with input validation off\n")
     for document in documents:
@@ -254,4 +258,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)

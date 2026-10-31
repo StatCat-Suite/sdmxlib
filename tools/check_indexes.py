@@ -52,13 +52,14 @@ its test — see `SELF_EXEMPT` for why a scanner cannot scan its own fixtures.
     uv run python tools/check_indexes.py --check    # exit 1 if any finding
 """
 
-import argparse
 import re
 import subprocess
-import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Annotated
+
+import typer
 
 # Public package indexes, and the CDN a public resolve pulls artefacts from.
 # Everything absent from this set is a finding — that is the whole design, so
@@ -342,17 +343,14 @@ def survey(root: Path) -> list[Finding]:
     return findings
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="Exit 1 if anything was found.")
-    args = parser.parse_args()
-
+def main(*, check: Annotated[bool, typer.Option(help="Exit 1 if anything was found.")] = False) -> None:
+    """Report any package index named in the tracked files that is not public."""
     root = Path(__file__).resolve().parent.parent
     findings = survey(root)
 
     if not findings:
         print(f"index check: clean — {len(tracked_files(root))} tracked files, no non-public index named")
-        return 0
+        return
 
     print(f"index check: {len(findings)} finding(s)\n")
     for finding in findings:
@@ -363,8 +361,9 @@ def main() -> int:
         "in your local environment — uv reads UV_INDEX / UV_DEFAULT_INDEX from "
         "the shell, and nothing there is committed."
     )
-    return 1 if args.check else 0
+    if check:
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    typer.run(main)

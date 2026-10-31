@@ -23,15 +23,26 @@ import sys
 import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
+from enum import StrEnum
 from pathlib import Path
+from typing import Annotated
 
 import duckdb
+import typer
 
 import sdmxlib as sl
 import sdmxlib.edition._write as write_module
 import sdmxlib.local.registry as registry_module
 from bench.seal import build_codr
 from sdmxlib.edition import Producer, seal
+
+
+class Kind(StrEnum):
+    """The product a run seals."""
+
+    CENSUS = "census"
+    CODR = "codr"
+
 
 #: The functions timed, by the module attribute each phase is called through.
 _WRAPPED = (
@@ -104,7 +115,7 @@ def _size(path: Path) -> int:
     return path.stat().st_size if path.exists() else 0
 
 
-def seal_once(kind: str, product: Path, previous: str, csv: Path | None) -> Run:
+def seal_once(kind: Kind, product: Path, previous: str, csv: Path | None) -> Run:
     run = _CURRENT
     run.reset()
     manifest = json.loads((product / previous / "manifest.json").read_text())
@@ -142,16 +153,24 @@ def seal_once(kind: str, product: Path, previous: str, csv: Path | None) -> Run:
     return run
 
 
-def main(argv: list[str]) -> None:
-    kind, product, previous, runs, *rest = argv
-    csv = Path(rest[0]) if rest else None
+def main(
+    kind: Annotated[Kind, typer.Argument(help="census changes nothing; codr appends the CSV's latest month.")],
+    product: Annotated[Path, typer.Argument(help="The product directory.")],
+    previous: Annotated[str, typer.Argument(help="The edition id each run builds on.")],
+    runs: Annotated[int, typer.Argument(help="Seals to time; the median is reported.")],
+    csv: Annotated[Path | None, typer.Argument(help="build_codr's table CSV, for a codr run.")] = None,
+) -> None:
+    """Time each phase of a seal over `runs` editions built on `previous`."""
+    if kind is Kind.CODR and csv is None:
+        msg = "a codr run needs the table's CSV"
+        raise typer.BadParameter(msg)
     _instrument()
     results: list[Run] = []
-    for number in range(int(runs)):
-        run = seal_once(kind, Path(product), previous, csv)
+    for number in range(runs):
+        run = seal_once(kind, product, previous, csv)
         results.append(copy.deepcopy(run))
         sys.stdout.write(json.dumps({"run": number, **asdict(run)}) + "\n")
-        shutil.rmtree(Path(product) / run.edition)
+        shutil.rmtree(product / run.edition)
     sys.stdout.write(f"\nmedian over {runs} runs\n")
     for name in results[0].seconds:
         seconds = statistics.median(r.seconds[name] for r in results)
@@ -160,4 +179,4 @@ def main(argv: list[str]) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    typer.run(main)

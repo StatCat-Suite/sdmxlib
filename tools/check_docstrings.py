@@ -40,11 +40,13 @@ one rule.
     uv run python tools/check_docstrings.py --check   # exit 1 if any
 """
 
-import argparse
 import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Annotated
+
+import typer
 
 #: Checked as a whole. Tests and benchmarks carry docstrings that are prose for
 #: a reader rather than API documentation, and the convention this enforces is
@@ -192,11 +194,8 @@ ARMS = (
 )
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Docstring convention gate (#374)")
-    parser.add_argument("--check", action="store_true", help="exit 1 when any finding is present")
-    args = parser.parse_args()
-
+def main(*, check: Annotated[bool, typer.Option(help="Exit 1 when any finding is present.")] = False) -> None:
+    """Docstring convention gate (#374)."""
     root = Path(__file__).resolve().parent.parent
     total = 0
     for label, arm in ARMS:
@@ -211,15 +210,14 @@ def main() -> int:
 
     if not total:
         print(f"{', '.join(f'{target}/' for target in _targets(root))}: docstrings are plain Google style")
-        return 0
-    if args.check:
+        return
+    if check:
         print(
             f"\n{total} finding(s). CLAUDE.md's convention is pure Google-style "
             f"docstrings — no RST roles, no NumPy sections. See #374."
         )
-        return 1
-    return 0
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    typer.run(main)
