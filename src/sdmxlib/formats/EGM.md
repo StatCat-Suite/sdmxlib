@@ -16,7 +16,10 @@ target format cannot carry.
   (`__init__.py`): reads a path or bytes and returns a `StructureMessage` or a
   `MetadataMessage`.
 - `parse(data, *, version, registry, strict, lossless)` (`__init__.py`):
-  parses bytes, detecting the version and message kind. A `ValidationError`
+  parses bytes, detecting the version and message kind. It reads a
+  structure message (`<Structure>`) or a metadata message
+  (`<GenericMetadata>`); a data message, in SDMX-ML or SDMX-JSON, and any
+  other XML root raise `SdmxParseError` naming what was found. A `ValidationError`
   raised outside any per-artefact refusal becomes an `SdmxParseError`. With
   `lossless=True` it raises `LossyReadError` for a `StructureMessage` with
   `lost` or `assumed` entries, and for a `MetadataMessage` with `lost`

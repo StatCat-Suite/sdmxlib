@@ -23,6 +23,7 @@ from sdmxlib.formats.sdmx_ml30 import writer as ml30_writer
 from sdmxlib.formats.sdmx_ml31 import writer as ml31_writer
 from sdmxlib.model.codelist import Code, Codelist
 from sdmxlib.model.collections import ItemList
+from sdmxlib.model.errors import SdmxParseError
 from sdmxlib.model.istring import InternationalString
 from sdmxlib.model.message import MetadataMessage, StructureMessage
 from tests.support.roundtrip import FIXTURES
@@ -111,3 +112,41 @@ def test_written_structure_messages_parse_back_as_structure_messages(text, fmt: 
         ]
     )
     assert isinstance(parse(_WRITERS[fmt](msg)), StructureMessage)
+
+
+# ── a data message is refused, never read as an empty structure message (GH-284) ──
+
+_MES = {
+    "2.1": "http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message",
+    "3.0": "http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message",
+}
+
+
+@pytest.mark.parametrize(
+    ("version", "root"),
+    [("2.1", "GenericData"), ("2.1", "StructureSpecificData"), ("3.0", "StructureSpecificData")],
+)
+def test_an_sdmx_ml_data_message_is_refused(version: str, root: str) -> None:
+    """It read as an empty `StructureMessage`, every data set dropped with no refusal and no loss."""
+    document = (
+        f'<?xml version="1.0"?><mes:{root} xmlns:mes="{_MES[version]}"><mes:Header><mes:ID>X</mes:ID>'
+        f'</mes:Header><mes:DataSet action="Delete"/></mes:{root}>'
+    ).encode()
+    with pytest.raises(SdmxParseError, match="is an SDMX data message; parse reads structure and metadata messages"):
+        parse(document)
+
+
+@pytest.mark.parametrize(
+    "document",
+    [b'{"data": {"structures": [], "dataSets": []}}', b'{"structure": {}, "dataSets": []}'],
+    ids=["2.0", "1.0"],
+)
+def test_an_sdmx_json_data_message_is_refused(document: bytes) -> None:
+    with pytest.raises(SdmxParseError, match="is an SDMX data message; parse reads structure and metadata messages"):
+        parse(document)
+
+
+def test_a_root_that_is_no_message_parse_reads_is_named() -> None:
+    document = f'<?xml version="1.0"?><mes:RegistryInterface xmlns:mes="{_MES["2.1"]}"/>'.encode()
+    with pytest.raises(SdmxParseError, match=r"<RegistryInterface> is not a message parse reads"):
+        parse(document)

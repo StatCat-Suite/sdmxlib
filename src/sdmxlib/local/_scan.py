@@ -32,7 +32,7 @@ from pathlib import Path
 import polars as pl
 
 from sdmxlib._read_errors import SCANS, reading_csv, type_mismatch
-from sdmxlib.local.data_store import DuckDBDataStore, column_types, refuse_deletions
+from sdmxlib.local.data_store import DuckDBDataStore, column_types, refuse_actions, refuse_mixed_structures
 from sdmxlib.local.object_store import sql_literal
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.dataflow import Dataflow
@@ -71,17 +71,20 @@ def scan_csv_into(
         literal_types = ", ".join(f"{sql_literal(c)}: {sql_literal(t)}" for c, t in types.items())
         path_literal = sql_literal(str(Path(source).resolve()))
         # DuckDB reads the header when the view is made, and the rows when a
-        # query runs and once more for `refuse_deletions`; the query
+        # query runs and once more for `refuse_actions`; the query
         # terminals convert what a query raises.
         with reading_csv(structure=dsd.id):
             read = f"read_csv({path_literal}, types={{{literal_types}}}, header=true)"
             plane.connection.execute(f"CREATE VIEW {relation} AS SELECT * FROM {read}")
     _require_columns(plane, relation, binding)
-    # One pass over a path's file, as the scan is made: a delete row is
-    # refused whatever a later query asks, and a row DuckDB cannot split
+    # Two passes over a path's file, as the scan is made: rows of a second
+    # structure, a delete row and an unknown action are refused whatever a
+    # later query asks, and a row DuckDB cannot split
     # fails here rather than at the first query.
     with reading_csv(structure=dsd.id):
-        refuse_deletions(plane.connection, relation, kind="TABLE" if isinstance(source, bytes) else "VIEW")
+        kind = "TABLE" if isinstance(source, bytes) else "VIEW"
+        refuse_mixed_structures(plane.connection, relation, kind=kind)
+        refuse_actions(plane.connection, relation, kind=kind)
     return plane.obs(binding, dsd=dsd)
 
 

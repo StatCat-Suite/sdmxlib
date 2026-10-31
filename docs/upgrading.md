@@ -19,6 +19,29 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## Data messages: refusals where a read used to guess
+
+What a data message's data sets and rows say is now checked as they are read
+([GH-284](https://github.com/StatCat-Suite/sdmxlib/issues/284)). Each case
+below used to read, and now raises `sl.SdmxParseError`:
+
+- `sl.parse` given a data message. An SDMX-ML one (`GenericData`,
+  `StructureSpecificData` and the rest) returned an empty `StructureMessage`;
+  read observations with `scan_csv` or `scan_json` instead. An XML root that
+  is neither a structure nor a metadata message is refused the same way.
+- SDMX-CSV with an `ACTION` other than `I`, `A`, `M`, `R` and `D`: an empty
+  cell or a lowercase `d` read as an observation. Write the letter, or drop
+  the `ACTION` column, which means `Information`.
+- SDMX-CSV whose rows name more than one structure: every row was read
+  against the first row's. Split the file by `STRUCTURE_ID`.
+- SDMX-JSON whose data sets link different data structures or provision
+  agreements, as different dataflows already were.
+
+`RestRegistry.scan_csv` reads the file's `STRUCTURE` column as
+`LocalRegistry.scan_csv` does: a `dataprovision` file fetches the provision
+agreement and its dataflow, and a `datastructure` file raises `ValueError`,
+where both used to fetch a dataflow of that id.
+
 ## Bundles are products, publications are editions (manifest 3.0)
 
 The bundle, its publication and the publication's token are now the

@@ -86,19 +86,6 @@ def _two_records(reader: Iterator[list[str]]) -> tuple[list[str], list[str]] | N
         return None
 
 
-def _peek_dataflow_id(source: str | Path | bytes) -> str | None:
-    """Extract the DATAFLOW value from the first data row without reading the whole file."""
-    head = _head(source)
-    if head is None:
-        return None
-    header, first_row = head
-    for col in (_DATAFLOW_COL, _STRUCTURE_ID_COL):
-        if col in header:
-            index = header.index(col)
-            return first_row[index] if index < len(first_row) else None
-    return None
-
-
 def _peek_structure(source: str | Path | bytes) -> tuple[str | None, str | None]:
     """``(STRUCTURE, STRUCTURE_ID)`` from the first data row, without reading on.
 

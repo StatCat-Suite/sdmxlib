@@ -22,9 +22,8 @@ is the registry's job (`scan_csv`). The package exports only
 - `parse_dataflow_id(dataflow_id)` (`reader.py`): splits
   `"AGENCY:ID(VERSION)"` into a tuple and raises `ValueError` when it is
   malformed.
-- Package-internal helpers in `reader.py`: `_peek_dataflow_id` (the 1.0
-  `DATAFLOW` value, or `STRUCTURE_ID` when there is no `DATAFLOW` column),
-  `_peek_structure` (the 2.0 `STRUCTURE`/`STRUCTURE_ID` pair, raising
+- Package-internal helpers in `reader.py`: `_peek_structure` (the 2.0
+  `STRUCTURE`/`STRUCTURE_ID` pair, or 1.0's `DATAFLOW`, raising
   `SdmxParseError` on a decode or CSV error), `_dataflow_ref` and
   `_resolve_structure`. `_resolve_structure` looks the name up through
   `SupportsGet`, follows provision agreement to dataflow to data structure,

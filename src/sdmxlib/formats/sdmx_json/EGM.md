@@ -33,10 +33,11 @@ serialisers in `structure_values.py`.
   through `read_data_sets` (`_data_common.py`); a 2.0 data set is decoded
   against the structure its `structure` index names. The data sets read as
   one frame when they decode to the same columns and name at most one
-  dataflow; a `Delete` data set, differing columns, two dataflows or a
-  structure index outside `data.structures` raise `SdmxParseError` (GH-264).
-  Each data set's `setID` and reporting and validity dates are not read
-  (GH-284).
+  dataflow, data structure and provision agreement; a `Delete` data set,
+  differing columns, two of any of those or a structure index outside
+  `data.structures` raise `SdmxParseError` (GH-264, GH-284). The other
+  actions read as observations and are dropped, as are each data set's
+  `setId` and reporting, validity and publication dates and the `meta`.
 - `ENCODER`, `WireStruct`, `_camel_rename`/`_WIRE_NAMES`,
   `emit_istr`/`ingest_istr`, `emit_annotations`/`ingest_annotations`, `Link`,
   `Annotation`, `Meta` and `Sender` (`_dto.py`): the shared wire layer.

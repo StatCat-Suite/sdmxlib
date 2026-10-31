@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.formats.sdmx_csv.reader import _peek_dataflow_id, _peek_structure
+from sdmxlib.formats.sdmx_csv.reader import _peek_structure
 from tests.unit import test_scan_registry as scan
 
 pytestmark = pytest.mark.unit
@@ -37,7 +37,6 @@ def test_a_wide_header_still_names_its_structure(tmp_path: Path, as_bytes: bool)
     path.write_text(_wide(), encoding="utf-8")
     source: bytes | Path = path.read_bytes() if as_bytes else path
     assert _peek_structure(source) == ("dataflow", "AGENCY:DF(1.0.0)")
-    assert _peek_dataflow_id(source) == "AGENCY:DF(1.0.0)"
 
 
 def test_a_wide_file_scans() -> None:
