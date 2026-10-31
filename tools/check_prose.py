@@ -32,10 +32,11 @@ inside it are exempt. This file is exempt for the same reason.
     uv run python tools/check_prose.py --check   # exit 1 if any
 """
 
-import argparse
 import re
-import sys
 from pathlib import Path
+from typing import Annotated
+
+import typer
 
 #: Markdown read for both checks: a directory is read recursively.
 MARKDOWN = ("docs", "README.md", "CLAUDE.md", "cli/README.md", "CONTRIBUTING.md", "CODE_OF_CONDUCT.md", "SECURITY.md")
@@ -147,22 +148,16 @@ def find(root: Path) -> list[str]:
     return findings
 
 
-def main() -> int:
-    """Report findings; with `--check`, exit 1 when there are any.
-
-    Returns:
-        The process exit status.
-    """
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--check", action="store_true", help="exit 1 on any finding")
-    args = parser.parse_args()
+def main(*, check: Annotated[bool, typer.Option(help="Exit 1 on any finding.")] = False) -> None:
+    """Report findings; with `--check`, exit 1 when there are any."""
     root = Path(__file__).resolve().parent.parent
     findings = find(root)
     for finding in findings:
         print(finding)
     print(f"prose check: {len(findings)} finding(s)" if findings else "prose check: clean")
-    return 1 if args.check and findings else 0
+    if check and findings:
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    typer.run(main)

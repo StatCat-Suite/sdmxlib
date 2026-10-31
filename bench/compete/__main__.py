@@ -8,15 +8,16 @@ by the others.
 
 from __future__ import annotations
 
-import argparse
 import io
 import statistics
 import sys
 from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
+from typing import Annotated
 
 import httpx2
+import typer
 
 from bench.compete.libs import (
     LIBS,
@@ -317,17 +318,17 @@ def _report_written(written: dict[Key, bytes], refusals: dict[Key, str], summari
             print(f"      read by {reader:7}: {'; '.join(found) or 'identical'}")
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(prog="python -m bench.compete", description=__doc__)
-    parser.add_argument("--rounds", type=int, default=7, help="interleaved rounds per measurement (median reported)")
-    parser.add_argument("--refresh", action="store_true", help="fetch the corpus from BIS again, replacing the cache")
-    args = parser.parse_args()
+def main(
+    *,
+    rounds: Annotated[int, typer.Option(help="Interleaved rounds per measurement (median reported).")] = 7,
+    refresh: Annotated[bool, typer.Option(help="Fetch the corpus from BIS again, replacing the cache.")] = False,
+) -> None:
+    """Compare sdmxlib, sdmx1 and pysdmx reading and writing BIS's structures."""
     # Line by line, so a long run shows its progress in a log rather than at the end.
     if isinstance(sys.stdout, io.TextIOWrapper):
         sys.stdout.reconfigure(line_buffering=True)
-    rounds: int = args.rounds
 
-    data = corpus(refresh=args.refresh)
+    data = corpus(refresh=refresh)
     print(f"sdmxlib {version('sdmxlib')}  sdmx1 {version('sdmx1')}  pysdmx {version('pysdmx')}  rounds={rounds}")
     print(f"corpus: BIS, fetched {FETCHED.read_text()}\n")
     failures: dict[Key, str] = {}
@@ -349,4 +350,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)

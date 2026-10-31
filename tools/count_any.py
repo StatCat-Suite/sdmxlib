@@ -51,12 +51,14 @@ annotations, which this codebase writes as quoted forward references.
     python tools/count_any.py --write    # record the current count as baseline
 """
 
-import argparse
 import ast
 import io
 import sys
 import tokenize
 from pathlib import Path
+from typing import Annotated
+
+import typer
 
 _ROOT = Path(__file__).resolve().parent.parent
 _SRC = _ROOT / "src"
@@ -106,7 +108,7 @@ def _code_lines(text: str) -> list[str]:
     blanked = list(lines)
     try:
         tokens = list(tokenize.generate_tokens(io.StringIO(text).readline))
-    except (tokenize.TokenError, IndentationError, SyntaxError):
+    except tokenize.TokenError, IndentationError, SyntaxError:
         return lines
     try:
         values = _any_values(ast.parse(text))
@@ -218,16 +220,16 @@ def _read_baseline() -> int | None:
     return None
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="fail if above the baseline")
-    parser.add_argument("--write", action="store_true", help="record the current count as the baseline")
-    args = parser.parse_args()
-
+def main(
+    *,
+    check: Annotated[bool, typer.Option(help="Fail if the count is off the baseline.")] = False,
+    write: Annotated[bool, typer.Option(help="Record the current count as the baseline.")] = False,
+) -> None:
+    """Count the uses of `Any` in src/, or check or record the baseline."""
     counts = survey()
     total = sum(counts.values())
 
-    if args.write:
+    if write:
         _BASELINE.write_text(
             "# Occurrences of the type `Any` in src/, excluding comments,\n"
             "# docstrings and imports. Lowered by the issues in %16; raising it\n"
@@ -236,18 +238,18 @@ def main() -> int:
             encoding="utf-8",
         )
         print(f"baseline written: {total}")  # noqa: T201
-        return 0
+        return
 
     baseline = _read_baseline()
-    if not args.check:
+    if not check:
         for name, n in counts.items():
             print(f"{n:5d}  {name}")  # noqa: T201
         print(f"{total:5d}  TOTAL" + (f"  (baseline {baseline})" if baseline is not None else ""))  # noqa: T201
-        return 0
+        return
 
     if baseline is None:
         print("error: no baseline recorded; run `python tools/count_any.py --write`", file=sys.stderr)  # noqa: T201
-        return 1
+        raise typer.Exit(1)
     if total > baseline:
         print(  # noqa: T201
             f"error: `Any` in src/ rose to {total}, above the baseline of {baseline}.\n"
@@ -258,7 +260,7 @@ def main() -> int:
         )
         for name, n in counts.items():
             print(f"{n:5d}  {name}", file=sys.stderr)  # noqa: T201
-        return 1
+        raise typer.Exit(1)
     if total < baseline:
         print(  # noqa: T201
             f"error: `Any` in src/ fell to {total}, below the baseline of {baseline}.\n"
@@ -266,9 +268,8 @@ def main() -> int:
             f"       A ratchet that is not tightened stops ratcheting.",
             file=sys.stderr,
         )
-        return 1
-    return 0
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    typer.run(main)

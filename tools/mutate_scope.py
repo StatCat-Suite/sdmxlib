@@ -11,9 +11,9 @@ coverage reports rather than a hand-rolled AST count.
 """
 
 import pathlib
-import sys
 import tomllib
 
+import typer
 from coverage.parser import PythonParser
 
 
@@ -24,7 +24,8 @@ def statements(path: pathlib.Path) -> int:
     return len(parser.statements)
 
 
-def main() -> int:
+def main() -> None:
+    """Print the statements in each `only_mutate` entry, and their total."""
     root = pathlib.Path(__file__).resolve().parent.parent
     config = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
     entries: list[str] = config["tool"]["mutmut"]["only_mutate"]
@@ -40,8 +41,7 @@ def main() -> int:
         total += count
         print(f"  {entry:<44} {count:>5} statements")
     print(f"  {'TOTAL':<44} {total:>5}")
-    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    typer.run(main)

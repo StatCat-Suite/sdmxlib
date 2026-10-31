@@ -45,9 +45,10 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Annotated, NamedTuple
 
 import attrs
+import typer
 
 import sdmxlib
 
@@ -237,21 +238,20 @@ def scan(package: Path) -> list[Finding]:
         return sorted(findings)
 
 
-def main() -> int:
+def main(*, check: Annotated[bool, typer.Option(help="Exit 1 on any finding.")] = False) -> None:
     """Report the findings over `src/sdmxlib`; with `--check`, exit 1 if there are any."""
     findings = scan(ROOT / "src" / "sdmxlib")
     for finding in findings:
         sys.stdout.write(f"{finding}\n")
-    if "--check" in sys.argv[1:] and findings:
+    if check and findings:
         sys.stderr.write(
             f"{len(findings)} return declaration(s) hide what the value offers — declare the class "
             f"really returned, or add the pair to ALLOWED with the reason it is compiler detail.\n"
         )
-        return 1
+        raise typer.Exit(1)
     if not findings:
         sys.stdout.write("return declarations: none hides what its value offers\n")
-    return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    typer.run(main)

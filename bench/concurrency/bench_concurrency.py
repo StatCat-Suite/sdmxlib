@@ -6,9 +6,11 @@ Run via ``just bench-concurrency`` (compares to ``baselines.json``) or
 
 from __future__ import annotations
 
-import argparse
 import itertools
 from importlib.metadata import version
+from typing import Annotated
+
+import typer
 
 # ``_harness`` resolves because running a script puts its own directory on
 # ``sys.path`` — this file is only ever invoked as
@@ -187,15 +189,12 @@ def run_benches() -> list[Result]:
     return results
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Run read-path benches.")
-    parser.add_argument("--update", action="store_true", help="Overwrite baselines.json with these results.")
-    args = parser.parse_args()
-
+def main(*, update: Annotated[bool, typer.Option(help="Overwrite baselines.json with these results.")] = False) -> None:
+    """Run read-path benches."""
     print(f"sdmxlib version: {version('sdmxlib')}")
     results = run_benches()
 
-    if args.update:
+    if update:
         save_baselines(results, version=version("sdmxlib"))
         print(f"\nBaseline written ({len(results)} workloads).")
         report(results, baselines={})
@@ -203,8 +202,6 @@ def main() -> int:
         baselines = load_baselines()
         report(results, baselines)
 
-    return 0
-
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    typer.run(main)
