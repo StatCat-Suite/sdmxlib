@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mes:Structure xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/message" xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/common" xsi:schemaLocation="http://www.sdmx.org/resources/sdmxml/schemas/v3_1/message https://registry.sdmx.org/schemas/v3_1/SDMXMessage.xsd">
 	<mes:Header>
-		<mes:ID>37040ac7-4a61-4741-9a23-127d328a8784</mes:ID>
+		<mes:ID>f39150db-f083-4773-929f-0f2b0104f713</mes:ID>
 		<mes:Test>false</mes:Test>
-		<mes:Prepared>2026-10-20T15:12:23Z</mes:Prepared>
+		<mes:Prepared>2026-10-31T08:45:29Z</mes:Prepared>
 		<mes:Sender id="ZZZ"/>
 	</mes:Header>
 	<mes:Structures>
@@ -287,6 +287,25 @@
 							<str:MetadataAttribute id="MA_CHILD">
 								<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).CHILD</str:ConceptIdentity>
 							</str:MetadataAttribute>
+						</str:MetadataAttribute>
+					</str:MetadataAttributeList>
+				</str:MetadataStructureComponents>
+			</str:MetadataStructure>
+			<str:MetadataStructure id="MSD_DSD" version="1.0" isExternalReference="false" agencyID="AG">
+				<com:Name xml:lang="en">MSD-DSD-NAME</com:Name>
+				<str:MetadataStructureComponents>
+					<str:MetadataAttributeList id="MetadataAttributeDescriptor">
+						<str:MetadataAttribute id="MA">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).PARENT</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)</str:Enumeration>
+							</str:LocalRepresentation>
+						</str:MetadataAttribute>
+						<str:MetadataAttribute id="MA_CHILD">
+							<str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0).CHILD</str:ConceptIdentity>
+							<str:LocalRepresentation>
+								<str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0)</str:Enumeration>
+							</str:LocalRepresentation>
 						</str:MetadataAttribute>
 					</str:MetadataAttributeList>
 				</str:MetadataStructureComponents>

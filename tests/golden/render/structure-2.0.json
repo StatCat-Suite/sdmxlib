@@ -2661,7 +2661,7 @@
             }
           ]
         },
-        "metadata": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD(1.0)",
+        "metadata": "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD_DSD(1.0)",
         "evolvingStructure": true
       }
     ],

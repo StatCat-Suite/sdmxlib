@@ -170,7 +170,7 @@ _CASES = [pytest.param(shape, id=shape) for shape in _SHAPES]
 
 def test_the_walk_reaches_every_shape() -> None:
     """The discrimination check: items, components, maps, links and the header are all visited."""
-    assert len(_SHAPES) == 2359
+    assert len(_SHAPES) == 2360
     assert sum(_leaves_a_lone_text(shape) for shape in _SHAPES) == 160
     for shape in (*_ASSUMED_AT.values(), *_REFUSED_THOUGH_OPTIONAL, *_COMPONENT_ID, "meta/sender/id"):
         assert shape in _SHAPES, f"{shape} is no longer in the maximal message"

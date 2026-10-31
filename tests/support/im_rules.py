@@ -928,6 +928,10 @@ RULES: tuple[Rule, ...] = (
 #: Every check in `model.validation` no rule cites, and what it enforces
 #: instead: a wire format's rule, or a part of another check.
 NON_IM_CHECKS: dict[str, str] = {
+    "_check_metadata_usages": (
+        "format: SDMX-ML 3.x's documentation on DataStructure/Metadata, a flat metadata structure "
+        "whose attributes the usages name (GH-299)"
+    ),
     "_check_dimension_multilingual": "format: every format's dimension and time formats prohibit isMultiLingual (#503)",
     # The wire formats' identifier, version and reference grammars — the IM
     # leaves their syntax to the schemas and the technical notes.

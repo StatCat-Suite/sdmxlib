@@ -693,8 +693,9 @@ def message() -> StructureMessage:
             measure_descriptor_uri="https://example.org/uri/measlist",
             measure_descriptor_links=_links("measlist"),
             evolving_structure=True,
-            # The MSD below; by URN because it is built later (#422).
-            metadata=MetadataStructure.urn_for(agency=AGENCY, id="MSD", version=VERSION),
+            # `MSD_DSD` below, flat as a data structure's metadata structure
+            # must be (GH-299); by URN because it is built later (#422).
+            metadata=MetadataStructure.urn_for(agency=AGENCY, id="MSD_DSD", version=VERSION),
             metadata_attributes=[
                 MetadataAttributeUsage(
                     id="MA",
@@ -1318,6 +1319,18 @@ def message() -> StructureMessage:
             ],
         )
     )
+    # The data structure's metadata structure: `MSD`'s two attributes side by
+    # side, since SDMX-ML 3.x documents that it nests none (GH-299).
+    data_msd = MetadataStructure(
+        id="MSD_DSD",
+        maintainer=AGENCY,
+        version=VERSION,
+        name={"en": "MSD-DSD-NAME"},
+        attributes=[
+            MetadataAttribute(id="MA", concept=_concept_ref("PARENT"), representation=Ref.to(codelist)),
+            MetadataAttribute(id="MA_CHILD", concept=_concept_ref("CHILD"), representation=Ref.to(codelist)),
+        ],
+    )
     # `Metadataflow.targets` is `tuple[str, ...]` on purpose, not `Ref`: SDMX
     # allows a wildcard URN here (`WildcardUrnType`), which no resolvable
     # reference can express.
@@ -1406,7 +1419,7 @@ def message() -> StructureMessage:
         hierarchical_codelists=[hierarchical_codelist],
         structure_sets=[structure_set],
         hierarchy_associations=[hierarchy_association],
-        metadata_structures=[msd],
+        metadata_structures=[msd, data_msd],
         metadataflows=[metadataflow],
         metadata_provision_agreements=[metadata_provision],
     )

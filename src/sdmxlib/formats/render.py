@@ -27,9 +27,9 @@ from types import MappingProxyType
 RENDER_VERSION: Mapping[str, str] = MappingProxyType(
     {
         "application/vnd.sdmx.structure+xml;version=2.1": "49cc074f171b9c27",
-        "application/vnd.sdmx.structure+xml;version=3.0.0": "5443e5a2f63dfa69",
-        "application/vnd.sdmx.structure+xml;version=3.1.0": "54c0141d15e794e8",
-        "application/vnd.sdmx.structure+json;version=2.0.0": "8cf8191061c9397a",
+        "application/vnd.sdmx.structure+xml;version=3.0.0": "87aaff56c8eac5ab",
+        "application/vnd.sdmx.structure+xml;version=3.1.0": "9310d8f1c7cd7ce6",
+        "application/vnd.sdmx.structure+json;version=2.0.0": "9ea7dcffac59e2be",
         "application/vnd.sdmx.structure+json;version=1.0.0": "46f8af53f63ed11f",
         "application/vnd.sdmx.metadata+xml;version=3.0.0": "22f65bb6d318e514",
         "application/vnd.sdmx.metadata+json;version=2.0.0": "577c3f401744f76f",

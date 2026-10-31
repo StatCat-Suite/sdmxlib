@@ -19,6 +19,7 @@
     "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0)",
     "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0)",
     "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD_DSD(1.0)",
     "urn:sdmx:org.sdmx.infomodel.metadatastructure.Metadataflow=AG:MDF(1.0)",
     "urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=AG:CC(1.0)",
     "urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=AG:CC_DATA_PROVIDER(1.0)",
