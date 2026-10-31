@@ -77,7 +77,13 @@ from sdmxlib.model.ref import Ref, SupportsUrn, UnresolvedRef, target_urn, urn_o
 from sdmxlib.model.registry import artefact_urn
 from sdmxlib.model.representation import Facet
 from sdmxlib.model.urn import SdmxUrn
-from sdmxlib.model.validation import SdmxConformanceError, ValidationError, ValidationIssue, metadata_sets_advisories
+from sdmxlib.model.validation import (
+    SdmxConformanceError,
+    ValidationError,
+    ValidationIssue,
+    metadata_sets_advisories,
+    partial_scheme_advisories,
+)
 from sdmxlib.model.version_rewrite import (
     RewrittenVersion,
     VersionRewrite,
@@ -2683,6 +2689,12 @@ class LocalRegistry(EditionRegistry):
         stale (e.g. a freshly-added Codelist replaces the one a previous
         ``get`` had cached).
 
+        A partial item scheme added over its full scheme is checked against
+        it, and the full scheme is kept; a full scheme added over a partial
+        replaces it, and the partial is checked. Either warns with an
+        `ImRuleWarning` naming each item the partial adds or changes (IM
+        §3.5.3.1). `replace` stores a partial over its full scheme.
+
         **Single-threaded.** Mutations are not safe under concurrent
         callers — do not invoke ``add`` / ``drop`` / ``replace`` from
         multiple threads against the same ``LocalRegistry``. Concurrent reads
@@ -2692,8 +2704,38 @@ class LocalRegistry(EditionRegistry):
         # `validate`, and a version only SDMX 2.1 accepts, which has no place
         # in a 3.x model; the rewrite that admits one is `add_all`'s (#420).
         check_ingestable([artefact])
-        self._put(artefact, source_registry=source_registry)
-        advise(metadata_sets_advisories([artefact], self.get))
+        issues = self._take(artefact, self._held_partial([artefact]), source_registry=source_registry)
+        advise([*issues, *metadata_sets_advisories([artefact], self.get)])
+
+    def _held_partial(self, batch: list[SupportsUrn]) -> dict[str, bool]:
+        """Whether the store holds each item scheme of `batch` as a partial, by URN; absent when it holds none."""
+        urns = [str(artefact_urn(a)) for a in batch if hasattr(a, "is_partial")]
+        if not urns:
+            return {}
+        rows = self._c.execute(
+            "SELECT urn, is_partial FROM artefact WHERE urn IN (SELECT unnest($urns))", {"urns": urns}
+        ).fetchall()
+        return {str(urn): bool(partial) for urn, partial in rows}
+
+    def _take(
+        self, artefact: SupportsUrn, held: dict[str, bool], *, source_registry: str | None
+    ) -> list[ValidationIssue]:
+        """Store `artefact`, unless it is a partial of a full scheme held here; what a partial breaks.
+
+        `held` is `_held_partial`'s answer, kept current as the batch is stored.
+        """
+        key = str(artefact_urn(artefact))
+        issues: list[ValidationIssue] = []
+        store = True
+        if key in held and bool(getattr(artefact, "is_partial", False)) != held[key]:
+            found: object = readers.get_artefact(self._c, key, eager=True)
+            if found is not None:
+                store, issues = partial_scheme_advisories(artefact, found)
+        if store:
+            self._put(artefact, source_registry=source_registry)
+            if hasattr(artefact, "is_partial"):
+                held[key] = bool(getattr(artefact, "is_partial", False))
+        return issues
 
     def _put(self, artefact: SupportsUrn, *, source_registry: str | None) -> None:
         """`add` without `check_ingestable`, for a batch `add_all` has checked whole."""
@@ -2759,11 +2801,13 @@ class LocalRegistry(EditionRegistry):
         check_ingestable(batch)
         with self.transaction():
             self._refuse_rewrites(batch, rewrites)
-            for artefact in batch:
-                self._put(artefact, source_registry=source_registry)
+            held = self._held_partial(batch)
+            issues = [
+                issue for artefact in batch for issue in self._take(artefact, held, source_registry=source_registry)
+            ]
             for rewrite in rewrites:
                 writers.put_version_rewrite(self._c, rewrite.urn, rewrite.original)
-        advise(metadata_sets_advisories(batch, self.get))
+        advise([*issues, *metadata_sets_advisories(batch, self.get)])
         return rewrites
 
     def _refuse_rewrites(self, batch: list[SupportsUrn], rewrites: tuple[RewrittenVersion, ...]) -> None:

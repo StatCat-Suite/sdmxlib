@@ -32,6 +32,7 @@ from sdmxlib._facets import FacetChecker
 from sdmxlib.model._container import inner_id
 from sdmxlib.model._invariants import advise, register, register_advisory
 from sdmxlib.model._items import spellings
+from sdmxlib.model._rebind import _is_attrs_instance
 from sdmxlib.model._referenceable import CLASSES_21, ENUMERATION_PAIR_JSON, PACKAGES_21, PAIRS_30, PAIRS_31, PAIRS_JSON
 from sdmxlib.model._refshape import can_reach_ref, item_fields, link_fields, walk_fields
 from sdmxlib.model._rules import (
@@ -1690,6 +1691,78 @@ def _check_metadata_set_values(
             walk(list(attribute.children), list(slot.children), f"{path}[{slot.id}].children")
 
     walk(list(ms.attributes), list(msd.attributes), f"MetadataSet:{ms.id}.attributes")
+
+
+def _flat_items(scheme: object) -> dict[str, tuple[str | None, object]]:
+    """Each item of an item scheme by id, with the id of the item it is nested under."""
+    found: dict[str, tuple[str | None, object]] = {}
+
+    def walk(owner: object, under: str | None) -> None:
+        for name, _cls in item_fields(type(owner)):
+            for item in getattr(owner, name, ()):
+                found[item.id] = (under, item)
+                walk(item, item.id)
+
+    walk(scheme, None)
+    return found
+
+
+def _check_partial_items(partial: object, full: object, issues: list[ValidationIssue]) -> None:
+    """A partial item scheme holds only its full scheme's items, each as the full scheme has it (IM §3.5.3.1).
+
+    "It cannot contain Items that are not present in the full ItemScheme and
+    the content of any one Item (e.g., names and descriptions) cannot deviate
+    from the content in the full ItemScheme." Every field of an item is
+    compared but the items nested under it, which a partial leaves out by
+    design; a nested item is also compared by the item it is nested under.
+    """
+    theirs = _flat_items(full)
+    prefix = f"{type(partial).__name__}:{getattr(partial, 'id', '')}"
+    for item_id, (under, item) in _flat_items(partial).items():
+        if item_id not in theirs:
+            issues.append(ValidationIssue(path=f"{prefix}[{item_id}]", message="is not an item of the full scheme"))
+            continue
+        full_under, full_item = theirs[item_id]
+        nested = {name for name, _cls in item_fields(type(item))}
+        compared = attrs.fields(type(item)) if _is_attrs_instance(item) else ()
+        differing = [
+            f.name
+            for f in compared
+            if f.eq and f.name not in nested and getattr(item, f.name) != getattr(full_item, f.name)
+        ]
+        if under != full_under:
+            differing.append("parent")
+        if differing:
+            message = f"differs from the full scheme's item in {', '.join(differing)}"
+            issues.append(ValidationIssue(path=f"{prefix}[{item_id}]", message=message))
+
+
+def partial_scheme_advisories(added: object, held: object) -> tuple[bool, list[ValidationIssue]]:
+    """Whether a registry stores `added` over `held`, at one URN, and what a partial among them breaks.
+
+    A partial item scheme added over its full scheme is checked against it and
+    not stored: the full scheme holds every item the partial does. A full
+    scheme added over a partial is stored, and the partial checked against
+    it. Anything else is stored, as `add` always has.
+
+    Args:
+        added: What is being added.
+        held: What the registry holds at its URN.
+
+    Returns:
+        Whether to store `added`, and the rules the partial breaks, for
+        `_invariants.advise`.
+    """
+    if type(added) is not type(held) or not hasattr(added, "is_partial"):
+        return True, []
+    added_partial, held_partial = bool(getattr(added, "is_partial", False)), bool(getattr(held, "is_partial", False))
+    issues: list[ValidationIssue] = []
+    if added_partial and not held_partial:
+        _check_partial_items(added, held, issues)
+        return False, issues
+    if held_partial and not added_partial:
+        _check_partial_items(held, added, issues)
+    return True, issues
 
 
 def _held_as[T](urn: SdmxUrn[object], held: Sequence[T]) -> list[T]:

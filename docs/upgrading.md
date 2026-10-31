@@ -19,6 +19,24 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## A registry keeps a full item scheme over its partial
+
+`add` and `add_all` on `InMemoryRegistry` and `LocalRegistry` keep a full
+item scheme when a partial of it arrives
+([GH-298](https://github.com/StatCat-Suite/sdmxlib/issues/298)). The two share
+a URN, and the last one added used to replace the other, so adding a partial
+codelist over its full one dropped every code the partial leaves out. Now:
+
+- A partial added over its held full scheme is checked against it and not
+  stored. A full scheme added over a held partial replaces it, as before, and
+  the partial is checked against it.
+- An item the partial adds, or one whose fields differ from the full
+  scheme's, warns with `sl.ImRuleWarning` (IM §3.5.3.1).
+- To store a partial over its full scheme on purpose, as `build_edition`
+  does, call `LocalRegistry.replace(urn, partial)`. `InMemoryRegistry` has
+  no `replace`: add the partial to a registry that does not hold the full
+  scheme.
+
 ## Data messages: refusals where a read used to guess
 
 What a data message's data sets and rows say is now checked as they are read
