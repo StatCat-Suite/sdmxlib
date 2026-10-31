@@ -166,8 +166,13 @@ RULES: tuple[Rule, ...] = (
         "A “partial” ItemScheme cannot be maintained independently in its partial form i.e., it cannot contain "
         "Items that are not present in the full ItemScheme and the content of any one Item (e.g., names and "
         "descriptions) cannot deviate from the content in the full ItemScheme.",
-        NotChecked(
-            "a partial scheme shares its full scheme's URN, so only a registry holding both can check it: GH-298"
+        Warned(
+            (
+                Check(
+                    "_check_partial_items",
+                    "tests/unit/test_partial_schemes.py::test_a_partial_with_an_item_the_full_scheme_lacks_warns",
+                ),
+            )
         ),
     ),
     Rule(

@@ -32,7 +32,13 @@ from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.hierarchy import Hierarchy, _applicable_hierarchies, _unique_hierarchy
 from sdmxlib.model.ref import Ref, SupportsUrn, artefact_urn, target_urn
 from sdmxlib.model.urn import SdmxUrn
-from sdmxlib.model.validation import ValidationError, _collect_refs, metadata_sets_advisories
+from sdmxlib.model.validation import (
+    ValidationError,
+    ValidationIssue,
+    _collect_refs,
+    metadata_sets_advisories,
+    partial_scheme_advisories,
+)
 from sdmxlib.model.version_rewrite import (
     RewrittenVersion,
     VersionRewrite,
@@ -89,15 +95,31 @@ class InMemoryRegistry:
         inside it, is refused: the model holds SDMX 3.x. `add_all`
         takes a rewrite for those.
 
+        A partial item scheme added over its full scheme is checked against
+        it, and the full scheme is kept; a full scheme added over a partial
+        replaces it, and the partial is checked. Either warns with an
+        `ImRuleWarning` naming each item the partial adds or changes (IM
+        §3.5.3.1).
+
         Raises:
             TypeError: If the artefact does not satisfy ``SupportsUrn``.
             ValidationError: If a version only SDMX 2.1 accepts is present.
         """
         _require_urn(artefact)
         check_ingestable([artefact])
-        self._rewritten.pop(str(artefact_urn(artefact)), None)
-        self._intern(artefact)
-        advise(metadata_sets_advisories([artefact], self.get))
+        issues = self._take(artefact)
+        advise([*issues, *metadata_sets_advisories([artefact], self.get)])
+
+    def _take(self, artefact: SupportsUrn) -> list[ValidationIssue]:
+        """Store `artefact`, unless it is a partial of a full scheme held here; what a partial breaks."""
+        key = str(artefact_urn(artefact))
+        held = self._store.get(key)
+        no_issues: list[ValidationIssue] = []
+        store, issues = (True, no_issues) if held is None else partial_scheme_advisories(artefact, held)
+        if store:
+            self._rewritten.pop(key, None)
+            self._intern(artefact)
+        return issues
 
     def add_all(
         self, artefacts: Iterable[SupportsUrn], *, rewrite_version: VersionRewrite | None = None
@@ -129,12 +151,10 @@ class InMemoryRegistry:
         batch, rewrites = rewrite_versions(batch, rewrite_version)
         check_ingestable(batch)
         self._refuse_rewrites(batch, rewrites)
-        for artefact in batch:
-            self._rewritten.pop(str(artefact_urn(artefact)), None)
-            self._intern(artefact)
+        issues = [issue for artefact in batch for issue in self._take(artefact)]
         for rewrite in rewrites:
             self._rewritten[rewrite.urn] = rewrite.original
-        advise(metadata_sets_advisories(batch, self.get))
+        advise([*issues, *metadata_sets_advisories(batch, self.get)])
         return rewrites
 
     def _refuse_rewrites(self, batch: list[SupportsUrn], rewrites: tuple[RewrittenVersion, ...]) -> None:
