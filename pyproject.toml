@@ -125,6 +125,9 @@ dev = [
   # The CLI, a workspace member released with sdmxlib (GH-67): installed here so
   # its tests run in `just ci` with everything else.
   "sdmxlib-cli",
+  # The scripts under bench/ and tools/ take their arguments through typer, so
+  # pyrefly checks each option against its use (GH-326). The CLI's bound.
+  "typer>=0.27.3,<0.28",
   # Checker versions carry UPPER bounds. uv.lock is gitignored (published
   # library), so every fresh `uv sync` resolves the dev group anew — an
   # unbounded floor means a checker release lands in `just ci` unannounced.

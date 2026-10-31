@@ -357,7 +357,7 @@ The §9.2 schema bump with mixed pods and zero non-2xx responses; restore by poi
 
 #### Measurement track M: tier-3 reads (GH-185) (done)
 
-Built as `bench/tier3/` (`bench_tier3.py`, `baselines.json`, `README.md`), run by `just bench-tier3 <publication>` outside `just ci`, since it uploads the census publication's 2.1 GB of data files to Azurite. `just ci` runs the object-store tier, `just test-stores` (`tests/stores/`, `justfile:255`), which checks that a remote read equals the local one. With DuckDB's external file cache on, a repeated read in the same process issues no request, so `BundleEngine` gained no cache setting. Specification §7.1 records the measurement; GH-231 measures request sizing in a cloud region.
+Built as `bench/tier3/` (`bench_tier3.py`, `baselines.json`, `README.md`), run by `just bench-tier3 <publication>` outside `just ci`, since it uploads the census publication's 2.1 GB of data files to Azurite. `just ci` runs the object-store tier, `just test-stores` (`tests/stores/`, `justfile:255`), which checks that a remote read equals the local one. With DuckDB's external file cache on, a repeated read in the same process issues no request, so `BundleEngine` gained no cache setting. Specification §7.1 records the measurement, and GH-231's measurement of request sizing in Azure, where larger requests are slower and the default stays.
 
 ### Verification Plan
 
