@@ -1478,16 +1478,13 @@ class EditionRegistry(SessionFactory):
         ``data_path`` is resolved against it, so nothing in the edition names
         a location::
 
+            connection = "BlobEndpoint=https://acct.blob.core.windows.net;SharedAccessSignature=…"
             engine = sl.EditionEngine(
-                secrets=[
-                    sl.StoreSecret(
-                        "azure", provider="credential_chain", options={"account_name": "acct"}
-                    )
-                ]
+                secrets=[sl.StoreSecret("azure", options={"connection_string": connection})]
             )
             reg = sl.LocalRegistry.edition(
                 "/var/bundles/census/019a…/",
-                remote="abfss://c@acct.dfs.core.windows.net/bundles/census/019a…/",
+                remote="az://c/bundles/census/019a…/",
                 engine=engine,
             )
 

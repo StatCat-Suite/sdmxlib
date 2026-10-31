@@ -129,7 +129,9 @@ class DuckDBDataStore(SessionFactory):
     * ``{"account_name": ..., "tenant_id": ..., "client_id": ...,
       "client_secret": ...}`` → ``PROVIDER 'service_principal'``.
     * ``{"chain": "cli"}`` (or ``"env"``, ``"managed_identity"``) →
-      ``PROVIDER 'credential_chain'`` with the named chain.
+      ``PROVIDER 'credential_chain'`` with the named chain. A
+      ``managed_identity`` chain fails on any query over 5 or more files
+      ([duckdb-azure#171](https://github.com/duckdb/duckdb-azure/issues/171)).
 
     When ``azure_credentials`` is set, or any ATTACH spec contains
     ``abfss://``, the ``azure`` extension is auto-INSTALL+LOADed so

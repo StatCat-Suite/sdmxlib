@@ -48,8 +48,9 @@ since the timings are the point; the GET counts should match Azurite's.
 
 A managed identity fails on this edition. A query that opens 5 or more files
 stops with "Failed to get token from ChainedTokenCredential" (DuckDB 2.0.0,
-azure extension `906e92458c`; 4 files read), so the census queries, which
-open up to 22, need a SAS on a VM:
+azure extension `906e92458c`; 4 files read;
+[duckdb-azure#171](https://github.com/duckdb/duckdb-azure/issues/171)), so
+the census queries, which open up to 22, need a SAS on a VM:
 
 ```bash
 az storage container generate-sas --as-user --auth-mode login --permissions rl \
@@ -60,7 +61,8 @@ TIER3_SAS=$(cat ~/.tier3_sas) uv run python -m bench.tier3.bench_tier3 <edition>
 
 Remote runs set `azure_transport_option_type = 'curl'`: on Ubuntu 24.04 the
 extension's default transport fails every request with "Problem with the SSL
-CA cert", and curl reads the system's CA bundle.
+CA cert" ([duckdb-azure#185](https://github.com/duckdb/duckdb-azure/issues/185)),
+and curl reads the system's CA bundle.
 
 1. Create a storage account and a container in one region, and give the
    identity the bench runs as the *Storage Blob Data Reader* role on it

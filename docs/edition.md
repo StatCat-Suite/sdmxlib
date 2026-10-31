@@ -263,15 +263,15 @@ the edition is in the store, and the reader resolves `data_path` against
 that root in place of the local directory:
 
 ```python
-engine = sl.EditionEngine(
-    secrets=[sl.StoreSecret("azure", provider="credential_chain", options={"account_name": "acct"})],
-)
+connection = f"BlobEndpoint=https://acct.blob.core.windows.net;SharedAccessSignature={sas}"
+engine = sl.EditionEngine(secrets=[sl.StoreSecret("azure", options={"connection_string": connection})])
+engine.connection.execute("SET azure_transport_option_type = 'curl'")
 census = sl.LocalRegistry.edition(
     pod_path,  # the required and lazy files, from copy_edition(..., tiers=("required", "lazy"))
-    remote=store_url,  # such as "abfss://catalog@acct.dfs.core.windows.net/products/census/019a…/"
+    remote=store_url,  # such as "az://catalog/products/census/019a…/"
     engine=engine,
 )
-census.data_path  # the store's data/ beside the edition: "abfss://catalog@acct.dfs.core.windows.net/products/census/data/"
+census.data_path  # the store's data/ beside the edition: "az://catalog/products/census/data/"
 ```
 
 `remote` is any URI DuckDB reads: `s3://`, which also reaches S3-compatible
@@ -279,9 +279,23 @@ servers through an `endpoint` option, `r2://`, `gs://`, `az://`, `abfss://`,
 `http(s)://`, and `file://` for a store mounted as a filesystem. The engine
 loads the DuckDB extension the scheme needs (`httpfs` or `azure`). A
 `StoreSecret` is a DuckDB secret, with DuckDB's types, providers and options;
-the engine creates each one, so every edition it holds reads with them. A
-`credential_chain` provider reads the cloud identity a pod already has, so
-the server holds no keys.
+the engine creates each one, so every edition it holds reads with them, and
+`EditionEngine.connection` takes any DuckDB setting a store needs.
+
+On Azure, DuckDB 2.0.0's `azure` extension has two open bugs, and the example
+works around both:
+
+- It requests a new token for each file it opens. With a managed identity,
+  Azure's identity endpoint throttles those requests, and a `credential_chain`
+  secret fails with "Failed to get token from ChainedTokenCredential" on any
+  query over 5 or more files
+  ([duckdb-azure#171](https://github.com/duckdb/duckdb-azure/issues/171)). A SAS
+  token in a `connection_string` requests no tokens. sdmxlib has measured the
+  SAS and the managed identity only.
+- On Debian and Ubuntu its default transport fails every request with
+  "Problem with the SSL CA cert"
+  ([duckdb-azure#185](https://github.com/duckdb/duckdb-azure/issues/185)).
+  `azure_transport_option_type = 'curl'` reads the system's CA bundle.
 
 `check_edition` and `check_on_open` take the same `remote=` and `engine=`. At
 `receive`, the `lake` and `bindings` checks then read the data files in the
