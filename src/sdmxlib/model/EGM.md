@@ -54,6 +54,9 @@ hierarchical roll-ups.
   GH-29): one `ImRuleWarning` per call names targets outside the flow's, attributes
   the MSD does not define or allow that often, and values their text format does not
   allow (`validation.metadata_sets_advisories`).
+  A partial item scheme added over its full scheme is checked against it and
+  the full scheme kept; a full scheme added over a partial replaces it and
+  checks the partial (IM §3.5.3.1, GH-298, `validation.partial_scheme_advisories`).
 - `Resolver`, `binding()` and `current()` (`_binding.py`), plus `MapResolver`
   and `document_binding` (`_resolvers.py`): the ContextVar binding that
   attaches every Ref built inside a block to a resolver.

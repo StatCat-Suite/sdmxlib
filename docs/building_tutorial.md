@@ -879,9 +879,7 @@ resolve and nothing is in it twice — and `serialize` what the target format
 can carry. The IM's rules
 fall into four kinds, and the checks above are the first. Some cannot be broken at all,
 because the model's types cannot hold the violation: a time dimension has no
-enumeration to code it with. Others are knowingly not checked. Rules that relate one artefact to
-another fall here, such as a partial codelist against the full one, or a
-constraint's values against their components' representations. So does a
+enumeration to code it with. Others are knowingly not checked, such as a
 data set's conformance to its DSD. `tests/support/im_rules.py` lists every
 normative sentence of the IM (SDMX 3.1, Section 2), quoted, and says which
 of the four each one is.
@@ -890,7 +888,11 @@ The fourth is a rule the IM states and no wire schema enforces: a facet's
 sequence attributes going together, or a data constraint holding cube regions
 or key sets but not both. Every SDMX format can carry an artefact that breaks
 one, so it is built, with one `sl.ImRuleWarning` per artefact naming each
-rule it breaks. To make them errors, filter them:
+rule it breaks. A rule relating two artefacts warns where both are at hand:
+`validate` warns on a constraint value its component's codelist or text
+format does not allow, and a registry's `add` on a partial codelist that
+adds an item to the full one it holds, or changes one. To make them errors,
+filter them:
 
 ```python
 import warnings

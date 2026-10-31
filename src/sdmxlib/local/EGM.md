@@ -35,8 +35,13 @@ plane: it attaches the catalogs, serves observation reads and takes writes.
 - `LocalRegistry` (`registry.py`): `EditionRegistry` plus writes: `add`,
   `add_all`, `drop`, `replace`, `ingest`, `write_observations`, `sql`,
   `scan_csv`, `scan_json` and `transaction`. A `MetadataSet` added beside its metadataflow and MSD is checked against them (IM §7.4.2.1,
-  GH-29): one `ImRuleWarning` per call names targets outside the flow's and attributes
-  the MSD does not define or allow that often (`validation.metadata_sets_advisories`).
+  GH-29): one `ImRuleWarning` per call names targets outside the flow's, attributes
+  the MSD does not define or allow that often, and values their text format does not
+  allow (`validation.metadata_sets_advisories`).
+  A partial item scheme added over its full scheme is checked against it and
+  the full scheme kept; a full scheme added over a partial replaces it and
+  checks the partial (IM §3.5.3.1, GH-298, `validation.partial_scheme_advisories`). `replace` stores a
+  partial over its full scheme.
 - `LocalRegistry.build(...)` (`registry.py`): creates an edition directory
   `<product>/<edition_id>` (a UUIDv7) over the shared `<product>/data/`. Takes
   `previous=` (copying the previous edition's `lazy`-tier files, or the
