@@ -2079,7 +2079,7 @@
                   "endTime": "2030-12",
                   "sentinelValues": [
                     {
-                      "value": "-1",
+                      "value": "9999",
                       "name": "TIME-SENTINEL-NAME-en",
                       "names": {
                         "en": "TIME-SENTINEL-NAME-en",
@@ -2092,7 +2092,7 @@
                       }
                     },
                     {
-                      "value": "NA",
+                      "value": "9999-12-31",
                       "name": "TIME-NA-NAME-en",
                       "names": {
                         "en": "TIME-NA-NAME-en",

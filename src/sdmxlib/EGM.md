@@ -47,6 +47,12 @@ the subpackages share.
   `SingleFlight` (`docs/design/caching.md`).
 - `to_storage`, `from_storage` and `as_utc` (`_time.py`): store every
   TIMESTAMP as naive UTC.
+- `FacetChecker` (`_facets.py`): whether a value meets a text format. libxml2
+  checks the type and the pattern as XML Schema defines them; SDMX's own text
+  types come from `_facet_types.xsd`, a copy of SDMXCommon.xsd's definitions
+  that `tests/unit/test_facets.py` holds to the vendored schemas. Lengths,
+  bounds and `decimals` are checked in Python; the sequence facets are not
+  checked. One checker serves one validation run.
 - `reading_csv`, `csv_errors`, `converting`, `reads_scan`, `type_mismatch`
   and `SCANS` (`_read_errors.py`): what reading observations raises. Data
   that cannot be read is `SdmxParseError`; a value that does not fit its

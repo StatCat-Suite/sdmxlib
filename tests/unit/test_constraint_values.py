@@ -16,8 +16,10 @@ import pytest
 from sdmxlib.model.constraint import DataConstraint
 from sdmxlib.model.errors import ImRuleWarning
 from sdmxlib.model.message import StructureMessage
+from sdmxlib.model.representation import SentinelValue
 from sdmxlib.model.validation import validate
 from tests.support import maximal
+from tests.support.narrow import present
 
 pytestmark = pytest.mark.unit
 
@@ -36,7 +38,7 @@ def _key_values(
 ) -> DataConstraint:
     region, *regions = dc.regions
     keys = tuple(
-        attrs.evolve(kv, values=frozenset(values), remove_prefix=remove_prefix)
+        attrs.evolve(kv, values=frozenset(values), time_range=None, remove_prefix=remove_prefix)
         if kv.dimension_id == dimension_id
         else kv
         for kv in region.keys
@@ -97,3 +99,27 @@ def test_a_value_set_with_its_prefix_removed_is_not_compared() -> None:
     with warnings.catch_warnings():
         warnings.simplefilter("error", ImRuleWarning)
         validate(_with("CC", lambda dc: _key_values(dc, "DIM", {"ENT"}, remove_prefix=True)))
+
+
+def test_a_key_value_its_text_format_does_not_allow_warns() -> None:
+    msg = _with("CC", lambda dc: _key_values(dc, "TIME_PERIOD", {"2020-Q4", "2020-Q5"}))
+    ((path, message),) = _warned(msg)
+    assert path == "DataConstraint:CC.regions[0].keys[TIME_PERIOD]"
+    assert message == (
+        "selects '2020-Q5', which is not of type ObservationalTimePeriod in the text format "
+        "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0) gives TIME_PERIOD"
+    )
+
+
+def test_a_sentinel_value_of_another_type_warns() -> None:
+    msg = maximal.message()
+    (dsd,) = msg.data_structures
+    time = present(dsd.time_dimension)
+    facet = present(time.representation)
+    sentinels = (*facet.sentinel_values, SentinelValue(value="-1", name={"en": "not applicable"}))
+    time = attrs.evolve(time, representation=attrs.evolve(facet, sentinel_values=sentinels))
+    ((path, message),) = _warned(attrs.evolve(msg, data_structures=[attrs.evolve(dsd, time_dimension=time)]))
+    assert (path, message) == (
+        "DataStructure:DSD.TIME_PERIOD.sentinel_values",
+        "names the sentinel value '-1', which is not of type ObservationalTimePeriod",
+    )
