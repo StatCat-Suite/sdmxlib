@@ -109,8 +109,10 @@ hierarchical roll-ups.
   §5.3.2.1, GH-27), on a data constraint value that is no item of the
   codelist or value list its DSD enumerates the component with, or that its
   text format does not allow (§12.3.3.1; a `remove_prefix` value set and a
-  codelist with extensions are not compared), and on a sentinel value that
-  is not of its text format's type (§5.3.2.2). `sdmxlib._facets` checks a
+  codelist with extensions are not compared), on a sentinel value that
+  is not of its text format's type (§5.3.2.2), and on a data structure whose
+  metadata structure nests an attribute or lacks one its usages name
+  (SDMX-ML 3.x's documentation, GH-299). `sdmxlib._facets` checks a
   value against a text format.
 - `sort_key`, `compliance`, `unwritable`, `is_final`, `unreferenceable` and
   `late_binds` (`version.py`): version ordering, which SDMX grammar (2.1 or

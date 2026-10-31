@@ -328,5 +328,4 @@ def test_a_stub_without_its_components_has_none(element: str, components: str) -
         )
         assert (dsd.groups, list(dsd.metadata_attributes)) == (None, [])
     else:
-        (msd,) = msg.metadata_structures
-        assert list(msd.attributes) == []
+        assert list(msg.metadata_structures["MSD"].attributes) == []

@@ -1506,8 +1506,9 @@ def validate(msg: StructureMessage | MetadataMessage) -> None:
     wire schema can enforce: a dataflow bound to the latest minor version of
     an evolving DSD with no dimension constraint (IM §5.3.2.1), a data
     constraint value its component's codelist does not hold or its text
-    format does not allow (§12.3.3.1), and a sentinel value that is not of
-    its text format's type (§5.3.2.2).
+    format does not allow (§12.3.3.1), a sentinel value that is not of
+    its text format's type (§5.3.2.2), and a data structure whose metadata
+    structure nests attributes or lacks one a usage names.
 
     Args:
         msg: A `StructureMessage`; a `MetadataMessage` holds no references to check.
@@ -1538,6 +1539,7 @@ def validate(msg: StructureMessage | MetadataMessage) -> None:
     checker = FacetChecker()
     _check_constraint_values(msg, advisories, checker)
     _check_sentinel_values(msg, advisories, checker)
+    _check_metadata_usages(msg, advisories)
     advise(advisories)
 
 
@@ -1809,6 +1811,36 @@ def _check_sentinel_values(msg: StructureMessage, issues: list[ValidationIssue],
                             path=f"DataStructure:{dsd.id}.{component_id}.sentinel_values",
                             message=f"names the sentinel value {sentinel.value!r}, which {broken}",
                         )
+                    )
+
+
+def _check_metadata_usages(msg: StructureMessage, issues: list[ValidationIssue]) -> None:
+    """A data structure's metadata structure is flat and defines each attribute it uses.
+
+    SDMX-ML 3.0 and 3.1 document on ``DataStructure/Metadata`` that "the
+    referenced metadata set cannot contain nested metadata attributes, as
+    these are not supported in the data"; a `MetadataAttributeUsage` names
+    one of that structure's attributes by id. Checked where the message holds
+    the metadata structure.
+    """
+    for dsd in msg.data_structures:
+        if dsd.metadata is None:
+            continue
+        for msd in _held_as(dsd.metadata.urn, msg.metadata_structures):
+            nesting = [attribute for attribute in msd.attributes if attribute.children]
+            for attribute in nesting:
+                nested = ", ".join(child.id for child in attribute.children)
+                message = (
+                    f"references {msd.urn}, whose attribute {attribute.id} nests {nested}; the metadata "
+                    "structure of a data structure has no nested attributes"
+                )
+                issues.append(ValidationIssue(path=f"DataStructure:{dsd.id}.metadata", message=message))
+            defined = {attribute.id for attribute in msd.attributes}
+            for usage in dsd.metadata_attributes:
+                if usage.id not in defined:
+                    message = f"uses {usage.id}, which {msd.urn} does not define at its top level"
+                    issues.append(
+                        ValidationIssue(path=f"DataStructure:{dsd.id}.metadata_attributes[{usage.id}]", message=message)
                     )
 
 
