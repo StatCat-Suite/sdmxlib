@@ -176,7 +176,7 @@ RULES: tuple[Rule[Kind], ...] = (
         "attribute: 2.1's primary measure has none, so a 3.x optional measure reads back required",
     ),
     Rule(
-        r"MISSING MetadataStructure AG:MSD(?:_SHAPES)?\(1\.0\)",
+        r"MISSING MetadataStructure AG:MSD(?:_SHAPES|_DSD)?\(1\.0\)",
         r".+:json10",
         "fmr-drops",
         "FMR's JSON 1.0 output has no metadataStructures, though the 1.0 schema declares the section",

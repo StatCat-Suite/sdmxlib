@@ -79,7 +79,7 @@ def test_pysdmx_read_what_it_models() -> None:
             "HierarchyAssociation": 1,
             "MetadataProviderScheme": 1,
             "MetadataProvisionAgreement": 1,
-            "MetadataStructure": 1,
+            "MetadataStructure": 2,
             "Metadataflow": 1,
             "ProvisionAgreement": 1,
             "RepresentationMap": 2,

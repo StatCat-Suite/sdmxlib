@@ -38,8 +38,8 @@ def test_sdmx_ml_2_1_writes_every_target_object_in_order() -> None:
 
 
 def test_sdmx_ml_2_1_reads_every_target_object_in_order() -> None:
-    (msd,) = ml21_reader.read(ml21_writer.write(maximal.message())).metadata_structures
-    (original,) = maximal.message().metadata_structures
+    msd = ml21_reader.read(ml21_writer.write(maximal.message())).metadata_structures["MSD"]
+    original = maximal.message().metadata_structures["MSD"]
     # Field by field less the annotations, whose second URL 2.1 cannot carry
     # (declared in `gaps.py`, proved by `test_field_coverage`).
     assert [attrs.evolve(obj, annotations=Annotations()) for obj in msd.targets[0].target_objects] == [
@@ -56,10 +56,10 @@ def test_a_target_object_is_not_a_bare_string() -> None:
 
 def test_sdmx_ml_2_1_refuses_a_target_with_no_target_object() -> None:
     msg = maximal.message()
-    (msd,) = msg.metadata_structures
+    msd = msg.metadata_structures["MSD"]
     emptied = attrs.evolve(msd, targets=[attrs.evolve(msd.targets[0], target_objects=()), *msd.targets[1:]])
     with pytest.raises(ValidationError) as caught:
-        serialize(attrs.evolve(msg, metadata_structures=[emptied]), version="2.1")
+        serialize(attrs.evolve(msg, metadata_structures=[emptied, msg.metadata_structures["MSD_DSD"]]), version="2.1")
     paths = [issue.path for issue in caught.value.issues if issue.path.startswith("MetadataStructure:")]
     assert paths == ["MetadataStructure:MSD.targets[TARGET].target_objects"]
 
@@ -75,7 +75,7 @@ def test_the_maximal_msd_is_writable_in_2_1() -> None:
 
 def test_a_target_object_s_text_type_is_checked_on_each() -> None:
     msg = maximal.message()
-    (msd,) = msg.metadata_structures
+    msd = msg.metadata_structures["MSD"]
     bad = TargetObject(id="DATA_SET_TARGET", kind="DataSetTarget", representation=None)
     second = attrs.evolve(
         bad, representation=attrs.evolve(msd.targets[0].target_objects[0].representation, type="String")
@@ -83,6 +83,6 @@ def test_a_target_object_s_text_type_is_checked_on_each() -> None:
     target = attrs.evolve(msd.targets[0], target_objects=(msd.targets[0].target_objects[0], second))
     changed = attrs.evolve(msd, targets=[target, *msd.targets[1:]])
     with pytest.raises(ValidationError) as caught:
-        serialize(attrs.evolve(msg, metadata_structures=[changed]), version="2.1")
+        serialize(attrs.evolve(msg, metadata_structures=[changed, msg.metadata_structures["MSD_DSD"]]), version="2.1")
     paths = [issue.path for issue in caught.value.issues if issue.path.startswith("MetadataStructure:")]
     assert paths == ["MetadataStructure:MSD.targets[TARGET].target_objects[DATA_SET_TARGET].representation.type"]

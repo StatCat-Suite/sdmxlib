@@ -903,7 +903,7 @@
             </str:Measure>
           </str:MeasureList>
         </str:DataStructureComponents>
-        <str:Metadata>urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD(1.0)</str:Metadata>
+        <str:Metadata>urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD_DSD(1.0)</str:Metadata>
       </str:DataStructure>
     </str:DataStructures>
     <str:Dataflows>
