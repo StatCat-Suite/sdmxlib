@@ -546,13 +546,13 @@ bench-concurrency-update:
 #
 # Measure tier-3 requests and bytes per cache setting
 [group('bench')]
-bench-tier3 PUBLICATION:
-    uv run python -m bench.tier3.bench_tier3 --publication {{ PUBLICATION }}
+bench-tier3 EDITION *ARGS:
+    uv run python -m bench.tier3.bench_tier3 {{ EDITION }} {{ ARGS }}
 
 # Overwrite bench/tier3/baselines.json with current numbers
 [group('bench')]
-bench-tier3-update PUBLICATION:
-    uv run python -m bench.tier3.bench_tier3 --publication {{ PUBLICATION }} --update
+bench-tier3-update EDITION *ARGS:
+    uv run python -m bench.tier3.bench_tier3 {{ EDITION }} --update {{ ARGS }}
 
 # ── Release ───────────────────────────────────────────────────────────────────
 

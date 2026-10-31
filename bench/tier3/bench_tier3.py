@@ -1,20 +1,25 @@
-"""Tier-3 reads from object storage: requests, bytes and time per DuckDB cache setting (GH-185).
+r"""Tier-3 reads from object storage: requests, bytes and time per DuckDB cache setting (GH-185, GH-231).
 
-The census publication's data files go to Azurite; a pod's copy of tiers 1
-and 2 opens them with ``remote=``. Each cache setting runs in a fresh process,
-which reads each query twice, then in a second fresh process that reads them
-twice again: the second process is a pod restart. DuckDB's HTTP log counts the
-requests and their bytes, so the counts are what an object store would see;
-the timings are an emulator's on one machine, and say nothing about a cloud
-region's latency.
+A pod's copy of tiers 1 and 2 opens the edition's data files in object
+storage with ``remote=``. Each cache setting runs in a fresh process, which
+reads each query twice, then in a second fresh process that reads them twice
+again: the second process is a pod restart. DuckDB's HTTP log counts the
+requests and their bytes, so the counts are what an object store would see.
 
-    uv run python -m bench.tier3.bench_tier3 --publication <census publication>
+Without ``--remote`` the edition's files go to Azurite, whose timings are one
+machine's and carry no request latency. With ``--remote`` the bench reads an
+edition already uploaded to Azure Blob Storage, signing in through DuckDB's
+credential chain (``az login``, or the machine's managed identity), so its
+timings are a cloud region's when it runs in that region.
 
-Writes ``bench/tier3/baselines.json`` with ``--update``; prints the table
-either way.
+    uv run python -m bench.tier3.bench_tier3 <edition>
+    uv run python -m bench.tier3.bench_tier3 <edition> \
+        --remote az://<container>/<product>/<edition id>/ --account <storage account> --region <region>
+
+Writes ``baselines.json`` (Azurite) or ``baselines_azure.json`` (``--remote``)
+with ``--update``; prints the table either way.
 """
 
-import argparse
 import json
 import multiprocessing
 import resource
@@ -23,8 +28,10 @@ import tempfile
 import time
 from importlib import metadata
 from pathlib import Path
+from typing import Annotated
 
 import httpx2
+import typer
 
 import sdmxlib as sl
 from sdmxlib.edition import copy_edition, read_manifest
@@ -32,6 +39,7 @@ from sdmxlib.query.observations import ObsQuery
 from tests.stores import _stores
 
 _BASELINES = Path(__file__).with_name("baselines.json")
+_BASELINES_AZURE = Path(__file__).with_name("baselines_azure.json")
 
 #: Each setting, as the DuckDB options it sets on the engine's connection.
 SETTINGS: dict[str, dict[str, str]] = {
@@ -65,10 +73,9 @@ def _queries(reg: sl.EditionRegistry, flow: sl.SdmxUrn[sl.Dataflow]) -> dict[str
     }
 
 
-def _worker(pod: Path, remote: str, port: int, options: dict[str, str]) -> list[dict[str, object]]:
+def _worker(pod: Path, remote: str, secret: sl.StoreSecret, options: dict[str, str]) -> list[dict[str, object]]:
     """Each query read twice in this process: requests, bytes and seconds per read."""
-    store = _stores.Running(_stores.EMULATORS[0], "", port)
-    engine = sl.EditionEngine(secrets=[_stores.secret(store)], threads=4)
+    engine = sl.EditionEngine(secrets=[secret], threads=4)
     conn = engine.connection
     for name, value in options.items():
         conn.execute(f"SET {name} = {value}")
@@ -106,51 +113,72 @@ def _worker(pod: Path, remote: str, port: int, options: dict[str, str]) -> list[
     return found
 
 
-def _run(pod: Path, remote: str, port: int, options: dict[str, str]) -> list[dict[str, object]]:
+def _run(pod: Path, remote: str, secret: sl.StoreSecret, options: dict[str, str]) -> list[dict[str, object]]:
     """`_worker` in a fresh process, as a pod that has just started."""
     with multiprocessing.get_context("spawn").Pool(1) as pool:
-        return pool.apply(_worker, (pod, remote, port, options))
+        return pool.apply(_worker, (pod, remote, secret, options))
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--publication", type=Path, required=True)
-    parser.add_argument("--update", action="store_true")
-    args = parser.parse_args()
-    publication: Path = args.edition_dir
+def _measure(edition: Path, remote: str, secret: sl.StoreSecret) -> dict[str, dict[str, list[dict[str, object]]]]:
+    """Every setting at a start and a restart, over a pod's copy of `edition`'s tiers 1 and 2."""
+    with tempfile.TemporaryDirectory() as tmp:
+        pod = Path(tmp) / "pod" / "census" / edition.name
+        copy_edition(edition, pod, tiers=("required", "lazy"))
+        return {
+            name: {"start": _run(pod, remote, secret, options), "restart": _run(pod, remote, secret, options)}
+            for name, options in SETTINGS.items()
+        }
+
+
+def _on_azurite(edition: Path) -> dict[str, dict[str, list[dict[str, object]]]]:
+    """`_measure` against Azurite, with `edition` uploaded to it first."""
     missing = _stores.runtime_missing()
     if missing is not None:
         sys.exit(f"tier-3 bench needs a container runtime: {missing}")
     store = _stores.start(_stores.EMULATORS[0])
     try:
-        with tempfile.TemporaryDirectory() as tmp:
-            with httpx2.Client(base_url=store.base, timeout=600) as client:
-                _stores.upload_publication(_stores.uploader(store, client), publication, bundle="census")
-            pod = Path(tmp) / "pod" / "census" / publication.name
-            copy_edition(publication, pod, tiers=("required", "lazy"))
-            remote = f"{_stores.root(store)}census/{publication.name}/"
-            results = {
-                name: {
-                    "start": _run(pod, remote, store.host_port, options),
-                    "restart": _run(pod, remote, store.host_port, options),
-                }
-                for name, options in SETTINGS.items()
-            }
+        with httpx2.Client(base_url=store.base, timeout=600) as client:
+            _stores.upload_publication(_stores.uploader(store, client), edition, bundle="census")
+        return _measure(edition, f"{_stores.root(store)}census/{edition.name}/", _stores.secret(store))
     finally:
         _stores.stop(store)
+
+
+def main(
+    edition: Annotated[Path, typer.Argument(help="The sealed edition directory, the pod's copy is taken from.")],
+    *,
+    remote: Annotated[
+        str | None,
+        typer.Option(help="The edition's URI in Azure Blob Storage, ending in '/'; Azurite when omitted."),
+    ] = None,
+    account: Annotated[str | None, typer.Option(help="The storage account --remote is in.")] = None,
+    region: Annotated[str | None, typer.Option(help="The Azure region the bench runs in, for --update.")] = None,
+    update: Annotated[bool, typer.Option(help="Overwrite the baselines file with these numbers.")] = False,
+) -> None:
+    """Measure tier-3 requests, bytes and time per DuckDB cache setting."""
+    if remote is None:
+        results = _on_azurite(edition)
+        store, baselines = "azurite", _BASELINES
+    else:
+        if account is None or region is None:
+            msg = "--remote needs --account and --region"
+            raise typer.BadParameter(msg)
+        secret = sl.StoreSecret("azure", provider="credential_chain", options={"account_name": account})
+        results = _measure(edition, remote, secret)
+        store, baselines = f"azure, {region}", _BASELINES_AZURE
     for name, runs in results.items():
         for phase, rows in runs.items():
             for row in rows:
                 print(name, phase, row)
-    if args.update:
+    if update:
         report = {
-            "_publication": read_manifest(publication).edition_id,
+            "_edition": read_manifest(edition).edition_id,
             "_sdmxlib": metadata.version("sdmxlib"),
-            "_store": "azurite",
+            "_store": store,
             "results": results,
         }
-        _BASELINES.write_text(json.dumps(report, indent=2) + "\n")
+        baselines.write_text(json.dumps(report, indent=2) + "\n")
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)
