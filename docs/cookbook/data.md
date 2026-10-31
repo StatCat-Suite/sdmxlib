@@ -353,6 +353,25 @@ component's type, such as text where the DSD declares a number, raises a
 on the scan for bytes and SDMX-JSON, and on the query that reads the row for
 a path. A REST `obs()` response raises the same two when it is fetched.
 
+A scan reads the observations of one structure and keeps none of a data
+set's own properties:
+
+- Rows and data sets marked `Information`, `Append`, `Replace` or, in
+  SDMX-CSV 2.1, `Merge` read as observations; the action is dropped. A
+  `Delete` data set or `D` row raises `sl.SdmxParseError`, since its rows
+  say what to remove, and so does an SDMX-CSV `ACTION` the format does not
+  define, such as `d` or an empty cell.
+- Rows or data sets that follow more than one dataflow, data structure or
+  provision agreement raise `sl.SdmxParseError`.
+- A data set's `setId`, reporting, validity and publication dates, and the
+  header's `DataSetAction` and `DataSetID`, are not read.
+- `sl.parse` refuses a data message, SDMX-ML's included: sdmxlib has no
+  SDMX-ML data reader.
+
+Writing observations with `write_observations` is a load, not an SDMX
+update: `mode="overwrite"` replaces the whole table, which an SDMX
+`Replace` does not, and `mode="append"` adds rows without matching keys.
+
 ---
 
 ## Filtering by code

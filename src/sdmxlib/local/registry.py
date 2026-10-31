@@ -2836,8 +2836,10 @@ class LocalRegistry(EditionRegistry):
             sorted_by: DuckLake sort expressions, outermost first, set as the
                 table's ``SORTED BY`` so DuckLake writes and keeps the rows
                 sorted (`DuckDBDataStore.write_observations`).
-            mode: ``"overwrite"`` replaces the table; ``"append"`` inserts
-                into it and keeps its partitioning.
+            mode: ``"overwrite"`` replaces the whole table; ``"append"``
+                inserts into it, matching no keys, and keeps its
+                partitioning. Neither is an SDMX action: an SDMX ``Replace``
+                replaces only the observations it names.
 
         Raises:
             KeyError: If this registry has no lake: one `build` starts has it,
@@ -2934,9 +2936,9 @@ class LocalRegistry(EditionRegistry):
                 dataflow or provision agreement — an observation query is over
                 a dataflow, and a structure alone does not say which.
             SdmxParseError: If the data is not readable SDMX-CSV, lacks a
-                column the structure declares, or holds a ``D`` (delete) row
-                in its ``ACTION`` column, which says what to remove rather
-                than what was observed.
+                column the structure declares, names more than one structure,
+                or holds a ``D`` (delete) row or an action SDMX-CSV does not
+                define in its ``ACTION`` column.
             ValueError: If a value does not fit its component's type, when the
                 file is read; for a path, when a query reads the value.
         """

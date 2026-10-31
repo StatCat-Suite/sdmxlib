@@ -12,7 +12,7 @@ SDMX-CSV 2.0.0 header layout::
 where:
 
 - ``STRUCTURE`` is the artefact type ("dataflow" / "datastructure" /
-  "provisionagreement"). Defaults to ``"dataflow"``.
+  "dataprovision"). Defaults to ``"dataflow"``.
 - ``STRUCTURE_ID`` is ``AGENCY:ID(VERSION)``. The caller passes this
   in — typically derived from the bound dataflow's URN.
 - ``ACTION`` is one of ``I`` / ``A`` / ``R`` / ``D`` (Information / Append /

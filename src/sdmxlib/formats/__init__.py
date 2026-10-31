@@ -118,6 +118,8 @@ def parse(
     - JSON envelopes are routed by ``$schema`` URL.
     - XML envelopes are routed by root element (``<mes:Structure>`` vs
       ``<mes:GenericMetadata>``).
+    - A data message is refused: observations are read with
+      `LocalRegistry.scan_csv` or `scan_json`.
 
     A structure document is read artefact by artefact: one that
     contradicts the schema is *refused* — recorded in
@@ -168,6 +170,8 @@ def parse(
             When the document is an SDMX error message (``<mes:Error>``,
             ``{"errors": [...]}``), `SdmxErrorMessage`, carrying each
             error's code and text as ``.errors``.
+            When the document is a data message, or an XML root other than a
+            structure or metadata message's.
     """
     try:
         # Read straight into an in-memory registry: its references are bound
@@ -210,6 +214,9 @@ def _dispatch(data: bytes, *, version: str | None) -> StructureMessage | Metadat
     detected = version or _detect_version(data)
     _refuse_error_message(data, detected)
     kind = _detect_message_kind(data, detected)
+    if kind == "data":
+        msg = f"the document is an SDMX data message; {_DATA_MESSAGE}"
+        raise SdmxParseError(msg)
 
     if kind == "metadata":
         if detected == "json":
@@ -342,6 +349,29 @@ _MESSAGE_NS_VERSION = {_MES_21: "2.1", _MES_30: "3.0", _MES_31: "3.1"}
 #: Local name of the SDMX-ML root element that carries reported metadata.
 _METADATA_ROOT = "GenericMetadata"
 
+#: Local name of the SDMX-ML root element that carries structures.
+_STRUCTURE_ROOT = "Structure"
+
+#: Local names of the SDMX-ML roots that carry observations: 2.1's and 3.x's,
+#: and 2.0's, which a provider may still send.
+_DATA_ROOTS = frozenset(
+    {
+        "GenericData",
+        "StructureSpecificData",
+        "GenericTimeSeriesData",
+        "StructureSpecificTimeSeriesData",
+        "CompactData",
+        "UtilityData",
+        "CrossSectionalData",
+    }
+)
+
+#: What `parse` says of a data message: where observations are read instead.
+_DATA_MESSAGE = (
+    "parse reads structure and metadata messages. Read observations from SDMX-CSV or SDMX-JSON "
+    "with LocalRegistry.scan_csv or scan_json; sdmxlib has no SDMX-ML data reader."
+)
+
 #: Local name of the SDMX-ML root element of an error message, and of each error in it.
 _ERROR_ROOT = "Error"
 _ERROR_ENTRY = "ErrorMessage"
@@ -463,6 +493,7 @@ class _KindProbeData(msgspec.Struct, rename=_camel_rename):
     """Just enough of ``/data`` to tell the two message kinds apart."""
 
     metadata_sets: list[msgspec.Raw] | None = None
+    data_sets: list[msgspec.Raw] | None = None
 
 
 class _KindProbeMeta(msgspec.Struct):
@@ -477,10 +508,12 @@ class _KindProbe(msgspec.Struct, rename={"schema_url": "$schema"}):
     schema_url: str | None = None
     meta: _KindProbeMeta | None = None
     data: _KindProbeData | None = None
+    #: SDMX-JSON 1.0 data puts its data sets at the top level.
+    data_sets: list[msgspec.Raw] | None = msgspec.field(default=None, name="dataSets")
 
 
 def _detect_json_kind(data: bytes) -> str:
-    """Return ``"structure"`` or ``"metadata"`` for an SDMX-JSON payload.
+    """Return ``"structure"``, ``"metadata"`` or ``"data"`` for an SDMX-JSON payload.
 
     Discriminates on the *values* of ``$schema`` / ``meta.schema`` and on the
     presence of ``data.metadataSets`` — not on whether a token appears anywhere
@@ -495,12 +528,14 @@ def _detect_json_kind(data: bytes) -> str:
         data: Raw JSON payload.
 
     Returns:
-        ``"structure"`` or ``"metadata"``.
+        ``"structure"``, ``"metadata"``, or ``"data"`` for a message holding data sets.
     """
     try:
         probe = msgspec.json.decode(data, type=_KindProbe)
     except msgspec.DecodeError:
         return "structure"
+    if probe.data_sets is not None or (probe.data is not None and probe.data.data_sets is not None):
+        return "data"
     # IMF and others cite the raw GitHub URL rather than the canonical one, so
     # match the distinctive path segment within a URL we actually read.
     for url in (probe.schema_url, probe.meta.schema if probe.meta else None):
@@ -510,13 +545,21 @@ def _detect_json_kind(data: bytes) -> str:
 
 
 def _detect_message_kind(data: bytes, version: str) -> str:
-    """Return ``"structure"`` or ``"metadata"`` based on the message envelope."""
+    """Return ``"structure"``, ``"metadata"`` or ``"data"`` based on the message envelope.
+
+    Raises:
+        SdmxParseError: If an XML root is none of the three.
+    """
     if version == "json":
         return _detect_json_kind(data)
-    # XML: the root element decides. <mes:GenericMetadata> is metadata;
-    # everything else (Structure, StructureSpecificMetadata, …) is structure.
-    # This used to substring-search the first 4 KB, so a *structure* message
-    # merely mentioning "GenericMetadata" — in a codelist name, an annotation —
-    # was read as metadata, silently returning an empty message (#220).
+    # XML: the root element decides, never a substring of the document: one
+    # merely mentioning "GenericMetadata" in a name is a structure (#220).
     root = _xml_root(data)
-    return "metadata" if root is not None and root.localname == _METADATA_ROOT else "structure"
+    if root is None or root.localname == _STRUCTURE_ROOT:
+        return "structure"
+    if root.localname == _METADATA_ROOT:
+        return "metadata"
+    if root.localname in _DATA_ROOTS:
+        return "data"
+    msg = f"<{root.localname}> is not a message parse reads: it reads <{_STRUCTURE_ROOT}> and <{_METADATA_ROOT}>"
+    raise SdmxParseError(msg)

@@ -195,6 +195,43 @@ def test_a_rest_registry_scans_with_the_structure_it_fetches(tmp_path: Path) -> 
     assert [r.url.path for r in requests] == ["/service/dataflow/AGENCY/DF/1.0.0"], "the second scan reuses the flow"
 
 
+def test_a_rest_registry_follows_a_provision_agreement_to_its_dataflow(tmp_path: Path) -> None:
+    """The file's `STRUCTURE` kind names what is fetched: an agreement, with its dataflow as a descendant."""
+    requests: list[httpx2.Request] = []
+    body = write21(
+        sl.StructureMessage(
+            provision_agreements=[_AGREEMENT],
+            dataflows=[_FLOW],
+            data_structures=[_DSD],
+            codelists=[_AREAS],
+            concept_schemes=[_CONCEPTS],
+        )
+    )
+
+    def serve(request: httpx2.Request) -> httpx2.Response:
+        requests.append(request)
+        return httpx2.Response(200, content=body)
+
+    path = _write(tmp_path, _rows(("CA", "2020", "1"), kind="dataprovision", identifier="AGENCY:PA(1.0.0)"))
+    with sl.RestRegistry("https://example.test/service", id="T", transport=httpx2.MockTransport(serve)) as reg:
+        obs = reg.scan_csv(path)
+        assert obs.structure == _DSD
+        assert obs.frame().height == 1
+    assert [r.url.path for r in requests] == ["/service/provisionagreement/AGENCY/PA/1.0.0"]
+
+
+def test_a_rest_registry_refuses_a_data_structure_alone(tmp_path: Path) -> None:
+    def serve(request: httpx2.Request) -> httpx2.Response:
+        raise AssertionError(request.url)
+
+    path = _write(tmp_path, _rows(("CA", "2020", "1"), kind="datastructure", identifier="AGENCY:DSD(1.0.0)"))
+    with (
+        sl.RestRegistry("https://example.test/service", id="T", transport=httpx2.MockTransport(serve)) as reg,
+        pytest.raises(ValueError, match="names the data structure AGENCY:DSD"),
+    ):
+        reg.scan_csv(path)
+
+
 # ── SDMX-JSON: decoded, then loaded once ──────────────────────────────────────
 
 

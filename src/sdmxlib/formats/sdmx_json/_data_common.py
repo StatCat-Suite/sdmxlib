@@ -864,16 +864,21 @@ class DataSetBlockJson(msgspec.Struct):
     links: list[LinkJson] = msgspec.field(default_factory=list)
 
 
-def dataflow_urn(data_set: DataSetBlockJson, structure: StructureBlockJson) -> str | None:
-    """The URN of the dataflow a message's observations belong to, or `None`.
+#: The link relations naming what a data set follows; data sets naming two of one kind follow different structures.
+_STRUCTURE_RELS = ("dataflow", "datastructure", "provisionagreement")
 
-    The ``rel="dataflow"`` link — on the dataSet, where this library's writers
-    put it, else on the structure block, where some providers do.
+
+def _structure_links(data_set: DataSetBlockJson, structure: StructureBlockJson) -> dict[str, str]:
+    """The URN each structure link relation names, the data set's link before its structure block's.
+
+    This library's writers put the links on the data set; some providers put
+    them on the structure block.
     """
+    found: dict[str, str] = {}
     for link in (*data_set.links, *structure.links):
-        if link.rel == "dataflow" and link.urn:
-            return link.urn
-    return None
+        if link.rel in _STRUCTURE_RELS and link.urn and link.rel not in found:
+            found[link.rel] = link.urn
+    return found
 
 
 def read_data_sets(
@@ -883,8 +888,12 @@ def read_data_sets(
 
     A message carries any number of data sets, each with its own structure and
     action. They read as one frame when each decodes to the same columns and
-    they name at most one dataflow. A ``Delete`` data set is refused: its rows
-    say what to remove.
+    they name at most one dataflow, data structure and provision agreement:
+    two structure blocks of one data structure may list different values. A
+    ``Delete`` data set is refused: its rows say what to remove. The other
+    actions read as observations, and the action is dropped, as are a data
+    set's ``setId``, its reporting, validity and publication dates and the
+    message's ``meta``.
 
     Args:
         data_sets: Each data set with the structure block it follows, in
@@ -897,11 +906,12 @@ def read_data_sets(
 
     Raises:
         SdmxParseError: If a data set is a ``Delete``, if two decode to
-            different columns, or if they name different dataflows.
+            different columns, or if they name different dataflows, data
+            structures or provision agreements.
     """
     columns: tuple[list[str], list[str]] | None = None
     rows: list[list[object]] = []
-    urns: set[str] = set()
+    named: dict[str, set[str]] = {rel: set() for rel in _STRUCTURE_RELS}
     for position, (data_set, structure) in enumerate(data_sets):
         if data_set.action == "Delete":
             msg = f"dataSets[{position}] is a Delete data set; its rows say what to remove, not what was observed"
@@ -916,15 +926,19 @@ def read_data_sets(
             )
             raise SdmxParseError(msg)
         rows.extend(set_rows)
-        if (urn := dataflow_urn(data_set, structure)) is not None:
-            urns.add(urn)
+        for rel, urn in _structure_links(data_set, structure).items():
+            named[rel].add(urn)
     if columns is None:
         msg = "the message has no data sets"
         raise SdmxParseError(msg)
-    if len(urns) > 1:
-        msg = f"the data sets name {len(urns)} dataflows ({', '.join(sorted(urns))}); one message reads as one dataflow"
-        raise SdmxParseError(msg)
-    return rows_to_lazyframe(*columns, rows).collect(), next(iter(urns), None)
+    for rel, urns in named.items():
+        if len(urns) > 1:
+            msg = (
+                f"the data sets name {len(urns)} {rel}s ({', '.join(sorted(urns))}); "
+                "data sets following different structures do not read as one frame"
+            )
+            raise SdmxParseError(msg)
+    return rows_to_lazyframe(*columns, rows).collect(), next(iter(named["dataflow"]), None)
 
 
 def _value_label(value_entry: ValueEntryJson) -> str:

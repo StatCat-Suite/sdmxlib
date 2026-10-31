@@ -629,7 +629,8 @@ class DuckDBDataStore(SessionFactory):
             f"CREATE OR REPLACE TABLE {lake_alias}.{schema}.{table} AS SELECT * FROM read_csv(?, types=?, header=true)",
             [str(path), dict(types)],
         )
-        refuse_deletions(conn, f"{lake_alias}.{schema}.{table}", kind="TABLE")
+        refuse_mixed_structures(conn, f"{lake_alias}.{schema}.{table}", kind="TABLE")
+        refuse_actions(conn, f"{lake_alias}.{schema}.{table}", kind="TABLE")
         # A column `types` leaves out is inferred, so a replacement may change
         # its type (#518) — and the inspector's cached `DESCRIBE` with it.
         self.inspect().invalidate(f"{lake_alias}.{schema}.{table}")
@@ -649,8 +650,10 @@ class DuckDBDataStore(SessionFactory):
 
         Routes through the ATTACHed lake (``lake_alias``, default ``lake``).
         Schema is created if missing. ``mode="overwrite"`` replaces the
-        table; ``mode="append"`` uses ``INSERT INTO`` and requires the target
-        table to already exist with a compatible schema.
+        whole table; ``mode="append"`` uses ``INSERT INTO``, matching no keys,
+        and requires the target table to already exist with a compatible
+        schema. Neither is an SDMX action: an SDMX ``Replace`` replaces only
+        the observations it names.
 
         Args:
             schema: Target schema inside the lake (created if absent).
@@ -924,14 +927,22 @@ def _as_relation(
     return conn.from_arrow(source)
 
 
-def refuse_deletions(conn: duckdb.DuckDBPyConnection, relation: str, *, kind: str) -> None:
-    """Refuse SDMX-CSV data holding a delete row, dropping the relation it was read into.
+#: The ``ACTION`` letters SDMX-CSV allows: 2.0's ``I``, ``A``, ``R`` and ``D``, and
+#: the ``M`` (Merge) 2.1 adds. A file names no version, so a reader takes all five.
+_CSV_ACTIONS = ("I", "A", "M", "R", "D")
+
+
+def refuse_actions(conn: duckdb.DuckDBPyConnection, relation: str, *, kind: str) -> None:
+    """Refuse SDMX-CSV data holding a delete row or an unknown action, dropping the relation it was read into.
 
     SDMX-CSV 2.0 carries each row's action in an ``ACTION`` column, and a
     ``D`` row says what to remove: read as an observation, it reports deleted
     data as data, and the frame keeps no ``ACTION`` to tell it apart. A
-    SDMX-JSON ``Delete`` data set is refused the same way (GH-264). Without
-    an ``ACTION`` column, 1.0's shape, there is nothing to refuse.
+    SDMX-JSON ``Delete`` data set is refused the same way. Any value other
+    than ``I``, ``A``, ``M``, ``R`` and ``D`` is refused too, an empty cell
+    and a lowercase letter included: the field guide defines no other, so
+    such a row could be a delete. Without an ``ACTION`` column, 1.0's shape
+    and 2.0's "Information" default, there is nothing to refuse.
 
     Args:
         conn: The handle the relation is on.
@@ -939,19 +950,72 @@ def refuse_deletions(conn: duckdb.DuckDBPyConnection, relation: str, *, kind: st
         kind: ``"TABLE"`` or ``"VIEW"``, to drop it.
 
     Raises:
-        SdmxParseError: If any row's action is ``D``.
+        SdmxParseError: If any row's action is ``D``, or is not an SDMX-CSV action.
     """
     columns = {row[0] for row in conn.execute(f"DESCRIBE {relation}").fetchall()}
     if "ACTION" not in columns:
         return
-    (deleted,) = conn.execute(f"SELECT count(*) FROM {relation} WHERE \"ACTION\" = 'D'").fetchall()[0]
+    found = dict(
+        conn.execute(
+            f"""
+            SELECT "ACTION", count(*) FROM {relation}
+            WHERE "ACTION" IS NULL OR "ACTION" NOT IN ('I', 'A', 'M', 'R')
+            GROUP BY "ACTION"
+            """
+        ).fetchall()
+    )
+    if not found:
+        return
+    conn.execute(f"DROP {kind} {relation}")
+    deleted = found.pop("D", 0)
     if deleted:
-        conn.execute(f"DROP {kind} {relation}")
         msg = (
             f"the SDMX-CSV data holds {deleted} delete row{'' if deleted == 1 else 's'} (ACTION D); "
             "a delete row says what to remove, not what was observed"
         )
         raise SdmxParseError(msg)
+    unknown = ", ".join(
+        f"{'an empty cell' if value is None else repr(value)} ({count} row{'' if count == 1 else 's'})"
+        for value, count in sorted(found.items(), key=lambda item: str(item[0]))
+    )
+    msg = (
+        f"the SDMX-CSV data holds ACTION values SDMX-CSV does not define: {unknown}; "
+        f"an action is one of {', '.join(_CSV_ACTIONS)}"
+    )
+    raise SdmxParseError(msg)
+
+
+def refuse_mixed_structures(conn: duckdb.DuckDBPyConnection, relation: str, *, kind: str) -> None:
+    """Refuse SDMX-CSV data whose rows name more than one structure, dropping the relation it was read into.
+
+    A reader takes the structure from the first row and reads every row
+    against it, so a second structure's rows would be read under the first's
+    columns. SDMX-CSV 2.0 names each row's structure in ``STRUCTURE`` and
+    ``STRUCTURE_ID``, 1.0 in ``DATAFLOW``.
+
+    Args:
+        conn: The handle the relation is on.
+        relation: The qualified relation just created over the data.
+        kind: ``"TABLE"`` or ``"VIEW"``, to drop it.
+
+    Raises:
+        SdmxParseError: If the rows name two structures or more.
+    """
+    columns = {row[0] for row in conn.execute(f"DESCRIBE {relation}").fetchall()}
+    named = [c for c in ("STRUCTURE", "STRUCTURE_ID", "DATAFLOW") if c in columns]
+    if not named:
+        return
+    selected = ", ".join(f'"{c}"' for c in named)
+    found = conn.execute(f"SELECT DISTINCT {selected} FROM {relation} ORDER BY ALL LIMIT 6").fetchall()
+    if len(found) <= 1:
+        return
+    conn.execute(f"DROP {kind} {relation}")
+    shown = ", ".join(" ".join(str(v) for v in row) for row in found[:5])
+    msg = (
+        f"the SDMX-CSV data names {'more than 5' if len(found) > 5 else len(found)} structures ({shown}); "
+        "rows following different structures do not read as one frame"
+    )
+    raise SdmxParseError(msg)
 
 
 def column_types(binding: DataflowBinding, dsd: DataStructure) -> dict[str, str]:

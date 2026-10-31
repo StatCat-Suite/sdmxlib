@@ -407,6 +407,20 @@ def test_data_sets_naming_different_dataflows_are_refused() -> None:
         read_v2(message)
 
 
+def test_data_sets_naming_different_data_structures_of_one_shape_are_refused() -> None:
+    """Two structure blocks of one shape, each linking its own data structure: different structures."""
+
+    def linked(dsd_id: str) -> dict[str, object]:
+        urn = f"urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:{dsd_id}(1.0)"
+        return {**_structure("FREQ", "A"), "links": [{"rel": "datastructure", "urn": urn}]}
+
+    message = _v2([linked("ONE"), linked("TWO")], _data_set(1.0, structure=0), _data_set(2.0, structure=1))
+    with pytest.raises(SdmxParseError, match="the data sets name 2 datastructures"):
+        read_v2(message)
+    same = _v2([linked("ONE"), linked("ONE")], _data_set(1.0, structure=0), _data_set(2.0, structure=1))
+    assert read_v2(same)[0]["OBS_VALUE"].to_list() == [1.0, 2.0]
+
+
 def test_one_dataflow_named_by_some_data_sets_is_the_messages() -> None:
     message = _v2([_structure("FREQ", "A")], _data_set(1.0, links=_flow_link("ONE")), _data_set(2.0))
     assert read_v2(message)[1] == "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:ONE(1.0)"

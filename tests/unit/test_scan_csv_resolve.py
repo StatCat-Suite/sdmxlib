@@ -1,7 +1,7 @@
 """An SDMX-CSV file names its own structure, so `scan_csv` can use it (#409).
 
 Every SDMX-CSV 2.0 row carries `STRUCTURE` and `STRUCTURE_ID`. The reader has
-always parsed them — `_peek_dataflow_id` pulled the id off the first row and
+always parsed them — it pulled the id off the first row and
 built an unresolved `Ref[Dataflow]` — and then required the `DataStructure` as a
 positional argument anyway, so the file's own answer was available only *after*
 you had supplied it. A consumer holding a structure message and a directory of

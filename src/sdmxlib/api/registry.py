@@ -28,6 +28,7 @@ from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.model.errors import Refusal
 from sdmxlib.model.in_memory_registry import InMemoryRegistry
 from sdmxlib.model.message import StructureMessage
+from sdmxlib.model.provision import ProvisionAgreement
 from sdmxlib.model.ref import Ref, SupportsUrn, artefact_urn, target_urn
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.model.validation import SdmxConformanceError
@@ -1181,8 +1182,9 @@ class RestRegistry:
     def scan_csv(self, source: str | Path | bytes) -> ObsQuery:
         """An SDMX-CSV file's observations, as a query — the structure fetched from this registry.
 
-        Reads the file's ``DATAFLOW`` / ``STRUCTURE_ID`` column to name the
-        dataflow, fetches it with its structure, and reads the file with it:
+        Reads the file's ``STRUCTURE`` / ``STRUCTURE_ID`` columns, or 1.0's
+        ``DATAFLOW``, to name the dataflow or the provision agreement for it,
+        fetches it with its structure, and reads the file with it:
         the same `ObsQuery` `obs(flow)` returns, over the file's rows
         instead of a fetch. A path is read in place on every query, and once
         as it is scanned, to refuse a delete row; bytes are loaded once. See
@@ -1192,11 +1194,13 @@ class RestRegistry:
             source: File path or raw SDMX-CSV bytes.
 
         Raises:
-            ValueError: If the ``DATAFLOW`` column is absent or unparseable.
+            ValueError: If the file names no structure, names it unparseably,
+                or names a data structure rather than a dataflow or provision
+                agreement.
             SdmxParseError: If the data is not readable SDMX-CSV, lacks a
-                column the structure declares, or holds a ``D`` (delete) row
-                in its ``ACTION`` column, which says what to remove rather
-                than what was observed.
+                column the structure declares, names more than one structure,
+                or holds a ``D`` (delete) row or an action SDMX-CSV does not
+                define in its ``ACTION`` column.
             ValueError: If a value does not fit its component's type, when the
                 file is read; for a path, when a query reads the value.
 
@@ -1206,27 +1210,40 @@ class RestRegistry:
                 obs.frame(labels="en")
         """
         from sdmxlib.formats.sdmx_csv.reader import (  # noqa: PLC0415  # lazy: defer CSV import
-            _peek_dataflow_id,
+            STRUCTURE_KINDS,
+            _peek_structure,
             parse_dataflow_id,
         )
 
-        dataflow_str = _peek_dataflow_id(source)
-        if dataflow_str is None:
+        kind, identifier = _peek_structure(source)
+        if identifier is None:
             msg = (
-                "DATAFLOW column not found in CSV — cannot auto-resolve structure. "
-                "Pass the DataStructure explicitly to slpl.scan_csv()."
+                "this file names no structure: no STRUCTURE_ID column (SDMX-CSV 2.0) and no DATAFLOW column "
+                "(1.0), so there is nothing to fetch"
+            )
+            raise ValueError(msg)
+        if kind is not None and kind not in STRUCTURE_KINDS:
+            msg = f"unknown STRUCTURE value {kind!r} — SDMX-CSV allows {', '.join(STRUCTURE_KINDS)}"
+            raise ValueError(msg)
+        if kind == "datastructure":
+            msg = (
+                f"this file names the data structure {identifier}, not a dataflow — an observation query is "
+                "over a dataflow, and a structure alone does not say which. Name the dataflow in the file "
+                "(STRUCTURE=dataflow), or a provision agreement for it."
             )
             raise ValueError(msg)
 
-        agency, id_, version = parse_dataflow_id(dataflow_str)
-        flow = self._fetch_one(
-            Dataflow,
-            agency,
-            id_,
-            version,
-            detail="referencepartial",
-            references="descendants",
-        )
+        agency, id_, version = parse_dataflow_id(identifier)
+        if kind == "dataprovision":
+            agreement = self._fetch_one(
+                ProvisionAgreement, agency, id_, version, detail="referencepartial", references="descendants"
+            )
+            if agreement.dataflow is None:
+                msg = f"provision agreement {identifier} has no dataflow, so its structure cannot be reached"
+                raise ValueError(msg)
+            flow = agreement.dataflow()
+        else:
+            flow = self._fetch_one(Dataflow, agency, id_, version, detail="referencepartial", references="descendants")
 
         if flow.structure is None:
             msg = f"Dataflow {flow.id!r} has no structure reference"
