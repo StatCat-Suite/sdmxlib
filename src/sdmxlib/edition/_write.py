@@ -31,6 +31,8 @@ from sdmxlib.storage._manifest import (
     DATA_PATH,
     FORMAT_VERSION,
     MANIFEST_NAME,
+    METADATA_NAME,
+    TABLES_NAME,
     UNLISTED,
     ArtefactEntry,
     BindingCount,
@@ -69,6 +71,33 @@ _LAKE_FILES = """
      AND s.begin_snapshot <= f.begin_snapshot
      AND (s.end_snapshot IS NULL OR f.begin_snapshot < s.end_snapshot)
 """
+
+#: A table's state in the current snapshot of the DuckLake catalog database
+#: ``{db}``: its uuid, its data files and its columns, or no row when it has a
+#: delete file. A catalog an edition continues from the previous edition's
+#: (``LocalRegistry.build(previous=...)`` copies it) keeps its file and column
+#: ids, and DuckLake never rewrites a data file, so the same state in both
+#: holds the same rows. Inlined rows are not part of it: `settle_lake` flushes
+#: them into data files before the seal reads it.
+_TABLE_STATE = """
+    SELECT
+        t.table_uuid,
+        (SELECT list(f.data_file_id ORDER BY f.data_file_id) FROM {db}.ducklake_data_file AS f
+          WHERE f.table_id = t.table_id AND f.end_snapshot IS NULL),
+        (SELECT list((c.column_id, c.column_order, c.column_name, c.column_type, c.initial_default,
+                      c.default_value, c.parent_column) ORDER BY c.column_id)
+           FROM {db}.ducklake_column AS c
+          WHERE c.table_id = t.table_id AND c.end_snapshot IS NULL)
+    FROM {db}.ducklake_table AS t
+    JOIN {db}.ducklake_schema AS s ON s.schema_id = t.schema_id AND s.end_snapshot IS NULL
+    WHERE t.end_snapshot IS NULL AND s.schema_name = $schema AND t.table_name = $table
+      AND NOT EXISTS (
+        SELECT 1 FROM {db}.ducklake_delete_file AS d WHERE d.table_id = t.table_id AND d.end_snapshot IS NULL
+      )
+"""
+
+#: The alias the previous edition's lake catalog attaches under while a seal reads it.
+_PREVIOUS_TABLES = "previous_tables"
 
 #: Whether a product's observations may still be revised: ``final`` ones are compacted.
 type Lifecycle = Literal["revisable", "final"]
@@ -318,19 +347,78 @@ def _quoted(identifier: str) -> str:
     return '"' + identifier.replace('"', '""') + '"'
 
 
-def binding_counts(reg: EditionRegistry, artefacts: tuple[ArtefactEntry, ...]) -> tuple[BindingCount, ...]:
-    """Each binding's count, data structure and fingerprints, by dataflow URN."""
+type _TableState = tuple[object, ...]
+
+
+def _table_state(conn: duckdb.DuckDBPyConnection, db: str, table_location: str) -> _TableState | None:
+    """The state of the table at ``schema.table`` `table_location` in catalog database `db`; None with a delete file."""
+    schema, _, table = table_location.partition(".")
+    row = first(conn.execute(_TABLE_STATE.format(db=db), {"schema": schema, "table": table}))
+    return None if row is None else tuple(row)
+
+
+def _earlier_fingerprints(conn: duckdb.DuckDBPyConnection, earlier: Path) -> dict[str, tuple[_TableState, str]]:
+    """Each lake binding of the sealed edition `earlier`: its table's state there, and its fingerprint, by dataflow URN.
+
+    Empty when `earlier` has no lake or its manifest does not read.
+    """
+    try:
+        fingerprints = {b.dataflow: b.fingerprint for b in read_manifest(earlier).bindings}
+    except ManifestError:
+        return {}
+    if not (earlier / TABLES_NAME).exists():
+        return {}
+    conn.execute("ATTACH $path AS previous_metadata (READ_ONLY)", {"path": str(earlier / METADATA_NAME)})
+    conn.execute(f"ATTACH $path AS {_PREVIOUS_TABLES} (READ_ONLY)", {"path": str(earlier / TABLES_NAME)})
+    try:
+        bound = conn.execute(
+            "SELECT dataflow_urn, table_location FROM previous_metadata.sdmx.dataflow_binding "
+            "WHERE database_role = 'lake'"
+        ).fetchall()
+        found: dict[str, tuple[_TableState, str]] = {}
+        for dataflow, location in bound:
+            state = _table_state(conn, _PREVIOUS_TABLES, location)
+            if state is not None and dataflow in fingerprints:
+                found[dataflow] = (state, fingerprints[dataflow])
+        return found
+    finally:
+        conn.execute("DETACH previous_metadata")
+        conn.execute(f"DETACH {_PREVIOUS_TABLES}")
+
+
+def binding_counts(
+    reg: EditionRegistry, artefacts: tuple[ArtefactEntry, ...], *, earlier: Path | None = None
+) -> tuple[BindingCount, ...]:
+    """Each binding's count, data structure and fingerprints, by dataflow URN.
+
+    With `earlier`, the sealed edition this one continues, a binding whose
+    table is in the same state there (`_TABLE_STATE`) takes that edition's
+    table fingerprint instead of reading every row (GH-318).
+    """
     fingerprints = {a.urn: a.fingerprint for a in artefacts}
     references = References(reg.connection, fingerprints)
+    carried: dict[str, tuple[_TableState, str]] = (
+        {} if earlier is None else _earlier_fingerprints(reg.connection, earlier)
+    )
+    lake = f"__ducklake_metadata_{reg.lake_alias}"
     counts: list[BindingCount] = []
     for binding in sorted(reg.get_all(DataflowBinding), key=lambda b: str(b.dataflow.urn)):
-        dataflow, structure = str(binding.dataflow.urn), _structure_urn(binding)
+        dataflow, structure, located = str(binding.dataflow.urn), _structure_urn(binding), reg.locate(binding)
+        before = carried.get(dataflow)
+        if (
+            before is not None
+            and located.database_role == reg.lake_alias
+            and _table_state(reg.connection, lake, located.table_location) == before[0]
+        ):
+            fingerprint = before[1]
+        else:
+            fingerprint = table_fingerprint(reg.connection, located)
         counts.append(
             BindingCount(
                 dataflow=dataflow,
                 observations=reg.obs(binding.dataflow).count(),
                 structural_version=structure,
-                fingerprint=table_fingerprint(reg.connection, reg.locate(binding)),
+                fingerprint=fingerprint,
                 structure_fingerprint=structure_fingerprint(references.closure(dataflow, [structure]), fingerprints),
             )
         )
@@ -381,6 +469,9 @@ def seal(
     marked with its edition id in ``carried_from``, so a republish hashes only the
     files it wrote. Observation counts come from the lake, through each
     binding's observation query, so DuckLake answers them from its catalog.
+    A binding whose table holds the same data files and columns as in the
+    previous edition, with no delete file, keeps that edition's table
+    fingerprint; any other table's fingerprint reads every row.
     Each binding's columns are scanned once. A value in a coded column that
     is not a code of its codelist or value list, an empty string standing for
     "no value" say, refuses the edition: an absent value is ``NULL``. The
@@ -452,7 +543,8 @@ def seal(
             settle_lake(reg.connection, expire_snapshots=expire_snapshots, lifecycle=lifecycle)
             referenced = lake_files(reg.connection, data)
         ducklake, spec = _ducklake_versions(reg.connection) if lake else (None, None)
-        counts = binding_counts(reg, artefacts)
+        earlier = root.parent / previous if lake and previous is not None else None
+        counts = binding_counts(reg, artefacts, earlier=earlier)
         # An edition extending another starts from its store, availability
         # included; it holds its own bindings' availability, or none (GH-203).
         clear_availability(reg.connection)

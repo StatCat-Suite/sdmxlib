@@ -103,6 +103,12 @@ seals through `seal(extensions=...)`.
 - `check_edition`'s `tags` check, at `publish` and `receive`, reports every
   stored language tag `normalize_tag` would change or refuse: a store built
   before GH-280 from a source that sent one.
+- `seal` takes a binding's table fingerprint from the previous edition's
+  manifest only when the table's uuid, current data file ids and current
+  columns in this edition's lake catalog equal those in the previous
+  edition's catalog, and neither has a delete file. Every other table is
+  fingerprinted by reading its rows. `check_edition(at="publish")` always
+  reads every row.
 - An edition with a lake is refused when a coded column holds a value
   outside its codelist. The survey scans every binding before refusing, and
   stores availability only when nothing is refused.
