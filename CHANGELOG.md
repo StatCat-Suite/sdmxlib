@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.80.0] - 2026-10-31
+
+### Breaking Changes
+
+- **edition**: Rename bundle, publication and token to product, edition and edition id (GH-250)
+- **data**: Refuse what a data message says that a read cannot keep (GH-284)
+- **registry**: Keep a full item scheme over its partial and check the partial (GH-298)
+
+### Documentation
+
+- **edition**: Point the package map and CLAUDE.md at edition/ (GH-250)
+- **design**: Revise the sharded catalog spec for products, editions and the Inventory (GH-249)
+- **api**: Document the Inventory and a product's editions (GH-251)
+
+### Features
+
+- **inventory**: Add the Inventory's documents, transition rules and reader (GH-251)
+- **inventory**: Add the protocol's conformance suite, run against a Delta prototype (GH-252)
+- **edition**: One unsealed edition per product, listing, discard and the seal journal (GH-253, GH-254, GH-255, GH-256, GH-257, GH-258, GH-259)
+- **validation**: Check values against their text format (GH-297)
+- **validation**: Warn on a data structure's nested or incomplete metadata structure (GH-299)
+
+### Performance
+
+- **bundle**: Measure seal cost on census and a CODR table (GH-248)
+- **edition**: Carry a table's fingerprint when its files are unchanged (GH-318)
+
 ## [0.79.0] - 2026-10-30
 
 ### Breaking Changes
