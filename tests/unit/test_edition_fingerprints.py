@@ -15,7 +15,7 @@ import duckdb
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.edition import CANONICAL_FORM, Manifest, Producer, read_manifest, seal
+from sdmxlib.edition import CANONICAL_FORM, Manifest, Producer, check_edition, read_manifest, seal
 from sdmxlib.edition._fingerprint import References, table_fingerprint
 from sdmxlib.model.constraint import ConstraintAttachment, CubeRegion, KeyValue
 from sdmxlib.model.ref import Ref
@@ -250,3 +250,78 @@ def test_a_codelist_only_a_concept_names_is_in_the_structure_fingerprint(tmp_pat
 
     one, two = published("one", ("G0", "G1")), published("two", ("G0", "G2"))
     assert one.bindings[0].structure_fingerprint != two.bindings[0].structure_fingerprint
+
+
+# ── carried forward (GH-318) ──────────────────────────────────────────────
+
+
+def _counting_fingerprints(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Count the table fingerprints `seal` computes; each entry is the table read."""
+    computed: list[str] = []
+
+    def counted(conn: duckdb.DuckDBPyConnection, binding: sl.DataflowBinding) -> str:
+        computed.append(binding.table_location)
+        return table_fingerprint(conn, binding)
+
+    monkeypatch.setattr("sdmxlib.edition._write.table_fingerprint", counted)
+    return computed
+
+
+def _continued(first: Path, change: str | None) -> Manifest:
+    """Seal an edition continuing `first` after running `change`, SQL over its lake, if any."""
+    with sl.LocalRegistry.build(first.parent, previous=first.name) as builder:
+        builder._data_plane()  # ATTACHes the lake
+        if change is not None:
+            builder.connection.execute(change)
+        second = builder.edition_dir
+    return seal(second, product_id="b", producer=_PRODUCER)
+
+
+def test_an_unchanged_table_carries_its_fingerprint_without_reading_a_row(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    first = make_bundle(tmp_path / "b", 1_000)
+    one = seal(first, product_id="b", producer=_PRODUCER)
+    computed = _counting_fingerprints(monkeypatch)
+    two = _continued(first, None)
+    assert computed == []
+    assert [(b.fingerprint, b.observations) for b in two.bindings] == [
+        (b.fingerprint, b.observations) for b in one.bindings
+    ]
+    assert check_edition(first.parent / two.edition_id, at="publish").ok, "a full recompute agrees"
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        pytest.param("INSERT INTO lake.d.obs VALUES ('G0', -1.0)", id="a new data file"),
+        pytest.param("DELETE FROM lake.d.obs WHERE OBS_VALUE = 3", id="a deleted row"),
+        pytest.param("ALTER TABLE lake.d.obs ADD COLUMN NOTE VARCHAR DEFAULT 'n'", id="a column added"),
+        pytest.param("ALTER TABLE lake.d.obs RENAME COLUMN OBS_VALUE TO VALUE", id="a column renamed"),
+        pytest.param(
+            "CREATE OR REPLACE TABLE lake.d.obs AS SELECT * FROM lake.d.obs ORDER BY OBS_VALUE DESC",
+            id="the table replaced, the same rows",
+        ),
+    ],
+)
+def test_a_changed_table_is_fingerprinted_again_as_a_full_recompute_would(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, change: str
+) -> None:
+    first = make_bundle(tmp_path / "b", 1_000)
+    seal(first, product_id="b", producer=_PRODUCER)
+    computed = _counting_fingerprints(monkeypatch)
+    two = _continued(first, change)
+    assert computed == ["d.obs"]
+    with sl.LocalRegistry.edition(first.parent / two.edition_id) as reg:
+        (binding,) = reg.get_all(sl.DataflowBinding)
+        assert two.bindings[0].fingerprint == table_fingerprint(reg.connection, reg.locate(binding))
+
+
+def test_a_fingerprint_is_carried_only_from_the_edition_continued(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    first = make_bundle(tmp_path / "b", 1_000)
+    seal(first, product_id="b", producer=_PRODUCER)
+    computed = _counting_fingerprints(monkeypatch)
+    seal(make_bundle(tmp_path / "other", 1_000), product_id="other", producer=_PRODUCER)
+    assert computed == ["d.obs"], "a first edition has nothing to carry from"

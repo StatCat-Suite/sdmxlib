@@ -71,3 +71,23 @@ seal is the binding counts, which recompute the table fingerprint over 1.14
 billion rows (217 s, 69 % of the seal), and the artefact fingerprints (66 s).
 Every design recomputes both, including for an edition that changes no
 observation.
+
+## The table fingerprint carried forward (GH-318)
+
+A binding whose table holds the same data files and columns as in the
+previous edition keeps that edition's table fingerprint. 2026-10-30, the same
+machine, the manifest 3.0 census edition, a correction edition that changes
+no observation. `main` at `1cd305dd`, one run; GH-318, median of 3.
+
+| phase | `main` | GH-318 |
+|---|---|---|
+| artefact fingerprints | 63.44 s | 65.36 s |
+| binding counts (table fingerprint) | 180.80 s | **0.11 s** |
+| binding survey | 5.30 s | 5.81 s |
+| `compact_for_publication` | 14.94 s | 14.42 s |
+| **seal** | 266.50 s | **87.77 s** |
+
+Peak resident memory of the first seal in a process: 5.08 GiB on `main`,
+4.83 GiB with GH-318. The artefact fingerprints are now most of a census seal
+that changes no observation (74 %). An edition that writes a table's data
+files again, or a first edition, still reads every row of that table.
