@@ -350,7 +350,7 @@ Ownership (statcatlib RFC decision 8): sdmxlib owns the JSON schemas, validation
 | `embargo` | required | `true` or `false`. With `false`, a seal releases its edition in the same version (§6.4). |
 | `products` | required | A map from `product_id` to `{leaf, leaf_sha256}`, `leaf` the path `inventory/leaves/<sha256>.json`. |
 | `retired` | required | Tombstones: every `{product_id, edition_id, retired_at}` retired within the tombstone window, so a retired edition stays distinguishable from one never recorded. Kept at least as long as backups (§11.6). |
-| `event` | required | `{actor, reason, kind}`: who acted and why. `kind` is one of `seal`, `release`, `rollback`, `withdraw`, `retire`, `embargo-change`, `restore` and `correct`; the enum freezes in 1.0. `actor` comes from the writer's identity (a token's object id), never from the caller. |
+| `event` | required | `{actor, reason, kind}`: who acted and why. `kind` is one of `seal`, `release`, `rollback`, `withdraw`, `retire`, `embargo-change`, `restore`, `correct` and `describe`. `describe` records a change to the catalog description in `extensions.statcat` and nothing else. A reader refuses a root whose `kind` it does not know, so a new kind ships in every reader before any writer uses it: `describe` needs sdmxlib 0.81.0 or later (GH-334). `actor` comes from the writer's identity (a token's object id), never from the caller. |
 | `extensions` | optional | Sections keyed by package; `statcat` holds the `CatalogDescription`. |
 
 ### 6.3 Leaf

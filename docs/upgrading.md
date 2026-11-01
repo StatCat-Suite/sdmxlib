@@ -19,6 +19,18 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## Inventory roots with `kind: describe`
+
+An Inventory root's `event.kind` takes a ninth value, `describe`
+([GH-334](https://github.com/StatCat-Suite/sdmxlib/issues/334)). statcatlib
+writes it for a version whose only change is the catalog description in the
+root's `extensions.statcat`. A reader refuses a root whose `kind` it does not
+know: sdmxlib 0.80.0 and earlier report that root in `skipped` and stay on the
+version before it. Upgrade every reader (`LiveInventory`, `FullInventory`, and
+the servers built on them) to this release before any writer records a
+`describe` version. Code that handles each `EventKind` value needs a
+`"describe"` case.
+
 ## A registry keeps a full item scheme over its partial
 
 `add` and `add_all` on `InMemoryRegistry` and `LocalRegistry` keep a full
