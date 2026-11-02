@@ -37,7 +37,11 @@ seals through `seal(extensions=...)`.
   `receive`) raises `ValueError`. `structures=` takes one edition or a
   sequence of them, and a partial is checked against the one holding its
   full artefact with its `partial_of` fingerprint; an empty sequence raises
-  `ValueError`.
+  `ValueError`. For an edition with no bindings (a structure product), the
+  `references` check also accepts a reference one of the `structures=`
+  editions holds as a full artefact or an item of one
+  (`storage._references.held_targets`; spec §6.5 item 9, GH-351). A data
+  product's references resolve in its own edition alone.
 - `check_on_open` (`_check.py`): runs one profile per call. Without a stamp
   for this `(product_id, edition id, manifest sha256)` it runs `receive` and writes
   the stamp when the report is clean; with one it runs `open`. An unreadable

@@ -77,8 +77,11 @@ of the store that edition ships (`_trim.py`).
   bound table. `observations_sql` and `distinct_periods` (`_synthetic.py`):
   the SQL behind `sdmxlib.testing`'s synthetic editions.
 - `unresolved_references` and `Unresolved` (`_references.py`): find dangling
-  references between artefacts. `code_map` (`_projections.py`): code-to-label
-  projection.
+  references between artefacts. `held_targets(conn, targets)` returns which
+  targets another store holds as a full artefact or an item of one (no
+  partial, no external reference), under the same spellings, for
+  `check_edition(structures=)` (GH-351). `code_map` (`_projections.py`):
+  code-to-label projection.
 - `create_exclusive(path, data)` (`_files.py`, exported): creates a file
   complete before it is visible: staged beside `path`, fsynced, hard-linked
   to `path` (`FileExistsError` when another writer created it first), the
