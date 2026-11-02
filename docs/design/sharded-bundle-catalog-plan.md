@@ -73,10 +73,10 @@ The specification defines every term (§1, §4 to §11); these are the ones this
 
 ## Open Questions
 
-Each question names the phase that must answer it. A decision is recorded in a PR to the specification or to this plan. The specification's open question 6, which GH-333 calls Q6, is this plan's Q1; the specification's question 5 is Q6 here, and its question 8 is Q2. Q4 is settled and kept for its record.
+Each question names the phase that must answer it. A decision is recorded in a PR to the specification or to this plan. The specification's open question 6, which GH-333 calls Q6, is this plan's Q1; the specification's question 5 is Q6 here, and its question 8 is Q2. Q2 and Q4 are settled and kept for their record.
 
 *   **Q1. Product granularity** (specification open question 6). Undecided; the section [Product granularity](#product-granularity-q1) below lists the options. Decide before Phase 4 closes.
-*   **Q2. The structure-product split** (specification open question 8): by artefact family, by change rate, or both. Decide before Phase 3 starts; StatCat-Suite/statcatlib#51 waits on it.
+*   **Q2. The structure-product split** (specification open question 8): decided by the owner on 2026-11-02. StatCan splits its structure products by change rate, as specification §8's example does: `structure-geo` (the full geography), `structure-classifications` (NAICS, NOC, SGC) and `structure-concepts` (concept schemes). Invariant 7 (one home per full artefact) is unchanged.
 *   **Q3. Code search scope** (specification open question 4): whether geography-first agent queries need catalog-level code search tables that cover partials. Decide when Phase 7 starts.
 *   **Q4. Block cache** (GH-185): settled. DuckDB's in-memory external file cache serves a repeated read in one process with no request, so no disk cache is built (specification §7.1).
 *   **Q5. Ingress resolution.** The ingress hashes on `product_id`, which an SDMX REST path does not contain. The ingress maps the path's dataflow, or a structure request's artefact, to its product through the live Inventory (specification §7.5). Phase 6 chooses where that map runs: an ingress filter reading a map the router publishes, or a resolver in front of the ingress. Forwarding from any pod to the owner is a leaf-to-leaf call, which specification §7.6 rules out.
@@ -161,7 +161,7 @@ Phases, in build order:
 | M | Remote-tier measurement | sdmxlib | — | — | done, sdmxlib 0.76.0 (GH-185); no cache built |
 | 1 | Closure builder, partials, `partial_of` | sdmxlib | M6 (sdmxlib part) | 0 | done, sdmxlib 0.76.0 |
 | 2a | Products, editions, the Inventory on local disk | all three | M8 (core and local writer) | 1 | done: sdmxlib 0.80.0 to 0.82.0, sdmxlib-rest 0.9.0, statcatlib 0.12.0 |
-| 3 | Structure products; partials checked against them; the CODR generator | sdmxlib, then statcatlib | M6 | 2a, Q2 | open |
+| 3 | Structure products; partials checked against them; the CODR generator | sdmxlib, then statcatlib | M6 | 2a | open |
 | 4 | The Inventory on blob storage, upload and `pending/`; the routing fields; `correct` and `reinstate`; the synthetic corpus | sdmxlib, then statcatlib | M8 (corpus), M9 (upload) | 2a and Q7; the corpus also 3 and Q1 | open |
 | 5 | Fold, release, `release_due`, GC of `products/` | statcatlib | M9 | 4, Q9, Q10 | open |
 | 6 | Router, tiers, pools, result store and its GC, pre-materialisation | sdmxlib-rest or the serving package (Q8) | M10 | 4, 5, Q8 | open |
@@ -285,15 +285,15 @@ Phases 3 and 4 start in statcatlib after StatCat-Suite/statcatlib#115, since the
 
 ### Phase 3: structure products (sdmxlib, then statcatlib; StatCat-Suite/statcatlib#51 and an sdmxlib issue to file; spec M6)
 
-Starts once Q2 is decided. statcatlib's design for the phase settles what this section leaves open.
+Q2 is decided (2026-11-02): StatCan's structure products follow the change-rate split. statcatlib's design for the phase settles what this section leaves open.
 
 *   **sdmxlib: the walk and the cut on an open builder.** `build_edition` builds a product's first edition, seals it itself, gathers structures only from dataflow closures and refuses a non-empty path, so neither a republish nor a structure product can use it. sdmxlib adds:
     *   a function that fills an open builder from `LocalRegistry.build(product_dir, previous=)` with the dataflows' closures, the observations and the partial cut, and leaves the seal to the caller, so a `WorkingCopy` can call it on any edition;
-    *   a function that fills an open builder with every full artefact of one agency in the named families (codelists, concept schemes, category schemes, hierarchies), with no dataflow;
-    *   `check_edition(structures=)` over several structure editions, since Q2 may split one agency's full artefacts across products.
+    *   a function that fills an open builder with the full artefacts of one agency in the named families (codelists, concept schemes, category schemes, hierarchies), or with an explicit list of artefacts, with no dataflow. The change-rate split puts all of one family in some products and part of a family in others (the classification codelists in `structure-classifications`, the geography codelist in `structure-geo`), so a selection by family alone cannot fill every product;
+    *   `check_edition(structures=)` over several structure editions, since the change-rate split puts one agency's full artefacts in three products.
 
     These ship in an sdmxlib minor that statcatlib pins.
-*   **statcatlib: structure products.** A product of `kind: "structure"` in its leaf and in the statcat section holds one agency's full artefacts in the families Q2 assigns it, with no bindings. `Product.working_copy` gains the product's kind. statcat section format 3 already reserves the kind (`PRODUCT_KINDS` in `src/statcatlib/bundle.py`), and `check_catalog` already reports a structure edition that binds a dataflow, so no format changes.
+*   **statcatlib: structure products.** A product of `kind: "structure"` in its leaf and in the statcat section holds the full artefacts of one agency that the change-rate split assigns it, with no bindings. For StatCan these are `structure-geo` (the full geography), `structure-classifications` (NAICS, NOC, SGC) and `structure-concepts` (the concept schemes). `Product.working_copy` gains the product's kind. statcat section format 3 already reserves the kind (`PRODUCT_KINDS` in `src/statcatlib/bundle.py`), and `check_catalog` already reports a structure edition that binds a dataflow, so no format changes.
 *   **statcatlib: ingest with partials.** `src/statcatlib/sources/sdmx.py` fills each data product's working copy through the sdmxlib function above with partials cut, and the seal checks it with `check_edition(at="publish", structures=<the live structure editions>)`.
 *   **statcatlib: the writer's cross-product rules.** When it records a version, the local Inventory writer enforces specification §6.5 item 4 (full artefacts agree across live and embargoed editions), item 7 (one structure home per full artefact) and item 8 (a data edition goes `live` only once the structure edition its partials were cut from is `live`). It reads the manifests of the editions involved. Each refusal names the item, the URN and both editions. sdmxlib's `inventory/_rules.py` checks one product's leaf; these rules read several products, so the writer holds them. statcatlib's design settles three cases: an item-8 refusal under embargo off, a structure edition and its data editions sealed in one `Catalog.seal`, and which edition item 4 refuses when a data product holds a full concept scheme that a structure edit changes.
 *   **statcatlib: the CODR generator** (new in `src/statcatlib/testing.py`). It builds one CODR-shaped data product: a DSD with a 5-level geography codelist of 6,000 codes, 3 classification codelists and 4 dimensions, and a 2,000-row observation frame per table over a random subset of the codes. It takes a seed and the tables per product, and builds the shared structure product the partials are cut from on first use. StatCat-Suite/statcatlib#51 names `tests/support/codr.py`; Alternative C moves it.
