@@ -11,6 +11,7 @@ import pytest
 from sdmxlib.inventory import (
     CURRENT_NAME,
     INVENTORY_FORMAT,
+    Event,
     FullInventory,
     InventoryError,
     Leaf,
@@ -22,6 +23,7 @@ from sdmxlib.inventory import (
     encode,
     head,
     local_fetch,
+    next_root,
     record,
     reinstate,
     release,
@@ -32,6 +34,7 @@ from sdmxlib.inventory import (
     schema,
     sha256_hex,
     supersede_pending,
+    validate_root,
 )
 from sdmxlib.inventory._format import generate_schemas
 from tests.support.inventory import NOW, LostRaceError, create_exclusive, new_catalog, set_current, write_version
@@ -320,6 +323,37 @@ def test_a_describe_root_validates_and_both_readers_take_it(tmp_path: Path) -> N
     live = LiveInventory(local_fetch(root), schema_version=_SCHEMA).refresh()
     assert (live.seq, live.skipped) == (2, [])
     assert live.head("14100287").edition_id == "01a18e00-0000-7000-8000-000000000100"
+
+
+def test_a_root_with_an_unknown_event_kind_is_read_by_both_readers(tmp_path: Path) -> None:
+    """A kind added in a later 1.x format is audit data: a reader takes the root (GH-338)."""
+    root = _catalog(tmp_path, 1)
+    write_version(root, {}, update_current=False)
+    document = json.loads((root / root_path(2)).read_bytes())
+    document["event"]["kind"] = "relabel"
+    data = json.dumps(document).encode()
+    (root / root_path(2)).write_bytes(data)
+    set_current(root, 2, sha256_hex(data))
+    full = FullInventory(local_fetch(root)).refresh()
+    assert (full.seq, full.root.event.kind, full.skipped) == (2, "relabel", [])
+    live = LiveInventory(local_fetch(root), schema_version=_SCHEMA).refresh()
+    assert (live.seq, live.skipped) == (2, [])
+    assert live.head("14100287").edition_id == "01a18e00-0000-7000-8000-000000000100"
+    with pytest.raises(jsonschema.ValidationError, match="relabel"):
+        jsonschema.validate(document, json.loads(schema("root")))
+
+
+def test_a_writer_records_only_a_known_event_kind(tmp_path: Path) -> None:
+    """`next_root` and `validate_root` keep the closed set a reader no longer enforces (GH-338)."""
+    root = _catalog(tmp_path, 1)
+    held = FullInventory(local_fetch(root)).refresh().root
+    unknown = Event(actor="tests", reason="test", kind="relabel")
+    with pytest.raises(InventoryError, match=r"Inventory version 2: event kind 'relabel' is not one a writer records"):
+        next_root(held, products=held.products, event=unknown, producer=held.producer, now=NOW)
+    with pytest.raises(InventoryError, match=r"Inventory version 1: event kind 'relabel'"):
+        validate_root(msgspec.structs.replace(held, event=unknown))
+    validate_root(held)
+    decode_root(encode(msgspec.structs.replace(held, event=unknown)))
 
 
 def test_exclusive_create_refuses_a_second_writer(tmp_path: Path) -> None:

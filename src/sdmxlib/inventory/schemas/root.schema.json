@@ -130,7 +130,7 @@
     },
     "Event": {
       "title": "Event",
-      "description": "Who wrote an Inventory version, and why.\n\nAttributes:\n    actor: The acting principal, from the writer's identity, never from a caller.\n    reason: Why, in the actor's words.\n    kind: What the version records.",
+      "description": "Who wrote an Inventory version, and why.\n\nAttributes:\n    actor: The acting principal, from the writer's identity, never from a caller.\n    reason: Why, in the actor's words.\n    kind: What the version records. A writer records an `EventKind`; a\n        root read back may carry a kind added in a later 1.x format, which\n        an audit or alerting consumer treats as other.",
       "type": "object",
       "properties": {
         "actor": {
@@ -150,7 +150,8 @@
             "rollback",
             "seal",
             "withdraw"
-          ]
+          ],
+          "type": "string"
         }
       },
       "required": [

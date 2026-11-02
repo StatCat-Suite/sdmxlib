@@ -19,13 +19,34 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## `Event.kind` reads as `str`
+
+A reader takes an Inventory root whose `event.kind` it does not know, within
+format 1.x ([GH-338](https://github.com/StatCat-Suite/sdmxlib/issues/338)).
+`FullInventory` and `LiveInventory` used to skip such a root into `skipped`
+and stay on the version before it. So `Event.kind` is typed `str`, where it
+was `EventKind`:
+
+- Code that matches exhaustively on `Event.kind` read from a root handles a
+  plain `str`, with a case for a kind it does not know. An audit or alerting
+  consumer treats that kind as other.
+- A writer still records an `EventKind`. `next_root` and `validate_root`
+  raise `InventoryError` for any other kind; `decode_root` accepts it. A
+  misspelled kind passed to `Event(kind=...)` is now refused by `next_root`
+  at run time, where the type checker used to refuse it.
+- The shipped root schema (`schema("root")`) keeps the enum of the kinds a
+  writer records.
+
+A kind added after this release reaches 0.82.0 readers without an upgrade.
+Readers from 0.81.0 and earlier still skip it.
+
 ## Inventory roots with `kind: describe`
 
 An Inventory root's `event.kind` takes a ninth value, `describe`
 ([GH-334](https://github.com/StatCat-Suite/sdmxlib/issues/334)). statcatlib
 writes it for a version whose only change is the catalog description in the
-root's `extensions.statcat`. A reader refuses a root whose `kind` it does not
-know: sdmxlib 0.80.0 and earlier report that root in `skipped` and stay on the
+root's `extensions.statcat`. sdmxlib 0.80.0 and earlier refuse a root whose
+`kind` they do not know: they report that root in `skipped` and stay on the
 version before it. Upgrade every reader (`LiveInventory`, `FullInventory`, and
 the servers built on them) to this release before any writer records a
 `describe` version. Code that handles each `EventKind` value needs a

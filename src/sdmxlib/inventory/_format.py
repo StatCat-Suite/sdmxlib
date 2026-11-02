@@ -13,7 +13,7 @@ refuses another major version.
 
 import hashlib
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal, get_args
 
 import msgspec
 
@@ -35,12 +35,15 @@ LEAVES_DIR = "inventory/leaves"
 type State = Literal["embargoed", "live", "superseded", "withdrawn"]
 
 #: What an Inventory version records it was written for (spec §6.2). ``describe`` records a
-#: change to the catalog description in ``extensions.statcat`` and nothing else. A reader
-#: refuses a root whose kind is not in this set, so a new kind reaches every reader before
-#: any writer uses it.
+#: change to the catalog description in ``extensions.statcat`` and nothing else. A writer
+#: records one of these (`next_root` and `validate_root` refuse any other); a reader accepts
+#: any string within format 1.x, so adding a kind is a minor-version change (GH-338).
 type EventKind = Literal[
     "seal", "release", "rollback", "withdraw", "retire", "embargo-change", "restore", "correct", "describe"
 ]
+
+#: The kinds a writer may record, as a set.
+EVENT_KINDS: frozenset[str] = frozenset(get_args(EventKind.__value__))
 
 #: A product holding observations, or one holding only full structures (spec §8).
 type Kind = Literal["data", "structure"]
@@ -88,12 +91,16 @@ class Event(msgspec.Struct, frozen=True, kw_only=True):
     Attributes:
         actor: The acting principal, from the writer's identity, never from a caller.
         reason: Why, in the actor's words.
-        kind: What the version records.
+        kind: What the version records. A writer records an `EventKind`; a
+            root read back may carry a kind added in a later 1.x format, which
+            an audit or alerting consumer treats as other.
     """
 
     actor: str
     reason: str
-    kind: EventKind
+    # A `str` so a reader takes a kind added after this build; the shipped schema keeps the
+    # enum, which is what a writer meets.
+    kind: Annotated[str, msgspec.Meta(extra_json_schema={"enum": sorted(EVENT_KINDS)})]
 
 
 class LeafRef(msgspec.Struct, frozen=True, kw_only=True):
@@ -297,13 +304,16 @@ def decode_current(raw: bytes) -> Current:
 
 
 def decode_root(raw: bytes) -> Root:
-    """A root from its bytes, validated (`validate_root`).
+    """A root from its bytes, validated as a reader validates it.
+
+    A reader checks every rule `validate_root` checks except the event kind:
+    it accepts any ``event.kind`` within format 1.x (spec §6.2).
 
     Raises:
         InventoryError: If it is malformed, of another major format, or breaks a rule.
     """
     root = _decode(raw, Root, INVENTORY_FORMAT, "an Inventory root")
-    validate_root(root)
+    _check_root(root)
     return root
 
 
@@ -319,13 +329,34 @@ def decode_leaf(raw: bytes) -> Leaf:
 
 
 def validate_root(root: Root) -> None:
-    """Refuse a root that breaks the format's own rules.
+    """Refuse a root that breaks the format's own rules, as a writer must meet them.
 
     Raises:
         InventoryError: If ``seq`` is below 1, ``previous_inventory`` is not
             None for version 1 or not below ``seq`` for a later one, a product's
-            leaf path does not name its hash, or a tombstone repeats.
+            leaf path does not name its hash, a tombstone repeats, or
+            ``event.kind`` is not an `EventKind`.
     """
+    _check_root(root)
+    check_event_kind(root.event, root.seq)
+
+
+def check_event_kind(event: Event, seq: int) -> None:
+    """Refuse an event whose kind is not an `EventKind`: the writer's half of spec §6.2.
+
+    Raises:
+        InventoryError: If it is not, naming the version `seq` and the kinds a writer records.
+    """
+    if event.kind not in EVENT_KINDS:
+        msg = (
+            f"Inventory version {seq}: event kind {event.kind!r} is not one a writer records "
+            f"({', '.join(sorted(EVENT_KINDS))})"
+        )
+        raise InventoryError(msg)
+
+
+def _check_root(root: Root) -> None:
+    """The rules a reader and a writer share: every one `validate_root` checks but the event kind."""
     if root.seq < 1:
         msg = f"Inventory version {root.seq}: seq starts at 1"
         raise InventoryError(msg)

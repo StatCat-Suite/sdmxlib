@@ -16,7 +16,10 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
   `StructureSource` and `PartialRecord`. `encode` writes one; `decode_catalog`,
   `decode_current`, `decode_root` and `decode_leaf` read one, refusing
   another major format with `InventoryError`; `validate_root` and
-  `validate_leaf` check the format's own rules. `root_path(seq)`,
+  `validate_leaf` check the format's own rules. `decode_root` checks every
+  rule `validate_root` does except the event kind. `EventKind` is the set a
+  writer records (`EVENT_KINDS`, `check_event_kind`); `Event.kind` is a
+  `str`. `root_path(seq)`,
   `leaf_path(sha256)` and `sha256_hex` name and address them.
   `INVENTORY_FORMAT` and `CATALOG_FORMAT` are `"1.0"`.
 - `schema(document)` (`__init__.py`): the shipped JSON Schema of `catalog`,
@@ -54,6 +57,9 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
   `restore_epoch` changed; it verifies the root `CURRENT` names, falls back
   on a mismatch, probes `seq + 1` onward without listing, and skips an
   invalid root into `skipped`. A leaf must hash to its name.
+- A reader accepts any `event.kind` within format 1.x; `next_root` and
+  `validate_root` refuse a kind outside `EventKind`, and the shipped root
+  schema keeps that enum (GH-338).
 - `LiveInventory` holds only `live` entries at its schema version and
   exposes no leaf, so a public reader has nothing embargoed to filter.
 

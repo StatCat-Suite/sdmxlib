@@ -37,6 +37,7 @@ from sdmxlib.inventory._format import (
     State,
     StructureSource,
     Tombstone,
+    check_event_kind,
     encode,
     leaf_path,
     sha256_hex,
@@ -486,9 +487,13 @@ def next_root(
 
     Returns:
         The root, numbered ``previous.seq + 1``.
+
+    Raises:
+        InventoryError: If ``event.kind`` is not an `EventKind`.
     """
     now = _aware(now)
     seq = 1 if previous is None else previous.seq + 1
+    check_event_kind(event, seq)
     return Root(
         format_version=INVENTORY_FORMAT,
         seq=seq,

@@ -350,7 +350,7 @@ Ownership (statcatlib RFC decision 8): sdmxlib owns the JSON schemas, validation
 | `embargo` | required | `true` or `false`. With `false`, a seal releases its edition in the same version (§6.4). |
 | `products` | required | A map from `product_id` to `{leaf, leaf_sha256}`, `leaf` the path `inventory/leaves/<sha256>.json`. |
 | `retired` | required | Tombstones: every `{product_id, edition_id, retired_at}` retired within the tombstone window, so a retired edition stays distinguishable from one never recorded. Kept at least as long as backups (§11.6). |
-| `event` | required | `{actor, reason, kind}`: who acted and why. `kind` is one of `seal`, `release`, `rollback`, `withdraw`, `retire`, `embargo-change`, `restore`, `correct` and `describe`. `describe` records a change to the catalog description in `extensions.statcat` and nothing else. A reader refuses a root whose `kind` it does not know, so a new kind ships in every reader before any writer uses it: `describe` needs sdmxlib 0.81.0 or later (GH-334). `actor` comes from the writer's identity (a token's object id), never from the caller. |
+| `event` | required | `{actor, reason, kind}`: who acted and why. `kind` is one of `seal`, `release`, `rollback`, `withdraw`, `retire`, `embargo-change`, `restore`, `correct` and `describe`. `describe` records a change to the catalog description in `extensions.statcat` and nothing else. A writer records one of these nine kinds. A reader accepts any `kind` string within format 1.x, and an audit or alerting consumer treats a kind it does not know as other, so a new kind is an additive minor-version change (GH-338). Readers older than sdmxlib 0.82.0 refuse a root whose `kind` they do not know: `describe` needs sdmxlib 0.81.0 or later (GH-334). `actor` comes from the writer's identity (a token's object id), never from the caller. |
 | `extensions` | optional | Sections keyed by package; `statcat` holds the `CatalogDescription`. |
 
 ### 6.3 Leaf
@@ -381,7 +381,7 @@ Ownership (statcatlib RFC decision 8): sdmxlib owns the JSON schemas, validation
 
 Phase 4's routing fields (`pool`, `pinned`, `location`, `pull_bytes`, `dataflows`) arrive as 1.x optional fields.
 
-**Versioning.** A minor version adds only optional fields; readers ignore unknown fields and refuse a newer major version.
+**Versioning.** A minor version adds only optional fields and new `event.kind` values (§6.2); readers ignore unknown fields, accept an unknown `event.kind`, and refuse a newer major version. The shipped root schema lists the kinds a writer records, so a root with a newer kind fails it and still reads.
 
 **Worked example.** Version 42, after CODR table 14100287's September release, with census unchanged:
 
