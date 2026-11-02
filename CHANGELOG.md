@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.81.0] - 2026-11-02
+
+### Documentation
+
+- **edition**: Read Azure with a SAS, and name the extension's two bugs (GH-328)
+
+### Features
+
+- **bench**: Read tier 3 from Azure Blob Storage, with typed arguments (GH-231)
+- **bench**: Measure tier 3 in Azure Canada Central with a SAS (GH-231)
+- **inventory**: Add the describe event kind, which older readers refuse (GH-334)
+
+### Refactoring
+
+- **scripts**: Parse bench and tools arguments with typer (GH-326)
+
 ## [0.80.0] - 2026-10-31
 
 ### Breaking Changes
