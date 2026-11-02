@@ -44,3 +44,10 @@ and lists what each said that the code contradicts, for GH-267. The documents
 were corrected from it, their dated sections moved to `docs/design/evidence/`,
 and the rejected explorations to `history/design/`. Two findings point at the
 code: GH-271 and GH-272.
+
+## Review of the plan's third revision
+
+[`sharded-catalog-replan/`](sharded-catalog-replan/README.md) holds the review
+of the third revision, which re-planned Phases 4 to 9 against the
+specification's sixth revision (GH-333), and records what the revision changed
+from it.
