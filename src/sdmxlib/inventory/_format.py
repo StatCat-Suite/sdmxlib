@@ -34,8 +34,13 @@ LEAVES_DIR = "inventory/leaves"
 #: An entry's state (spec §6.4). Retirement is a tombstone in the root, never a state.
 type State = Literal["embargoed", "live", "superseded", "withdrawn"]
 
-#: What an Inventory version records it was written for. The set is frozen in 1.0.
-type EventKind = Literal["seal", "release", "rollback", "withdraw", "retire", "embargo-change", "restore", "correct"]
+#: What an Inventory version records it was written for (spec §6.2). ``describe`` records a
+#: change to the catalog description in ``extensions.statcat`` and nothing else. A reader
+#: refuses a root whose kind is not in this set, so a new kind reaches every reader before
+#: any writer uses it.
+type EventKind = Literal[
+    "seal", "release", "rollback", "withdraw", "retire", "embargo-change", "restore", "correct", "describe"
+]
 
 #: A product holding observations, or one holding only full structures (spec §8).
 type Kind = Literal["data", "structure"]

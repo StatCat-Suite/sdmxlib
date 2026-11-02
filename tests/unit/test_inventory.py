@@ -305,6 +305,23 @@ def test_an_invalid_root_is_skipped_and_reported(tmp_path: Path) -> None:
     assert reader.skipped[0].startswith(f"{root_path(3)}: an Inventory root is not JSON")
 
 
+def test_a_describe_root_validates_and_both_readers_take_it(tmp_path: Path) -> None:
+    root = _catalog(tmp_path, 1)
+    write_version(root, {}, kind="describe", update_current=False)
+    document = json.loads((root / root_path(2)).read_bytes())
+    document["extensions"] = {"statcat": {"title": {"en": "Census catalog"}}}
+    data = json.dumps(document).encode()
+    (root / root_path(2)).write_bytes(data)
+    set_current(root, 2, sha256_hex(data))
+    jsonschema.validate(document, json.loads(schema("root")))
+    full = FullInventory(local_fetch(root)).refresh()
+    assert (full.seq, full.root.event.kind, full.skipped) == (2, "describe", [])
+    assert full.root.extensions == document["extensions"]
+    live = LiveInventory(local_fetch(root), schema_version=_SCHEMA).refresh()
+    assert (live.seq, live.skipped) == (2, [])
+    assert live.head("14100287").edition_id == "01a18e00-0000-7000-8000-000000000100"
+
+
 def test_exclusive_create_refuses_a_second_writer(tmp_path: Path) -> None:
     root = _catalog(tmp_path, 1)
     with pytest.raises(LostRaceError):

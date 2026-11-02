@@ -142,6 +142,7 @@
         "kind": {
           "enum": [
             "correct",
+            "describe",
             "embargo-change",
             "release",
             "restore",
