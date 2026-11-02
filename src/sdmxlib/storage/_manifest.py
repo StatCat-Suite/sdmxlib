@@ -23,6 +23,8 @@ from typing import Annotated, Literal
 import duckdb
 import msgspec
 
+from sdmxlib.storage._files import is_staged
+
 #: The manifest's file name, in the edition directory.
 MANIFEST_NAME = "manifest.json"
 
@@ -38,6 +40,16 @@ SIGNATURE_NAME = f"{MANIFEST_NAME}.sig"
 
 #: What an edition directory holds beside its listed files.
 UNLISTED = frozenset({MANIFEST_NAME, f"{MANIFEST_NAME}.tmp", SIGNATURE_NAME})
+
+
+def unlisted(path: str) -> bool:
+    """Whether `path`, relative to the edition directory, is a file the manifest never lists.
+
+    The manifest, its signature, and a staged manifest a seal or a copy
+    stopped while writing (``manifest.json.tmp`` before 0.82.0).
+    """
+    return path in UNLISTED or is_staged(path, MANIFEST_NAME)
+
 
 #: The format this build writes. A reader takes any ``3.x``: a minor version
 #: only adds fields, which a reader that predates them ignores. 3.0 names the

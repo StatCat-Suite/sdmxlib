@@ -193,7 +193,8 @@ def test_copying_the_next_publication_copies_only_its_new_data_files(
     manifest = read_manifest(second)
     publication = sum(f.root == "edition" for f in manifest.files)
     delta = sum(f.root == "data" and f.carried_from is None for f in manifest.files)
-    assert len(copied) == publication + delta + 1, "its own files, the new data file, and the manifest"
+    assert len(copied) == publication + delta, "its own files and the new data file"
+    assert (tmp_path / "dst" / "b" / second.name / MANIFEST_NAME).read_bytes() == (second / MANIFEST_NAME).read_bytes()
     assert check_edition(tmp_path / "dst" / "b" / second.name, at="publish").ok
 
 

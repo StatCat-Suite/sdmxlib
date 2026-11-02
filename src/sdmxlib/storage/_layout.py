@@ -12,7 +12,6 @@ the manifest, and the writer that records the edition in the Inventory
 removes it with `clear_journal`.
 """
 
-import os
 import shutil
 import uuid
 from datetime import UTC, datetime
@@ -20,6 +19,7 @@ from pathlib import Path
 
 import msgspec
 
+from sdmxlib.storage._files import replace_durably
 from sdmxlib.storage._manifest import MANIFEST_NAME, ManifestError, read_manifest
 
 #: The directory of seal journal entries, in the product directory.
@@ -153,12 +153,12 @@ def journal_path(product: Path, edition_id: str) -> Path:
 
 
 def write_journal(product: Path, entry: JournalEntry) -> None:
-    """Write a seal's journal entry, complete before it is visible (GH-259)."""
-    target = journal_path(product, entry.edition_id)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    staged = target.with_name(f".{target.name}.{os.getpid()}.tmp")
-    staged.write_bytes(msgspec.json.encode(entry) + b"\n")
-    staged.replace(target)
+    """Write a seal's journal entry, complete before it is visible and fsynced (GH-259, GH-335).
+
+    It replaces an entry a seal of the same edition left when it stopped
+    before its manifest, so a retried seal records when it ran.
+    """
+    replace_durably(journal_path(product, entry.edition_id), msgspec.json.encode(entry) + b"\n")
 
 
 def read_journal(product: str | Path) -> list[JournalEntry]:

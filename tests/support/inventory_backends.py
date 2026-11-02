@@ -39,7 +39,8 @@ from sdmxlib.inventory import (
     sha256_hex,
 )
 from sdmxlib.inventory.conformance import ConflictError, Reader, Snapshot
-from tests.support.inventory import NOW, PRODUCER, LostRaceError, create_exclusive, new_catalog, set_current
+from sdmxlib.storage import create_exclusive
+from tests.support.inventory import NOW, PRODUCER, new_catalog, set_current
 
 
 def _snapshot(inventory: FullInventory) -> Snapshot:
@@ -123,7 +124,7 @@ class FileBackend:
         data = encode(root)
         try:
             create_exclusive(self.root / root_path(root.seq), data)
-        except LostRaceError as exc:
+        except FileExistsError as exc:
             raise ConflictError(str(exc)) from exc
         set_current(self.root, root.seq, sha256_hex(data), root.restore_epoch)
         head = self.head()

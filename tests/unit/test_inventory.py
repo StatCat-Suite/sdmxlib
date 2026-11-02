@@ -37,7 +37,8 @@ from sdmxlib.inventory import (
     validate_root,
 )
 from sdmxlib.inventory._format import generate_schemas
-from tests.support.inventory import NOW, LostRaceError, create_exclusive, new_catalog, set_current, write_version
+from sdmxlib.storage import create_exclusive
+from tests.support.inventory import NOW, new_catalog, set_current, write_version
 
 pytestmark = pytest.mark.unit
 
@@ -358,7 +359,7 @@ def test_a_writer_records_only_a_known_event_kind(tmp_path: Path) -> None:
 
 def test_exclusive_create_refuses_a_second_writer(tmp_path: Path) -> None:
     root = _catalog(tmp_path, 1)
-    with pytest.raises(LostRaceError):
+    with pytest.raises(FileExistsError):
         create_exclusive(root / root_path(1), b"{}")
 
 

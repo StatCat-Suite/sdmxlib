@@ -77,6 +77,16 @@ of the store that edition ships (`_trim.py`).
 - `unresolved_references` and `Unresolved` (`_references.py`): find dangling
   references between artefacts. `code_map` (`_projections.py`): code-to-label
   projection.
+- `create_exclusive(path, data)` (`_files.py`, exported): creates a file
+  complete before it is visible: staged beside `path`, fsynced, hard-linked
+  to `path` (`FileExistsError` when another writer created it first), the
+  staged file unlinked, the directory fsynced (spec §6.6, GH-335).
+  `replace_durably` does the same with a replacing rename, for a file meant
+  to be overwritten. `fsync_file`, `fsync_directory` and `is_staged` are the
+  steps; `fsync_directory` does nothing on Windows, which cannot open a
+  directory for fsync.
+- `unlisted(path)` (`_manifest.py`): whether the manifest never lists a file
+  of the edition directory.
 - `_layout.py`: a product directory's editions. `list_editions`,
   `discard` and `refuse_second_unsealed` (which `LocalRegistry.build` calls);
   the seal journal, `write_journal`, `read_journal` and `clear_journal`
@@ -124,8 +134,12 @@ of the store that edition ships (`_trim.py`).
   temporary directory on every call (`engine_storage_version`).
 - `readers.py`, `lazy.py` and `resolve.py` run only `SELECT`s.
 - `compact_for_publication` attaches the store read-only, copies it through
-  `.trim` and `.new` files, replaces the original `metadata.duckdb`, and deletes the
-  temporary file.
+  `.trim` and `.new` files, fsyncs the `.new` file, replaces the original
+  `metadata.duckdb` with it, fsyncs the directory, and deletes the temporary
+  file.
+- `create_exclusive` and `replace_durably` write a staged
+  `.<name>.<pid>.<random>.tmp` file and unlink it, and fsync the file and its
+  directory. `write_journal` writes through `replace_durably`.
 - `restore` rebuilds tables and runs `CREATE INDEX` on an open store when the
   trimmed keys or indexes are missing.
 
