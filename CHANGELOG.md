@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.82.0] - 2026-11-02
+
+### Documentation
+
+- **design**: Link statcatlib's catalog-format page from the spec (GH-341)
+
+### Features
+
+- **inventory**: Read roots with an unknown event kind within format 1.x (GH-338)
+  - `Event.kind` is typed `str`; see `docs/upgrading.md`.
+- **storage**: Fsync the seal journal and manifest through one public create_exclusive (GH-335)
+  - Sealing creates `manifest.json` with a hard link (`os.link`), so a second process sealing the same
+    edition gets `ManifestError` where its rename used to replace the first manifest. The edition root
+    must be on a filesystem with hard links; exFAT, FAT and some FUSE and SMB mounts fail the seal (GH-343).
+- **local**: Verify the Inventory's manifest_sha256 when opening an edition (GH-336)
+- **inventory**: Export Rule from sdmxlib.inventory and JsonValue from sdmxlib.storage (GH-339)
+
 ## [0.81.0] - 2026-11-02
 
 ### Documentation
