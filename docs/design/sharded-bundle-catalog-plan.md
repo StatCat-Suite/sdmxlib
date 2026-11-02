@@ -183,7 +183,7 @@ The specification records the design alternatives and their rejections (ยง7.4, ย
 *   [`caching.md`](caching.md): the rules every cache in this program follows.
 *   [GH-136](https://github.com/StatCat-Suite/sdmxlib/issues/136): the cross-repo tracking issue.
 *   [GH-221](https://github.com/StatCat-Suite/sdmxlib/issues/221): the incoming-reference closure, with the FMR measurement.
-*   [statcatlib's bundle format](https://statcat-suite.github.io/statcatlib/bundle-format/): the statcat section.
+*   [statcatlib's catalog format](https://statcat-suite.github.io/statcatlib/catalog-format/): the statcat section.
 
 ## Future Improvements
 

@@ -7,7 +7,7 @@ sdmxlib's part of the earlier revisions is built: M0, M2, M4, M5 and M7, the nam
 This document specifies how a dissemination catalog of many SDMX products is published as editions, recorded in an Inventory, routed to serving pods, verified, cached and migrated. It builds on two published formats and changes both:
 
 - sdmxlib edition format, manifest 3.0 and overlay 1.2: https://statcat-suite.github.io/sdmxlib/edition/
-- statcatlib catalog format, statcat section 3: https://statcat-suite.github.io/statcatlib/bundle-format/
+- statcatlib catalog format, statcat section 3: https://statcat-suite.github.io/statcatlib/catalog-format/
 
 MUST, MUST NOT, SHOULD and MAY carry their RFC 2119 meanings. A *producer* writes an edition; a *writer* writes Inventory versions (statcatlib); a *reader* opens an edition or reads the Inventory; a *server* is a reader that answers SDMX REST requests; the *publish job* produces editions, and the *release job* writes the Inventory versions that release them.
 
