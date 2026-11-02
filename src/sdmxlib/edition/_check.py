@@ -13,7 +13,8 @@ than stopping at the first, so one run lists everything wrong.
 
 import hashlib
 import json
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
+from contextlib import ExitStack
 from datetime import UTC, datetime
 from functools import partial
 from pathlib import Path
@@ -92,7 +93,7 @@ def check_edition(
     lookup: Lookup | None = None,
     fingerprints: bool = False,
     expect: Manifest | str | Path | None = None,
-    structures: str | Path | None = None,
+    structures: str | Path | Sequence[str | Path] | None = None,
     extensions: Mapping[str, Check] | None = None,
 ) -> Report:
     """Check a sealed edition against its manifest and against itself, as profile `at` asks.
@@ -145,13 +146,14 @@ def check_edition(
             finding under ``expect``. Read from the manifests alone, so at
             ``publish``, where the fingerprints are also recomputed, a clean
             run says the store's content is the earlier one's.
-        structures: An edition holding the full artefacts this edition's
-            partials were cut from, a structures edition say. Each partial
-            whose manifest entry records `partial_of` must have a full artefact
-            at its URN there with that fingerprint, and the partial's items,
-            with their parents, must be among that artefact's. A codelist's,
-            concept scheme's and category scheme's items are compared; for
-            another scheme, the fingerprint alone.
+        structures: The editions holding the full artefacts this edition's
+            partials were cut from, structure products say: one edition or a
+            sequence of them. Each partial whose manifest entry records
+            `partial_of` must have a full artefact at its URN in one of them
+            with that fingerprint, and the partial's items, with their
+            parents, must be among that artefact's. A codelist's, concept
+            scheme's and category scheme's items are compared; for another
+            scheme, the fingerprint alone.
         extensions: More checks, by name, for parts of the edition other
             packages own (statcatlib's search index, say).
 
@@ -160,7 +162,8 @@ def check_edition(
 
     Raises:
         ValueError: If `lookup`, `fingerprints`, `remote` or `structures` is
-            given at a profile that does not use it.
+            given at a profile that does not use it, or `structures` is an
+            empty sequence.
     """
     _refuse_unused(at, lookup=lookup, fingerprints=fingerprints, remote=remote, structures=structures)
     root = Path(path)
@@ -199,7 +202,7 @@ def check_edition(
             at,
             sized_remotely=remote is not None and lookup is None,
             fingerprints=fingerprints,
-            structures=None if structures is None else Path(structures),
+            structures=_editions(structures),
             extensions=extensions or {},
         )
         for name, step in steps:
@@ -215,10 +218,27 @@ def check_edition(
     return Report(root, at, tuple(checked), tuple(findings))
 
 
+def _editions(structures: str | Path | Sequence[str | Path] | None) -> tuple[Path, ...] | None:
+    """`structures` as a tuple of edition directories, or None when not given."""
+    if structures is None:
+        return None
+    if isinstance(structures, (str, Path)):
+        return (Path(structures),)
+    return tuple(Path(edition) for edition in structures)
+
+
 def _refuse_unused(
-    at: Profile, *, lookup: Lookup | None, fingerprints: bool, remote: str | None, structures: str | Path | None
+    at: Profile,
+    *,
+    lookup: Lookup | None,
+    fingerprints: bool,
+    remote: str | None,
+    structures: str | Path | Sequence[str | Path] | None,
 ) -> None:
     """Raise for an argument the profile `at` does not use."""
+    if structures is not None and not isinstance(structures, (str, Path)) and not structures:
+        msg = "structures= names no edition; give the structure editions the partials were cut from, or None"
+        raise ValueError(msg)
     if structures is not None and at == "open":
         msg = "structures= compares partials with their full artefacts; at='open' reads no artefact"
         raise ValueError(msg)
@@ -243,7 +263,7 @@ def _steps(
     *,
     sized_remotely: bool,
     fingerprints: bool,
-    structures: Path | None,
+    structures: tuple[Path, ...] | None,
     extensions: Mapping[str, Check],
 ) -> list[tuple[str, Callable[[], Iterable[Finding]]]]:
     """The checks that read the store, by name, in the order profile `at` runs them."""
@@ -423,27 +443,52 @@ _ITEMS = {
 }
 
 
-def _partials(manifest: Manifest, reg: EditionRegistry, structures: Path) -> list[Finding]:
-    """Each partial recording `partial_of` that the full artefact in `structures` does not bear out."""
+def _partials(manifest: Manifest, reg: EditionRegistry, structures: tuple[Path, ...]) -> list[Finding]:
+    """Each partial recording `partial_of` that no full artefact in `structures` bears out."""
     cut = [a for a in manifest.artefacts if a.partial and a.partial_of is not None]
     if not cut:
         return []
-    try:
-        full = {a.urn: a.fingerprint for a in read_manifest(structures).artefacts if not a.partial}
-    except ManifestError as exc:
-        return [Finding("partials", str(structures), f"the structures edition cannot be read: {exc}")]
+    held = _full_artefacts(structures)
+    if isinstance(held, Finding):
+        return [held]
     findings: list[Finding] = []
-    with LocalRegistry.edition(structures) as source:
+    with ExitStack() as stack:
+        opened: dict[Path, EditionRegistry] = {}
         for entry in cut:
-            fingerprint = full.get(entry.urn)
-            if fingerprint is None:
-                findings.append(Finding("partials", entry.urn, f"{structures} holds no full artefact at this URN"))
-            elif fingerprint != entry.partial_of:
-                detail = f"cut from {entry.partial_of}, and the full artefact in {structures} is {fingerprint}"
+            holders = held.get(entry.urn, {})
+            source = next((edition for edition, found in holders.items() if found == entry.partial_of), None)
+            if not holders:
+                findings.append(Finding("partials", entry.urn, f"{_named(structures)} at this URN"))
+            elif source is None:
+                found = "; ".join(f"in {edition} is {fingerprint}" for edition, fingerprint in holders.items())
+                detail = f"cut from {entry.partial_of}, and the full artefact {found}"
                 findings.append(Finding("partials", entry.urn, detail))
             else:
-                findings += _subset(entry.urn, reg, source)
+                if source not in opened:
+                    opened[source] = stack.enter_context(LocalRegistry.edition(source))
+                findings += _subset(entry.urn, reg, opened[source])
     return findings
+
+
+def _full_artefacts(structures: tuple[Path, ...]) -> dict[str, dict[Path, str]] | Finding:
+    """Each full artefact's fingerprint, by URN and then by the edition holding it; a finding if one cannot be read."""
+    held: dict[str, dict[Path, str]] = {}
+    for edition in structures:
+        try:
+            entries = read_manifest(edition).artefacts
+        except ManifestError as exc:
+            return Finding("partials", str(edition), f"the structures edition cannot be read: {exc}")
+        for entry in entries:
+            if not entry.partial:
+                held.setdefault(entry.urn, {})[edition] = entry.fingerprint
+    return held
+
+
+def _named(structures: tuple[Path, ...]) -> str:
+    """Who holds no full artefact: the one structures edition, or none of several."""
+    if len(structures) == 1:
+        return f"{structures[0]} holds no full artefact"
+    return f"none of {', '.join(map(str, structures))} holds a full artefact"
 
 
 def _subset(urn: str, partial_in: EditionRegistry, full_in: EditionRegistry) -> list[Finding]:

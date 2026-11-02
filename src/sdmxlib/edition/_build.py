@@ -1,8 +1,11 @@
-"""Building an edition from a registry and the observations a producer holds (GH-223).
+"""Building an edition from a registry and the observations a producer holds (GH-223, GH-347).
 
-`build_edition` is the one place a dataflow's structural closure is selected and
-its codelists cut to partials. `fetch_edition` is a call to it; so is any
-producer holding structures in a registry and observations in a lake.
+`fill_edition` is the one place a dataflow's structural closure is selected and
+its codelists cut to partials, into a builder its caller opened and seals.
+`build_edition` opens a new product's first edition, fills it and seals it;
+`fetch_edition` is a call to it. `fill_structures` fills a builder with the
+full artefacts of a structure product, chosen by family, agency, id pattern and
+URN (`docs/design/open-builder-structures.md`).
 
 **The closure is the fingerprint's.** It is what `References.closure` selects
 from the dataflow and its data structure: what they refer to, every artefact
@@ -21,7 +24,8 @@ stays full too when it has extensions, when a component it enumerates has no
 column in written observations, and when the cut would keep every code.
 """
 
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Collection, Iterable, Mapping, Sequence
+from fnmatch import fnmatchcase
 from pathlib import Path
 
 import msgspec
@@ -38,9 +42,10 @@ from sdmxlib.model.codelist import CascadeSelection, Codelist
 from sdmxlib.model.constraint import ComponentValueSet, ConstraintType, DataConstraint, KeyValue
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure
-from sdmxlib.model.ref import Ref
+from sdmxlib.model.ref import Ref, urn_of
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.storage._columns import table_columns
+from sdmxlib.storage._kinds import CLASS_TO_NAME
 from sdmxlib.storage._manifest import Manifest, Producer, Provenance
 
 #: The lake schema a dataflow's observations are written to.
@@ -98,23 +103,13 @@ def build_edition(
             column holds a value outside its codelist, naming the dataflow,
             the component and the values.
     """
-    rows = dict(observations or {})
     root = Path(path)
     if root.exists() and any(root.iterdir()):
         msg = f"{root} exists and is not empty; build_edition creates a new edition"
         raise FileExistsError(msg)
     root.mkdir(parents=True, exist_ok=True)
     with LocalRegistry.build(root) as builder:
-        flows = _structures(source, dataflows, builder)
-        # Rows are found by the URN given or the one it resolved to.
-        keys = [{str(given), str(flow.urn)} for given, (flow, _) in zip(dataflows, flows, strict=True)]
-        unknown = sorted(set(rows) - set().union(*keys))
-        if unknown:
-            msg = f"observations name {', '.join(unknown)}, which is not among the dataflows built"
-            raise ValueError(msg)
-        found = [next((rows[key] for key in sorted(names) if key in rows), None) for names in keys]
-        bound = _write(builder, flows, found)
-        cut = _cut(builder, flows, bound) if partials else {}
+        cut = fill_edition(builder, source, dataflows, observations=observations, partials=partials)
         stored = builder.connection.execute(
             "SELECT urn FROM sdmx.artefact WHERE artefact_type <> 'DataflowBinding' ORDER BY urn"
         ).fetchall()
@@ -125,6 +120,158 @@ def build_edition(
     return seal(
         edition_dir, product_id=product_id, producer=producer, provenance=recorded, lifecycle=lifecycle, partial_of=cut
     )
+
+
+def fill_edition(
+    builder: LocalRegistry,
+    source: RestRegistry | EditionRegistry,
+    dataflows: Sequence[SdmxUrn[Dataflow]],
+    *,
+    observations: Mapping[str, WriteSource] | None = None,
+    partials: bool = True,
+) -> dict[str, str]:
+    """Add each dataflow's closure at `source` and its observations to an open builder, and cut its codelists.
+
+    The builder is the caller's: `LocalRegistry.build` opened it, empty or
+    on a previous edition, and the caller seals it, passing the returned
+    mapping as ``seal(partial_of=...)``. Nothing here opens, closes or seals it.
+
+    What the builder held before is kept. An artefact of the closure the
+    builder already held is replaced by the one at `source`, so a full
+    codelist from `source` replaces a partial carried from the previous
+    edition. A dataflow given rows gets a table, ``obs.<table_for(urn)>``,
+    whose rows the new ones replace, and a binding; a dataflow given none
+    keeps the binding the builder holds, if any. With `partials`, the cut
+    covers every binding in the builder, so a codelist another bound dataflow
+    shares keeps the codes that dataflow holds too, and a codelist a dataflow
+    given here with no binding enumerates stays full. A codelist the builder
+    holds as a partial is not cut again.
+
+    Args:
+        builder: The open builder of an unsealed edition.
+        source: Where the structures are: a `RestRegistry`, asked for each
+            dataflow's closure, or a sealed edition's `EditionRegistry`.
+        dataflows: The dataflows, by URN. A `latest` URN is filled at the
+            version it resolves to.
+        observations: The rows of each dataflow that has any, by URN string,
+            as `LocalRegistry.write_observations` reads them.
+        partials: Whether to cut codelists to partials.
+
+    Returns:
+        The fingerprint of the full codelist each partial cut here was cut
+        from, by URN: ``seal``'s `partial_of`.
+
+    Raises:
+        TypeError: If a URN names no dataflow at `source`.
+        ValueError: If a dataflow has no data structure at `source`, if
+            `observations` names a dataflow not in `dataflows`, or if a coded
+            column holds a value outside its codelist, naming the dataflow,
+            the component and the values.
+    """
+    rows = dict(observations or {})
+    flows = _structures(source, dataflows, builder)
+    # Rows are found by the URN given or the one it resolved to.
+    keys = [{str(given), str(flow.urn)} for given, (flow, _) in zip(dataflows, flows, strict=True)]
+    unknown = sorted(set(rows) - set().union(*keys))
+    if unknown:
+        msg = f"observations name {', '.join(unknown)}, which is not among the dataflows built"
+        raise ValueError(msg)
+    found = [next((rows[key] for key in sorted(names) if key in rows), None) for names in keys]
+    _write(builder, flows, found)
+    return _cut(builder, flows) if partials else {}
+
+
+#: Classes a structure product never holds: it binds no dataflow (the sharded catalog spec §8).
+_NOT_STRUCTURES: tuple[type, ...] = (Dataflow, DataflowBinding)
+
+
+def fill_structures(
+    builder: LocalRegistry,
+    source: EditionRegistry,
+    *,
+    families: Collection[type[MaintainableArtefact]] = (),
+    agency: str | None = None,
+    ids: Collection[str] = (),
+    artefacts: Collection[SdmxUrn[MaintainableArtefact] | str] = (),
+) -> tuple[str, ...]:
+    """Copy full artefacts from `source` into an open builder, for a structure product.
+
+    An artefact is selected when `artefacts` names its URN, or when its class
+    is one of `families`, its agency is `agency` (any agency when None) and
+    its id matches one of the `ids` patterns (`fnmatch.fnmatchcase`, so
+    ``SGC*``; any id when `ids` is empty). A family selects full artefacts
+    only, so a data edition holding partials can be the source. Nothing is
+    added for what a selected artefact references: each full artefact has one
+    structure home, so a reference into another structure product stays open.
+    The builder is the caller's to seal; an artefact it already holds at a
+    selected URN is replaced.
+
+    Args:
+        builder: The open builder of an unsealed edition.
+        source: The registry holding the full artefacts.
+        families: The artefact classes to select, such as `Codelist` or
+            `ConceptScheme`. `Codelist` selects geographic codelists too.
+        agency: The maintenance agency of the artefacts `families` selects.
+        ids: Patterns the id of an artefact `families` selects must match.
+        artefacts: More artefacts, by URN.
+
+    Returns:
+        The URNs copied, sorted.
+
+    Raises:
+        TypeError: If a family is not a class the store holds, or is
+            `Dataflow` or `DataflowBinding`.
+        ValueError: If a URN names a dataflow or a binding, if a URN
+            names an artefact `source` does not hold or holds as a partial, or
+            if nothing is selected.
+    """
+    names: list[str] = []
+    for family in families:
+        name = CLASS_TO_NAME.get(family)
+        if name is None:
+            stored = next((cls.__name__ for cls in family.__mro__ if cls in CLASS_TO_NAME), None)
+            held_as = "" if stored is None else f"; it is stored as a {stored}, the family to name"
+            msg = f"{family.__name__} is not an artefact class the store holds{held_as}"
+            raise TypeError(msg)
+        if issubclass(family, _NOT_STRUCTURES):
+            msg = f"a structure product binds no dataflow, so it holds no {family.__name__}"
+            raise TypeError(msg)
+        names.append(name)
+    held = {
+        urn: (kind, owner, resource, partial)
+        for urn, kind, owner, resource, partial in source.connection.execute(
+            "SELECT urn, artefact_type, agency_id, resource_id, is_partial FROM sdmx.artefact"
+        ).fetchall()
+    }
+    selected = {
+        urn
+        for urn, (kind, owner, resource, partial) in held.items()
+        if kind in names
+        and not partial
+        and (agency is None or owner == agency)
+        and (not ids or any(fnmatchcase(resource, pattern) for pattern in ids))
+    }
+    for named in artefacts:
+        urn = str(named)
+        found = held.get(urn)
+        if found is None:
+            msg = f"{urn} is not held at {source}"
+            raise ValueError(msg)
+        kind, _, _, partial = found
+        if kind in {CLASS_TO_NAME[cls] for cls in _NOT_STRUCTURES}:
+            msg = f"{urn} is a {kind}, and a structure product binds no dataflow"
+            raise ValueError(msg)
+        if partial:
+            msg = f"{urn} is a partial artefact at {source}; a structure product holds full artefacts"
+            raise ValueError(msg)
+        selected.add(urn)
+    if not selected:
+        msg = f"nothing at {source} matches families={sorted(names)}, agency={agency!r}, ids={sorted(ids)}"
+        raise ValueError(msg)
+    kept = sorted(selected)
+    copied = (source.get(SdmxUrn.parse(urn), expect=MaintainableArtefact, eager=True) for urn in kept)
+    builder.add_all([artefact for artefact in copied if artefact is not None])
+    return tuple(kept)
 
 
 def table_for(urn: SdmxUrn[Dataflow]) -> str:
@@ -154,10 +301,19 @@ def _structures(
             raise ValueError(msg)
         flows.append((flow, structure))
     if isinstance(source, RestRegistry):
-        # Everything fetched goes in, and what the closure does not reach comes out.
-        edition.add_all(list(source.registry))
-        for urn in _held(edition) - _closure(edition, flows):
+        # What was fetched and is new goes in, and what of it the closure does
+        # not reach comes out; then the closure's members the builder already
+        # held are replaced by the fetched ones. Into an empty builder this is
+        # every fetched artefact in, the rest of the closure out.
+        before = _held(edition)
+        fetched = list(source.registry)
+        edition.add_all([artefact for artefact in fetched if str(urn_of(artefact)) not in before])
+        closure = _closure(edition, flows)
+        for urn in _held(edition) - before - closure:
             edition.drop(SdmxUrn.parse(urn))
+        replaced = [artefact for artefact in fetched if str(urn_of(artefact)) in before & closure]
+        if replaced:
+            edition.add_all(replaced)
     else:
         kept = sorted(_closure(source, flows))
         copied = (source.get(SdmxUrn.parse(urn), expect=MaintainableArtefact, eager=True) for urn in kept)
@@ -178,11 +334,8 @@ def _closure(registry: EditionRegistry, flows: Iterable[tuple[Dataflow, DataStru
     return {urn for flow, dsd in flows for urn in references.closure(str(flow.urn), [str(dsd.urn)])}
 
 
-def _write(
-    edition: LocalRegistry, flows: list[tuple[Dataflow, DataStructure]], rows: list[WriteSource | None]
-) -> list[tuple[DataflowBinding, DataStructure]]:
-    """Write each dataflow's rows to its own table and bind it; the bindings, located, with their structures."""
-    bound: list[tuple[DataflowBinding, DataStructure]] = []
+def _write(edition: LocalRegistry, flows: list[tuple[Dataflow, DataStructure]], rows: list[WriteSource | None]) -> None:
+    """Write each dataflow's rows to its own table and bind it."""
     for (flow, dsd), found in zip(flows, rows, strict=True):
         if found is None:
             continue
@@ -190,27 +343,39 @@ def _write(
         edition.write_observations(schema=SCHEMA, table=table, source=found)
         binding = DataflowBinding.from_dsd(dsd, dataflow=Ref[Dataflow].unresolved(flow.urn), schema=SCHEMA, table=table)
         edition.add(binding)
-        bound.append((edition.locate(binding), dsd))
+
+
+def _bound(edition: LocalRegistry) -> list[tuple[Dataflow, DataflowBinding, DataStructure]]:
+    """Every binding the builder holds, located, with its dataflow and data structure."""
+    bound: list[tuple[Dataflow, DataflowBinding, DataStructure]] = []
+    for binding in edition.get_all(DataflowBinding):
+        flow = edition.get(binding.dataflow.urn, expect=Dataflow)
+        dsd = None if flow is None else edition.dsd(flow.urn)
+        if flow is not None and dsd is not None:
+            bound.append((flow, edition.locate(binding), dsd))
     return bound
 
 
-def _cut(
-    edition: LocalRegistry,
-    flows: list[tuple[Dataflow, DataStructure]],
-    bound: list[tuple[DataflowBinding, DataStructure]],
-) -> dict[str, str]:
-    """Replace each codelist that can be cut by its partial; the full fingerprint of each, by URN."""
+def _cut(edition: LocalRegistry, flows: list[tuple[Dataflow, DataStructure]]) -> dict[str, str]:
+    """Replace each codelist that can be cut by its partial; the full fingerprint of each, by URN.
+
+    The codes kept are those of every binding in the builder; a dataflow of
+    `flows` with no binding keeps the codelists it enumerates full.
+    """
     used: dict[str, set[str]] = {}
     full: set[str] = set()
-    observed = {str(binding.dataflow.urn) for binding, _ in bound}
+    bound = _bound(edition)
+    observed = {str(flow.urn) for flow, _, _ in bound}
     for flow, dsd in flows:
         if str(flow.urn) not in observed:
             full |= set(_components(dsd).values())
-    for binding, dsd in bound:
+    for _, binding, dsd in bound:
         _observed_codes(edition, binding, dsd, used, full)
     placed, referenced = _code_references(edition)
     full |= placed
-    for urn, codes in _constraint_codes(edition, flows).items():
+    served = {str(flow.urn): (flow, dsd) for flow, dsd in flows}
+    served.update({str(flow.urn): (flow, dsd) for flow, _, dsd in bound})
+    for urn, codes in _constraint_codes(edition, list(served.values())).items():
         used.setdefault(urn, set()).update(codes)
     cut: dict[str, str] = {}
     for urn in sorted(set(used) - full):

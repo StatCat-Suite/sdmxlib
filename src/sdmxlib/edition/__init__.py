@@ -12,7 +12,9 @@ an ETag keys on. ``LocalRegistry.edition(edition_dir)`` opens it read-only.
 what such a copy needs for another tool; `verify_remote` checks the
 files a server reads from object storage by size and a digest the store keeps; `build_edition`
 builds one from dataflows' closures at a registry and the observations a
-producer holds, cutting codelists to partials; and `fetch_edition` lands
+producer holds, cutting codelists to partials; `fill_edition` does the same
+into a builder its caller opened and seals, and `fill_structures` fills one
+with a structure product's full artefacts; and `fetch_edition` lands
 one dataflow from an SDMX REST source as a sealed edition, its provenance
 recorded. `apply_overlays` changes display annotations without a rebuild,
 `effective_token` is what a cache keys on when it does, and `fold_overlays`
@@ -44,7 +46,7 @@ from sdmxlib.edition._check import Check, Profile, Report, check_edition, check_
 from sdmxlib.edition._finding import Finding
 from sdmxlib.edition._copy import edition_files, copy_edition
 from sdmxlib.edition._remote import RemoteFile, content_crc32c, content_md5, verify_remote
-from sdmxlib.edition._build import build_edition
+from sdmxlib.edition._build import build_edition, fill_edition, fill_structures
 from sdmxlib.edition._fetch import fetch_edition
 from sdmxlib.edition._overlay import (
     OVERLAY_FORMAT,
@@ -135,6 +137,8 @@ __all__ = [
     "edition_files",
     "effective_token",
     "fetch_edition",
+    "fill_edition",
+    "fill_structures",
     "fold_overlays",
     "list_editions",
     "list_files",

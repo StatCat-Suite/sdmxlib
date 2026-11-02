@@ -116,6 +116,7 @@ nav:
           - Worked solutions: design/query-language-cookbook.md
       - Sharded bundle catalog: design/sharded-bundle-catalog.md
       - Sharded bundle catalog plan: design/sharded-bundle-catalog-plan.md
+      - Open builders and structure products: design/open-builder-structures.md
       - EGM reviews and drift reports: design/egm/README.md
       - Data plane:
           - Querying observations without SQL: design/data-plane-query.md

@@ -34,7 +34,10 @@ seals through `seal(extensions=...)`.
   implements, and `Profile` is the profile literal. Findings are `Finding`s
   (`_finding.py`). An argument the profile does not use (`structures=` at
   `open`, `remote=` at `publish`, `lookup=` or `fingerprints=` outside
-  `receive`) raises `ValueError`.
+  `receive`) raises `ValueError`. `structures=` takes one edition or a
+  sequence of them, and a partial is checked against the one holding its
+  full artefact with its `partial_of` fingerprint; an empty sequence raises
+  `ValueError`.
 - `check_on_open` (`_check.py`): runs one profile per call. Without a stamp
   for this `(product_id, edition id, manifest sha256)` it runs `receive` and writes
   the stamp when the report is clean; with one it runs `open`. An unreadable
@@ -45,9 +48,18 @@ seals through `seal(extensions=...)`.
 - `verify_remote`, `RemoteFile`, `content_md5` and `content_crc32c`
   (`_remote.py`): check files in an object store by size and digest. The
   digests are the base64 values used in headers.
-- `build_edition` (`_build.py`): builds an edition from dataflow closures and
-  producer observations. With `partials=True` (the default) it cuts codelists
-  down to partials.
+- `build_edition` (`_build.py`): builds a new product's first edition from
+  dataflow closures and producer observations. With `partials=True` (the
+  default) it cuts codelists down to partials. It opens the builder, calls
+  `fill_edition` and seals.
+- `fill_edition` (`_build.py`): adds dataflow closures and observations to a
+  builder the caller opened, cuts its codelists, and returns the `partial_of`
+  mapping for the caller's `seal`. It keeps what the builder held; the cut
+  covers every binding in the builder (GH-347).
+- `fill_structures` (`_build.py`): copies full artefacts into a builder for a
+  structure product, selected by family, agency, id pattern and URN. It
+  refuses dataflows, bindings, partials and an empty selection, and adds
+  nothing the selected artefacts reference (GH-347).
 - `fetch_edition` (`_fetch.py`): fetches one dataflow over SDMX REST into a new
   sealed edition that records its `Provenance`. It calls `build_edition`
   with `partials=False`.
@@ -82,6 +94,10 @@ seals through `seal(extensions=...)`.
 
 - An edition is never rewritten. `seal` raises `ManifestError`
   when `manifest.json` already exists.
+- `seal` records `partial_of` for a partial its `partial_of=` names, and
+  otherwise the value the previous edition's manifest records for it.
+- `fill_edition` and `fill_structures` never open, close or seal the
+  builder. `fill_structures` checks its whole selection before it writes.
 - `seal` requires a `edition_id` in the meta store, which
   `LocalRegistry.build` sets. It then works in this order: `settle_lake` (when
   `tables.ducklake` exists), `clear_availability`, the binding survey (when

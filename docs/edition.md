@@ -152,7 +152,7 @@ file:
 | `stability` | required | `"semantic"` for a final semantic version (three numeric parts, no extension, major at least 1), which SDMX 3.0 holds immutable; `"legacy"` for any other. |
 | `partial` | required | `true` for a partial item scheme, a subset of the full one. |
 | `fingerprint` | required | The artefact fingerprint (§9): the SHA-256 of its canonical text, lowercase hex. |
-| `partial_of` | optional | For a partial, the artefact fingerprint of the full artefact the producer cut it from (`seal(partial_of=...)`). A catalog compares it with the full artefact's entry where that is published, so the partial's items never need to be in the manifest. Absent for a full artefact, and for a partial whose producer did not record it. Added in 2.1. |
+| `partial_of` | optional | For a partial, the artefact fingerprint of the full artefact the producer cut it from (`seal(partial_of=...)`). A catalog compares it with the full artefact's entry where that is published, so the partial's items never need to be in the manifest. A partial `seal(partial_of=...)` does not name keeps the value the previous edition's manifest records. Absent for a full artefact, and for a partial whose producer did not record it. Added in 2.1. |
 
 ### `Provenance`
 
@@ -595,7 +595,7 @@ not only the first:
 | `references` | every reference in the store names an artefact or an item in the store | yes | yes | no | continues |
 | `fingerprints` | every artefact, binding and content fingerprint, recomputed, is the manifest's (§9) | yes | with `fingerprints=True` | no | continues |
 | `availability` | every coded column holds codes of its enumeration or `NULL`, and the stored availability is the data's: each dimension's values and the observation count, rescanned (§4) | yes | no | no | continues |
-| `partials` | every partial whose entry records `partial_of` has a full artefact at its URN in the `structures=` edition with that fingerprint, and the partial's items, each under the same parent, are among the full artefact's; a codelist's, concept scheme's and category scheme's items are compared, another scheme's fingerprint alone | with `structures=` | with `structures=` | no | continues |
+| `partials` | every partial whose entry records `partial_of` has a full artefact at its URN with that fingerprint in one of the `structures=` editions (one edition, or a sequence of structure products), and the partial's items, each under the same parent, are among the full artefact's; a codelist's, concept scheme's and category scheme's items are compared, another scheme's fingerprint alone | with `structures=` | with `structures=` | no | continues |
 
 A store file that cannot be read, a damaged `metadata.duckdb` or `tables.ducklake`,
 is a finding under the check that tried to read it, and ends the run.
@@ -769,6 +769,21 @@ sdmxlib also produces editions itself:
   ancestors, and records `partial_of`; a codelist a hierarchy places stays
   full, since SDMX has no partial hierarchy. `fetch_edition` is a call to it
   with every codelist full.
+- `fill_edition(builder, source, dataflows, observations=...)` does
+  `build_edition`'s work in a builder the caller opened with
+  `LocalRegistry.build`, empty or on a previous edition, and returns the
+  `partial_of` mapping for the caller's `seal(partial_of=...)`. What the
+  builder held is kept: the cut covers every binding in it, so a codelist two
+  dataflows share keeps the codes of both when one is republished.
+  `build_edition` opens a new product, calls it, and seals.
+- `fill_structures(builder, source, families=..., agency=..., ids=..., artefacts=...)`
+  fills a builder with the full artefacts of a structure product: those of
+  the classes in `families`, of `agency`, whose id matches an `ids` pattern
+  (`SGC*`), and those `artefacts` names by URN. It refuses a dataflow or a
+  binding, a URN the source does not hold or holds as a partial, and an
+  empty selection. A data product's partials are then checked with
+  `check_edition(at="publish", structures=[...])` against every structure
+  product they were cut from.
 - `sdmxlib.testing.synthetic_edition(path, shape, seed=...)` builds an
   edition of a given `Shape` deterministically from its seed, for tests and
   benchmarks. With `seal=False` it stops before the seal and returns the open
