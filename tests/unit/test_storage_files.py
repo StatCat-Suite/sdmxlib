@@ -1,5 +1,6 @@
 """Files complete before they are visible, and fsynced once they are (GH-335; sharded catalog spec §6.6, §6.7)."""
 
+import errno
 import os
 import stat
 import sys
@@ -118,6 +119,56 @@ def test_on_windows_a_directory_is_not_opened_for_fsync(tmp_path: Path, monkeypa
     with pytest.raises(PermissionError):
         fsync_directory(tmp_path)
     assert opened == [tmp_path]
+
+
+def test_create_exclusive_names_the_hard_link_requirement_when_the_link_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """exFAT, FAT and some FUSE and SMB mounts refuse ``os.link``; the error says the directory needs hard links."""
+
+    def unsupported(_src: object, _dst: object) -> None:
+        raise OSError(errno.ENOTSUP, os.strerror(errno.ENOTSUP))
+
+    monkeypatch.setattr(os, "link", unsupported)
+    target = tmp_path / MANIFEST_NAME
+    with pytest.raises(OSError, match="must be on a filesystem that supports hard links") as raised:
+        create_exclusive(target, b"{}")
+    assert raised.value.errno == errno.ENOTSUP
+    assert not isinstance(raised.value, FileExistsError)
+    assert str(tmp_path) in str(raised.value)
+    assert _left(tmp_path) == [], "nothing is written and the staged file is gone"
+
+
+@pytest.mark.parametrize("code", [errno.EINVAL, errno.ENOTSUP, errno.EOPNOTSUPP])
+def test_create_exclusive_succeeds_where_the_directory_cannot_be_fsynced(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, code: int
+) -> None:
+    """A mount without directory fsync raises one of these; the file is already in place, so the create succeeds."""
+    real: Callable[[int], None] = os.fsync
+
+    def no_directory_fsync(fd: int) -> None:
+        if stat.S_ISDIR(os.fstat(fd).st_mode):
+            raise OSError(code, os.strerror(code))
+        real(fd)
+
+    monkeypatch.setattr(os, "fsync", no_directory_fsync)
+    target = tmp_path / "CURRENT"
+    create_exclusive(target, b"1\n")
+    assert target.read_bytes() == b"1\n"
+
+
+def test_any_other_directory_fsync_error_propagates(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    real: Callable[[int], None] = os.fsync
+
+    def failing_disk(fd: int) -> None:
+        if stat.S_ISDIR(os.fstat(fd).st_mode):
+            raise OSError(errno.EIO, os.strerror(errno.EIO))
+        real(fd)
+
+    monkeypatch.setattr(os, "fsync", failing_disk)
+    with pytest.raises(OSError, match="Input/output error") as raised:
+        create_exclusive(tmp_path / "CURRENT", b"1\n")
+    assert raised.value.errno == errno.EIO
 
 
 def test_a_staged_name_is_recognised_for_its_file_alone() -> None:

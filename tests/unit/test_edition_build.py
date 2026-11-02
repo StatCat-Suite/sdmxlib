@@ -4,7 +4,7 @@ The source is a published bundle holding a dataflow `F` over a data structure
 whose `GEO` dimension a hierarchical codelist enumerates, an allowed
 constraint on `F`, and artefacts outside `F`'s closure. A `RestRegistry`
 source is covered by the FMR cassettes in
-`tests/integration/test_edition_fetch_live.py`.
+`tests/integration/test_bundle_fetch_live.py`.
 """
 
 from pathlib import Path

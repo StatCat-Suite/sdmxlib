@@ -82,11 +82,15 @@ of the store that edition ships (`_trim.py`).
 - `create_exclusive(path, data)` (`_files.py`, exported): creates a file
   complete before it is visible: staged beside `path`, fsynced, hard-linked
   to `path` (`FileExistsError` when another writer created it first), the
-  staged file unlinked, the directory fsynced (spec §6.6, GH-335).
+  staged file unlinked, the directory fsynced (spec §6.6, GH-335). Any
+  other `os.link` failure, as on exFAT, FAT or a FUSE or SMB mount without
+  hard links, is re-raised as an `OSError` with the same `errno` whose
+  message says the directory needs hard links (GH-343).
   `replace_durably` does the same with a replacing rename, for a file meant
   to be overwritten. `fsync_file`, `fsync_directory` and `is_staged` are the
   steps; `fsync_directory` does nothing on Windows, which cannot open a
-  directory for fsync.
+  directory for fsync, ignores `EINVAL`, `ENOTSUP` and `EOPNOTSUPP` from a
+  filesystem without directory fsync, and raises any other `OSError`.
 - `JsonValue` (`_manifest.py`, exported, GH-339): the type of a free-form
   JSON value in a manifest's `producer_fields` and `extensions` and an
   Inventory root's `extensions`. `unlisted(path)` (`_manifest.py`): whether

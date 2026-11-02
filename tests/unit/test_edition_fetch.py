@@ -1,7 +1,7 @@
 """`fetch_edition`'s refusals that need no network (GH-68).
 
 The fetch itself is replayed from recorded ECB responses in
-`tests/integration/test_edition_fetch_live.py`.
+`tests/integration/test_bundle_fetch_live.py`.
 """
 
 from pathlib import Path

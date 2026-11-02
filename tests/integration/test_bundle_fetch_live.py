@@ -12,7 +12,7 @@ against a local FMR 12.4.2 (`bench/fmr/README.md`) holding ECB's `EXR` closure
 and, submitted on top of it, `tests/integration/fmr/12.4.2/incoming.xml`:
 
     curl -u root:password -H "ACTION: REPLACE" --data-binary @tests/integration/fmr/12.4.2/incoming.xml http://localhost:8080/ws/secure/sdmxapi/rest/
-    uv run pytest tests/integration/test_edition_fetch_live.py -k fmr --record-mode=rewrite
+    uv run pytest tests/integration/test_bundle_fetch_live.py -k fmr --record-mode=rewrite
 """
 
 from pathlib import Path
