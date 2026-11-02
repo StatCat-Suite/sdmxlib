@@ -267,12 +267,15 @@ def _ducklake_versions(conn: duckdb.DuckDBPyConnection) -> tuple[str | None, str
     return extension, spec
 
 
-def artefact_entries(reg: EditionRegistry, partial_of: Mapping[str, str] | None = None) -> tuple[ArtefactEntry, ...]:
+def artefact_entries(
+    reg: EditionRegistry, partial_of: Mapping[str, str] | None = None, *, carried: Mapping[str, str] | None = None
+) -> tuple[ArtefactEntry, ...]:
     """Every maintainable artefact in the store but the bindings, by URN, each fingerprinted.
 
     Read one at a time and dropped, so memory holds one artefact: on the
     census edition the largest, a 499,138-node hierarchy, sets the peak.
-    `partial_of` gives a partial's `ArtefactEntry.partial_of`, by URN.
+    `partial_of` gives a partial's `ArtefactEntry.partial_of`, by URN, and
+    `carried` gives it for a partial `partial_of` does not name.
 
     Raises:
         ManifestError: If a `partial_of` URN names no partial in the store.
@@ -281,10 +284,12 @@ def artefact_entries(reg: EditionRegistry, partial_of: Mapping[str, str] | None 
         "SELECT urn, is_final, is_partial FROM sdmx.artefact WHERE artefact_type <> 'DataflowBinding' ORDER BY urn"
     ).fetchall()
     cuts = dict(partial_of or {})
-    unknown = sorted(set(cuts) - {urn for urn, _, partial in rows if partial})
+    partials = {urn for urn, _, partial in rows if partial}
+    unknown = sorted(set(cuts) - partials)
     if unknown:
         msg = f"partial_of names {', '.join(unknown)}, which the store holds as no partial artefact"
         raise ManifestError(msg)
+    cuts = {urn: fingerprint for urn, fingerprint in (carried or {}).items() if urn in partials} | cuts
     entries: list[ArtefactEntry] = []
     for urn, final, partial in rows:
         artefact = reg.get(SdmxUrn.parse(urn), eager=True)
@@ -510,7 +515,10 @@ def seal(
         partial_of: For each partial artefact the producer cut, by URN, the
             artefact fingerprint of the full one it was cut from, recorded as
             its `ArtefactEntry.partial_of`. `check_edition(at="publish",
-            structures=...)` checks each against the full artefact.
+            structures=...)` checks each against the full artefact. A partial
+            this does not name keeps the `partial_of` the previous edition's
+            manifest records for it, so a republish that does not cut it
+            again keeps its record.
 
     Returns:
         The manifest written.
@@ -536,7 +544,7 @@ def seal(
             raise ManifestError(msg)
         previous = meta_value(reg.connection, "previous")
         schema_version = get_schema_version(reg.connection) or ""
-        artefacts = artefact_entries(reg, partial_of)
+        artefacts = artefact_entries(reg, partial_of, carried=_carried_partials(root, previous))
         referenced: list[str] = []
         lake = (root / "tables.ducklake").exists()
         if lake:
@@ -627,6 +635,17 @@ def _survey_bindings(root: Path, reg: LocalRegistry, counts: Iterable[BindingCou
     if store:
         for binding, constraint, _ in surveyed:
             put_availability(reg.connection, str(binding.dataflow.urn), constraint)
+
+
+def _carried_partials(root: Path, previous: str | None) -> dict[str, str]:
+    """The `partial_of` the previous edition's manifest records, by URN; empty if it is not beside `root`."""
+    if previous is None:
+        return {}
+    try:
+        earlier = read_manifest(root.parent / previous)
+    except ManifestError:
+        return {}
+    return {a.urn: a.partial_of for a in earlier.artefacts if a.partial and a.partial_of is not None}
 
 
 def _carried(root: Path, previous: str | None) -> dict[str, EditionFile]:
