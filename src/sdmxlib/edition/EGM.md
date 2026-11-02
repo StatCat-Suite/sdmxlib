@@ -118,7 +118,8 @@ seals through `seal(extensions=...)`.
   tier 1, and other files to tier 2.
 - `copy_edition` skips a `data/` file already present with the same size and
   digest, raises when a copied file does not match, and refuses a destination
-  that is already sealed.
+  that is already sealed. Every file it copied is fsynced before the manifest
+  exists.
 - `check_on_open` writes a stamp only after a clean `receive` check, and only
   to a path made of exactly two plain components under the stamps directory.
 - `settle_lake` never deletes files from `data/`.
@@ -146,7 +147,9 @@ seals through `seal(extensions=...)`.
 - `seal` clears per-binding availability in `metadata.duckdb` and, when
   availability is enabled, stores it again.
 - `copy_edition` creates directories and copies files with `shutil.copyfile`,
-  then copies the detached signature and the manifest last.
+  then copies the detached signature. It fsyncs each copied file, the
+  signature included, and each directory it created or wrote into (with the
+  directory naming a created one), then creates the manifest last (GH-344).
 - `check_on_open` writes the JSON stamp `<stamps>/<product_id>/<edition_id>`
   with `storage._files.replace_durably`, which replaces any stamp there.
 - `fetch_edition` makes SDMX REST requests and creates a product directory.

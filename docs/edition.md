@@ -807,6 +807,9 @@ sdmxlib also produces editions itself:
 receives an edition and how a mirror is made. It copies the files the manifest
 lists, the data files into the `data_path` beside `destination`, checks each
 against its `size` and every digest the manifest records, and copies the manifest last, byte for byte.
+Before it creates the manifest it fsyncs every file it copied, the signature
+included, and every directory it created or wrote into, so after a power loss
+a sealed copy never lists a file whose bytes were not on disk.
 A data file already at the destination with the listed digest is kept, so
 receiving the next edition of a product copies only its new data files. An
 interrupted copy leaves a directory without a manifest, which readers refuse
