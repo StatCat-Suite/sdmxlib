@@ -447,12 +447,29 @@ def read_manifest(root: Path) -> Manifest:
         ManifestError: If there is none, it is malformed, or its major format
             version is not one this build reads.
     """
-    path = root / MANIFEST_NAME
+    return decode_manifest(read_manifest_bytes(root), root / MANIFEST_NAME)
+
+
+def read_manifest_bytes(root: Path) -> bytes:
+    """The bytes of the manifest of the edition at `root`, as `read_manifest` reads them.
+
+    Raises:
+        ManifestError: If there is none.
+    """
     try:
-        raw = path.read_bytes()
+        return (root / MANIFEST_NAME).read_bytes()
     except FileNotFoundError as exc:
         msg = f"{root} has no {MANIFEST_NAME}, so it is not a sealed edition"
         raise ManifestError(msg) from exc
+
+
+def decode_manifest(raw: bytes, path: Path) -> Manifest:
+    """The manifest `raw` holds, read from `path`, which the errors name.
+
+    Raises:
+        ManifestError: If it is malformed, or its major format version is not
+            one this build reads.
+    """
     try:
         found = msgspec.json.decode(raw, type=_FormatProbe).format_version
     except msgspec.MsgspecError as exc:

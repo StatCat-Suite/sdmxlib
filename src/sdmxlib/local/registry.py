@@ -31,6 +31,7 @@ stashes the URI; the DuckDB connection is opened by ``open()`` /
 """
 
 import functools
+import hashlib
 import logging
 import re
 import shutil
@@ -112,7 +113,9 @@ from sdmxlib.storage._manifest import (
     TABLES_NAME,
     Manifest,
     ManifestError,
+    decode_manifest,
     read_manifest,
+    read_manifest_bytes,
     refuse_engine_mismatch,
 )
 from sdmxlib.storage._trim import restore
@@ -1456,6 +1459,7 @@ class EditionRegistry(SessionFactory):
         remote: str | None = None,
         engine: EditionEngine | None = None,
         resolve_cache_items: int = DEFAULT_RESOLVE_CACHE_ITEMS,
+        manifest_sha256: str | None = None,
     ) -> EditionRegistry:
         """Open a sealed edition, read-only: artefacts and observations together.
 
@@ -1499,6 +1503,19 @@ class EditionRegistry(SessionFactory):
         edition is refused without the file being touched. It is `manifest`
         afterwards, whose ``token`` is what a cache keys on.
 
+        **The Inventory's digest.** A server routed to an edition by the
+        Inventory passes the entry's ``manifest_sha256``
+        (`sdmxlib.inventory.LiveEdition.manifest_sha256`). The bytes of
+        ``manifest.json`` are hashed before they are parsed, and an edition
+        whose manifest is not the one the Inventory recorded is refused: a
+        restored backup, a sync tool's conflict copy or a hand edit leaves a
+        manifest that is valid on its own (the sharded catalog spec §6.3)::
+
+            live = inventory.head("census-2021-cpt")
+            reg = sl.LocalRegistry.edition(
+                product / live.edition_id, engine=engine, manifest_sha256=live.manifest_sha256
+            )
+
         **Read-only.** ``metadata.duckdb`` opens with DuckDB's
         ``read_only`` and the lake attaches ``READ_ONLY``, so any number of
         processes may hold one edition open at once, and a checker can run
@@ -1525,6 +1542,9 @@ class EditionRegistry(SessionFactory):
                 beside `path` when None.
             engine: The engine to attach into; one of its own when None.
             resolve_cache_items: As the `LocalRegistry` constructor.
+            manifest_sha256: The SHA-256 of ``manifest.json`` the Inventory
+                records, as lowercase hex; the manifest is not checked
+                against one when None.
 
         Returns:
             An open, read-only registry over the edition.
@@ -1533,12 +1553,24 @@ class EditionRegistry(SessionFactory):
             StoreSchemaError: If the edition was built on another schema version.
             StoreFormatError: If its DuckDB storage version or its DuckLake
                 format is newer than this build reads.
-            ManifestError: If there is no manifest, or it is malformed or in a
-                format this build cannot read.
+            ManifestError: If there is no manifest, it is malformed or in a
+                format this build cannot read, or its SHA-256 is not
+                `manifest_sha256`.
             ValueError: If `remote` is not a URI DuckDB reads.
         """
         root = Path(path)
-        manifest = read_manifest(root)
+        raw = read_manifest_bytes(root)
+        if manifest_sha256 is not None:
+            found = hashlib.sha256(raw).hexdigest()
+            if found != manifest_sha256:
+                msg = (
+                    f"edition {root.name} ({root}) was not opened: its {MANIFEST_NAME} has SHA-256 {found}, "
+                    f"and the Inventory records {manifest_sha256}. The directory holds another manifest than "
+                    f"the one recorded (a restored backup, a sync conflict copy or an edit); copy the edition "
+                    f"again from its source."
+                )
+                raise ManifestError(msg)
+        manifest = decode_manifest(raw, root / MANIFEST_NAME)
         if manifest.schema_version != SCHEMA_VERSION:
             msg = (
                 f"{root} is an edition on store schema {manifest.schema_version} (its manifest says so), "

@@ -372,7 +372,7 @@ Ownership (statcatlib RFC decision 8): sdmxlib owns the JSON schemas, validation
 | `edition_id` | required | The edition. |
 | `previous` | required | Its manifest's `previous`. |
 | `state` | required | `embargoed`, `live`, `superseded` or `withdrawn` (§6.4). |
-| `manifest_sha256` | required | SHA-256 of the edition's `manifest.json`. A reader verifies it before reading anything else. |
+| `manifest_sha256` | required | SHA-256 of the edition's `manifest.json`. A reader verifies it before reading anything else: `LocalRegistry.edition(path, manifest_sha256=)` hashes the manifest's bytes before parsing them and refuses a mismatch (GH-336). |
 | `schema_version` | required | The store schema the edition was written at. |
 | `state_changed_at` | required | When the entry took its state, an RFC 3339 UTC instant. |
 | `release_at` | required | For an `embargoed` entry, the instant it becomes releasable, or `null` for no scheduled release; `null` otherwise. |

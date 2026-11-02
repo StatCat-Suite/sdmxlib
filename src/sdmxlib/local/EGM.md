@@ -24,12 +24,15 @@ plane: it attaches the catalogs, serves observation reads and takes writes.
   rebuild a store on another schema version; `target=` names a format from
   `formats.gaps.TARGETS`, and `add` then refuses content that format cannot
   represent.
-- `EditionRegistry.bundle(...)` (`registry.py`): opens a sealed edition
+- `EditionRegistry.edition(...)` (`registry.py`): opens a sealed edition
   read-only and attaches its lake on first use. It reads the manifest first
   and refuses a schema-version mismatch (`StoreSchemaError`) and a DuckDB
   storage or DuckLake format newer than this build reads (`StoreFormatError`,
-  through `refuse_engine_mismatch`). It returns a `EditionRegistry`, also when
-  called as `LocalRegistry.edition`.
+  through `refuse_engine_mismatch`). With `manifest_sha256=` it hashes the
+  `manifest.json` bytes before parsing them and refuses a digest other than
+  the one given (`ManifestError`, naming the edition and both digests;
+  GH-336). It returns a `EditionRegistry`, also when called as
+  `LocalRegistry.edition`.
 - `EditionRegistry.from_connection(...)` (`registry.py`): wraps a DuckDB
   connection the caller owns. The caller keeps its lifecycle.
 - `LocalRegistry` (`registry.py`): `EditionRegistry` plus writes: `add`,

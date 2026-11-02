@@ -60,7 +60,9 @@ of the store that edition ships (`_trim.py`).
   missing.
 - `Manifest`, `read_manifest`, `encode_manifest`, `refuse_engine_mismatch` and
   `storage_version_of` (`_manifest.py`): the msgspec edition manifest and the
-  DuckDB storage-version checks. The module also defines `ManifestError`,
+  DuckDB storage-version checks. `read_manifest` is `read_manifest_bytes`
+  then `decode_manifest`, split so `LocalRegistry.edition` hashes the bytes
+  it parses. The module also defines `ManifestError`,
   `StoreFormatError`, `MANIFEST_NAME`, `FORMAT_VERSION`, `DATA_PATH`,
   `DUCKLAKE_SPEC_VERSION`, `edition_storage_version`,
   `engine_storage_version` and `generate_schema` (the manifest's JSON Schema).
