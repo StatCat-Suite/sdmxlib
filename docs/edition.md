@@ -736,8 +736,12 @@ every check.
    file is always `remote`. It lists the edition's files and every data file
    its catalog references, counts
    each binding's rows through DuckLake, records the engine versions and
-   every artefact, and writes the manifest to a
-   temporary file renamed into place, so a reader never sees half of one. A
+   every artefact, and creates the manifest with
+   `sdmxlib.storage.create_exclusive`: a staged file, fsynced and hard-linked
+   into place, then the directory fsynced. A reader never sees half of one, a
+   power loss never leaves an empty one, and a second seal racing it is
+   refused. The journal entry and the compacted `metadata.duckdb` are
+   fsynced the same way before the manifest is written. A
    data file the previous edition's manifest lists at the same size keeps
    that manifest's digests, with `carried_from` naming its edition id, so a
    new edition hashes only the files it wrote.

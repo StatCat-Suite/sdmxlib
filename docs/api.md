@@ -66,6 +66,14 @@ Persistent DuckDB-backed structural store, the in-memory registry, and the data 
 
 ---
 
+::: sdmxlib.storage.create_exclusive
+
+---
+
+::: sdmxlib.storage.JsonValue
+
+---
+
 ### Editions
 
 An edition sealed as an artefact: its manifest, an `edition_id` per edition, and a checksum per file; and the product directory's editions, unsealed ones included.
@@ -293,6 +301,10 @@ Which edition of each product in a catalog is live: the documents, the rules tha
 ---
 
 ::: sdmxlib.inventory.TransitionError
+
+---
+
+::: sdmxlib.inventory.Rule
 
 ---
 

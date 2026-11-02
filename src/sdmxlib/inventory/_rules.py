@@ -37,6 +37,7 @@ from sdmxlib.inventory._format import (
     State,
     StructureSource,
     Tombstone,
+    check_event_kind,
     encode,
     leaf_path,
     sha256_hex,
@@ -44,8 +45,19 @@ from sdmxlib.inventory._format import (
 )
 from sdmxlib.storage._manifest import JsonValue, Producer
 
-#: The rule a refused transition breaks.
 type Rule = Literal["fast-forward", "if-live", "not-due", "state", "tombstone", "duplicate", "unknown", "kind"]
+"""The rule a refused transition breaks: `TransitionError.rule`.
+
+- ``fast-forward``: the edition is not built on the live edition at its
+  schema, or on the same base as the edition it supersedes.
+- ``if-live``: the live edition is not the one a rollback names.
+- ``not-due``: an embargoed edition's ``release_at`` has not passed.
+- ``state``: the entry is not in a state the operation moves from.
+- ``tombstone``: the edition is retired, or `reinstate` names one that is not.
+- ``duplicate``: the edition is recorded already.
+- ``unknown``: the product records no such edition.
+- ``kind``: the product's kind differs from the one recorded.
+"""
 
 
 class TransitionError(InventoryError):
@@ -486,9 +498,13 @@ def next_root(
 
     Returns:
         The root, numbered ``previous.seq + 1``.
+
+    Raises:
+        InventoryError: If ``event.kind`` is not an `EventKind`.
     """
     now = _aware(now)
     seq = 1 if previous is None else previous.seq + 1
+    check_event_kind(event, seq)
     return Root(
         format_version=INVENTORY_FORMAT,
         seq=seq,

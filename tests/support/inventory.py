@@ -2,10 +2,9 @@
 
 statcatlib owns the real writer. This one follows the spec's write protocol
 (§6.6) closely enough to drive the reader and the rules: leaves first, then
-the root created exclusively through a no-replace hard link, then ``CURRENT``.
+the root created exclusively through `sdmxlib.storage.create_exclusive`, then ``CURRENT``.
 """
 
-import os
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from pathlib import Path
@@ -28,31 +27,11 @@ from sdmxlib.inventory import (
     root_path,
     sha256_hex,
 )
+from sdmxlib.storage import create_exclusive
 from sdmxlib.storage._manifest import Producer
 
 PRODUCER = Producer(name="tests", version="0")
 NOW = datetime(2026, 10, 9, 12, 30, tzinfo=UTC)
-
-
-class LostRaceError(Exception):
-    """Another writer created the version first."""
-
-
-def create_exclusive(path: Path, data: bytes) -> None:
-    """Write `data` to `path` only if nothing is there, complete before it is visible.
-
-    Raises:
-        LostRaceError: If `path` exists.
-    """
-    path.parent.mkdir(parents=True, exist_ok=True)
-    staged = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    staged.write_bytes(data)
-    try:
-        os.link(staged, path)
-    except FileExistsError as exc:
-        raise LostRaceError(str(path)) from exc
-    finally:
-        staged.unlink()
 
 
 def new_catalog(root: Path, catalog_id: str = "01a18e00-0000-7000-8000-000000000000", restore_epoch: int = 0) -> None:
@@ -78,7 +57,7 @@ def write_version(
         The root written.
 
     Raises:
-        LostRaceError: If another writer created the version first.
+        FileExistsError: If another writer created the version first.
     """
     inventory = FullInventory(local_fetch(root))
     try:

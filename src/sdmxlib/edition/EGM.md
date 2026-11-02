@@ -90,8 +90,14 @@ seals through `seal(extensions=...)`.
   for writing. An edition refused at the survey or at the `*.wal` check is
   left settled with its availability cleared; a rerun after fixing the cause
   redoes both.
-- `seal` and `copy_edition` both write the manifest to a `.tmp` file
-  and rename it into place.
+- `seal` and `copy_edition` both create the manifest with
+  `storage.create_exclusive`: staged, fsynced, hard-linked into place, the
+  directory fsynced. A manifest another process created first is never
+  replaced; both raise `ManifestError`. `seal` writes the journal entry
+  with `replace_durably` and fsyncs the compacted store before its rename
+  (GH-335).
+- `list_files` and the `files` check skip `storage._manifest.unlisted`
+  names: the manifest, its signature, and a staged manifest a crash left.
 - Data files are always tier 3. `metadata.duckdb` and `tables.ducklake` default to
   tier 1, and other files to tier 2.
 - `copy_edition` skips a `data/` file already present with the same size and
@@ -125,8 +131,8 @@ seals through `seal(extensions=...)`.
   availability is enabled, stores it again.
 - `copy_edition` creates directories and copies files with `shutil.copyfile`,
   then copies the detached signature and the manifest last.
-- `check_on_open` writes the JSON stamp `<stamps>/<product_id>/<edition_id>` through
-  a `.partial` file and a rename.
+- `check_on_open` writes the JSON stamp `<stamps>/<product_id>/<edition_id>`
+  with `storage._files.replace_durably`, which replaces any stamp there.
 - `fetch_edition` makes SDMX REST requests and creates a product directory.
   `verify_remote` and `check_edition(remote=...)` read from object storage.
 

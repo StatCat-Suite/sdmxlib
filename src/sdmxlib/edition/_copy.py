@@ -19,6 +19,7 @@ from collections.abc import Collection
 from pathlib import Path
 
 from sdmxlib.edition._write import digests_of, recorded
+from sdmxlib.storage._files import create_exclusive
 from sdmxlib.storage._manifest import (
     MANIFEST_NAME,
     SIGNATURE_NAME,
@@ -80,9 +81,11 @@ def copy_edition(
             raise ManifestError(msg)
     if (src / SIGNATURE_NAME).is_file():
         shutil.copyfile(src / SIGNATURE_NAME, dst / SIGNATURE_NAME)
-    staged = dst / f"{MANIFEST_NAME}.tmp"
-    shutil.copyfile(src / MANIFEST_NAME, staged)
-    staged.replace(dst / MANIFEST_NAME)
+    try:
+        create_exclusive(dst / MANIFEST_NAME, (src / MANIFEST_NAME).read_bytes())
+    except FileExistsError as exc:
+        msg = f"{dst} was sealed by another process while this copy ran; an edition is never rewritten"
+        raise ManifestError(msg) from exc
     return manifest
 
 

@@ -34,14 +34,15 @@ from sdmxlib.local.object_store import sizes
 from sdmxlib.local.registry import EditionRegistry, LocalRegistry
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.urn import SdmxUrn
+from sdmxlib.storage._files import replace_durably
 from sdmxlib.storage._manifest import (
     MANIFEST_NAME,
-    UNLISTED,
     EditionFile,
     Manifest,
     ManifestError,
     StoreFormatError,
     read_manifest,
+    unlisted,
 )
 from sdmxlib.storage._references import unresolved_references
 from sdmxlib.storage._tags import stale_tags
@@ -333,28 +334,21 @@ def _stamped(stamp: Path, digest: str) -> bool:
 
 
 def _write_stamp(stamp: Path, digest: str, report: Report) -> None:
-    """Record `report` under `stamp`, whole or not at all: a rename puts it in place."""
-    stamp.parent.mkdir(parents=True, exist_ok=True)
-    partial = stamp.with_name(f".{stamp.name}.partial")
-    partial.write_text(
-        json.dumps(
-            {
-                "manifest_sha256": digest,
-                "at": report.at,
-                "checked": list(report.checked),
-                "verified_at": datetime.now(UTC).isoformat(),
-            },
-            indent=2,
-        )
-    )
-    partial.replace(stamp)
+    """Record `report` under `stamp`, whole or not at all, replacing any stamp there."""
+    record = {
+        "manifest_sha256": digest,
+        "at": report.at,
+        "checked": list(report.checked),
+        "verified_at": datetime.now(UTC).isoformat(),
+    }
+    replace_durably(stamp, json.dumps(record, indent=2).encode())
 
 
 def _files(root: Path, manifest: Manifest, at: Profile, *, remote: bool) -> Iterable[Finding]:
     on_disk = {
         p.relative_to(root).as_posix(): p
         for p in sorted(root.rglob("*"))
-        if p.is_file() and p.relative_to(root).as_posix() not in UNLISTED
+        if p.is_file() and not unlisted(p.relative_to(root).as_posix())
     }
     data = root / manifest.data_path
     for entry in manifest.files:

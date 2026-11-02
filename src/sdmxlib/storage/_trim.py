@@ -29,6 +29,7 @@ from pathlib import Path
 import duckdb
 
 from sdmxlib._duckdb import first
+from sdmxlib.storage._files import fsync_directory, fsync_file
 from sdmxlib.storage.schema import create_schema
 
 #: Tables whose keys a sealed store leaves out.
@@ -131,7 +132,9 @@ def compact_for_publication(meta: Path) -> None:
     finally:
         conn.close()
     mid.unlink()
+    fsync_file(new)
     new.replace(meta)
+    fsync_directory(meta.parent)
 
 
 def restore(conn: duckdb.DuckDBPyConnection) -> None:

@@ -372,3 +372,18 @@ def test_the_raises_reader_sees_the_section() -> None:
         "Raises:\n    ValueError: If bad.\n    sl.SliceError: If\n        sliced.\n"
     )
     assert _raised(doc) == ["ValueError", "sl.SliceError"]
+
+
+@pytest.mark.parametrize(
+    ("package", "name", "private"),
+    [
+        ("sdmxlib.inventory", "Rule", "sdmxlib.inventory._rules"),
+        ("sdmxlib.storage", "JsonValue", "sdmxlib.storage._manifest"),
+    ],
+)
+def test_the_types_an_inventory_writer_annotates_with_are_public(package: str, name: str, private: str) -> None:
+    """statcatlib's writer names both in its annotations (GH-339); the private spelling keeps working."""
+    public = importlib.import_module(package)
+    assert name in public.__all__
+    assert getattr(public, name) is getattr(importlib.import_module(private), name)
+    assert f"{package}.{name}" in _RENDERED, "listed in docs/api.md"

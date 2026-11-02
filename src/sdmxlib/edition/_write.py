@@ -26,6 +26,7 @@ from sdmxlib.local.registry import EditionRegistry, LocalRegistry
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.model.urn import SdmxUrn
+from sdmxlib.storage._files import create_exclusive
 from sdmxlib.storage._layout import JournalEntry, write_journal
 from sdmxlib.storage._manifest import (
     DATA_PATH,
@@ -33,7 +34,6 @@ from sdmxlib.storage._manifest import (
     MANIFEST_NAME,
     METADATA_NAME,
     TABLES_NAME,
-    UNLISTED,
     ArtefactEntry,
     BindingCount,
     EditionFile,
@@ -45,6 +45,7 @@ from sdmxlib.storage._manifest import (
     edition_storage_version,
     encode_manifest,
     read_manifest,
+    unlisted,
 )
 from sdmxlib.storage._trim import compact_for_publication
 from sdmxlib.storage.schema import get_schema_version, meta_value
@@ -170,7 +171,7 @@ def list_files(root: Path, tiers: Mapping[str, Tier] | None = None) -> tuple[Edi
     Returns:
         Each file's path from the root, size, digests and tier.
     """
-    files = sorted(p for p in root.rglob("*") if p.is_file() and p.relative_to(root).as_posix() not in UNLISTED)
+    files = sorted(p for p in root.rglob("*") if p.is_file() and not unlisted(p.relative_to(root).as_posix()))
     entries: list[EditionFile] = []
     for p in files:
         path = p.relative_to(root).as_posix()
@@ -596,9 +597,11 @@ def seal(
         extensions=extensions or {},
         provenance=provenance,
     )
-    staged = root / f"{MANIFEST_NAME}.tmp"
-    staged.write_bytes(encode_manifest(manifest))
-    staged.replace(root / MANIFEST_NAME)
+    try:
+        create_exclusive(root / MANIFEST_NAME, encode_manifest(manifest))
+    except FileExistsError as exc:
+        msg = f"{root} was sealed by another process while this seal ran, and an edition is never rewritten"
+        raise ManifestError(msg) from exc
     return manifest
 
 

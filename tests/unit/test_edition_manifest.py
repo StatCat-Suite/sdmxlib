@@ -6,6 +6,7 @@ per file is for integrity. These tests pin what a cache relies on: the token
 changes with each publication and never when one is read.
 """
 
+import hashlib
 import json
 import uuid
 from pathlib import Path
@@ -117,6 +118,31 @@ def test_a_manifest_on_another_schema_is_refused_before_the_store_is_opened(bund
     path.write_text(json.dumps(json.loads(path.read_text()) | {"schema_version": "2.19"}))
     (bundle / "metadata.duckdb").write_bytes(b"not a duckdb file")
     with pytest.raises(sl.StoreSchemaError, match=r"store schema 2\.19 \(its manifest says so\)"):
+        sl.LocalRegistry.edition(bundle)
+
+
+def test_an_edition_whose_manifest_is_the_inventorys_opens(bundle: Path) -> None:
+    """The digest the Inventory records for the edition (GH-336)."""
+    seal(bundle, product_id="b", producer=_PRODUCER)
+    digest = hashlib.sha256((bundle / MANIFEST_NAME).read_bytes()).hexdigest()
+    with sl.LocalRegistry.edition(bundle, manifest_sha256=digest) as reg:
+        assert reg.obs(_FLOW.urn).count() == 200_000
+
+
+def test_a_manifest_other_than_the_inventorys_is_refused_before_it_is_parsed(bundle: Path) -> None:
+    """The bytes are hashed first: a manifest that would not parse is refused for its digest (GH-336)."""
+    seal(bundle, product_id="b", producer=_PRODUCER)
+    path = bundle / MANIFEST_NAME
+    recorded = hashlib.sha256(path.read_bytes()).hexdigest()
+    path.write_text(json.dumps(json.loads(path.read_text()) | {"producer_fields": {"edited": True}}))
+    found = hashlib.sha256(path.read_bytes()).hexdigest()
+    with pytest.raises(ManifestError, match=rf"edition {bundle.name} .* has SHA-256 {found}, .* records {recorded}"):
+        sl.LocalRegistry.edition(bundle, manifest_sha256=recorded)
+    path.write_text("{not json")
+    found = hashlib.sha256(path.read_bytes()).hexdigest()
+    with pytest.raises(ManifestError, match=rf"SHA-256 {found}, and the Inventory records {recorded}"):
+        sl.LocalRegistry.edition(bundle, manifest_sha256=recorded)
+    with pytest.raises(ManifestError, match="not an edition manifest"):
         sl.LocalRegistry.edition(bundle)
 
 
