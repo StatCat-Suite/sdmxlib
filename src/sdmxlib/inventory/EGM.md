@@ -27,7 +27,8 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
 - Rules (`_rules.py`): `head`, `record`, `release`, `due`, `release_due`,
   `cancel`, `supersede_pending`, `rollback`, `retire`, `reinstate`,
   `leaf_ref` and `next_root`. Each takes a product's current leaf and
-  returns the next, or raises `TransitionError` with its `rule`.
+  returns the next, or raises `TransitionError` with its `rule`, a `Rule`
+  (exported, GH-339).
 - Reading (`_reader.py`): `LiveInventory(fetch, schema_version=...)` and
   `FullInventory(fetch)`, each with `refresh()`, `seq`, `restore_epoch` and
   `skipped`; `LiveInventory.editions()`, `products()` and `head(product)`

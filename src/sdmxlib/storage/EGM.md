@@ -87,8 +87,10 @@ of the store that edition ships (`_trim.py`).
   to be overwritten. `fsync_file`, `fsync_directory` and `is_staged` are the
   steps; `fsync_directory` does nothing on Windows, which cannot open a
   directory for fsync.
-- `unlisted(path)` (`_manifest.py`): whether the manifest never lists a file
-  of the edition directory.
+- `JsonValue` (`_manifest.py`, exported, GH-339): the type of a free-form
+  JSON value in a manifest's `producer_fields` and `extensions` and an
+  Inventory root's `extensions`. `unlisted(path)` (`_manifest.py`): whether
+  the manifest never lists a file of the edition directory.
 - `_layout.py`: a product directory's editions. `list_editions`,
   `discard` and `refuse_second_unsealed` (which `LocalRegistry.build` calls);
   the seal journal, `write_journal`, `read_journal` and `clear_journal`

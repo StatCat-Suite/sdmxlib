@@ -66,9 +66,14 @@ REQUIRED_DIGESTS = ("sha256", "md5", "crc32c")
 #: ``data/`` every edition of a product shares.
 DATA_PATH = "../data/"
 
-#: A JSON value of any kind: what `product` and `extensions` carry without interpreting.
-#: Annotated so the generated schema can say so; `object` keeps it inert.
 type JsonValue = Annotated[object, msgspec.Meta(extra_json_schema={"description": "A JSON value of any kind."})]
+"""A JSON value of any kind, carried without interpretation.
+
+The type of a manifest's ``producer_fields`` and ``extensions`` values and
+an Inventory root's ``extensions`` sections. It is `object`, so a reader
+narrows a value before using it; the annotation gives the generated JSON
+Schema its description.
+"""
 
 
 #: The newest DuckLake catalog format this build reads: the one its DuckLake

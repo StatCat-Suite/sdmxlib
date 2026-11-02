@@ -12,7 +12,7 @@ validation, the state-transition rules and a reader; statcatlib writes it.
   `supersede_pending`, `rollback`, `retire`, `reinstate`, `repairable`,
   `next_root`):
   pure functions over a product's leaf that return the next one or raise
-  `TransitionError`, naming the rule.
+  `TransitionError`, naming the `Rule`.
 - **Reading** (`LiveInventory`, `FullInventory`): the read protocol over a
   ``fetch(path) -> bytes | None`` callable, since sdmxlib holds no blob
   client. `LiveInventory` holds only live entries; `FullInventory` every
@@ -55,6 +55,7 @@ from sdmxlib.inventory._format import (
 )
 from sdmxlib.inventory._reader import Fetch, FullInventory, LiveEdition, LiveInventory, local_fetch
 from sdmxlib.inventory._rules import (
+    Rule,
     TransitionError,
     cancel,
     due,
@@ -92,6 +93,7 @@ __all__ = [
     "LiveInventory",
     "PartialRecord",
     "Root",
+    "Rule",
     "State",
     "StructureSource",
     "Tombstone",
