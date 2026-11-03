@@ -19,6 +19,18 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## Sealing needs a filesystem with hard links
+
+Since 0.82.0, `seal` and `copy_edition` create `manifest.json` with
+`sdmxlib.storage.create_exclusive`, which hard-links a staged file to the name
+([GH-335](https://github.com/StatCat-Suite/sdmxlib/issues/335)). Earlier
+releases renamed a staged file into place, which works on every filesystem.
+An edition directory on exFAT, FAT or a FUSE or SMB mount without hard links
+now fails to seal. From 0.83.0 the `OSError` says the directory must be on a
+filesystem that supports hard links
+([GH-343](https://github.com/StatCat-Suite/sdmxlib/issues/343)). Build and
+seal editions on a filesystem with hard links, such as APFS, ext4, XFS or NTFS.
+
 ## `Event.kind` reads as `str`
 
 A reader takes an Inventory root whose `event.kind` it does not know, within

@@ -45,7 +45,7 @@ from sdmxlib.storage._manifest import (
     read_manifest,
     unlisted,
 )
-from sdmxlib.storage._references import unresolved_references
+from sdmxlib.storage._references import held_targets, unresolved_references
 from sdmxlib.storage._tags import stale_tags
 from sdmxlib.storage.schema import StoreSchemaError
 
@@ -107,7 +107,7 @@ def check_edition(
     | remote: ``data/``'s entries in object storage, by size | no | with `remote` and no `lookup` | no |
     | lake: current files at their recorded size, no delete file, every referenced file listed | yes | yes | no |
     | bindings: the manifest's, each with the count it gives | yes | yes | no |
-    | references: every stored reference names something in the store | yes | yes | no |
+    | references: every stored reference names something in the store (see `structures`) | yes | yes | no |
     | tags: every stored language tag is in the form `normalize_tag` gives | yes | yes | no |
     | fingerprints: recomputed, equal to the manifest's | yes | with `fingerprints` | no |
     | availability: coded columns hold codes; stored availability is the data's | yes | no | no |
@@ -153,7 +153,13 @@ def check_edition(
             with that fingerprint, and the partial's items, with their
             parents, must be among that artefact's. A codelist's, concept
             scheme's and category scheme's items are compared; for another
-            scheme, the fingerprint alone.
+            scheme, the fingerprint alone. For a structure product, an
+            edition with no bindings, they are also the catalog's other
+            structure products: a reference the edition does not hold
+            resolves when one of them holds it as a full artefact or an item
+            of one (sharded catalog spec §6.5 item 9). A data product
+            vendors its closure, so its references resolve in the edition
+            alone.
         extensions: More checks, by name, for parts of the edition other
             packages own (statcatlib's search index, say).
 
@@ -275,7 +281,7 @@ def _steps(
             steps.append(("lake", partial(_lake, root, manifest, reg)))
         steps += [
             ("bindings", partial(_bindings, manifest, reg)),
-            ("references", partial(_references, reg)),
+            ("references", partial(_references, reg, None if manifest.bindings else structures)),
             ("tags", partial(_tags, reg)),
         ]
     if at == "publish" or fingerprints:
@@ -729,8 +735,36 @@ def _tags(reg: EditionRegistry) -> list[Finding]:
     ]
 
 
-def _references(reg: EditionRegistry) -> list[Finding]:
-    return [
-        Finding("references", u.source, f"its {u.role} reference {u.target} is not in the edition")
-        for u in unresolved_references(reg.connection)
+def _references(reg: EditionRegistry, structures: tuple[Path, ...] | None) -> list[Finding]:
+    """Each stored reference that names nothing in the edition, nor a full artefact in `structures`.
+
+    `structures` is given for a structure product, whose references may
+    resolve in the catalog's other structure products (sharded catalog spec
+    §6.5 item 9).
+    """
+    unresolved = unresolved_references(reg.connection)
+    if not unresolved or structures is None:
+        return [
+            Finding("references", u.source, f"its {u.role} reference {u.target} is not in the edition")
+            for u in unresolved
+        ]
+    findings: list[Finding] = []
+    targets = {u.target for u in unresolved}
+    for edition in structures:
+        try:
+            with LocalRegistry.edition(edition) as other:
+                targets -= held_targets(other.connection, targets)
+        except (StoreSchemaError, StoreFormatError, ManifestError, duckdb.Error) as exc:
+            findings.append(Finding("references", str(edition), f"the structures edition cannot be read: {exc}"))
+        if not targets:
+            break
+    looked = ", ".join(map(str, structures))
+    return findings + [
+        Finding(
+            "references",
+            u.source,
+            f"its {u.role} reference {u.target} is not in the edition, and no full artefact in {looked} holds it",
+        )
+        for u in unresolved
+        if u.target in targets
     ]

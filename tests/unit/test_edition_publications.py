@@ -7,7 +7,10 @@ writing only new data files, and the earlier one keeps serving untouched.
 """
 
 import hashlib
+import os
 import shutil
+import stat
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -15,6 +18,7 @@ import pytest
 import sdmxlib as sl
 from sdmxlib.edition import (
     MANIFEST_NAME,
+    SIGNATURE_NAME,
     ManifestError,
     Producer,
     check_edition,
@@ -196,6 +200,31 @@ def test_copying_the_next_publication_copies_only_its_new_data_files(
     assert len(copied) == publication + delta, "its own files and the new data file"
     assert (tmp_path / "dst" / "b" / second.name / MANIFEST_NAME).read_bytes() == (second / MANIFEST_NAME).read_bytes()
     assert check_edition(tmp_path / "dst" / "b" / second.name, at="publish").ok
+
+
+def test_a_copy_fsyncs_every_file_and_directory_it_wrote_before_the_manifest_exists(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """After a power loss, a sealed copy never lists a file whose bytes were not on disk (GH-344)."""
+    first = publish(make_bundle(tmp_path / "src" / "b", 200_000))
+    (first / SIGNATURE_NAME).write_text("a detached signature")
+    destination = tmp_path / "dst" / "b" / first.name
+    before: set[tuple[int, bool]] = set()
+    real: Callable[[int], None] = os.fsync
+
+    def recording(fd: int) -> None:
+        found = os.fstat(fd)
+        if not (destination / MANIFEST_NAME).exists():
+            before.add((found.st_ino, stat.S_ISDIR(found.st_mode)))
+        real(fd)
+
+    monkeypatch.setattr(os, "fsync", recording)
+    copy_edition(first, destination)
+    written = [p for p in (tmp_path / "dst").rglob("*") if p.name != MANIFEST_NAME]
+    assert destination / SIGNATURE_NAME in written
+    assert any(p.suffix == ".parquet" for p in written)
+    for path in [*written, tmp_path / "dst"]:
+        assert (path.stat().st_ino, path.is_dir()) in before, f"{path.relative_to(tmp_path)} was not fsynced first"
 
 
 def test_an_interrupted_copy_leaves_an_unpublished_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

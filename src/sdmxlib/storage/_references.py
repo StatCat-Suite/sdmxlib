@@ -17,7 +17,14 @@ URN without a version names the latest one the store holds, and the
 component classes SDMX renamed (`CLASS_ALIAS_GROUPS`) match under either name.
 Every reference resolves exactly in a typical edition, so the second query
 rarely runs.
+
+`held_targets` asks another store which of a set of targets it holds as a full
+artefact or an item of one, under the same spellings: a structure product's
+references may resolve in the catalog's other structure products (sharded
+catalog spec §6.5 item 9, GH-351).
 """
+
+from collections.abc import Collection
 
 import duckdb
 from attrs import frozen
@@ -175,12 +182,23 @@ def _references() -> str:
     """
 
 
-def _known() -> tuple[str, list[object]]:
-    """A query of every URN a reference may name, and its parameters."""
-    parts = ["SELECT urn FROM sdmx.artefact"]
+#: The artefacts another edition holds in full: neither a partial nor an
+#: external reference, which names an artefact held elsewhere.
+_FULL = "NOT is_partial AND NOT is_external_ref"
+
+
+def _known(*, full_only: bool = False) -> tuple[str, list[object]]:
+    """A query of every URN a reference may name, and its parameters.
+
+    With `full_only`, only full artefacts and the items of one.
+    """
+    parts = [f"SELECT urn FROM sdmx.artefact WHERE {_FULL}" if full_only else "SELECT urn FROM sdmx.artefact"]
     params: list[object] = []
     for stored in STORED_ITEMS:
-        where = f" WHERE {stored.where}" if stored.where else ""
+        conditions = [stored.where] if stored.where else []
+        if full_only:
+            conditions.append(f"{stored.scheme} IN (SELECT urn FROM sdmx.artefact WHERE {_FULL})")
+        where = f" WHERE {' AND '.join(conditions)}" if conditions else ""
         parts.append(
             f"SELECT 'urn:sdmx:org.sdmx.infomodel.' || ? || '.' || ? || '=' "
             f"|| split_part({stored.scheme}, '=', 2) || '.' || {stored.key} "
@@ -211,9 +229,47 @@ def unresolved_references(conn: duckdb.DuckDBPyConnection) -> list[Unresolved]:
     ).fetchall()
     if not missing:
         return []
+    respelled = _respelled(conn, {target for _, _, target in missing}, known, params)
+    return [Unresolved(source, role, target) for source, role, target in missing if target not in respelled]
+
+
+def held_targets(conn: duckdb.DuckDBPyConnection, targets: Collection[str]) -> set[str]:
+    """Which of `targets` the store holds as a full artefact or an item of one, under any spelling.
+
+    A partial or an external reference does not count: a reference resolved
+    here names an artefact the store holds whole.
+
+    Args:
+        conn: A connection to the store.
+        targets: Reference targets, as URNs written.
+
+    Returns:
+        The targets held.
+    """
+    if not targets:
+        return set()
+    known, params = _known(full_only=True)
+    wanted = sorted(set(targets))
+    exact = {
+        target
+        for (target,) in conn.execute(
+            f"""
+            SELECT t.target_urn
+            FROM (SELECT unnest(?::VARCHAR[]) AS target_urn) AS t
+            WHERE EXISTS (SELECT 1 FROM ({known}) AS k (urn) WHERE k.urn = t.target_urn)
+            """,
+            [wanted, *params],
+        ).fetchall()
+    }
+    rest = set(wanted) - exact
+    return exact | (_respelled(conn, rest, known, params) if rest else set())
+
+
+def _respelled(conn: duckdb.DuckDBPyConnection, targets: Collection[str], known: str, params: list[object]) -> set[str]:
+    """Which of `targets` match a URN of `known` without a version, or under a renamed component class."""
     aliases = [(spelling, group[0]) for group in CLASS_ALIAS_GROUPS for spelling in group]
     alias_rows = ", ".join("(?, ?)" for _ in aliases)
-    respelled = {
+    return {
         target
         for (target,) in conn.execute(
             f"""
@@ -240,10 +296,9 @@ def unresolved_references(conn: duckdb.DuckDBPyConnection) -> list[Unresolved]:
             [
                 *(value for pair in aliases for value in pair),
                 _URN_PARTS,
-                sorted({target for _, _, target in missing}),
+                sorted(targets),
                 _URN_PARTS,
                 *params,
             ],
         ).fetchall()
     }
-    return [Unresolved(source, role, target) for source, role, target in missing if target not in respelled]

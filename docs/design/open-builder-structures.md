@@ -155,8 +155,9 @@ written:
 Family selection skips partial artefacts, so a data edition can serve as a
 source. Nothing is added for what the selected artefacts reference: invariant
 7 gives each full artefact one home, so a concept scheme whose concepts name a
-codelist in another structure product keeps that reference open, and
-`check_edition`'s `references` check reports it (open question 1).
+codelist in another structure product keeps that reference open.
+`check_edition(structures=)` resolves it in the other structure editions
+(open question 1, settled).
 
 ### `check_edition(structures=)` over several editions
 
@@ -201,14 +202,17 @@ matching one is used.
 
 ## Open questions
 
-1. A structure product's references to artefacts in another structure product
+1. **Settled 2026-11-02 by the owner
+   ([GH-351](https://github.com/StatCat-Suite/sdmxlib/issues/351)).** A
+   structure product's references to artefacts in another structure product
    (a concept's core representation naming a codelist in
-   `structure-classifications`) are `references` findings at
-   `check_edition(at="publish")`. statcatlib's seal of a `structure-concepts`
-   edition will see them. Either `check_edition` takes the other structure
-   editions for the `references` check too, or the specification lets a
-   structure product's references point to the catalog's other structure
-   products. Both need a specification decision.
+   `structure-classifications`) resolve in the catalog's other live or
+   embargoed structure products (specification §6.5 item 9 and §8).
+   `check_edition(structures=)` gives the `references` check those editions:
+   for an edition with no bindings, a reference one of them holds as a full
+   artefact, or as an item of one, is accepted, and a reference none holds is
+   a finding naming the editions it looked in. A data product's references
+   still resolve within its own edition.
 2. `fill_edition` returns `partial_of`, and the caller keeps it until it
    seals. A `WorkingCopy` resumed in another process (`resume=True`) has lost
    it. statcatlib can keep it with the working copy, or sdmxlib can record it

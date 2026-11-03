@@ -63,8 +63,8 @@ plane: it attaches the catalogs, serves observation reads and takes writes.
   `close`. `store_path` and `column_types` are module-level helpers.
 - `DuckLakeVersionError` (`data_store.py`): raised by `ATTACH` when a DuckLake
   catalog's format is newer than the installed extension supports, matched on
-  DuckDB's error text. `bundle()` usually refuses such a catalog earlier, with
-  `StoreFormatError` from the manifest.
+  DuckDB's error text. `EditionRegistry.edition` usually refuses such a
+  catalog earlier, with `StoreFormatError` from the manifest.
 - `SchemaInspector`, `QueryPlan` and `SidecarNotUniqueError` (`sql.py`):
   `SchemaInspector` reflects columns, types, keys and partitions and caches
   them. `plan(binding)` returns a `QueryPlan`, the FROM clause for a
@@ -89,8 +89,8 @@ plane: it attaches the catalogs, serves observation reads and takes writes.
 
 - `EditionRegistry._READ_ONLY` is `True` and `LocalRegistry._READ_ONLY` is
   `False`. A registry opened on a file path connects with
-  `duckdb.connect(uri, read_only=_READ_ONLY)`. A `bundle()` registry runs on
-  `engine.cursor(prefix)` inside a `EditionEngine`.
+  `duckdb.connect(uri, read_only=_READ_ONLY)`. A registry `edition()` opens
+  runs on `engine.cursor(prefix)` inside an `EditionEngine`.
 - Opening runs `_initialise_schema`. A store with no `sdmx` schema, or on
   another schema version and holding no rows or opened with `rebuild=True`, is
   rebuilt by `migrate` (`DROP SCHEMA sdmx CASCADE`). A store on another

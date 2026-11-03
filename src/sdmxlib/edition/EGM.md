@@ -37,7 +37,11 @@ seals through `seal(extensions=...)`.
   `receive`) raises `ValueError`. `structures=` takes one edition or a
   sequence of them, and a partial is checked against the one holding its
   full artefact with its `partial_of` fingerprint; an empty sequence raises
-  `ValueError`.
+  `ValueError`. For an edition with no bindings (a structure product), the
+  `references` check also accepts a reference one of the `structures=`
+  editions holds as a full artefact or an item of one
+  (`storage._references.held_targets`; spec §6.5 item 9, GH-351). A data
+  product's references resolve in its own edition alone.
 - `check_on_open` (`_check.py`): runs one profile per call. Without a stamp
   for this `(product_id, edition id, manifest sha256)` it runs `receive` and writes
   the stamp when the report is clean; with one it runs `open`. An unreadable
@@ -118,7 +122,8 @@ seals through `seal(extensions=...)`.
   tier 1, and other files to tier 2.
 - `copy_edition` skips a `data/` file already present with the same size and
   digest, raises when a copied file does not match, and refuses a destination
-  that is already sealed.
+  that is already sealed. Every file it copied is fsynced before the manifest
+  exists.
 - `check_on_open` writes a stamp only after a clean `receive` check, and only
   to a path made of exactly two plain components under the stamps directory.
 - `settle_lake` never deletes files from `data/`.
@@ -146,7 +151,9 @@ seals through `seal(extensions=...)`.
 - `seal` clears per-binding availability in `metadata.duckdb` and, when
   availability is enabled, stores it again.
 - `copy_edition` creates directories and copies files with `shutil.copyfile`,
-  then copies the detached signature and the manifest last.
+  then copies the detached signature. It fsyncs each copied file, the
+  signature included, and each directory it created or wrote into (with the
+  directory naming a created one), then creates the manifest last (GH-344).
 - `check_on_open` writes the JSON stamp `<stamps>/<product_id>/<edition_id>`
   with `storage._files.replace_durably`, which replaces any stamp there.
 - `fetch_edition` makes SDMX REST requests and creates a product directory.

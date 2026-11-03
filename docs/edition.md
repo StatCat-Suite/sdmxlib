@@ -592,7 +592,7 @@ not only the first:
 | `manifest` | the manifest's `schema_version`, `duckdb_storage_version` and `ducklake_spec_version` pass the reader's checks, so the files can be opened (§4) | yes | yes | yes | the run stops |
 | `lake` | every file the current snapshot references exists at the size DuckLake recorded and none is a delete file, and every file the catalog references from any snapshot it keeps is in the manifest; runs only when `tables.ducklake` exists | yes | yes | no | continues |
 | `bindings` | the store's bindings are the manifest's, and each table holds the count the manifest gives | yes | yes | no | continues |
-| `references` | every reference in the store names an artefact or an item in the store | yes | yes | no | continues |
+| `references` | every reference in the store names an artefact or an item in the store; for a structure product given `structures=`, or a full artefact or an item of one in those editions | yes | yes | no | continues |
 | `fingerprints` | every artefact, binding and content fingerprint, recomputed, is the manifest's (§9) | yes | with `fingerprints=True` | no | continues |
 | `availability` | every coded column holds codes of its enumeration or `NULL`, and the stored availability is the data's: each dimension's values and the observation count, rescanned (§4) | yes | no | no | continues |
 | `partials` | every partial whose entry records `partial_of` has a full artefact at its URN with that fingerprint in one of the `structures=` editions (one edition, or a sequence of structure products), and the partial's items, each under the same parent, are among the full artefact's; a codelist's, concept scheme's and category scheme's items are compared, another scheme's fingerprint alone | with `structures=` | with `structures=` | no | continues |
@@ -633,6 +633,19 @@ without a version names the latest version the store holds, and SDMX 2.1's
 reference, and its detail names the reference's role and target. On a
 2.6 GB census edition with 2.16 million stored references the check takes
 0.15 s.
+
+A structure product's references may name an artefact another structure
+product holds: a concept scheme in `structure-concepts` whose core
+representation names a codelist in `structure-classifications`. For an
+edition with no bindings, which is how a structure product is told apart,
+`check_edition(path, at="publish", structures=[...])` looks up each reference
+the edition does not hold in the given editions, under the same spellings,
+and accepts one that an edition holds as a full artefact or as an item of
+one. A partial or an external reference there does not count. A reference
+none holds is a finding whose detail names the editions looked in. A data
+product vendors its closure, so its references resolve in its own edition
+alone, with or without `structures=`
+([GH-351](https://github.com/StatCat-Suite/sdmxlib/issues/351)).
 
 A package that owns part of an edition MAY pass its own checks as
 `extensions={name: check}`. Each runs last at every profile, is called as
@@ -740,8 +753,13 @@ every check.
    `sdmxlib.storage.create_exclusive`: a staged file, fsynced and hard-linked
    into place, then the directory fsynced. A reader never sees half of one, a
    power loss never leaves an empty one, and a second seal racing it is
-   refused. The journal entry and the compacted `metadata.duckdb` are
-   fsynced the same way before the manifest is written. A
+   refused. The edition directory must therefore be on a filesystem that
+   supports hard links: on exFAT, FAT and some FUSE and SMB mounts the seal
+   raises an `OSError` that names this requirement. Where a filesystem does
+   not support fsync on a directory (`EINVAL`, `ENOTSUP` or `EOPNOTSUPP`),
+   the directory fsync is skipped. The journal entry and the compacted
+   `metadata.duckdb` are fsynced the same way before the manifest is
+   written. A
    data file the previous edition's manifest lists at the same size keeps
    that manifest's digests, with `carried_from` naming its edition id, so a
    new edition hashes only the files it wrote.
@@ -802,6 +820,9 @@ sdmxlib also produces editions itself:
 receives an edition and how a mirror is made. It copies the files the manifest
 lists, the data files into the `data_path` beside `destination`, checks each
 against its `size` and every digest the manifest records, and copies the manifest last, byte for byte.
+Before it creates the manifest it fsyncs every file it copied, the signature
+included, and every directory it created or wrote into, so after a power loss
+a sealed copy never lists a file whose bytes were not on disk.
 A data file already at the destination with the listed digest is kept, so
 receiving the next edition of a product copies only its new data files. An
 interrupted copy leaves a directory without a manifest, which readers refuse

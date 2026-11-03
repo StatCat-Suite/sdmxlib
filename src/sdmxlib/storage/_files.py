@@ -20,6 +20,7 @@ share one; `is_staged` recognises the name.
 """
 
 import contextlib
+import errno
 import os
 import re
 import sys
@@ -27,6 +28,12 @@ import uuid
 from pathlib import Path
 
 _STAGED = re.compile(r"\.(?P<name>.+)\.\d+\.[0-9a-f]{32}\.tmp")
+
+#: The errors ``fsync`` on a directory raises where the filesystem does not
+#: support it (some FUSE, SMB and network mounts): ``EINVAL``, and ``ENOTSUP``
+#: or ``EOPNOTSUPP``, which are one number on Linux (95) and two on macOS
+#: (45 and 102).
+_DIRECTORY_FSYNC_UNSUPPORTED = frozenset({errno.EINVAL, errno.ENOTSUP, errno.EOPNOTSUPP})
 
 
 def is_staged(name: str, of: str) -> bool:
@@ -39,13 +46,22 @@ def fsync_directory(directory: Path) -> None:
     """Flush `directory`'s entries to disk, so a name just linked or renamed into it survives a power loss.
 
     On Windows a directory cannot be opened for ``fsync``, and NTFS journals
-    its metadata, so this does nothing there.
+    its metadata, so this does nothing there. A filesystem that does not
+    support ``fsync`` on a directory raises ``EINVAL``, ``ENOTSUP`` or
+    ``EOPNOTSUPP``; this ignores those, since the name is already in place
+    and the filesystem offers no way to flush it.
+
+    Raises:
+        OSError: Any other error opening or flushing the directory.
     """
     if sys.platform == "win32":
         return
     fd = os.open(directory, os.O_RDONLY)
     try:
         os.fsync(fd)
+    except OSError as exc:
+        if exc.errno not in _DIRECTORY_FSYNC_UNSUPPORTED:
+            raise
     finally:
         os.close(fd)
 
@@ -79,6 +95,9 @@ def create_exclusive(path: Path, data: bytes) -> None:
     for one name exactly one creates it, and the name never holds part of a
     file. The parent directory is created when missing.
 
+    The directory must be on a filesystem that supports hard links. exFAT,
+    FAT and some FUSE and SMB mounts do not, and there the create fails.
+
     Args:
         path: The file to create.
         data: Its bytes.
@@ -86,10 +105,22 @@ def create_exclusive(path: Path, data: bytes) -> None:
     Raises:
         FileExistsError: If `path` exists: another writer created it first.
             Nothing is written.
+        OSError: If the hard link fails for another reason, as on a
+            filesystem without hard links; the error keeps the link's
+            ``errno`` and names the requirement. Nothing is written.
     """
     staged = _stage(path, data)
     try:
         os.link(staged, path)
+    except FileExistsError:
+        raise
+    except OSError as exc:
+        msg = (
+            f"cannot create {path}: hard-linking a staged file to it failed ({exc.strerror}). "
+            f"{path.parent} must be on a filesystem that supports hard links, which exFAT, FAT "
+            "and some FUSE and SMB mounts do not"
+        )
+        raise OSError(exc.errno, msg) from exc
     finally:
         with contextlib.suppress(FileNotFoundError):
             staged.unlink()

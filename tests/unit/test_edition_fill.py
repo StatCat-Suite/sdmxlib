@@ -9,6 +9,8 @@ codelist enumerates.
 from collections.abc import Callable
 from pathlib import Path
 
+import attrs
+import duckdb
 import httpx2
 import polars as pl
 import pytest
@@ -28,6 +30,8 @@ from sdmxlib.edition import (
 from sdmxlib.formats.sdmx_ml21.writer import write as write21
 from sdmxlib.local.registry import EditionRegistry
 from sdmxlib.model.codelist import GeographicCodelist
+from sdmxlib.storage._references import held_targets
+from sdmxlib.storage.writers import drop_artefact
 from tests.unit.test_edition_build import CONCEPTS, DSD, FLOW, FLOW_URN, GEO, GEO_URN, OTHER, SIBLING, _source
 
 pytestmark = pytest.mark.unit
@@ -403,3 +407,80 @@ def test_an_empty_list_of_structure_editions_is_refused(tmp_path: Path) -> None:
     data = _data(_source(tmp_path / "s"), tmp_path / "data")
     with pytest.raises(ValueError, match="structures= names no edition"):
         check_edition(data, at="publish", structures=[])
+
+
+# ── references into another structure product (GH-351) ───────────────────
+
+
+NAICS_CONCEPTS = sl.ConceptScheme(
+    id="CS_NAICS",
+    maintainer="T",
+    version="1.0",
+    name={"en": "industry concepts"},
+    concepts=[sl.Concept(id="INDUSTRY", name={"en": "industry"}, core_representation=sl.Ref.to(NAICS))],
+)
+
+
+def _holding(product: Path, *artefacts: sl.MaintainableArtefact) -> Path:
+    """A sealed edition of `product` holding `artefacts` and nothing else."""
+    product.mkdir(parents=True)
+    with sl.LocalRegistry.build(product) as builder:
+        builder.add_all(artefacts)
+        edition = builder.edition_dir
+    seal(edition, product_id=product.name, producer=_PRODUCER)
+    return edition
+
+
+def _references(report: Report) -> list[tuple[str, str]]:
+    return [(f.subject, f.detail) for f in report.findings if f.check == "references"]
+
+
+def test_a_structure_products_reference_resolves_in_the_structure_edition_holding_it(tmp_path: Path) -> None:
+    concepts = _holding(tmp_path / "structure-concepts", NAICS_CONCEPTS)
+    classifications = _holding(tmp_path / "structure-classifications", NAICS)
+    geo = _holding(tmp_path / "structure-geo", SGC_2021)
+    reference = f"its core_representation reference {NAICS.urn} is not in the edition"
+
+    _clean(check_edition(concepts, at="publish", structures=[geo, classifications]))
+    _clean(check_edition(concepts, at="receive", structures=classifications))
+    assert _references(check_edition(concepts, at="publish")) == [(str(NAICS_CONCEPTS.urn), reference)]
+    assert _references(check_edition(concepts, at="publish", structures=[geo])) == [
+        (str(NAICS_CONCEPTS.urn), f"{reference}, and no full artefact in {geo} holds it")
+    ]
+
+
+def test_a_partial_in_another_edition_does_not_resolve_a_reference(tmp_path: Path) -> None:
+    concepts = _holding(tmp_path / "structure-concepts", NAICS_CONCEPTS)
+    cut = _holding(tmp_path / "cut", attrs.evolve(NAICS, is_partial=True))
+
+    report = check_edition(concepts, at="publish", structures=[cut])
+
+    assert [subject for subject, _ in _references(report)] == [str(NAICS_CONCEPTS.urn)]
+
+
+def test_a_data_products_references_resolve_in_its_own_edition_alone(tmp_path: Path) -> None:
+    """A data product vendors its closure: `structures=` checks its partials and resolves none of its references."""
+    source = _source(tmp_path / "s")
+    concepts, geo = _split(source, tmp_path)
+    data = _data(source, tmp_path / "data")
+    with duckdb.connect(str(data / "metadata.duckdb")) as conn:
+        conn.execute("SET search_path = 'sdmx'")
+        assert drop_artefact(conn, str(CONCEPTS.urn))
+
+    report = check_edition(data, at="publish", structures=[concepts, geo])
+
+    assert _references(report), "the concepts the data structure names are held in full by structure-concepts"
+    assert all(detail.endswith("is not in the edition") for _, detail in _references(report))
+
+
+def test_held_targets_answers_items_and_versionless_urns_of_full_artefacts_alone(tmp_path: Path) -> None:
+    full = _holding(tmp_path / "full", NAICS)
+    cut = _holding(tmp_path / "cut", attrs.evolve(SGC_2021, is_partial=True))
+    code = "urn:sdmx:org.sdmx.infomodel.codelist.Code=T:NAICS(1.0).X"
+    versionless = "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=T:NAICS"
+    partial_code = "urn:sdmx:org.sdmx.infomodel.codelist.Code=T:SGC_2021(1.0).X"
+    wanted = {str(NAICS.urn), code, versionless, partial_code, str(SGC_2021.urn)}
+    with sl.LocalRegistry.edition(full) as reg:
+        assert held_targets(reg.connection, wanted) == {str(NAICS.urn), code, versionless}
+    with sl.LocalRegistry.edition(cut) as reg:
+        assert held_targets(reg.connection, wanted) == set()
