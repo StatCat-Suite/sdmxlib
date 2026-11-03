@@ -275,10 +275,8 @@ StatCat-Suite/statcatlib#97 folded this plan's earlier Phases 2a and 2b into the
 
 #### Phase 2a follow-ups
 
-sdmxlib 0.82.0 (2026-11-02) shipped GH-335 (`sdmxlib.storage.create_exclusive`), GH-336 (`LocalRegistry.edition(manifest_sha256=)`), GH-338 (readers accept an unknown `event.kind` within format 1.x) and GH-339 (`Rule` and `JsonValue` exported). Open:
+sdmxlib 0.82.0 (2026-11-02) shipped GH-335 (`sdmxlib.storage.create_exclusive`), GH-336 (`LocalRegistry.edition(manifest_sha256=)`), GH-338 (readers accept an unknown `event.kind` within format 1.x) and GH-339 (`Rule` and `JsonValue` exported). sdmxlib-rest 0.9.1 shipped StatCat-Suite/sdmxlib-rest#87 and statcatlib 0.12.1 shipped StatCat-Suite/statcatlib#115 (adopt sdmxlib 0.82). sdmxlib 0.83.0 (2026-11-03) shipped GH-343 (name the hard-link requirement when a seal fails) and GH-344 (fsync what `copy_edition` copies before its manifest), both via GH-352. Open:
 
-*   StatCat-Suite/sdmxlib-rest#87 and StatCat-Suite/statcatlib#115: adopt sdmxlib 0.82.
-*   GH-343: name the hard-link requirement when a seal fails. GH-344: fsync what `copy_edition` copies before its manifest.
 *   GH-341: the specification page keeps its `sharded-bundle-catalog` file name until the owner decides on a rename.
 *   StatCat-Suite/statcatlib#108 (keep `build-index` options across processes) and StatCat-Suite/statcatlib#110 (the `model_name` warning).
 
