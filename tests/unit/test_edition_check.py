@@ -6,13 +6,24 @@ test fails if the right thing is reported under the wrong check.
 """
 
 import json
+from collections.abc import Callable
 from pathlib import Path
 
 import duckdb
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.edition import DATA_PATH, MANIFEST_NAME, Finding, Producer, Profile, Report, check_edition, seal
+from sdmxlib.edition import (
+    DATA_PATH,
+    MANIFEST_NAME,
+    Finding,
+    Producer,
+    Profile,
+    Report,
+    _write,
+    check_edition,
+    seal,
+)
 from tests.support.bundles import FLOW, make_bundle
 
 pytestmark = pytest.mark.unit
@@ -48,6 +59,54 @@ def test_a_published_bundle_checks_clean_on_every_check(tmp_path: Path) -> None:
     assert report.findings == ()
     assert report.ok
     assert report.checked == _ALL
+
+
+@pytest.fixture
+def fingerprinted(monkeypatch: pytest.MonkeyPatch) -> dict[str, int]:
+    """How many artefact and table fingerprints are computed, by kind."""
+    calls = {"artefact": 0, "table": 0}
+
+    def counting(kind: str, original: Callable[..., str]) -> Callable[..., str]:
+        def count(*args: object) -> str:
+            calls[kind] += 1
+            return original(*args)
+
+        return count
+
+    monkeypatch.setattr(_write, "artefact_fingerprint", counting("artefact", _write.artefact_fingerprint))
+    monkeypatch.setattr(_write, "table_fingerprint", counting("table", _write.table_fingerprint))
+    return calls
+
+
+def test_a_publish_check_right_after_the_seal_can_skip_the_fingerprints(
+    tmp_path: Path, fingerprinted: dict[str, int]
+) -> None:
+    root = make_bundle(tmp_path / "b", 10)
+    manifest = seal(root, product_id="b", producer=_PRODUCER)
+    assert fingerprinted == {"artefact": len(manifest.artefacts), "table": 1}, "the seal computes each once"
+    fingerprinted.update(artefact=0, table=0)
+    report = check_edition(root, at="publish", fingerprints=False)
+    assert fingerprinted == {"artefact": 0, "table": 0}
+    assert report.ok
+    assert report.checked == tuple(name for name in _ALL if name != "fingerprints")
+
+
+def test_a_publish_check_recomputes_the_fingerprints_by_default(tmp_path: Path, fingerprinted: dict[str, int]) -> None:
+    root = make_bundle(tmp_path / "b", 10)
+    manifest = seal(root, product_id="b", producer=_PRODUCER)
+    fingerprinted.update(artefact=0, table=0)
+    report = check_edition(root, at="publish")
+    assert fingerprinted == {"artefact": len(manifest.artefacts), "table": 1}
+    assert report.checked == _ALL
+
+
+def test_skipping_the_fingerprints_leaves_a_wrong_one_unfound(tmp_path: Path) -> None:
+    """The skip trusts the manifest: it is for the process whose seal just wrote it."""
+    root = _published(tmp_path / "b", rows=10)
+    path = root / MANIFEST_NAME
+    path.write_text(json.dumps(json.loads(path.read_text()) | {"content_fingerprint": "0" * 64}))
+    assert _found(check_edition(root, at="publish")) == {("fingerprints", MANIFEST_NAME)}
+    assert check_edition(root, at="publish", fingerprints=False).ok
 
 
 def test_without_a_manifest_only_the_manifest_is_checked(tmp_path: Path) -> None:

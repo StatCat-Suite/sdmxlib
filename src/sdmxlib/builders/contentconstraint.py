@@ -31,6 +31,7 @@ from typing import Literal
 
 import duckdb
 
+from sdmxlib._duckdb import located
 from sdmxlib.local.registry import EditionRegistry, LocalRegistry
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.constraint import (
@@ -114,7 +115,7 @@ def build_dataflow_constraint(
             )
             raise TypeError(err)
 
-    table = f"{binding.database_role}.{binding.table_location}"
+    table = located(binding.database_role, binding.table_location)
     key_values: list[KeyValue] = []
     for dim_id in sorted(binding.dimension_column_map):
         column = binding.dimension_column_map[dim_id]
@@ -260,7 +261,7 @@ def build_component_availability(
     held = _held_values(registry, dataflow_urn)
     component_filter = _drop_covering(component_filter, held)
 
-    table = f"{binding.database_role}.{binding.table_location}"
+    table = located(binding.database_role, binding.table_location)
     key_values: list[KeyValue] = []
     components: list[ComponentValueSet] = []
     for target in targets:

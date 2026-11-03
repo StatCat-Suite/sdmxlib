@@ -33,8 +33,12 @@ seals through `seal(extensions=...)`.
   `Report.ok` says whether it passed. `Check` is the type an extension check
   implements, and `Profile` is the profile literal. Findings are `Finding`s
   (`_finding.py`). An argument the profile does not use (`structures=` at
-  `open`, `remote=` at `publish`, `lookup=` or `fingerprints=` outside
-  `receive`) raises `ValueError`. `structures=` takes one edition or a
+  `open`, `remote=` at `publish`, `lookup=` outside `receive`,
+  `fingerprints=True` at `open`) raises `ValueError`. `fingerprints=None`
+  (the default) recomputes the fingerprints at `publish` only;
+  `fingerprints=True` adds them at `receive`, and `fingerprints=False` skips
+  them at `publish`, for the process that sealed the edition, right after
+  `seal` (GH-357). `structures=` takes one edition or a
   sequence of them, and a partial is checked against the one holding its
   full artefact with its `partial_of` fingerprint; an empty sequence raises
   `ValueError`. For an edition with no bindings (a structure product), the
@@ -134,8 +138,8 @@ seals through `seal(extensions=...)`.
   manifest only when the table's uuid, current data file ids and current
   columns in this edition's lake catalog equal those in the previous
   edition's catalog, and neither has a delete file. Every other table is
-  fingerprinted by reading its rows. `check_edition(at="publish")` always
-  reads every row.
+  fingerprinted by reading its rows. `check_edition(at="publish")` reads
+  every row unless given `fingerprints=False`.
 - An edition with a lake is refused when a coded column holds a value
   outside its codelist. The survey scans every binding before refusing, and
   stores availability only when nothing is refused.

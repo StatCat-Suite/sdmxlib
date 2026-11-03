@@ -102,7 +102,7 @@ def test_the_root_names_the_binding_s_table() -> None:
     become `sdmx.memory.data.obs`, which parses and names nothing.
     """
     obs = Observations(_binding())
-    assert obs.__table__ == "memory.data.obs"
+    assert obs.__table__ == '"memory".data.obs'
     assert obs.__schema__ is None
 
 
@@ -145,7 +145,7 @@ def test_the_statement_reads_the_bound_table_and_columns(plane) -> None:
     """SDMX ids in, physical SQL out, in one assertion."""
     store, binding, obs = plane
     compiled = store.obs(binding).filter(obs["REF_AREA"] == "CA").to_sql()
-    assert "memory.data.obs" in compiled.sql
+    assert '"memory".data.obs' in compiled.sql
     assert "GEO = ?" in compiled.sql, "the id was mapped to its column"
     assert compiled.params == ["CA"], "the value is bound, never spliced"
 
@@ -841,7 +841,7 @@ def test_the_sidecar_column_reads_through_the_join_s_alias(with_sidecar) -> None
     """
     store, binding, obs = with_sidecar
     sql = store.obs(binding).select(name=obs["GEO_NAME"], area=obs["REF_AREA"]).to_sql().sql
-    assert "LEFT JOIN memory.data.series" in sql
+    assert 'LEFT JOIN "memory".data.series' in sql
     assert "USING (FREQ, GEO)" in sql
     assert "s0_0.GEO_NAME" in sql, "the sidecar's own alias"
     assert "s0.GEO" in sql, "and the main table's for a key"
@@ -1034,7 +1034,7 @@ def test_pruning_the_join_does_not_drop_the_unmatched_rows(with_orphan_sidecar) 
     assert "JOIN" not in pruned.to_sql(columns="count(*)", ordered=False).sql
     assert pruned.count() == 6, "three series, two periods each, one of them unmatched"
     joined = pruned.filter(obs["GEO_NAME"].is_null() | obs["GEO_NAME"].is_not_null())
-    assert "LEFT JOIN memory.data.series" in joined.to_sql(columns="count(*)", ordered=False).sql
+    assert 'LEFT JOIN "memory".data.series' in joined.to_sql(columns="count(*)", ordered=False).sql
     assert joined.count() == 6, "the same rows, the join present"
 
 
@@ -1054,7 +1054,7 @@ def test_a_count_filtered_on_a_sidecar_column_keeps_the_join(with_sidecar) -> No
     """
     store, binding, obs = with_sidecar
     query = store.obs(binding).filter(obs["GEO_NAME"] == "Mexico")
-    assert "LEFT JOIN memory.data.series" in query.to_sql(columns="count(*)", ordered=False).sql
+    assert 'LEFT JOIN "memory".data.series' in query.to_sql(columns="count(*)", ordered=False).sql
     assert query.count() == 2
 
 
@@ -1063,14 +1063,14 @@ def test_ordering_by_a_sidecar_column_keeps_the_join(with_sidecar) -> None:
     clause a pruning pass that ran too early would miss."""
     store, binding, obs = with_sidecar
     sql = store.obs(binding).order_by(obs["GEO_NAME"]).select(area=obs["REF_AREA"]).to_sql().sql
-    assert "LEFT JOIN memory.data.series" in sql
+    assert 'LEFT JOIN "memory".data.series' in sql
 
 
 def test_grouping_by_a_sidecar_column_keeps_the_join(with_sidecar) -> None:
     """The `GROUP BY` case, where the reference is a key rather than a filter."""
     store, binding, obs = with_sidecar
     grouped = store.obs(binding).group_by(obs["GEO_NAME"]).agg(n=obs["OBS_VALUE"].count())
-    assert "LEFT JOIN memory.data.series" in grouped.to_sql().sql
+    assert 'LEFT JOIN "memory".data.series' in grouped.to_sql().sql
     frame = grouped.collect()
     assert dict(zip(frame["GEO_NAME"].to_list(), frame["n"].to_list(), strict=True)) == {
         "Canada": 2,
@@ -1083,7 +1083,7 @@ def test_an_unprojected_read_still_joins(with_sidecar) -> None:
     """The default projection names every component, the sidecar's included —
     so a whole-row read references the join and keeps it."""
     store, binding, _obs = with_sidecar
-    assert "LEFT JOIN memory.data.series" in store.obs(binding).to_sql().sql
+    assert 'LEFT JOIN "memory".data.series' in store.obs(binding).to_sql().sql
     assert "GEO_NAME" in store.obs(binding).frame().columns
 
 

@@ -42,6 +42,7 @@ import polars as pl
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from sdmxlib._duckdb import located
 from sdmxlib.formats._arrow import frame_of
 from sdmxlib.formats.sdmx_json import data_v1, data_v2
 from sdmxlib.model.binding import DataflowBinding
@@ -187,7 +188,7 @@ class Observations(Cols[ObsRow]):
         }
 
         #: Qualified observation table — already two-part, hence `__schema__`.
-        self.__table__ = f"{binding.database_role}.{binding.table_location}"
+        self.__table__ = located(binding.database_role, binding.table_location)
         #: `None`: the table name above qualifies itself.
         self.__schema__ = None
         #: The dimension columns, in DSD order.

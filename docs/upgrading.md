@@ -19,6 +19,26 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## Plans and SQL quote the catalog name
+
+From 0.84.0, SQL that sdmxlib writes names an attached DuckDB catalog in
+double quotes ([GH-356](https://github.com/StatCat-Suite/sdmxlib/issues/356)).
+A catalog alias carries the product id, and a product id such as `14100287`
+starts with a digit, which DuckDB accepts only in a quoted identifier. The
+schema and table parts stay bare. These strings show the change:
+
+- `QueryPlan.main`, `QueryPlan.sidecar` and `QueryPlan.from_clause` from
+  `store.inspect().plan(binding)` read `"memory".data.obs`, where they read
+  `memory.data.obs`.
+- `Observations.__table__` takes the same quoted form.
+- The SQL from `to_sql()` on an observation query names the quoted table,
+  and a sidecar join reads `LEFT JOIN "memory".data.series`.
+
+Code that compares these strings with a literal, or splits them on `.`,
+expects the quoted catalog. SQL built from `plan.from_clause` runs unchanged.
+`SchemaInspector.columns` and `SchemaInspector.invalidate` accept a table
+name with its catalog quoted or bare.
+
 ## Sealing needs a filesystem with hard links
 
 Since 0.82.0, `seal` and `copy_edition` create `manifest.json` with

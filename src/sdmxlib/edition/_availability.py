@@ -15,6 +15,7 @@ One scan per component column at publish answers two questions:
 
 from attrs import frozen
 
+from sdmxlib._duckdb import located
 from sdmxlib.builders.contentconstraint import _distinct_values
 from sdmxlib.local.registry import EditionRegistry
 from sdmxlib.model.binding import DataflowBinding
@@ -111,6 +112,6 @@ def survey(
 
 def _tables(binding: DataflowBinding) -> list[str]:
     """The tables `binding` reads: its own, then its series-attribute sidecar."""
-    main = f"{binding.database_role}.{binding.table_location}"
+    main = located(binding.database_role, binding.table_location)
     sidecar = binding.series_attributes_location
-    return [main] if sidecar is None else [main, f"{binding.database_role}.{sidecar}"]
+    return [main] if sidecar is None else [main, located(binding.database_role, sidecar)]

@@ -40,3 +40,25 @@ def count(cursor: duckdb.DuckDBPyConnection) -> int:
     """
     row = first(cursor)
     return int(row[0]) if row is not None else 0
+
+
+def quote_identifier(name: str) -> str:
+    """`name` as a DuckDB quoted identifier: in double quotes, each inner double quote doubled.
+
+    A catalog alias carries the product id (`EditionEngine.attach`), and a
+    product named after a StatCan table id, ``14100287``, starts with a digit,
+    which an unquoted identifier cannot. DuckDB resolves a quoted identifier
+    without regard to case, as it does an unquoted one.
+    """
+    return '"' + name.replace('"', '""') + '"'
+
+
+def located(catalog: str, location: str) -> str:
+    """The relation ``<catalog>.<location>``, with `catalog` quoted.
+
+    A binding names its table by its catalog (``database_role``) and its
+    ``schema.table`` inside it (``table_location``). The catalog is an ATTACH
+    alias the registry chose, quoted here; the location is the producer's and
+    written as it stands.
+    """
+    return f"{quote_identifier(catalog)}.{location}"
