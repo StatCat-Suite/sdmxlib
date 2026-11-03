@@ -21,12 +21,11 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ## Plans and SQL quote the catalog name
 
-From the first release after 0.83.0, SQL that sdmxlib writes names an attached
-DuckDB catalog in double quotes
-([GH-356](https://github.com/StatCat-Suite/sdmxlib/issues/356)). A catalog
-alias carries the product id, and a product id such as `14100287` starts with
-a digit, which DuckDB accepts only in a quoted identifier. The schema and
-table parts stay bare. These strings show the change:
+From 0.84.0, SQL that sdmxlib writes names an attached DuckDB catalog in
+double quotes ([GH-356](https://github.com/StatCat-Suite/sdmxlib/issues/356)).
+A catalog alias carries the product id, and a product id such as `14100287`
+starts with a digit, which DuckDB accepts only in a quoted identifier. The
+schema and table parts stay bare. These strings show the change:
 
 - `QueryPlan.main`, `QueryPlan.sidecar` and `QueryPlan.from_clause` from
   `store.inspect().plan(binding)` read `"memory".data.obs`, where they read
