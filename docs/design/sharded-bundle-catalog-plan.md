@@ -74,9 +74,9 @@ The specification defines every term (§1, §4 to §11); these are the ones this
 
 ## Open Questions
 
-Each question names the phase that must answer it. A decision is recorded in a PR to the specification or to this plan. The specification's open question 6, which GH-333 calls Q6, is this plan's Q1; the specification's question 5 is Q6 here, and its question 8 is Q2. Q2 and Q4 are settled and kept for their record.
+Each question names the phase that must answer it. A decision is recorded in a PR to the specification or to this plan. The specification's open question 6, which GH-333 calls Q6, is this plan's Q1; the specification's question 5 is Q6 here, and its question 8 is Q2. Q1, Q2 and Q4 are settled and kept for their record.
 
-*   **Q1. Product granularity** (specification open question 6). Undecided; the section [Product granularity](#product-granularity-q1) below lists the options. Decide before Phase 4 closes.
+*   **Q1. Product granularity** (specification open question 6): decided by the owner on 2026-11-03 ([statcat-suite.github.io#19](https://github.com/StatCat-Suite/statcat-suite.github.io/issues/19#issuecomment-6617482207)). Option C: a catalog has one product per table by default, and a producer may group tables that always release together into one product. The section [Product granularity](#product-granularity-q1) below records the options weighed and the corpus shape.
 *   **Q2. The structure-product split** (specification open question 8): decided by the owner on 2026-11-02. StatCan splits its structure products by change rate, as specification §8's example does: `structure-geo` (the full geography), `structure-classifications` (NAICS, NOC, SGC) and `structure-concepts` (concept schemes). Invariant 7 (at most one home per full artefact) is unchanged by the split.
 *   **Q3. Code search scope** (specification open question 4): whether geography-first agent queries need catalog-level code search tables that cover partials. Decide when Phase 7 starts.
 *   **Q4. Block cache** (GH-185): settled. DuckDB's in-memory external file cache serves a repeated read in one process with no request, so no disk cache is built (specification §7.1).
@@ -89,7 +89,9 @@ Each question names the phase that must answer it. A decision is recorded in a P
 
 ### Product granularity (Q1)
 
-Specification §4.0 sets the rule (a product groups dataflows released together with one lifecycle) and the CODR default of one product per table. Three groupings meet the rule:
+Specification §4.0 sets the rule (a product groups dataflows released together with one lifecycle) and the CODR default of one product per table. Three groupings meet the rule.
+
+The owner chose option C on 2026-11-03: one product per table by default, and a producer may group tables that always release together into one product. The synthetic corpus for Phases 5 to 9 has about 7,000 tables: about 6,500 one-table products and about 50 products of 5 to 20 tables each. StatCat-Suite/statcatlib#124 builds the corpus generator and the no-home measurement, which uses one-table products up to 7,000. The table below keeps the options weighed:
 
 | option | products in the synthetic corpus | effect |
 |---|---|---|
@@ -100,12 +102,12 @@ Specification §4.0 sets the rule (a product groups dataflows released together 
 What each phase needs from the answer:
 
 *   **Phase 3** needs none. Its CODR generator builds one table per product by default, and a test with two tables in one product covers B.
-*   **Phase 4** needs the corpus shape: the number of products and the tables per product. Its 7,000-leaf read is timed at 7,000 products, the most option A gives, whatever Q1 decides.
-*   **Phase 5** tests a release of 200 tables. Under B that is fewer products, and each per-product refusal of `release_due` holds back several tables.
-*   **Phase 6** routes, pins, evicts and checks readiness per product, so the attach unit, the LRU's `max_attached` and Goal 1's first-attach target all depend on product size.
+*   **Phase 4** builds the corpus in the shape above. Its 7,000-leaf read is timed at 7,000 one-table products, the most leaves any grouping gives.
+*   **Phase 5** tests a release of 200 tables that mixes both shapes: one-table products, and grouped products where each per-product refusal of `release_due` holds back several tables.
+*   **Phase 6** routes, pins, evicts and checks readiness per product, so the attach unit, the LRU's `max_attached` and Goal 1's first-attach target are measured on both one-table products and products of 5 to 20 tables.
 *   **Phase 8** measures the remap bound over product keys.
 
-The corpus is the gating fixture of Phases 5 to 9, so Q1 is decided before Phase 4 closes. The generator takes the tables per product as a parameter, so work on it can start before Q1 is decided.
+The corpus is the gating fixture of Phases 5 to 9. Its generator takes the mix of product sizes as a parameter.
 
 ## Critical User Journeys (CUJs)
 
@@ -331,7 +333,7 @@ statcatlib RFC §7 and the Phase 2a design's non-goals define the scope: everyth
 *   **Upload** (`statcat upload`, specification §11.2 step 1). It copies the data files with a digest the store keeps (`Content-MD5` on Azure, a full-object CRC32C on S3), then the edition directory with `manifest.json` last, verifies every listed file with `check_edition(at="receive", lookup=)`, and writes `pending/<product_id>/<edition_id>.json` (`edition_id`, `release_at`) put-if-absent. It never writes `CURRENT` or `inventory/`.
 *   **Remote catalogs.** `Catalog.open` and `EditionView` read an edition with its data files in object storage through `LocalRegistry.edition(path, remote=, engine=, manifest_sha256=)` and an `EditionEngine` holding the store's secret. statcatlib's design gives the signature and where the required tier lands on local disk.
 *   **`CatalogAdmin.correct` and `reinstate`** (the Phase 2a design's P6). `correct(from_seq=, reason=)` follows the RFC and fixes the four defects the Phase 2a review found. `reinstate(product, edition, reason=)` moves a tombstone back to `superseded` once its manifest and every listed file verify. Neither gates Phases 5 or 6; Phase 9's restore drill is their first real use.
-*   **The synthetic corpus**: a `statcatlib.testing` function and a script under `bench/` write `n` products with Phase 3's generator, one seed per product, and the structure products they were cut from. They seal locally with embargo on and copy the whole catalog, `inventory/` included, through the blob writer, so the corpus has both live and embargoed entries. The default is 7,000 tables; Q1 sets the tables per product. At 1.6 s per seal the corpus takes hours to build, so it is built once outside `just ci` and kept beside the bench data.
+*   **The synthetic corpus**: a `statcatlib.testing` function and a script under `bench/` write `n` products with Phase 3's generator, one seed per product, and the structure products they were cut from. They seal locally with embargo on and copy the whole catalog, `inventory/` included, through the blob writer, so the corpus has both live and embargoed entries. The default is 7,000 tables: about 6,500 one-table products and about 50 products of 5 to 20 tables each, the shape Q1 set (StatCat-Suite/statcatlib#124). At 1.6 s per seal the corpus takes hours to build, so it is built once outside `just ci` and kept beside the bench data.
 *   **Gating tests**
     *   `sdmxlib.inventory.conformance.run` passes against the blob writer over Azurite.
     *   A writer killed between the upload of a leaf and of its root leaves the previous head readable and writable.

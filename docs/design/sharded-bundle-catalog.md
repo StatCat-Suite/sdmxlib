@@ -100,7 +100,7 @@ A product groups dataflows that are **published together** and **share a lifecyc
 | closure | members sharing a DSD or codelists vendor them once; grouping removes duplicated labels |
 | attach and readiness | members are pinned, pulled and evicted together |
 
-The practical ceiling is the required tier's size: the product's catalog and labels must pull inside the readiness budget (§7.1). Examples: a census profile split into dataflows by geography level, or a family of tables derived from one DSD and released together, is one product; two census vintages are two products, grouped in a `ProductSeries`, because each is final; CODR tables default to one product per table because release days differ table by table, with subject-level grouping where tables always release together (open question 6).
+The practical ceiling is the required tier's size: the product's catalog and labels must pull inside the readiness budget (§7.1). Examples: a census profile split into dataflows by geography level, or a family of tables derived from one DSD and released together, is one product; two census vintages are two products, grouped in a `ProductSeries`, because each is final; CODR tables default to one product per table because release days differ table by table, with subject-level grouping where tables always release together (open question 6, settled 2026-11-03).
 
 ### 4.1 Layout
 
@@ -909,7 +909,7 @@ Order follows risk removed per unit of work. Synthetic editions and `profile_edi
 3. Detached signature format (minisign vs sigstore) when cross-agency sharing becomes concrete.
 4. Code search scope for the agent (§12).
 5. Republishing structures with semantic three-part versions; an FMR governance change decoupled from this work.
-6. CODR product granularity: one per table by default, subject-level merging where tables always release together (§4.0).
+6. CODR product granularity (§4.0): settled by the owner on 2026-11-03. A catalog has one product per table by default, and a producer may group tables that always release together into one product.
 7. `labels.duckdb` pull time on the census edition: settled by GH-139. Labels are 31 MB of the census `metadata.duckdb` and stay in it (§7.1).
 8. How to split the structure products for StatCan (§8): settled by the owner on 2026-11-02. StatCan splits them by change rate into `structure-geo`, `structure-classifications` and `structure-concepts` (§8).
 
