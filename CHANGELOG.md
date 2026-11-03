@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.83.0] - 2026-11-03
+
+### Bug Fixes
+
+- **storage**: Name the hard-link requirement when create_exclusive fails; tolerate unsupported directory fsync (GH-343)
+  - `fsync_directory` ignores `EINVAL`, `ENOTSUP` and `EOPNOTSUPP` and re-raises any other error.
+- **edition**: Fsync copied files and directories in copy_edition before the manifest (GH-344)
+
+### Documentation
+
+- **design**: Name the hub tracker and record the met adoption gate (GH-332)
+- **design**: Re-plan Phases 4 to 9 against spec v6 (GH-333)
+- **design**: Record the EGM review of the plan's third revision (GH-333)
+- **design**: Open builders and structure products (GH-347)
+- **design**: Record the structure-product split by change rate (GH-347)
+- **spec**: Resolve a structure product's references in the other structure products (GH-351)
+
+### Features
+
+- **edition**: Fill an open builder, fill a structure product, check partials against several structure editions (GH-347)
+  - New `sdmxlib.edition.fill_edition` and `fill_structures`; `build_edition` keeps its signature and wraps `fill_edition`.
+  - `seal` keeps the `partial_of` the previous edition's manifest records for a partial its `partial_of=` does not name.
+- **edition**: Resolve a structure product's references in the given structure editions (GH-351)
+  - Applies to an edition with no bindings; a data product's references check is unchanged.
+
 ## [0.82.0] - 2026-11-02
 
 ### Documentation
