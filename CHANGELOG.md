@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.84.0] - 2026-11-03
+
+### Bug Fixes
+
+- **local**: Quote the catalog alias so a product id that starts with a digit attaches (GH-356)
+  - SQL names every attached catalog in double quotes, so `QueryPlan.main`, `QueryPlan.from_clause` and `Observations.__table__` read `"memory".data.obs`. `docs/upgrading.md` lists the changed strings.
+
+### Documentation
+
+- **spec**: Let a structure edit through item 4 and mark old copies stale (GH-354)
+- **spec**: Compare no-home artefacts at release and extend item 8 to full artefacts (GH-354)
+- **llms**: Show the quoted catalog a query plan names (GH-356)
+- **upgrading**: Note the quoted catalog in plan strings (GH-356)
+- **upgrading**: Name 0.84.0 in the quoted-catalog entry (GH-356)
+
+### Features
+
+- **edition**: Let check_edition skip recomputing fingerprints at publish right after a seal (GH-357)
+  - `check_edition(..., fingerprints=False)` skips the recompute. The default `None` keeps the recompute at `publish`, and an explicit `False` at `publish` now skips it. On the census edition the publish check took 46 s instead of 774 s.
+
 ## [0.83.0] - 2026-11-03
 
 ### Bug Fixes
