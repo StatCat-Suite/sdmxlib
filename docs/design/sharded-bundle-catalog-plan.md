@@ -21,8 +21,9 @@ Built so far:
 *   **Phase 1** (sdmxlib 0.76.0): the closure builder, partials and their `partial_of` fingerprint.
 *   **Phase 2a** (shipped 2026-11-02 as sdmxlib 0.81.0, sdmxlib-rest 0.9.0 and statcatlib 0.12.0), as the statcatlib RFC defines it. sdmxlib 0.80.0 renamed the format's units to product, edition and `edition_id` (manifest 3.0) and added the Inventory's schemas, rules and reader. statcatlib writes the Inventory on local disk (`Catalog`, `WorkingCopy`, `CatalogAdmin`). sdmxlib-rest serves one edition and reads manifest 3.0.
 *   **sdmxlib 0.82.0** (main `9b4e933b`), the Phase 2a follow-ups: `sdmxlib.storage.create_exclusive`, `LocalRegistry.edition(manifest_sha256=)`, and readers that accept an unknown `event.kind` within Inventory format 1.x.
+*   **Phase 3** (shipped 2026-11-03 as sdmxlib 0.83.0 and 0.84.0, statcatlib 0.13.0 and sdmxlib-rest 0.9.2): structure products split by change rate, partial codelists in data products checked against them, and the writer's cross-product rules (specification §6.5 items 4, 7 and 8).
 
-Phases 3 to 9 are open.
+Phases 4 to 9 are open.
 
 ## The Problem
 
@@ -161,7 +162,7 @@ Phases, in build order:
 | M | Remote-tier measurement | sdmxlib | — | — | done, sdmxlib 0.76.0 (GH-185); no cache built |
 | 1 | Closure builder, partials, `partial_of` | sdmxlib | M6 (sdmxlib part) | 0 | done, sdmxlib 0.76.0 |
 | 2a | Products, editions, the Inventory on local disk | all three | M8 (core and local writer) | 1 | done: sdmxlib 0.80.0 to 0.82.0, sdmxlib-rest 0.9.0, statcatlib 0.12.0 |
-| 3 | Structure products; partials checked against them; the CODR generator | sdmxlib, then statcatlib | M6 | 2a | open |
+| 3 | Structure products; partials checked against them; the CODR generator | sdmxlib, then statcatlib | M6 | 2a | done: sdmxlib 0.83.0 and 0.84.0, statcatlib 0.13.0, sdmxlib-rest 0.9.2 |
 | 4 | The Inventory on blob storage, upload and `pending/`; the routing fields; `correct` and `reinstate`; the synthetic corpus | sdmxlib, then statcatlib | M8 (corpus), M9 (upload) | 2a and Q7; the corpus also 3 and Q1 | open |
 | 5 | Fold, release, `release_due`, GC of `products/` | statcatlib | M9 | 4, Q9, Q10 | open |
 | 6 | Router, tiers, pools, result store and its GC, pre-materialisation | sdmxlib-rest or the serving package (Q8) | M10 | 4, 5, Q8 | open |
@@ -283,9 +284,18 @@ sdmxlib 0.82.0 (2026-11-02) shipped GH-335 (`sdmxlib.storage.create_exclusive`),
 
 Phases 3 and 4 start in statcatlib after StatCat-Suite/statcatlib#115, since the blob writer relies on `create_exclusive`'s rule and on the `manifest_sha256=` check.
 
+#### Phase 3: structure products (shipped 2026-11-03)
+
+GH-349 decided Q2 by splitting StatCan's structure products by change rate into `structure-geo`, `structure-classifications` and `structure-concepts`. GH-355 (issue GH-354) amended specification §6.5 items 4 and 8. The [Phase 3 section](#phase-3-structure-products-sdmxlib-then-statcatlib-statcat-suitestatcatlib51-and-an-sdmxlib-issue-to-file-spec-m6) below keeps the contracts and gating tests the phase was built to.
+
+*   **sdmxlib 0.83.0** (2026-11-03): GH-347 via GH-350 (`fill_edition`, `fill_structures` and `check_edition(structures=[...])` over several structure editions) and GH-351 via GH-352 (references between structure products).
+*   **sdmxlib 0.84.0** (2026-11-03): GH-356 (a quoted catalog alias for a product id that starts with a digit) and GH-357 (`check_edition(fingerprints=False)`), both via GH-358.
+*   **statcatlib 0.13.0** (2026-11-03): StatCat-Suite/statcatlib#51 in slices StatCat-Suite/statcatlib#119 to StatCat-Suite/statcatlib#122: structure products, partial codelists in data products, the cross-product rules (specification §6.5 items 4, 7 and 8), stale data editions and the `statcat doctor` topics.
+*   **sdmxlib-rest 0.9.2** (2026-11-03): StatCat-Suite/sdmxlib-rest#91 (require sdmxlib 0.84).
+
 ### Phase 3: structure products (sdmxlib, then statcatlib; StatCat-Suite/statcatlib#51 and an sdmxlib issue to file; spec M6)
 
-Q2 is decided (2026-11-02): StatCan's structure products follow the change-rate split. statcatlib's design for the phase settles what this section leaves open.
+Built (2026-11-03); [Built](#phase-3-structure-products-shipped-2026-11-03) records the releases. Q2 is decided (2026-11-02): StatCan's structure products follow the change-rate split. statcatlib's design for the phase settles what this section leaves open.
 
 *   **sdmxlib: the walk and the cut on an open builder.** `build_edition` builds a product's first edition, seals it itself, gathers structures only from dataflow closures and refuses a non-empty path, so neither a republish nor a structure product can use it. sdmxlib adds:
     *   a function that fills an open builder from `LocalRegistry.build(product_dir, previous=)` with the dataflows' closures, the observations and the partial cut, and leaves the seal to the caller, so a `WorkingCopy` can call it on any edition;
@@ -334,6 +344,7 @@ statcatlib RFC §7 and the Phase 2a design's non-goals define the scope: everyth
     *   `correct` and `reinstate` each refuse their precondition's failure and succeed when it holds.
     *   A 1.1 leaf validates, and a 1.0 leaf reads with the routing fields absent.
     *   A 7,000-leaf Inventory read records its wall time, its fetch count and the bytes fetched. The measurement goes into specification §6.5 and decides whether the baked summary is built.
+    *   The first measurement on the 7,000-product corpus is the cost of statcatlib's no-home comparison: every data seal reads every other live data manifest.
 
 ### Phase 5: release and garbage collection (statcatlib; StatCat-Suite/statcatlib#52; spec M9)
 
