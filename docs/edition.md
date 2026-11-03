@@ -593,7 +593,7 @@ not only the first:
 | `lake` | every file the current snapshot references exists at the size DuckLake recorded and none is a delete file, and every file the catalog references from any snapshot it keeps is in the manifest; runs only when `tables.ducklake` exists | yes | yes | no | continues |
 | `bindings` | the store's bindings are the manifest's, and each table holds the count the manifest gives | yes | yes | no | continues |
 | `references` | every reference in the store names an artefact or an item in the store; for a structure product given `structures=`, or a full artefact or an item of one in those editions | yes | yes | no | continues |
-| `fingerprints` | every artefact, binding and content fingerprint, recomputed, is the manifest's (§9) | yes | with `fingerprints=True` | no | continues |
+| `fingerprints` | every artefact, binding and content fingerprint, recomputed, is the manifest's (§9) | unless `fingerprints=False` | with `fingerprints=True` | no | continues |
 | `availability` | every coded column holds codes of its enumeration or `NULL`, and the stored availability is the data's: each dimension's values and the observation count, rescanned (§4) | yes | no | no | continues |
 | `partials` | every partial whose entry records `partial_of` has a full artefact at its URN with that fingerprint in one of the `structures=` editions (one edition, or a sequence of structure products), and the partial's items, each under the same parent, are among the full artefact's; a codelist's, concept scheme's and category scheme's items are compared, another scheme's fingerprint alone | with `structures=` | with `structures=` | no | continues |
 
@@ -603,6 +603,16 @@ is a finding under the check that tried to read it, and ends the run.
 At `receive` the lake and the bindings read the data where the registry
 reads it, local or mounted, even when `lookup=` checks `data/` in the blob
 store.
+
+At `publish`, `fingerprints=False` skips the `fingerprints` check. It is for
+the process that sealed the edition, right after `seal`: `seal` computed every
+fingerprint the manifest records from this store, and the `files` check, which
+still hashes every file, shows the files are the ones sealed. The skip trusts
+the manifest's fingerprints, so a wrong one goes unfound. On the 2021 Census
+Profile edition, 2.0 GB of data files, the `publish` check took 774 s with the
+recomputation and 46 s without it. Check an edition received from elsewhere,
+or one another process sealed, with the default
+([GH-357](https://github.com/StatCat-Suite/sdmxlib/issues/357)).
 
 ### The receive stamp
 

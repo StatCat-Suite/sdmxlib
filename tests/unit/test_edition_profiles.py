@@ -189,10 +189,9 @@ def test_a_lookup_is_for_receive(tmp_path: Path, at: Profile) -> None:
         check_edition(tmp_path, at=at, lookup=lambda e: None)
 
 
-@pytest.mark.parametrize("at", ["publish", "open"])
-def test_fingerprints_is_for_receive(tmp_path: Path, at: Profile) -> None:
-    with pytest.raises(ValueError, match="fingerprints= opts a receive check"):
-        check_edition(tmp_path, at=at, fingerprints=True)
+def test_open_refuses_to_recompute_fingerprints(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="at='open' reads no store"):
+        check_edition(tmp_path, at="open", fingerprints=True)
 
 
 @pytest.mark.parametrize("at", ["publish", "receive", "open"])

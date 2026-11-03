@@ -91,7 +91,7 @@ def check_edition(
     remote: str | None = None,
     engine: EditionEngine | None = None,
     lookup: Lookup | None = None,
-    fingerprints: bool = False,
+    fingerprints: bool | None = None,
     expect: Manifest | str | Path | None = None,
     structures: str | Path | Sequence[str | Path] | None = None,
     extensions: Mapping[str, Check] | None = None,
@@ -109,7 +109,7 @@ def check_edition(
     | bindings: the manifest's, each with the count it gives | yes | yes | no |
     | references: every stored reference names something in the store (see `structures`) | yes | yes | no |
     | tags: every stored language tag is in the form `normalize_tag` gives | yes | yes | no |
-    | fingerprints: recomputed, equal to the manifest's | yes | with `fingerprints` | no |
+    | fingerprints: recomputed, equal to the manifest's | unless `fingerprints` is False | if it is True | no |
     | availability: coded columns hold codes; stored availability is the data's | yes | no | no |
     | expect: fingerprints equal to an earlier manifest's | with `expect` | with `expect` | with `expect` |
     | partials: `partial_of` and the items match the full artefact | with `structures` | with `structures` | no |
@@ -137,15 +137,26 @@ def check_edition(
             credentials; one of its own when None.
         lookup: At ``receive``, what the blob store reports for a ``data/``
             entry, or None for a file it does not hold (see `verify_remote`).
-        fingerprints: At ``receive``, also recompute the fingerprints, which
-            ``publish`` always does.
+        fingerprints: Whether to recompute every artefact, binding and
+            content fingerprint from the store and compare it with the
+            manifest's. None takes the profile's default: ``publish``
+            recomputes them, ``receive`` and ``open`` do not. True opts a
+            ``receive`` check in. False skips them at ``publish``, for the
+            process that sealed the edition, right after `seal`: `seal`
+            computed the manifest's fingerprints from this store, and the
+            ``files`` check, which still hashes every file, shows the files
+            are the ones sealed. On the 2021 Census Profile edition, 2.0 GB
+            of data files, the check took 774 s with the recomputation and
+            46 s without it. Check an edition received from elsewhere, or
+            one sealed by another process, with the default.
         expect: An earlier edition's manifest, or its directory, whose
             content this one must have: a republish that is to change no
             content, such as every edition rebuilt at a new store schema. Each
             artefact, binding and the edition fingerprint that differs is a
             finding under ``expect``. Read from the manifests alone, so at
-            ``publish``, where the fingerprints are also recomputed, a clean
-            run says the store's content is the earlier one's.
+            ``publish``, where the fingerprints are also recomputed unless
+            ``fingerprints=False``, a clean run says the store's content is
+            the earlier one's.
         structures: The editions holding the full artefacts this edition's
             partials were cut from, structure products say: one edition or a
             sequence of them. Each partial whose manifest entry records
@@ -167,9 +178,9 @@ def check_edition(
         What was checked and what was found.
 
     Raises:
-        ValueError: If `lookup`, `fingerprints`, `remote` or `structures` is
-            given at a profile that does not use it, or `structures` is an
-            empty sequence.
+        ValueError: If `lookup`, `remote` or `structures` is given at a
+            profile that does not use it, `fingerprints` is True at ``open``,
+            or `structures` is an empty sequence.
     """
     _refuse_unused(at, lookup=lookup, fingerprints=fingerprints, remote=remote, structures=structures)
     root = Path(path)
@@ -237,7 +248,7 @@ def _refuse_unused(
     at: Profile,
     *,
     lookup: Lookup | None,
-    fingerprints: bool,
+    fingerprints: bool | None,
     remote: str | None,
     structures: str | Path | Sequence[str | Path] | None,
 ) -> None:
@@ -254,10 +265,8 @@ def _refuse_unused(
     if lookup is not None and at != "receive":
         msg = f"lookup= verifies data files at receive; at={at!r} does not use it"
         raise ValueError(msg)
-    if fingerprints and at != "receive":
-        msg = f"fingerprints= opts a receive check into recomputing them; at={at!r} " + (
-            "always recomputes them" if at == "publish" else "never does"
-        )
+    if fingerprints and at == "open":
+        msg = "fingerprints=True recomputes them from the store; at='open' reads no store"
         raise ValueError(msg)
 
 
@@ -268,7 +277,7 @@ def _steps(
     at: Profile,
     *,
     sized_remotely: bool,
-    fingerprints: bool,
+    fingerprints: bool | None,
     structures: tuple[Path, ...] | None,
     extensions: Mapping[str, Check],
 ) -> list[tuple[str, Callable[[], Iterable[Finding]]]]:
@@ -284,7 +293,7 @@ def _steps(
             ("references", partial(_references, reg, None if manifest.bindings else structures)),
             ("tags", partial(_tags, reg)),
         ]
-    if at == "publish" or fingerprints:
+    if fingerprints or (fingerprints is None and at == "publish"):
         steps.append(("fingerprints", partial(_fingerprints, root, manifest, reg)))
     if at == "publish":
         steps.append(("availability", partial(_availability, manifest, reg)))
