@@ -99,6 +99,14 @@ plane: it attaches the catalogs, serves observation reads and takes writes.
   `check_scan_integrity`.
 - The lake is attached as `ducklake:<root>/tables.ducklake` with `DATA_PATH` and
   `OVERRIDE_DATA_PATH true`. A read-only class also adds `READ_ONLY`.
+- SQL names an attached catalog quoted: `ATTACH ... AS "<alias>"`, a binding's
+  relation as `"<database_role>".<table_location>` (`_duckdb.located`) and
+  DuckLake's `"__ducklake_metadata_<alias>"`. An alias carries the product id,
+  and a product id may start with a digit (`14100287`), which an unquoted
+  identifier cannot (GH-356). `data_store._sql_identifier` still refuses any
+  name but letters, digits and underscores before quoting it.
+  `SchemaInspector.invalidate` matches a table named with its parts quoted or
+  bare.
 - Every read cursor is a `conn.cursor()` passed through `use_sdmx(...,
   catalog)` (`storage/schema.py`), because a derived cursor does not inherit
   `USE`. Read cursors are cached per thread through `threading.local`.

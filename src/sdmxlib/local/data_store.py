@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, Literal, Self, override
 import duckdb
 import polars as pl
 
+from sdmxlib._duckdb import located, quote_identifier
 from sdmxlib.data_store import WriteSource
 from sdmxlib.local.object_store import OptionValue, StoreSecret
 from sdmxlib.local.sql import SchemaInspector
@@ -548,7 +549,7 @@ class DuckDBDataStore(SessionFactory):
         component the DSD leaves untyped.
         """
         try:
-            return self.inspect().column_types(f"{binding.database_role}.{binding.table_location}")
+            return self.inspect().column_types(located(binding.database_role, binding.table_location))
         except duckdb.CatalogException:
             return column_types(binding, dsd) if dsd is not None else {}
 
@@ -626,16 +627,17 @@ class DuckDBDataStore(SessionFactory):
                 msg = f"Invalid {name} identifier: {value!r}"
                 raise ValueError(msg)
         conn = self.connection
-        conn.execute(f"CREATE SCHEMA IF NOT EXISTS {lake_alias}.{schema}")
+        target = located(lake_alias, f"{schema}.{table}")
+        conn.execute(f"CREATE SCHEMA IF NOT EXISTS {located(lake_alias, schema)}")
         conn.execute(
-            f"CREATE OR REPLACE TABLE {lake_alias}.{schema}.{table} AS SELECT * FROM read_csv(?, types=?, header=true)",
+            f"CREATE OR REPLACE TABLE {target} AS SELECT * FROM read_csv(?, types=?, header=true)",
             [str(path), dict(types)],
         )
-        refuse_mixed_structures(conn, f"{lake_alias}.{schema}.{table}", kind="TABLE")
-        refuse_actions(conn, f"{lake_alias}.{schema}.{table}", kind="TABLE")
+        refuse_mixed_structures(conn, target, kind="TABLE")
+        refuse_actions(conn, target, kind="TABLE")
         # A column `types` leaves out is inferred, so a replacement may change
         # its type (#518) — and the inspector's cached `DESCRIBE` with it.
-        self.inspect().invalidate(f"{lake_alias}.{schema}.{table}")
+        self.inspect().invalidate(target)
 
     def write_observations(
         self,
@@ -704,8 +706,8 @@ class DuckDBDataStore(SessionFactory):
         view_name = f"__sdmxlib_write_obs_{id(source):x}"
         conn.register(view_name, _as_relation(conn, source))
         try:
-            target = f"{lake_alias}.{schema}.{table}"
-            conn.execute(f"CREATE SCHEMA IF NOT EXISTS {lake_alias}.{schema}")
+            target = located(lake_alias, f"{schema}.{table}")
+            conn.execute(f"CREATE SCHEMA IF NOT EXISTS {located(lake_alias, schema)}")
             partitions = _column_list(conn, view_name, partition_by)
             if sorted_by and not _is_ducklake(conn, lake_alias):
                 msg = (
@@ -807,16 +809,19 @@ def _column_list(conn: duckdb.DuckDBPyConnection, view_name: str, names: tuple[s
 
 
 def _sql_identifier(name: str) -> str:
-    """Escape a SQL identifier (extension name, ATTACH alias).
+    """`name` as a DuckDB quoted identifier (extension name, ATTACH alias, column).
 
-    DuckDB identifiers are case-insensitive and may contain alphanumerics
-    and underscores. Reject anything else to avoid SQL injection through
-    extension/alias names.
+    Only letters, digits and underscores are accepted, so no name reaches the
+    SQL that could close the quotes. Quoted, a name may start with a digit:
+    an alias carrying a product id such as ``14100287`` attaches.
+
+    Raises:
+        ValueError: If `name` holds anything but letters, digits and underscores.
     """
     if not _is_valid_identifier(name):
         msg = f"Invalid SQL identifier: {name!r}"
         raise ValueError(msg)
-    return name
+    return quote_identifier(name)
 
 
 def _is_valid_identifier(name: str) -> bool:

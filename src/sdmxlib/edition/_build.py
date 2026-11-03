@@ -30,6 +30,7 @@ from pathlib import Path
 
 import msgspec
 
+from sdmxlib._duckdb import located
 from sdmxlib.api.registry import RestRegistry
 from sdmxlib.builders.contentconstraint import _distinct_values
 from sdmxlib.data_store import WriteSource
@@ -410,7 +411,7 @@ def _observed_codes(
     Raises:
         ValueError: If a column holds a value that is not a code of its codelist.
     """
-    table = f"{binding.database_role}.{binding.table_location}"
+    table = located(binding.database_role, binding.table_location)
     columns = table_columns(edition.connection, table)
     mapped = {**binding.dimension_column_map, **binding.attribute_column_map, **binding.measure_column_map}
     for component_id, urn in _components(dsd).items():

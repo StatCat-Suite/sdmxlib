@@ -61,7 +61,9 @@ the subpackages share.
   REST ingest); `csv_errors` and `converting` convert at a query terminal and
   in a drained stream, and only errors DuckDB's CSV reader raised.
 - `first` and `count` (`_duckdb.py`): a cursor's first row with its result
-  finished, and the row count from a cursor.
+  finished, and the row count from a cursor. `quote_identifier` and `located`
+  (`_duckdb.py`): a DuckDB quoted identifier, and a binding's relation
+  ``"<database_role>".<table_location>`` with its catalog quoted.
 - `synthetic_edition`, `profile_edition`, `Shape`, `Dim` and `HierarchyShape`
   (`testing.py`): build a seeded synthetic edition that passes `check_edition`,
   or take a `Shape` from an existing edition.

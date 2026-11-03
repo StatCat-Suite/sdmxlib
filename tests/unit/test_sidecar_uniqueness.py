@@ -35,7 +35,7 @@ from sdmxlib.session import cursor_for
 
 pytestmark = pytest.mark.unit
 
-SIDECAR = "memory.data.series"
+SIDECAR = '"memory".data.series'
 
 
 def _binding() -> DataflowBinding:
@@ -169,6 +169,10 @@ def test_the_check_runs_once_per_table_and_again_after_invalidate(monkeypatch: p
         inspector.invalidate(SIDECAR)
         inspector.plan(_binding())
         assert conn.checks == 2, "a rewritten table is checked again"
+
+        inspector.invalidate("memory.data.series")
+        inspector.plan(_binding())
+        assert conn.checks == 3, "the catalog unquoted names the same table"
 
 
 def test_fixing_the_table_and_invalidating_clears_the_refusal() -> None:

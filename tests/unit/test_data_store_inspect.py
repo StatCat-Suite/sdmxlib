@@ -93,8 +93,8 @@ class _CountingCursors:
         return _CountingHandle(cursor_for(base), self)
 
 
-MAIN = "memory.data.observations"
-SIDECAR = "memory.data.series_attrs"
+MAIN = '"memory".data.observations'
+SIDECAR = '"memory".data.series_attrs'
 
 
 # ── Reflection ───────────────────────────────────────────────────────────

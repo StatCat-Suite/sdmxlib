@@ -51,7 +51,7 @@ import threading
 import duckdb
 from attrs import frozen
 
-from sdmxlib._duckdb import first
+from sdmxlib._duckdb import first, located, quote_identifier
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.session import cursor_for
 
@@ -233,12 +233,19 @@ class SchemaInspector:
             return partitions
 
     def invalidate(self, table: str) -> None:
-        """Drop everything cached about ``table`` (e.g. after a rewrite)."""
+        """Drop everything cached about ``table`` (e.g. after a rewrite).
+
+        `plan` names a binding's table with its catalog quoted
+        (``"lake".d.obs``); ``table`` may name it with its parts quoted or
+        bare, and both spellings drop the same entries.
+        """
+        name = _unquoted(table)
         with self._lock:
-            self._columns_cache.pop(table, None)
-            for cache_key in [k for k in self._key_counts_cache if k[0] == table]:
+            for cached in [k for k in self._columns_cache if _unquoted(k) == name]:
+                del self._columns_cache[cached]
+            for cache_key in [k for k in self._key_counts_cache if _unquoted(k[0]) == name]:
                 del self._key_counts_cache[cache_key]
-            for cache_key in [k for k in self._partitions_cache if f"{k[0]}.{k[1]}" == table]:
+            for cache_key in [k for k in self._partitions_cache if f"{k[0]}.{k[1]}" == name]:
                 del self._partitions_cache[cache_key]
 
     def invalidate_all(self) -> None:
@@ -266,11 +273,11 @@ class SchemaInspector:
                 some combination of those keys, which would multiply every
                 observation the join matches.
         """
-        main = f"{binding.database_role}.{binding.table_location}"
+        main = located(binding.database_role, binding.table_location)
         sidecar_loc = binding.series_attributes_location
         if sidecar_loc is None:
             return QueryPlan(main=main, sidecar=None, join_keys=())
-        sidecar = f"{binding.database_role}.{sidecar_loc}"
+        sidecar = located(binding.database_role, sidecar_loc)
         join_keys = self.shared_columns(main, sidecar)
         if not join_keys:
             msg = (
@@ -292,6 +299,11 @@ class SchemaInspector:
         return QueryPlan(main=main, sidecar=sidecar, join_keys=join_keys)
 
 
+def _unquoted(table: str) -> str:
+    """`table` with its identifiers' double quotes removed, the form `invalidate` compares names in."""
+    return table.replace('"', "")
+
+
 def _ducklake_partitions(conn: duckdb.DuckDBPyConnection, catalog: str, table_location: str) -> tuple[str, ...]:
     """A DuckLake table's current identity partition columns, or ``()`` when `catalog` is not a DuckLake catalog."""
     lakes = conn.execute("SELECT database_name FROM duckdb_databases() WHERE type = 'ducklake'").fetchall()
@@ -299,16 +311,16 @@ def _ducklake_partitions(conn: duckdb.DuckDBPyConnection, catalog: str, table_lo
         return ()
     # DuckLake attaches the catalog's metadata under this name, not listed in
     # `duckdb_databases()` but readable.
-    metadata = f"__ducklake_metadata_{catalog}"
+    metadata = quote_identifier(f"__ducklake_metadata_{catalog}")
     schema, _, table = table_location.rpartition(".")
     rows = conn.execute(
         f"""
         SELECT col.column_name, pc.transform
-        FROM "{metadata}".ducklake_partition_info AS pi
-        JOIN "{metadata}".ducklake_partition_column AS pc USING (partition_id, table_id)
-        JOIN "{metadata}".ducklake_table AS t ON t.table_id = pi.table_id AND t.end_snapshot IS NULL
-        JOIN "{metadata}".ducklake_schema AS s ON s.schema_id = t.schema_id AND s.end_snapshot IS NULL
-        JOIN "{metadata}".ducklake_column AS col
+        FROM {metadata}.ducklake_partition_info AS pi
+        JOIN {metadata}.ducklake_partition_column AS pc USING (partition_id, table_id)
+        JOIN {metadata}.ducklake_table AS t ON t.table_id = pi.table_id AND t.end_snapshot IS NULL
+        JOIN {metadata}.ducklake_schema AS s ON s.schema_id = t.schema_id AND s.end_snapshot IS NULL
+        JOIN {metadata}.ducklake_column AS col
           ON col.table_id = pi.table_id AND col.column_id = pc.column_id AND col.end_snapshot IS NULL
         WHERE pi.end_snapshot IS NULL AND s.schema_name = ? AND t.table_name = ?
         ORDER BY pc.partition_key_index
