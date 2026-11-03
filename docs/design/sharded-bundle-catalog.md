@@ -684,7 +684,7 @@ Layered editions (`requires`) remain the recorded alternative and stay rejected.
 4. Roll pods; old pods read the old entries, new pods the new ones; the ingress routes by `product_id`.
 5. Once the rollback window for the pod image closes, supersede the old-schema entries; they follow §11.6.
 
-Result-store keys survive the bump wherever `canonical_form`, fingerprints and render versions are unchanged. A `canonical_form` bump is a one-time cold cache by design. A seal throughput target is set before Phase 5: at the measured 1.6 s per CODR seal (§7.1), a full republish of 7,000 tables fits one non-release window on 4 workers.
+Result-store keys survive the bump wherever `canonical_form`, fingerprints and render versions are unchanged. A `canonical_form` bump is a one-time cold cache by design. The seal throughput target is a full republish of every live product in at most 8 hours on 4 workers. At the measured 1.6 s per CODR seal (§7.1), a full republish of 7,000 tables takes about 5 hours.
 
 ---
 
