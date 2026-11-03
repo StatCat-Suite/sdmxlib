@@ -371,7 +371,7 @@ you write yourself uses the store's naming rather than guessing it:
 store = sl.DuckDBDataStore.from_registry(reg)
 binding = reg.binding_for(cpi)
 plan = store.inspect().plan(binding)
-print(plan.from_clause)  # memory.data.cpi
+print(plan.from_clause)  # "memory".data.cpi
 store.inspect().columns(plan.main)          # cached DESCRIBE
 sql = f"SELECT REF_AREA, printf('%.1f', OBS_VALUE) AS v FROM {plan.from_clause} WHERE FREQ = ?"
 print(store.connection.execute(sql, ["A"]).fetchall())  # [('FR', '2.3'), ('DE', '2.5')]
