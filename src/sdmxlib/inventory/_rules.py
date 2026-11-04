@@ -135,7 +135,21 @@ def _moved(entry: LeafEntry, state: State, now: datetime) -> LeafEntry:
         release_at=None,
         structure_source=entry.structure_source,
         artefacts=entry.artefacts,
+        dataflows=entry.dataflows,
+        pull_bytes=entry.pull_bytes,
     )
+
+
+def _routing(
+    dataflows: Iterable[str] | None, pull_bytes: int | None
+) -> tuple[tuple[str, ...] | UnsetType, int | UnsetType]:
+    """The routing fields a new entry carries: both, sorted and unique, or neither (spec §6.3)."""
+    if dataflows is None and pull_bytes is None:
+        return UNSET, UNSET
+    if dataflows is None or pull_bytes is None:
+        msg = "dataflows and pull_bytes are the routing fields; pass both or neither (spec §6.3)"
+        raise ValueError(msg)
+    return tuple(sorted(set(dataflows))), pull_bytes
 
 
 def _fast_forward(leaf: Leaf, edition_id: str, previous: str | None, schema_version: str) -> LeafEntry | None:
@@ -177,6 +191,8 @@ def record(
     retired: Collection[str] = (),
     structure_source: StructureSource | None = None,
     artefacts: Mapping[str, PartialRecord] | None = None,
+    dataflows: Iterable[str] | None = None,
+    pull_bytes: int | None = None,
 ) -> Leaf:
     """Record a sealed edition: ``live`` when embargo is off, ``embargoed`` when it is on.
 
@@ -196,7 +212,12 @@ def record(
         release_at: For an embargoed edition, when it may be released.
         retired: The edition ids the root tombstones for this product.
         structure_source: Where its structures came from.
-        artefacts: Its manifest's artefacts and partials.
+        artefacts: Its manifest's artefact records (`routing_fields`); a
+            writer passes them for every structure edition.
+        dataflows: A routing field: its manifest's binding URNs, which the
+            entry records sorted and without duplicates.
+        pull_bytes: A routing field: the size of its manifest's required
+            tier. Pass both routing fields or neither.
 
     Returns:
         The product's next leaf.
@@ -206,9 +227,12 @@ def record(
             tombstoned (``tombstone``), the product is another kind
             (``kind``), or a live edition is not built on the live one
             (``fast-forward``; an embargoed one is checked at release).
-        ValueError: If `now` or `release_at` names no time zone.
+        ValueError: If `now` or `release_at` names no time zone, or one
+            routing field is passed without the other.
+        InventoryError: If `pull_bytes` is negative.
     """
     now = _aware(now)
+    routed, pulled = _routing(dataflows, pull_bytes)
     if release_at is not None:
         _aware(release_at)
     current = leaf or Leaf(
@@ -233,6 +257,8 @@ def record(
         release_at=release_at if embargo else None,
         structure_source=structure_source,
         artefacts=dict(artefacts) if artefacts is not None else None,
+        dataflows=routed,
+        pull_bytes=pulled,
     )
     changed = [entry]
     if not embargo:
@@ -446,6 +472,8 @@ def reinstate(
     schema_version: str,
     now: datetime,
     artefacts: Mapping[str, PartialRecord] | None = None,
+    dataflows: Iterable[str] | None = None,
+    pull_bytes: int | None = None,
 ) -> tuple[Leaf, tuple[Tombstone, ...]]:
     """Enter a tombstoned edition again as ``superseded``, so a rollback can make it live.
 
@@ -462,15 +490,21 @@ def reinstate(
         now: The storage server's time, time-zone aware.
         artefacts: Its manifest's artefact records, so the reinstated entry
             keeps them (spec §6.3).
+        dataflows: A routing field, as `record` takes it.
+        pull_bytes: A routing field, as `record` takes it. Pass both routing
+            fields or neither.
 
     Returns:
         The product's next leaf, and the tombstones the next root keeps.
 
     Raises:
         TransitionError: If the edition is not tombstoned for this product (``tombstone``).
-        ValueError: If `now` names no time zone.
+        ValueError: If `now` names no time zone, or one routing field is
+            passed without the other.
+        InventoryError: If `pull_bytes` is negative.
     """
     now = _aware(now)
+    routed, pulled = _routing(dataflows, pull_bytes)
     stones = tuple(retired)
     if not any(t.product_id == leaf.product_id and t.edition_id == edition_id for t in stones):
         msg = f"{leaf.product_id}'s {edition_id} is not tombstoned; reinstate restores only a retired edition"
@@ -483,6 +517,8 @@ def reinstate(
         schema_version=schema_version,
         state_changed_at=now,
         artefacts=dict(artefacts) if artefacts is not None else None,
+        dataflows=routed,
+        pull_bytes=pulled,
     )
     kept = tuple(t for t in stones if not (t.product_id == leaf.product_id and t.edition_id == edition_id))
     return _with(leaf, [entry]), kept

@@ -41,6 +41,7 @@ from pathlib import Path
 from typing import Self
 
 import msgspec
+from msgspec import UnsetType
 
 from sdmxlib.inventory._format import (
     CATALOG_NAME,
@@ -53,6 +54,7 @@ from sdmxlib.inventory._format import (
     LeafEntry,
     LeafRef,
     Lifecycle,
+    PartialRecord,
     Root,
     Tombstone,
     decode_catalog,
@@ -93,6 +95,13 @@ class LiveEdition(msgspec.Struct, frozen=True, kw_only=True):
         schema_version: The store schema it was written at.
         kind: ``data`` or ``structure``.
         lifecycle: ``final`` or ``revisable``.
+        dataflows: The entry's ``dataflows``, or None when it lacks the
+            routing fields (spec §6.3).
+        pull_bytes: The entry's ``pull_bytes``, or None when it lacks the
+            routing fields.
+        artefacts: The entry's artefact records, or None when it carries none.
+            A structure edition's records without ``partial_of`` are the
+            artefacts it is the structure home of (spec §7.3).
     """
 
     product_id: str
@@ -101,6 +110,9 @@ class LiveEdition(msgspec.Struct, frozen=True, kw_only=True):
     schema_version: str
     kind: Kind
     lifecycle: Lifecycle
+    dataflows: tuple[str, ...] | None = None
+    pull_bytes: int | None = None
+    artefacts: dict[str, PartialRecord] | None = None
 
 
 class _Chain:
@@ -320,6 +332,9 @@ class LiveInventory(_Chain):
             schema_version=entry.schema_version,
             kind=leaf.kind,
             lifecycle=leaf.lifecycle,
+            dataflows=None if isinstance(entry.dataflows, UnsetType) else entry.dataflows,
+            pull_bytes=None if isinstance(entry.pull_bytes, UnsetType) else entry.pull_bytes,
+            artefacts=entry.artefacts,
         )
 
     def editions(self) -> Mapping[str, LiveEdition]:

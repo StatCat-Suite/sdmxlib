@@ -41,7 +41,7 @@
     },
     "LeafEntry": {
       "title": "LeafEntry",
-      "description": "One edition of a product, as the Inventory records it.\n\nAttributes:\n    edition_id: The edition.\n    previous: Its manifest's ``previous``.\n    state: Its state (spec §6.4).\n    manifest_sha256: The SHA-256 of its ``manifest.json``.\n    schema_version: The store schema it was written at.\n    state_changed_at: When it took its state.\n    release_at: For an embargoed entry, when it may be released, or None\n        for no scheduled release; None in every other state.\n    structure_source: Where its structures came from, when a registry is\n        authoritative.\n    artefacts: The artefact records of its manifest, by URN: every full\n        artefact with its fingerprint, and every partial with its\n        fingerprint and ``partial_of``. Optional in 1.x; a writer fills it\n        from Phase 5 on, and an entry without it is read from its\n        manifest (spec §6.3).",
+      "description": "One edition of a product, as the Inventory records it.\n\nAttributes:\n    edition_id: The edition.\n    previous: Its manifest's ``previous``.\n    state: Its state (spec §6.4).\n    manifest_sha256: The SHA-256 of its ``manifest.json``.\n    schema_version: The store schema it was written at.\n    state_changed_at: When it took its state.\n    release_at: For an embargoed entry, when it may be released, or None\n        for no scheduled release; None in every other state.\n    structure_source: Where its structures came from, when a registry is\n        authoritative.\n    artefacts: The artefact records of its manifest, by URN: every full\n        artefact with its fingerprint, and every partial with its\n        fingerprint and ``partial_of``. Optional in 1.x; a writer fills it\n        in every structure entry, and an entry without it is read from\n        its manifest (spec §6.3).\n    dataflows: A routing field: the URNs of its manifest's bindings,\n        sorted and without duplicates; empty for a structure edition.\n        Unset in an entry without the routing fields.\n    pull_bytes: A routing field: the sum of ``size`` over its manifest's\n        ``required``-tier files. Unset in an entry without the routing\n        fields.",
       "type": "object",
       "properties": {
         "edition_id": {
@@ -109,6 +109,17 @@
             }
           ],
           "default": null
+        },
+        "dataflows": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "pull_bytes": {
+          "type": "integer",
+          "minimum": 0
         }
       },
       "required": [
@@ -118,7 +129,15 @@
         "manifest_sha256",
         "schema_version",
         "state_changed_at"
-      ]
+      ],
+      "dependentRequired": {
+        "dataflows": [
+          "pull_bytes"
+        ],
+        "pull_bytes": [
+          "dataflows"
+        ]
+      }
     },
     "StructureSource": {
       "title": "StructureSource",

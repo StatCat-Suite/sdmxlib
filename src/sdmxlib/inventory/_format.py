@@ -357,8 +357,14 @@ class LeafEntry(msgspec.Struct, frozen=True, kw_only=True):
         artefacts: The artefact records of its manifest, by URN: every full
             artefact with its fingerprint, and every partial with its
             fingerprint and ``partial_of``. Optional in 1.x; a writer fills it
-            from Phase 5 on, and an entry without it is read from its
-            manifest (spec §6.3).
+            in every structure entry, and an entry without it is read from
+            its manifest (spec §6.3).
+        dataflows: A routing field: the URNs of its manifest's bindings,
+            sorted and without duplicates; empty for a structure edition.
+            Unset in an entry without the routing fields.
+        pull_bytes: A routing field: the sum of ``size`` over its manifest's
+            ``required``-tier files. Unset in an entry without the routing
+            fields.
     """
 
     edition_id: str
@@ -370,6 +376,25 @@ class LeafEntry(msgspec.Struct, frozen=True, kw_only=True):
     release_at: datetime | None = None
     structure_source: StructureSource | None = None
     artefacts: dict[str, PartialRecord] | None = None
+    dataflows: tuple[str, ...] | UnsetType = UNSET
+    pull_bytes: Annotated[int, msgspec.Meta(ge=0)] | UnsetType = UNSET
+
+    @property
+    def has_routing(self) -> bool:
+        """Whether the entry carries both routing fields (spec §6.3): the test every routing rule makes."""
+        return not isinstance(self.dataflows, UnsetType) and not isinstance(self.pull_bytes, UnsetType)
+
+    @property
+    def full_artefacts(self) -> tuple[str, ...] | None:
+        """The URNs of its full artefacts, sorted: the records without ``partial_of``.
+
+        In a structure entry these are the artefacts its edition is the
+        structure home of (spec §7.3). None when the entry carries no
+        ``artefacts``, which a reader then reads from its manifest.
+        """
+        if self.artefacts is None:
+            return None
+        return tuple(sorted(urn for urn, record in self.artefacts.items() if record.partial_of is None))
 
 
 class Leaf(msgspec.Struct, frozen=True, kw_only=True):
@@ -856,8 +881,11 @@ def validate_leaf(leaf: Leaf) -> None:
 
     Raises:
         InventoryError: If its editions are not sorted by id or repeat one,
-            more than one is live at one ``schema_version``, or a
-            ``release_at`` is set on an entry that is not embargoed.
+            more than one is live at one ``schema_version``, a
+            ``release_at`` is set on an entry that is not embargoed, or an
+            entry breaks a routing-field rule: one routing field without the
+            other, ``dataflows`` unsorted or repeating a URN, or a negative
+            ``pull_bytes`` (spec §6.3).
     """
     ids = [e.edition_id for e in leaf.editions]
     if ids != sorted(set(ids)):
@@ -876,6 +904,24 @@ def validate_leaf(leaf: Leaf) -> None:
         if entry.release_at is not None and entry.state != "embargoed":
             msg = f"{leaf.product_id}'s {entry.edition_id} is {entry.state} and has a release_at"
             raise InventoryError(msg)
+        _check_routing(leaf.product_id, entry)
+
+
+def _check_routing(product_id: str, entry: LeafEntry) -> None:
+    """The rules of the routing fields (spec §6.3), when an entry carries them."""
+    dataflows, pull_bytes = entry.dataflows, entry.pull_bytes
+    if isinstance(dataflows, UnsetType) and isinstance(pull_bytes, UnsetType):
+        return
+    where = f"{product_id}'s {entry.edition_id}"
+    if isinstance(dataflows, UnsetType) or isinstance(pull_bytes, UnsetType):
+        msg = f"{where} carries one routing field without the other (dataflows and pull_bytes)"
+        raise InventoryError(msg)
+    if list(dataflows) != sorted(set(dataflows)):
+        msg = f"{where} lists its dataflows out of order or twice"
+        raise InventoryError(msg)
+    if pull_bytes < 0:
+        msg = f"{where} has a negative pull_bytes, {pull_bytes}"
+        raise InventoryError(msg)
 
 
 # ── JSON Schemas ─────────────────────────────────────────────────────────────
@@ -927,6 +973,10 @@ _DEFINITION_RULES: dict[str, _Schema] = {
         "not": {"anyOf": [{"required": ["products"]}, {"required": ["retired"]}]},
     },
     "Root": {"dependentRequired": {"changes": ["previous_root_sha256"], "previous_root_sha256": ["changes"]}},
+    "LeafEntry": {
+        "dependentRequired": {"dataflows": ["pull_bytes"], "pull_bytes": ["dataflows"]},
+        "properties": {"dataflows": {"uniqueItems": True}},
+    },
 }
 
 #: Each shipped schema: its model, and rules merged into the model's own definition.
