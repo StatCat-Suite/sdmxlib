@@ -41,7 +41,7 @@
     },
     "LeafEntry": {
       "title": "LeafEntry",
-      "description": "One edition of a product, as the Inventory records it.\n\nAttributes:\n    edition_id: The edition.\n    previous: Its manifest's ``previous``.\n    state: Its state (spec §6.4).\n    manifest_sha256: The SHA-256 of its ``manifest.json``.\n    schema_version: The store schema it was written at.\n    state_changed_at: When it took its state.\n    release_at: For an embargoed entry, when it may be released, or None\n        for no scheduled release; None in every other state.\n    structure_source: Where its structures came from, when a registry is\n        authoritative.\n    artefacts: Its manifest's artefacts and partials, by URN; optional\n        in 1.0.",
+      "description": "One edition of a product, as the Inventory records it.\n\nAttributes:\n    edition_id: The edition.\n    previous: Its manifest's ``previous``.\n    state: Its state (spec §6.4).\n    manifest_sha256: The SHA-256 of its ``manifest.json``.\n    schema_version: The store schema it was written at.\n    state_changed_at: When it took its state.\n    release_at: For an embargoed entry, when it may be released, or None\n        for no scheduled release; None in every other state.\n    structure_source: Where its structures came from, when a registry is\n        authoritative.\n    artefacts: The artefact records of its manifest, by URN: every full\n        artefact with its fingerprint, and every partial with its\n        fingerprint and ``partial_of``. Optional in 1.x; a writer fills it\n        from Phase 5 on, and an entry without it is read from its\n        manifest (spec §6.3).",
       "type": "object",
       "properties": {
         "edition_id": {

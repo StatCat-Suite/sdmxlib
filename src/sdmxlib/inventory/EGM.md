@@ -23,7 +23,11 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
   `leaf_path(sha256)` and `sha256_hex` name and address them.
   `INVENTORY_FORMAT` and `CATALOG_FORMAT` are `"1.0"`.
 - `schema(document)` (`__init__.py`): the shipped JSON Schema of `catalog`,
-  `current`, `root` or `leaf`, under `schemas/`.
+  `current`, `root` or `leaf`, generated from the models, or of the
+  Inventory 1.2 history formats (spec §6.1, §6.2, §6.9; GH-361):
+  `catalog-2.0`, `root-1.2` (a root with `previous_root_sha256` and
+  `changes`), `history` (`inventory/HISTORY`), `segment-header` and
+  `segment-line`. Those five are written by hand, ahead of the models.
 - Rules (`_rules.py`): `head`, `record`, `release`, `due`, `release_due`,
   `cancel`, `supersede_pending`, `rollback`, `retire`, `reinstate`,
   `leaf_ref` and `next_root`. Each takes a product's current leaf and

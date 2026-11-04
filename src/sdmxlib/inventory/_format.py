@@ -205,8 +205,11 @@ class LeafEntry(msgspec.Struct, frozen=True, kw_only=True):
             for no scheduled release; None in every other state.
         structure_source: Where its structures came from, when a registry is
             authoritative.
-        artefacts: Its manifest's artefacts and partials, by URN; optional
-            in 1.0.
+        artefacts: The artefact records of its manifest, by URN: every full
+            artefact with its fingerprint, and every partial with its
+            fingerprint and ``partial_of``. Optional in 1.x; a writer fills it
+            from Phase 5 on, and an entry without it is read from its
+            manifest (spec §6.3).
     """
 
     edition_id: str

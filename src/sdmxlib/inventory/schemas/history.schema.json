@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/History",
+  "$defs": {
+    "History": {
+      "title": "History",
+      "description": "``inventory/HISTORY``: an opted-in catalog's epoch, expiry mark and segment pointers (spec §6.9).\n\nAttributes:\n    format_version: ``1.0``.\n    catalog_id: ``catalog.json``'s.\n    restore_epoch: The catalog's epoch; a restore writes it here first.\n    expired_through: The highest ``seq`` expiry removed from the head\n        chain; 0 at opt-in.\n    newest_segment: The newest segment's path, or None before the first.\n    newest_segment_sha256: The SHA-256 of its bytes.\n    cleaned_through: The newest segment whose roots and leaves are\n        deleted, or None.",
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "type": "string",
+          "pattern": "^1\\.[0-9]+$"
+        },
+        "catalog_id": {
+          "type": "string"
+        },
+        "restore_epoch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expired_through": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "newest_segment": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^history/[0-9]+/[0-9]{12}-[0-9]{12}-[0-9a-f-]{36}\\.jsonl$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "newest_segment_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cleaned_through": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^history/[0-9]+/[0-9]{12}-[0-9]{12}-[0-9a-f-]{36}\\.jsonl$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "format_version",
+        "catalog_id",
+        "restore_epoch",
+        "expired_through",
+        "newest_segment",
+        "newest_segment_sha256",
+        "cleaned_through"
+      ],
+      "if": {
+        "properties": {
+          "newest_segment": {
+            "type": "null"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "newest_segment_sha256": {
+            "type": "null"
+          },
+          "cleaned_through": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "newest_segment_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/CatalogDocument",
+  "$defs": {
+    "CatalogDocument": {
+      "title": "CatalogDocument",
+      "description": "``catalog.json`` 2.0: an opted-in catalog's identity (spec §6.1).\n\nAttributes:\n    format_version: ``2.0``.\n    catalog_id: A UUIDv7.\n    restore_epoch: Starts at 0; every restore bumps it.\n    history: Where expiry may start.",
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "type": "string",
+          "pattern": "^2\\.[0-9]+$"
+        },
+        "catalog_id": {
+          "type": "string"
+        },
+        "restore_epoch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "history": {
+          "$ref": "#/$defs/CatalogHistory"
+        }
+      },
+      "required": [
+        "format_version",
+        "catalog_id",
+        "restore_epoch",
+        "history"
+      ]
+    },
+    "CatalogHistory": {
+      "title": "CatalogHistory",
+      "description": "``catalog.json``'s ``history``.\n\nAttributes:\n    since_seq: The lowest ``seq`` from which every root carries both\n        history fields; roots below it never expire.",
+      "type": "object",
+      "properties": {
+        "since_seq": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "since_seq"
+      ]
+    }
+  }
+}
