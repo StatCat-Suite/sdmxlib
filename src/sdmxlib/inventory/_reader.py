@@ -8,11 +8,21 @@ pod passes one over ``obstore`` or ``fsspec``.
 The read protocol (spec §6.6):
 
 1. read ``CURRENT``;
-2. verify the root it names against its ``root_sha256``, and fall back to
-   the version before it on a mismatch;
+2. verify the root it names against its ``root_sha256``;
 3. probe ``seq + 1``, ``seq + 2``, … until one is absent, with no listing;
 4. never accept a lower ``seq`` than one already held, unless
    ``restore_epoch`` changed, which resets the floor.
+
+With ``CURRENT`` present and naming a root that verifies, the reader reads
+nothing else but roots. When ``CURRENT`` is missing, malformed or names a
+root that fails, it falls back (stage 1 of Inventory 1.2): it reads
+``catalog.json``, and on a 2.x catalog ``inventory/HISTORY``; takes the epoch
+from ``HISTORY``, or from ``catalog.json`` on a 1.x catalog; walks back from
+``CURRENT`` no further than its lower bound, the larger of the ``seq`` it
+holds in that epoch and ``expired_through``; drops a held root at or below
+``expired_through``; and probes from one above the bound. It fails closed
+when it finds no root above the bound and holds none, and when a 2.x catalog
+has no ``HISTORY``.
 
 A root that does not validate is skipped and reported in `skipped`, and the
 last valid version is kept.
@@ -33,7 +43,10 @@ from typing import Self
 import msgspec
 
 from sdmxlib.inventory._format import (
+    CATALOG_NAME,
     CURRENT_NAME,
+    HISTORY_NAME,
+    Current,
     InventoryError,
     Kind,
     Leaf,
@@ -42,7 +55,9 @@ from sdmxlib.inventory._format import (
     Lifecycle,
     Root,
     Tombstone,
+    decode_catalog,
     decode_current,
+    decode_history,
     decode_leaf,
     decode_root,
     root_path,
@@ -119,33 +134,32 @@ class _Chain:
     def refresh(self) -> Self:
         """Read the newest valid Inventory version, by the read protocol.
 
+        With ``CURRENT`` present and naming a root that verifies, it reads
+        only ``CURRENT`` and roots. Otherwise it takes the fallback of spec
+        §6.6 (`_fallback`).
+
         Raises:
-            InventoryError: If no valid version is found and none is held.
+            InventoryError: If no valid version is found and none is held,
+                or the fallback fails closed.
         """
         held = self._root
-        raw = self._fetch(CURRENT_NAME)
-        current = decode_current(raw) if raw is not None else None
-        epoch = current.restore_epoch if current is not None else (held.restore_epoch if held else 0)
-        floor = held.seq if held is not None and held.restore_epoch == epoch else 0
-        found: Root | None = None
-        if current is not None:
-            found = self._root_at(current.seq, current.root_sha256)
-            seq = current.seq - 1
-            while found is None and seq > floor:
-                found = self._root_at(seq, None)
+        current = self._read_current()
+        found = None if current is None else self._root_at(current.seq, current.root_sha256)
+        if current is not None and found is not None:
+            epoch = current.restore_epoch
+            start = found.seq
+        else:
+            epoch, bound, held = self._fallback(held)
+            self._root = held
+            seq = current.seq - 1 if current is not None else bound
+            while found is None and seq > bound:
+                candidate = self._root_at(seq, None)
+                found = candidate if candidate is not None and candidate.restore_epoch == epoch else None
                 seq -= 1
-        if found is None and floor > 0 and held is not None:
-            found = held
-        start = found.seq if found is not None else max(floor, 0)
-        seq = start + 1
-        while True:
-            raw = self._fetch(root_path(seq))
-            if raw is None:
-                break
-            later = self._root_at(seq, None, raw)
-            if later is not None and later.restore_epoch == epoch:
-                found = later
-            seq += 1
+            if found is None and held is not None and held.restore_epoch == epoch:
+                found = held
+            start = found.seq if found is not None else bound
+        found = self._probe(start, epoch) or found
         if found is None:
             msg = f"the catalog has no valid Inventory version ({'; '.join(self.skipped) or 'none written'})"
             raise InventoryError(msg)
@@ -153,6 +167,59 @@ class _Chain:
             found = held
         self._root = found
         return self
+
+    def _read_current(self) -> Current | None:
+        """``CURRENT``, or None when it is missing or malformed (then reported in `skipped`)."""
+        raw = self._fetch(CURRENT_NAME)
+        if raw is None:
+            return None
+        try:
+            return decode_current(raw)
+        except InventoryError as exc:
+            self.skipped.append(str(exc))
+            return None
+
+    def _probe(self, after: int, epoch: int) -> Root | None:
+        """The newest valid root of `epoch` from ``after + 1`` until a ``seq`` is absent, or None."""
+        found: Root | None = None
+        seq = after + 1
+        while (raw := self._fetch(root_path(seq))) is not None:
+            later = self._root_at(seq, None, raw)
+            if later is not None and later.restore_epoch == epoch:
+                found = later
+            seq += 1
+        return found
+
+    def _fallback(self, held: Root | None) -> tuple[int, int, Root | None]:
+        """The epoch, the lower bound and the held root to keep, when ``CURRENT`` fails (spec §6.6).
+
+        It reads ``catalog.json``, and on a 2.x document ``inventory/HISTORY``,
+        taking the epoch from ``HISTORY`` or, on a 1.x catalog, from
+        ``catalog.json``. The bound is the larger of the held ``seq`` in that
+        epoch and ``expired_through`` (0 on a 1.x catalog); a held root at or
+        below ``expired_through`` is dropped, and no longer served.
+
+        Raises:
+            InventoryError: If ``catalog.json`` is missing or malformed, or a
+                2.x catalog has no valid ``inventory/HISTORY``.
+        """
+        raw = self._fetch(CATALOG_NAME)
+        if raw is None:
+            msg = f"{CURRENT_NAME} failed and the catalog has no {CATALOG_NAME}"
+            raise InventoryError(msg)
+        catalog = decode_catalog(raw)
+        epoch, expired = catalog.restore_epoch, 0
+        if catalog.opted_in:
+            raw = self._fetch(HISTORY_NAME)
+            if raw is None:
+                msg = f"{CATALOG_NAME} is format {catalog.format_version} and the catalog has no {HISTORY_NAME}"
+                raise InventoryError(msg)
+            history = decode_history(raw)
+            epoch, expired = history.restore_epoch, history.expired_through
+        if held is not None and held.seq <= expired:
+            held = None
+        floor = held.seq if held is not None and held.restore_epoch == epoch else 0
+        return epoch, max(floor, expired), held
 
     @property
     def _current(self) -> Root:
