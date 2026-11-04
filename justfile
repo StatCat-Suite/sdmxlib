@@ -678,7 +678,11 @@ release-check-upgrading VERSION:
     set -euo pipefail
     RAW="{{ VERSION }}"
     VER="v${RAW#v}"
-    if ! just release-notes "${VER}" | grep -q '^### Breaking Changes'; then
+    # Under pipefail, `release-notes | grep -q` fails on a match when grep's early
+    # exit kills release-notes with SIGPIPE (GH-369), so the notes are captured
+    # first. A failed release-notes, such as a version with no section, stops here.
+    NOTES=$(just release-notes "${VER}")
+    if ! grep -q '^### Breaking Changes' <<< "${NOTES}"; then
         echo "${VER} has no breaking changes; docs/upgrading.md need not change"
         exit 0
     fi
