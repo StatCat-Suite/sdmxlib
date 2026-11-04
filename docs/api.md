@@ -312,6 +312,30 @@ Which edition of each product in a catalog is live: the documents, the rules tha
 
 ---
 
+::: sdmxlib.inventory.routing_fields
+
+---
+
+::: sdmxlib.inventory.RoutingFields
+
+---
+
+::: sdmxlib.inventory.manifest_records
+
+---
+
+::: sdmxlib.inventory.route
+
+---
+
+::: sdmxlib.inventory.Route
+
+---
+
+::: sdmxlib.inventory.verify_entry
+
+---
+
 ::: sdmxlib.inventory.TransitionError
 
 ---

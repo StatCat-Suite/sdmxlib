@@ -41,6 +41,7 @@ from sdmxlib.inventory._format import (
     History,
     InventoryError,
     Leaf,
+    PartialRecord,
     Root,
     Tombstone,
     decode_catalog,
@@ -317,6 +318,97 @@ def check_a_withdrawn_edition_is_never_released_again(new: Callable[[], Backend]
         raise _fail(msg)
 
 
+_FLOWS = (
+    "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=STC:DF_B(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=STC:DF_A(1.0)",
+)
+_HOME = "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=STC:CL_GEO(1.0)"
+_CUT = "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=STC:CL_FREQ(1.0)"
+_RECORDS = {_HOME: PartialRecord(fingerprint="f1"), _CUT: PartialRecord(fingerprint="f2", partial_of="f3")}
+
+
+def _routed(leaf: Leaf | None, edition: str, previous: str | None) -> Leaf:
+    """A structure edition recorded with its routing fields and artefacts."""
+    return record(
+        leaf,
+        product_id="s",
+        kind="structure",
+        lifecycle="revisable",
+        edition_id=edition,
+        previous=previous,
+        manifest_sha256="0" * 64,
+        schema_version=SCHEMA_VERSION,
+        embargo=False,
+        now=_T0,
+        artefacts=_RECORDS,
+        dataflows=(),
+        pull_bytes=4096,
+    )
+
+
+def _routing_of(snapshot: Snapshot | None, product: str, edition: str) -> object:
+    leaf = _present(snapshot, f"reading {product}").leaves.get(product)
+    entry = None if leaf is None else next((e for e in leaf.editions if e.edition_id == edition), None)
+    if entry is None:
+        msg = f"{product} records no {edition}"
+        raise _fail(msg)
+    return (entry.dataflows, entry.pull_bytes, entry.artefacts)
+
+
+def check_the_routing_fields_survive_a_commit_and_a_reinstate(new: Callable[[], Backend]) -> None:
+    """An entry's routing fields and ``artefacts`` read back as recorded, and a reinstated entry keeps them.
+
+    An entry recorded without them reads with them absent (spec §6.3).
+    """
+    backend = new()
+    data = record(
+        _sealed(None, "d", _edition(1), None),
+        product_id="d",
+        kind="data",
+        lifecycle="revisable",
+        edition_id=_edition(2),
+        previous=_edition(1),
+        manifest_sha256="0" * 64,
+        schema_version=SCHEMA_VERSION,
+        embargo=False,
+        now=_T0 + _MINUTE,
+        dataflows=_FLOWS,
+        pull_bytes=13131776,
+    )
+    structure = _routed(_routed(None, _edition(3), None), _edition(4), _edition(3))
+    base = backend.commit(None, {"d": data, "s": structure})
+    reader = backend.reader().refresh()
+    for snapshot, who in ((backend.head(), "a fresh reader"), (reader, "a long-lived reader")):
+        bare = _routing_of(snapshot, "d", _edition(1))
+        if bare != (msgspec.UNSET, msgspec.UNSET, None):
+            msg = f"{who} read routing fields {bare} into an entry recorded without them"
+            raise _fail(msg)
+        if (found := _routing_of(snapshot, "d", _edition(2))) != (tuple(sorted(_FLOWS)), 13131776, None):
+            msg = f"{who} read the data entry's routing fields as {found}"
+            raise _fail(msg)
+        if (found := _routing_of(snapshot, "s", _edition(3))) != ((), 4096, _RECORDS):
+            msg = f"{who} read the superseded structure entry's routing fields as {found}"
+            raise _fail(msg)
+    kept, stones = retire(base.leaves["s"], [_edition(3)], now=_T0 + _MINUTE)
+    retired = backend.commit(base, {"s": kept}, retired=stones, kind="retire")
+    back, left = reinstate(
+        retired.leaves["s"],
+        retired.retired,
+        edition_id=_edition(3),
+        previous=None,
+        manifest_sha256="0" * 64,
+        schema_version=SCHEMA_VERSION,
+        now=_T0 + 2 * _MINUTE,
+        artefacts=_RECORDS,
+        dataflows=(),
+        pull_bytes=4096,
+    )
+    after = backend.commit(retired, {"s": back}, retired=left, kind="reinstate")
+    if (found := _routing_of(backend.head(), "s", _edition(3))) != ((), 4096, _RECORDS):
+        msg = f"the reinstated entry in version {after.seq} reads its routing fields as {found}"
+        raise _fail(msg)
+
+
 def _three_versions(backend: Backend) -> int:
     """Commit three versions, adding products p1 to p3; return the newest's seq."""
     snapshot = None
@@ -346,6 +438,7 @@ CHECKS = (
     check_a_restore_epoch_change_resets_readers,
     check_fast_forward_and_conditional_rollback,
     check_a_withdrawn_edition_is_never_released_again,
+    check_the_routing_fields_survive_a_commit_and_a_reinstate,
 )
 
 
