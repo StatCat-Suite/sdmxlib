@@ -17,31 +17,45 @@ The rules are the sharded catalog spec's §6.4:
   (``if_live``) and is refused when another has gone live since.
 - **Retirement is a tombstone**, and a tombstoned edition is never recorded
   again except by `reinstate`.
+
+A writer that writes the history fields (§6.2, §6.6) builds them from the
+base version, root ``seq - 1``, and its leaves: `change_list` diffs the two
+versions, `next_root` hashes the base's stored bytes, and `next_created_at`
+keeps ``created_at`` monotone and refuses a base from a fast clock.
 """
 
-from collections.abc import Collection, Iterable, Mapping
-from datetime import datetime
+from collections.abc import Collection, Iterable, Mapping, Sequence
+from datetime import datetime, timedelta
 from typing import Literal
+
+from msgspec import UNSET, UnsetType
 
 from sdmxlib.inventory._format import (
     INVENTORY_FORMAT,
+    ChangeItem,
+    EntryItem,
+    EntryRecord,
     Event,
     InventoryError,
     Kind,
     Leaf,
     LeafEntry,
+    LeafHashes,
     LeafRef,
     Lifecycle,
+    Marker,
     PartialRecord,
     Root,
     State,
     StructureSource,
     Tombstone,
     check_event_kind,
+    decode_root,
     encode,
     leaf_path,
     sha256_hex,
     validate_leaf,
+    validate_root,
 )
 from sdmxlib.storage._manifest import JsonValue, Producer
 
@@ -431,11 +445,23 @@ def reinstate(
     manifest_sha256: str,
     schema_version: str,
     now: datetime,
+    artefacts: Mapping[str, PartialRecord] | None = None,
 ) -> tuple[Leaf, tuple[Tombstone, ...]]:
     """Enter a tombstoned edition again as ``superseded``, so a rollback can make it live.
 
     The writer verifies its manifest and every listed file before it calls
     this (spec §6.4).
+
+    Args:
+        leaf: The product's current leaf.
+        retired: The current root's tombstones.
+        edition_id: The tombstoned edition.
+        previous: Its manifest's ``previous``.
+        manifest_sha256: The SHA-256 of its ``manifest.json``.
+        schema_version: Its manifest's ``schema_version``.
+        now: The storage server's time, time-zone aware.
+        artefacts: Its manifest's artefact records, so the reinstated entry
+            keeps them (spec §6.3).
 
     Returns:
         The product's next leaf, and the tombstones the next root keeps.
@@ -456,9 +482,153 @@ def reinstate(
         manifest_sha256=manifest_sha256,
         schema_version=schema_version,
         state_changed_at=now,
+        artefacts=dict(artefacts) if artefacts is not None else None,
     )
     kept = tuple(t for t in stones if not (t.product_id == leaf.product_id and t.edition_id == edition_id))
     return _with(leaf, [entry]), kept
+
+
+#: How far ahead of a writer's clock a base version's ``created_at`` may be (spec §6.6).
+MAX_BASE_AHEAD = timedelta(minutes=5)
+
+#: The least step from a base version's ``created_at`` to the next version's.
+CREATED_AT_STEP = timedelta(milliseconds=1)
+
+
+def next_created_at(base: Root | None, now: datetime) -> datetime:
+    """The ``created_at`` of the version after `base`, written at the writer's time `now` (spec §6.6).
+
+    It is at least the base version's ``created_at`` plus one millisecond,
+    across a ``restore_epoch`` change too, so a writer whose clock reads
+    earlier writes that instant.
+
+    Raises:
+        InventoryError: If the base version's ``created_at`` is more than
+            `MAX_BASE_AHEAD` ahead of `now`, naming its time, so one fast
+            clock cannot pin ``created_at`` for every later writer.
+        ValueError: If `now` names no time zone.
+    """
+    now = _aware(now)
+    if base is None:
+        return now
+    if base.created_at > now + MAX_BASE_AHEAD:
+        msg = (
+            f"Inventory version {base.seq} was created at {base.created_at.isoformat()}, more than "
+            f"{MAX_BASE_AHEAD} ahead of this writer's clock ({now.isoformat()}); fix the clock that wrote it "
+            "or this one"
+        )
+        raise InventoryError(msg)
+    return max(now, base.created_at + CREATED_AT_STEP)
+
+
+def entry_record(entry: LeafEntry) -> EntryRecord:
+    """A change item's copy of `entry`: its seven required fields (spec §6.3)."""
+    return EntryRecord(
+        edition_id=entry.edition_id,
+        previous=entry.previous,
+        state=entry.state,
+        manifest_sha256=entry.manifest_sha256,
+        schema_version=entry.schema_version,
+        state_changed_at=entry.state_changed_at,
+        release_at=entry.release_at,
+    )
+
+
+def _leaf_for(leaves: Mapping[str, Leaf], product_id: str, ref: LeafRef | None, which: str) -> Leaf | None:
+    if ref is None:
+        return None
+    leaf = leaves.get(product_id)
+    if leaf is None:
+        msg = f"{product_id}'s leaf in the {which} version is needed for the change list and was not given"
+        raise InventoryError(msg)
+    if leaf_ref(leaf)[1] != ref:
+        msg = f"{product_id}'s leaf given for the {which} version does not hash to {ref.leaf_sha256}"
+        raise InventoryError(msg)
+    return leaf
+
+
+def _marks(leaf: Leaf | None, stones: Mapping[str, Tombstone]) -> dict[str, tuple[Marker, LeafEntry | Tombstone]]:
+    marks: dict[str, tuple[Marker, LeafEntry | Tombstone]] = {}
+    for entry in leaf.editions if leaf is not None else ():
+        marks[entry.edition_id] = (entry.state, entry)
+    for edition_id, stone in stones.items():
+        marks[edition_id] = ("tombstone", stone)
+    return marks
+
+
+def change_list(
+    base: Root | None,
+    base_leaves: Mapping[str, Leaf],
+    *,
+    products: Mapping[str, LeafRef],
+    leaves: Mapping[str, Leaf],
+    retired: Iterable[Tombstone],
+) -> tuple[ChangeItem, ...]:
+    """The change list of the version after `base`: one item per product whose leaf or tombstones differ (spec §6.3).
+
+    It reads the base version, root ``seq - 1``, and no other, whatever
+    version the new one was built from: a correction built from an older
+    version still diffs against ``seq - 1`` (spec §6.2).
+
+    Args:
+        base: The base version, root ``seq - 1``, or None for version 1.
+        base_leaves: The base version's leaves by product: at least each
+            product whose leaf or tombstones change.
+        products: Every product's leaf pointer in the new version.
+        leaves: The new version's leaves by product: at least each product
+            whose leaf or tombstones change.
+        retired: The new version's tombstones.
+
+    Returns:
+        The items, sorted by ``product_id``, each listing its editions sorted
+        by ``edition_id``.
+
+    Raises:
+        InventoryError: If a leaf the list needs is missing from `base_leaves`
+            or `leaves`, or does not hash to the pointer its version holds.
+    """
+    before = base.products if base is not None else {}
+    stones_before: dict[str, dict[str, Tombstone]] = {}
+    for stone in base.retired if base is not None else ():
+        stones_before.setdefault(stone.product_id, {})[stone.edition_id] = stone
+    stones_after: dict[str, dict[str, Tombstone]] = {}
+    for stone in retired:
+        stones_after.setdefault(stone.product_id, {})[stone.edition_id] = stone
+    items: list[ChangeItem] = []
+    for product_id in sorted({*before, *products, *stones_before, *stones_after}):
+        old_ref, new_ref = before.get(product_id), products.get(product_id)
+        old_stones, new_stones = stones_before.get(product_id, {}), stones_after.get(product_id, {})
+        if old_ref == new_ref and old_stones == new_stones:
+            continue
+        old_leaf = _leaf_for(base_leaves, product_id, old_ref, "base")
+        new_leaf = old_leaf if old_ref == new_ref else _leaf_for(leaves, product_id, new_ref, "new")
+        old_marks, new_marks = _marks(old_leaf, old_stones), _marks(new_leaf, new_stones)
+        entries: list[EntryItem] = []
+        for edition_id in sorted({*old_marks, *new_marks}):
+            old, new = old_marks.get(edition_id), new_marks.get(edition_id)
+            if old == new:
+                continue
+            to = None if new is None else new[0]
+            record_of = new[1] if new is not None and isinstance(new[1], LeafEntry) else None
+            entries.append(
+                EntryItem(
+                    edition_id=edition_id,
+                    from_=None if old is None else old[0],
+                    to=to,
+                    entry=entry_record(record_of) if record_of is not None else UNSET,
+                )
+            )
+        items.append(
+            ChangeItem(
+                product_id=product_id,
+                leaf_sha256=LeafHashes(
+                    from_=None if old_ref is None else old_ref.leaf_sha256,
+                    to=None if new_ref is None else new_ref.leaf_sha256,
+                ),
+                entries=tuple(entries),
+            )
+        )
+    return tuple(items)
 
 
 def leaf_ref(leaf: Leaf) -> tuple[bytes, LeafRef]:
@@ -480,39 +650,72 @@ def next_root(
     restore_epoch: int | None = None,
     built_from: int | None = None,
     extensions: Mapping[str, Mapping[str, JsonValue]] | None = None,
+    previous_bytes: bytes | UnsetType | None = UNSET,
+    changes: Sequence[ChangeItem] | UnsetType = UNSET,
 ) -> Root:
     """The next Inventory version's root.
 
+    A writer that writes the history fields passes `previous_bytes` and
+    `changes` together (spec §6.2): the root then carries the SHA-256 of
+    `previous_bytes` and `changes`, and its ``created_at`` follows
+    `next_created_at`. Without them the root carries neither field and
+    ``created_at`` is `now`.
+
     Args:
-        previous: The newest version, or None for a catalog's first.
+        previous: The newest version, root ``seq - 1``, or None for a
+            catalog's first. It is the base version of the history fields.
         products: Every product's leaf pointer in the new version.
         event: Who acts, and why.
         producer: The writing library.
-        now: The time written, time-zone aware.
+        now: The writer's time, time-zone aware.
         retired: The tombstones; by default `previous`'s.
         embargo: The embargo setting; by default `previous`'s, else False.
         restore_epoch: By default `previous`'s, else 0.
         built_from: The version this one is built from, for a correction
-            from an older, known-good one; by default `previous`.
+            from an older, known-good one; by default `previous`. The
+            history fields still follow `previous`.
         extensions: By default `previous`'s.
+        previous_bytes: The stored bytes of `previous`, or None for a
+            catalog's first version.
+        changes: The change list against `previous` (`change_list`).
 
     Returns:
         The root, numbered ``previous.seq + 1``.
 
     Raises:
-        InventoryError: If ``event.kind`` is not an `EventKind`.
+        InventoryError: If ``event.kind`` is not an `EventKind`; if only one
+            of `previous_bytes` and `changes` is given, or `previous_bytes`
+            are not `previous`'s; if the change list breaks a rule
+            (`validate_root`); or if `previous` was created more than
+            `MAX_BASE_AHEAD` ahead of `now`.
+        ValueError: If `now` names no time zone.
     """
     now = _aware(now)
     seq = 1 if previous is None else previous.seq + 1
     check_event_kind(event, seq)
-    return Root(
+    history = not isinstance(previous_bytes, UnsetType)
+    if history == isinstance(changes, UnsetType):
+        msg = f"Inventory version {seq}: previous_bytes and changes are the history fields, given both or neither"
+        raise InventoryError(msg)
+    previous_root_sha256: str | UnsetType | None = UNSET
+    if isinstance(previous_bytes, bytes):
+        if previous is None or decode_root(previous_bytes) != previous:
+            msg = f"Inventory version {seq}: the previous_bytes given are not version {seq - 1}'s root"
+            raise InventoryError(msg)
+        previous_root_sha256 = sha256_hex(previous_bytes)
+    elif previous_bytes is None:
+        if previous is not None:
+            msg = f"Inventory version {seq}: previous_bytes is None, and version {seq - 1} exists"
+            raise InventoryError(msg)
+        previous_root_sha256 = None
+    root = Root(
         format_version=INVENTORY_FORMAT,
         seq=seq,
         previous_inventory=built_from if built_from is not None else (None if previous is None else previous.seq),
         restore_epoch=restore_epoch
         if restore_epoch is not None
         else (0 if previous is None else previous.restore_epoch),
-        created_at=now,
+        created_at=next_created_at(previous, now) if history else now,
         producer=producer,
         embargo=embargo if embargo is not None else (previous.embargo if previous is not None else False),
         products=dict(sorted(products.items())),
@@ -526,7 +729,11 @@ def next_root(
         extensions={
             k: dict(v) for k, v in (extensions or (previous.extensions if previous is not None else {})).items()
         },
+        previous_root_sha256=previous_root_sha256,
+        changes=UNSET if isinstance(changes, UnsetType) else tuple(changes),
     )
+    validate_root(root)
+    return root
 
 
 def repairable(

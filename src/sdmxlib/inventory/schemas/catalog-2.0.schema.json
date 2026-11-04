@@ -1,10 +1,9 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$ref": "#/$defs/CatalogDocument",
   "$defs": {
     "CatalogDocument": {
       "title": "CatalogDocument",
-      "description": "``catalog.json`` 2.0: an opted-in catalog's identity (spec §6.1).\n\nAttributes:\n    format_version: ``2.0``.\n    catalog_id: A UUIDv7.\n    restore_epoch: Starts at 0; every restore bumps it.\n    history: Where expiry may start.",
+      "description": "``catalog.json``: a catalog's identity, written when it is created.\n\nAttributes:\n    format_version: `CATALOG_FORMAT`, or `OPTED_IN_CATALOG_FORMAT` once\n        the catalog has opted in to expiry.\n    catalog_id: A UUIDv7. A full export keeps it; a live-only export\n        takes a new one.\n    restore_epoch: Starts at 0; a whole-catalog restore or failover bumps\n        it, and readers reset their ``seq`` floor when it changes.\n    history: Present exactly in a 2.x document: where expiry may start.",
       "type": "object",
       "properties": {
         "format_version": {
@@ -16,6 +15,7 @@
         },
         "restore_epoch": {
           "type": "integer",
+          "default": 0,
           "minimum": 0
         },
         "history": {
@@ -31,7 +31,7 @@
     },
     "CatalogHistory": {
       "title": "CatalogHistory",
-      "description": "``catalog.json``'s ``history``.\n\nAttributes:\n    since_seq: The lowest ``seq`` from which every root carries both\n        history fields; roots below it never expire.",
+      "description": "``catalog.json``'s ``history``: where expiry may start (spec §6.1).\n\nAttributes:\n    since_seq: The lowest ``seq`` from which every root carries both\n        history fields; roots below it never expire.",
       "type": "object",
       "properties": {
         "since_seq": {

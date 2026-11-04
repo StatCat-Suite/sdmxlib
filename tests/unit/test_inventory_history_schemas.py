@@ -284,8 +284,7 @@ def test_the_change_list_marks_a_retire_a_reinstate_and_a_dropped_tombstone() ->
         },
     ]
     _validate(root, "root-1.2")
-    with pytest.raises(jsonschema.ValidationError, match="'reinstate' is not one of"):
-        _validate(root, "root")
+    _validate(root, "root")  # Inventory 1.2 adds the reinstate kind to every root
 
 
 def test_a_root_with_the_history_fields_meets_the_1_0_schema_and_decodes() -> None:
@@ -295,13 +294,22 @@ def test_a_root_with_the_history_fields_meets_the_1_0_schema_and_decodes() -> No
     assert decode_root(json.dumps(root).encode()).seq == 42
 
 
-def test_a_root_written_today_lacks_the_history_fields(tmp_path: Path) -> None:
+def test_a_written_root_meets_both_root_schemas(tmp_path: Path) -> None:
     new_catalog(tmp_path)
+    write_version(tmp_path, {})
     written = write_version(tmp_path, {})
     document = json.loads((tmp_path / root_path(written.seq)).read_bytes())
     _validate(document, "root")
+    _validate(document, "root-1.2")
+
+
+def test_a_root_without_the_history_fields_meets_only_the_root_schema() -> None:
+    document = {k: v for k, v in _root().items() if k not in ("previous_root_sha256", "changes")}
+    _validate(document, "root")
     with pytest.raises(jsonschema.ValidationError, match="'previous_root_sha256' is a required property"):
         _validate(document, "root-1.2")
+    with pytest.raises(jsonschema.ValidationError, match="'previous_root_sha256' is a dependency of 'changes'"):
+        _validate(document | {"changes": []}, "root")
 
 
 def test_a_segment_line_is_its_root_without_products_and_retired() -> None:

@@ -3,7 +3,7 @@
   "$defs": {
     "CatalogDocument": {
       "title": "CatalogDocument",
-      "description": "``catalog.json``: a catalog's identity, written when it is created.\n\nAttributes:\n    format_version: `CATALOG_FORMAT`.\n    catalog_id: A UUIDv7. An export keeps it.\n    restore_epoch: Starts at 0; a whole-catalog restore or failover bumps\n        it, and readers reset their ``seq`` floor when it changes.",
+      "description": "``catalog.json``: a catalog's identity, written when it is created.\n\nAttributes:\n    format_version: `CATALOG_FORMAT`, or `OPTED_IN_CATALOG_FORMAT` once\n        the catalog has opted in to expiry.\n    catalog_id: A UUIDv7. A full export keeps it; a live-only export\n        takes a new one.\n    restore_epoch: Starts at 0; a whole-catalog restore or failover bumps\n        it, and readers reset their ``seq`` floor when it changes.\n    history: Present exactly in a 2.x document: where expiry may start.",
       "type": "object",
       "properties": {
         "format_version": {
@@ -15,11 +15,28 @@
         "restore_epoch": {
           "type": "integer",
           "default": 0
+        },
+        "history": {
+          "$ref": "#/$defs/CatalogHistory"
         }
       },
       "required": [
         "format_version",
         "catalog_id"
+      ]
+    },
+    "CatalogHistory": {
+      "title": "CatalogHistory",
+      "description": "``catalog.json``'s ``history``: where expiry may start (spec §6.1).\n\nAttributes:\n    since_seq: The lowest ``seq`` from which every root carries both\n        history fields; roots below it never expire.",
+      "type": "object",
+      "properties": {
+        "since_seq": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "since_seq"
       ]
     }
   }

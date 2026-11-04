@@ -2,6 +2,7 @@
 
 import json
 from datetime import timedelta
+from importlib import resources
 from pathlib import Path
 
 import jsonschema
@@ -78,10 +79,35 @@ def _states(leaf: Leaf) -> dict[str, str]:
 # ── documents and schemas ──────────────────────────────────────────────────
 
 
+_SHIPPED = (
+    "catalog",
+    "current",
+    "root",
+    "leaf",
+    "catalog-2.0",
+    "root-1.2",
+    "history",
+    "segment-header",
+    "segment-line",
+)
+
+
 def test_the_shipped_schemas_are_the_models() -> None:
     generated = generate_schemas()
-    for name in ("catalog", "current", "root", "leaf"):
+    assert sorted(generated) == sorted(_SHIPPED)
+    for name in _SHIPPED:
         assert schema(name) == generated[name], f"regenerate src/sdmxlib/inventory/schemas/{name}.schema.json"
+    shipped = {
+        p.name.removesuffix(".schema.json") for p in (resources.files("sdmxlib.inventory") / "schemas").iterdir()
+    }
+    assert shipped == set(_SHIPPED), "every file under schemas/ is generated"
+
+
+def test_the_schema_comparison_can_fail() -> None:
+    """Discrimination: a model change shows in the generated schema."""
+    generated = generate_schemas()
+    assert generated["root-1.2"] != generated["root"]
+    assert generated["catalog-2.0"] != generated["catalog"]
 
 
 def test_a_written_root_and_leaf_meet_their_schemas_and_read_back(tmp_path: Path) -> None:
@@ -390,7 +416,7 @@ def test_the_live_view_routes_by_schema_version(tmp_path: Path) -> None:
 
 
 def test_the_format_version_is_the_spec_s() -> None:
-    assert INVENTORY_FORMAT == "1.0"
+    assert INVENTORY_FORMAT == "1.2"
 
 
 def _sha(root: Path, seq: int) -> str:
