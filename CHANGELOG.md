@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.85.0] - 2026-11-04
+
+### Breaking Changes
+
+- **inventory**: Add the Inventory 1.2 history documents and writer rules, and generate every schema (GH-361)
+- **inventory**: Fall back on catalog.json and inventory/HISTORY when CURRENT fails (GH-361)
+
+### Documentation
+
+- **plan**: Mark Phase 3 built
+- **plan**: Record the closed Phase 2a follow-ups
+- **plan**: Record the Q1 product granularity decision
+- **plan**: Record the Q9 and Q10 decisions
+- **plan**: Record the Q8 serving package decision
+- **plan**: Record the remaining specification PR decisions
+- **plan**: Align Phase 5 with the Inventory history log suite design
+- **spec**: Specify Inventory 1.2 change lists, history segments and expiry (GH-361)
+- **plan**: Link the Phase 5 artefact records to the Inventory 1.2 specification (GH-361)
+- **spec**: Specify the Inventory 1.1 routing fields (GH-348)
+- **inventory**: Document Inventory 1.2 stage 1 in upgrading, the API reference and EGM.md (GH-361)
+- **inventory**: Document the routing fields in upgrading, the API reference and EGM.md (GH-348)
+
+### Features
+
+- **inventory**: Add JSON Schemas for the history formats (GH-361)
+- **inventory**: Add the stage-1 history conformance checks (GH-361)
+- **inventory**: Add the routing fields dataflows and pull_bytes to LeafEntry, record, reinstate and LiveEdition (GH-348)
+- **inventory**: Compute the routing fields from a manifest, route from a live edition and verify an entry (GH-348)
+- **inventory**: Add the routing-field conformance check (GH-348)
+
 ## [0.84.0] - 2026-11-03
 
 ### Bug Fixes
