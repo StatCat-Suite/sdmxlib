@@ -100,7 +100,7 @@ A product groups dataflows that are **published together** and **share a lifecyc
 | closure | members sharing a DSD or codelists vendor them once; grouping removes duplicated labels |
 | attach and readiness | members are pinned, pulled and evicted together |
 
-The practical ceiling is the required tier's size: the product's catalog and labels must pull inside the readiness budget (§7.1). Examples: a census profile split into dataflows by geography level, or a family of tables derived from one DSD and released together, is one product; two census vintages are two products, grouped in a `ProductSeries`, because each is final; CODR tables default to one product per table because release days differ table by table, with subject-level grouping where tables always release together (open question 6).
+The practical ceiling is the required tier's size: the product's catalog and labels must pull inside the readiness budget (§7.1). Examples: a census profile split into dataflows by geography level, or a family of tables derived from one DSD and released together, is one product; two census vintages are two products, grouped in a `ProductSeries`, because each is final; CODR tables default to one product per table because release days differ table by table, with subject-level grouping where tables always release together (open question 6, settled 2026-11-03).
 
 ### 4.1 Layout
 
@@ -684,7 +684,7 @@ Layered editions (`requires`) remain the recorded alternative and stay rejected.
 4. Roll pods; old pods read the old entries, new pods the new ones; the ingress routes by `product_id`.
 5. Once the rollback window for the pod image closes, supersede the old-schema entries; they follow §11.6.
 
-Result-store keys survive the bump wherever `canonical_form`, fingerprints and render versions are unchanged. A `canonical_form` bump is a one-time cold cache by design. A seal throughput target is set before Phase 5: at the measured 1.6 s per CODR seal (§7.1), a full republish of 7,000 tables fits one non-release window on 4 workers.
+Result-store keys survive the bump wherever `canonical_form`, fingerprints and render versions are unchanged. A `canonical_form` bump is a one-time cold cache by design. The seal throughput target is a full republish of every live product in at most 8 hours on 4 workers. At the measured 1.6 s per CODR seal (§7.1), a full republish of 7,000 tables takes about 5 hours.
 
 ---
 
@@ -909,7 +909,7 @@ Order follows risk removed per unit of work. Synthetic editions and `profile_edi
 3. Detached signature format (minisign vs sigstore) when cross-agency sharing becomes concrete.
 4. Code search scope for the agent (§12).
 5. Republishing structures with semantic three-part versions; an FMR governance change decoupled from this work.
-6. CODR product granularity: one per table by default, subject-level merging where tables always release together (§4.0).
+6. CODR product granularity (§4.0): settled by the owner on 2026-11-03. A catalog has one product per table by default, and a producer may group tables that always release together into one product.
 7. `labels.duckdb` pull time on the census edition: settled by GH-139. Labels are 31 MB of the census `metadata.duckdb` and stay in it (§7.1).
 8. How to split the structure products for StatCan (§8): settled by the owner on 2026-11-02. StatCan splits them by change rate into `structure-geo`, `structure-classifications` and `structure-concepts` (§8).
 
