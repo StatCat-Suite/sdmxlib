@@ -21,18 +21,32 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
   writer records (`EVENT_KINDS`, `check_event_kind`); `Event.kind` is a
   `str`. `root_path(seq)`,
   `leaf_path(sha256)` and `sha256_hex` name and address them.
-  `INVENTORY_FORMAT` and `CATALOG_FORMAT` are `"1.0"`.
+  `INVENTORY_FORMAT` is `"1.2"`, `CATALOG_FORMAT` `"1.0"`.
+- History documents (`_format.py`, Inventory 1.2, spec §6.1-§6.3, §6.9;
+  GH-361): a root's history fields `previous_root_sha256` and `changes`
+  (`ChangeItem`, `LeafHashes`, `EntryItem` with its `Marker`, `EntryRecord`),
+  unset when absent, tested by `Root.has_history`; `CatalogDocument.history`
+  (`CatalogHistory`), set exactly in `catalog.json` 2.x; `History`
+  (`inventory/HISTORY`); `SegmentHeader` and `SegmentLine`. `decode_catalog`
+  takes `decoder=`: a reader and a stage-2 writer read majors 1 and 2, a
+  `stage-1-writer` refuses 2.x. `decode_history`, `decode_segment`,
+  `encode_segment`, `segment_line` and `segment_path` read and write them.
 - `schema(document)` (`__init__.py`): the shipped JSON Schema of `catalog`,
-  `current`, `root` or `leaf`, generated from the models, or of the
-  Inventory 1.2 history formats (spec §6.1, §6.2, §6.9; GH-361):
-  `catalog-2.0`, `root-1.2` (a root with `previous_root_sha256` and
-  `changes`), `history` (`inventory/HISTORY`), `segment-header` and
-  `segment-line`. Those five are written by hand, ahead of the models.
+  `current`, `root`, `leaf`, `catalog-2.0`, `root-1.2` (history fields
+  required), `history`, `segment-header` or `segment-line`. `generate_schemas`
+  builds all nine from the models, merging in the conditional rules msgspec
+  cannot state from a type (`_DEFINITION_RULES`, `_SCHEMAS`).
 - Rules (`_rules.py`): `head`, `record`, `release`, `due`, `release_due`,
   `cancel`, `supersede_pending`, `rollback`, `retire`, `reinstate`,
   `leaf_ref` and `next_root`. Each takes a product's current leaf and
   returns the next, or raises `TransitionError` with its `rule`, a `Rule`
-  (exported, GH-339).
+  (exported, GH-339). `reinstate` takes `artefacts`.
+- History rules (`_rules.py`, spec §6.6): `change_list` diffs the base
+  version, root `seq - 1`, and its leaves against the new version;
+  `next_created_at` keeps `created_at` at least `CREATED_AT_STEP` past the
+  base's and refuses a base more than `MAX_BASE_AHEAD` ahead; `next_root`
+  takes `previous_bytes` and `changes` together and writes both history
+  fields; `entry_record` is a change item's copy of a `LeafEntry`.
 - Reading (`_reader.py`): `LiveInventory(fetch, schema_version=...)` and
   `FullInventory(fetch)`, each with `refresh()`, `seq`, `restore_epoch` and
   `skipped`; `LiveInventory.editions()`, `products()` and `head(product)`
@@ -47,7 +61,11 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
   `reader`, `hint_behind`, `restore_to`, `restore_with_new_epoch`), the
   `Snapshot` it returns, the checks in `CHECKS`, and `run(new)`, which runs
   every check against fresh backends. An implementation of the protocol
-  (statcatlib's writer) runs it as a test.
+  (statcatlib's writer) runs it as a test. A writer of the history fields
+  also provides a `HistoryBackend` (`stage_2`, `fetch`, `put`, `commit_at`)
+  and runs `run_history`, the stage-1 checks in `HISTORY_CHECKS`. The §6.9
+  cases for the lock, opt-in, expiry, restores and `verify-catalog` wait for
+  stage 2.
 
 ## Invariants
 
@@ -59,9 +77,19 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
   tombstoned edition is recorded again only by `reinstate`. Every
   transition time is time-zone aware.
 - A reader never accepts a lower `seq` than one it holds unless
-  `restore_epoch` changed; it verifies the root `CURRENT` names, falls back
-  on a mismatch, probes `seq + 1` onward without listing, and skips an
-  invalid root into `skipped`. A leaf must hash to its name.
+  `restore_epoch` changed; it verifies the root `CURRENT` names, probes
+  `seq + 1` onward without listing, and skips an invalid root into
+  `skipped`. A leaf must hash to its name.
+- With `CURRENT` present and verifying, a reader fetches only `CURRENT` and
+  roots. Otherwise it reads `catalog.json` and, on 2.x, `inventory/HISTORY`;
+  takes the epoch from `HISTORY` (2.x) or `catalog.json` (1.x); bounds its
+  walk back and starts its probe at max(held `seq` in that epoch,
+  `expired_through`); drops a held root at or below `expired_through`; and
+  fails closed with no root above the bound and none held, or on 2.x
+  without `HISTORY` (spec §6.6).
+- A root carries both history fields or neither; `previous_root_sha256` is
+  None exactly at version 1; changes are sorted by product, entry items by
+  edition, and an entry item carries `entry` exactly when `to` is a state.
 - A reader accepts any `event.kind` within format 1.x; `next_root` and
   `validate_root` refuse a kind outside `EventKind`, and the shipped root
   schema keeps that enum (GH-338).
@@ -75,10 +103,11 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
 
 ## Verification
 
-- `uv run pytest -m unit tests/unit/test_inventory.py tests/unit/test_inventory_conformance.py`.
+- `uv run pytest -m unit tests/unit/test_inventory.py tests/unit/test_inventory_history.py tests/unit/test_inventory_reader_fallback.py tests/unit/test_inventory_history_schemas.py tests/unit/test_inventory_conformance.py`.
   The conformance suite runs against two backends in
   `tests/support/inventory_backends.py`: the file protocol, written by the
-  reference writer in `tests/support/inventory.py`, and a prototype over a
+  reference writer in `tests/support/inventory.py` (it writes the history
+  fields and refuses `catalog.json` 2.x), and a prototype over a
   Delta table (delta-rs, a dev dependency), which proves the spec's escape
   route. A Delta reader lists its log, so `hint_behind` has nothing to do
-  there. Two sabotaged backends show each check can fail.
+  there. Sabotaged backends show each check, and each history check, can fail.

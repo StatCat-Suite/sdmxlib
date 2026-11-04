@@ -19,6 +19,45 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## Inventory 1.2: history fields and the reader fallback
+
+This release reads and writes Inventory 1.2
+([GH-361](https://github.com/StatCat-Suite/sdmxlib/issues/361)), stage 1 of
+the [history design](https://github.com/StatCat-Suite/statcat-suite.github.io/blob/main/docs/design/inventory-history-log.md).
+Nothing expires yet.
+
+- `INVENTORY_FORMAT` is `"1.2"`, so `record`, `retire`, `reinstate` and
+  `next_root` write roots and leaves at `1.2`. Readers of every 1.x release
+  read them.
+- `EventKind` takes a tenth value, `reinstate`. Code that handles each
+  `EventKind` value needs a `"reinstate"` case. Readers from 0.81.0 and
+  earlier skip a root that records it.
+- `Root` has two optional fields, `previous_root_sha256` and `changes`, unset
+  in a root that lacks them; `Root.has_history` says whether a root carries
+  both. A writer that writes them passes `previous_bytes` (the stored bytes
+  of root `seq - 1`) and `changes` (from `change_list`) to `next_root`
+  together. `next_root` then sets `created_at` by `next_created_at`: at least
+  one millisecond after the base version's, and refused with
+  `InventoryError` when the base version is more than 5 minutes ahead of the
+  writer's clock. `next_root` now also runs `validate_root` on the root it
+  returns.
+- `decode_catalog` reads `catalog.json` 1.x and 2.x. A writer without the
+  catalog lock passes `decoder="stage-1-writer"` on every commit, which
+  refuses a 2.x document. `CatalogDocument.history` is set exactly in a 2.x
+  document (`CatalogDocument.opted_in`).
+- `reinstate` takes `artefacts=`, so a reinstated entry keeps its artefact
+  records.
+- When `CURRENT` is missing, malformed or names a root that fails to verify,
+  `FullInventory` and `LiveInventory` read `catalog.json`, and on a 2.x
+  catalog `inventory/HISTORY`, and take the epoch from there. They used to
+  assume epoch 0 when `CURRENT` was missing. A catalog without
+  `catalog.json`, or a 2.x catalog without `inventory/HISTORY`, now fails
+  that fallback with `InventoryError`. A malformed `CURRENT` is reported in
+  `skipped` and no longer raises.
+- `schema(...)` generates all nine shipped schemas from the models. The
+  `catalog` and `root` schemas now list the optional `history`,
+  `previous_root_sha256` and `changes` fields and the `reinstate` kind.
+
 ## Plans and SQL quote the catalog name
 
 From 0.84.0, SQL that sdmxlib writes names an attached DuckDB catalog in
