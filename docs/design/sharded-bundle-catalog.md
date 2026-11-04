@@ -382,7 +382,7 @@ The **base version** of root N is root N - 1: the head the writer read and won t
 
 | field | presence | meaning |
 |---|---|---|
-| `format_version` | required | `"1.0"`. |
+| `format_version` | required | The Inventory format the writer writes, the root's (Versioning). |
 | `product_id` | required | The product. |
 | `kind` | required | `"data"` or `"structure"` (§8). |
 | `lifecycle` | required | `"final"` or `"revisable"`. |
@@ -401,8 +401,10 @@ The **base version** of root N is root N - 1: the head the writer read and won t
 | `release_at` | required | For an `embargoed` entry, the instant it becomes releasable, or `null` for no scheduled release; `null` otherwise. |
 | `structure_source` | optional | Where the structures came from when a registry is authoritative: `{registry, query, retrieved_at, fingerprints}` (statcatlib RFC §8). |
 | `artefacts` | optional | `{urn: {fingerprint, partial_of}}`: the artefact records of the manifest `manifest_sha256` names, every full artefact with its `fingerprint` and every partial with its `fingerprint` and `partial_of`, the record statcatlib's `manifest_records` computes (statcatlib RFC decision 25). A 1.x optional field. |
+| `dataflows` | with `pull_bytes` (1.1) | The URNs of the edition's bindings, each manifest `bindings[].dataflow`, sorted and without duplicates. A grouped product holds several (plan Q1: 5 to 20); a structure edition, with no bindings, carries `[]`. |
+| `pull_bytes` | with `dataflows` (1.1) | The size in bytes of the edition's required tier: the sum of `size` over the manifest `files` entries whose `tier` is `"required"`: one number for the edition, covering every table it holds. It is the producer's default tier (§7.1); a pool that promotes a file pulls more. |
 
-**Filled `artefacts`.** A writer fills `artefacts` in every entry it records from Phase 5 on, and the cross-product rules of §6.5 read the records from leaves instead of opening manifests (owner, 2026-11-04). An entry recorded earlier, with `artefacts` absent, is read from its manifest. `reinstate` takes the entry's `artefacts`, so a reinstated entry keeps them. A filled `artefacts` MUST equal the records of the manifest `manifest_sha256` names. `verify-catalog` checks this for each entry whose manifest exists; GC deletes retired editions' manifests (§11.4), so a checkpoint's old entries are skipped.
+**Filled `artefacts`.** A writer fills `artefacts` in every entry of a `kind: structure` leaf it records from Phase 4 on, so a router finds a full artefact's home from the leaf (§7.3), and in every entry it records from Phase 5 on, so the cross-product rules of §6.5 read the records from leaves instead of opening manifests (owner, 2026-11-04). A structure entry's records without `partial_of` are the full artefacts its edition holds. An entry recorded earlier, with `artefacts` absent, is read from its manifest. `reinstate` takes the entry's `artefacts`, so a reinstated entry keeps them. A filled `artefacts` MUST equal the records of the manifest `manifest_sha256` names. `verify-catalog` checks this for each entry whose manifest exists; GC deletes retired editions' manifests (§11.4), so a checkpoint's old entries are skipped.
 
 **The change list.** A root's `changes` (§6.2) holds change items:
 
@@ -429,9 +431,17 @@ An entry item:
 
 Sizes on the corpus of StatCat-Suite/statcatlib#126 (2,521 one-table products), compact JSON: a release's change item, with its two entry items, is 920 bytes; a release of 200 tables adds 185 KB to its root, and a republish of 7,000 products 6.5 MB, beside a 1.6 MB root. A filled `artefacts` grows a one-edition leaf from 510 bytes to 2.4 KB and leaves the change list unchanged.
 
-Phase 4's routing fields (`pool`, `pinned`, `location`, `pull_bytes`, `dataflows`) arrive as 1.x optional fields.
+**The routing fields.** `dataflows` and `pull_bytes` are the routing fields (GH-348). A `LeafEntry` carries both or neither, and a writer that has them fills both in every entry it records, of either leaf kind, from its manifest. They are defined by their presence, as the history fields are (§6.2, H19): every rule that reads them tests whether an entry carries both, and none tests `format_version`, so Inventory 1.1 and 1.2 ship in either order. A 1.x reader that predates them ignores them, and an entry without them still reads.
 
-**Versioning.** A minor version adds only optional fields and new `event.kind` values (§6.2); readers ignore unknown fields, accept an unknown `event.kind`, and refuse a newer major version. The shipped root schema lists the kinds a writer records, so a root with a newer kind fails it and still reads. One constant, `INVENTORY_FORMAT`, versions roots and leaves. Inventory 1.1 is Phase 4's routing fields (GH-348). Inventory 1.2 is the history fields and the `reinstate` kind, whichever of the two specifications merges first; a rule that needs the history fields tests for them and never for the minor (H19, H24). `catalog.json` (§6.1), `inventory/HISTORY` and the history segments (§6.9) carry their own `format_version`, and a reader refuses a major it does not know.
+- `record` and `reinstate` take `dataflows`, `pull_bytes` and `artefacts` and write them into the new entry; every other transition of §6.4 copies an entry's fields unchanged. `validate_leaf` refuses an entry with one routing field and not the other, a `dataflows` that is unsorted or holds a duplicate, and a negative `pull_bytes`.
+- The reader's `LiveEdition` carries `dataflows`, `pull_bytes` and `artefacts`, each `None` when the entry lacks it.
+- An entry without the routing fields, recorded before a writer had them, is routed from its manifest: the router reads its `bindings` and `files` when it loads the entry, after verifying `manifest_sha256` (§7.3). A structure entry without `artefacts` is read the same way.
+- Filled routing fields MUST equal the values computed from the manifest `manifest_sha256` names. `verify-catalog` checks `dataflows` and `pull_bytes` against the manifest for each entry whose manifest exists, as it checks `artefacts`.
+- The change list's `entry` omits both fields (H14).
+
+`pool` and `pinned` wait for Phase 6, which chooses between pool configuration and leaf fields; if they go in the leaf they arrive as a later 1.x minor. No leaf carries `location`: `Shard.location` (§7.3) is the edition directory, which the deployment's catalog root and the §4.1 layout give (`products/<product_id>/<edition_id>/`).
+
+**Versioning.** A minor version adds only optional fields and new `event.kind` values (§6.2); readers ignore unknown fields, accept an unknown `event.kind`, and refuse a newer major version. The shipped root schema lists the kinds a writer records, so a root with a newer kind fails it and still reads. One constant, `INVENTORY_FORMAT`, versions roots and leaves. Inventory 1.1 is Phase 4's routing fields (GH-348); a rule that needs them tests for them and never for the minor. Inventory 1.2 is the history fields and the `reinstate` kind, whichever of the two specifications merges first; a rule that needs the history fields tests for them and never for the minor (H19, H24). `catalog.json` (§6.1), `inventory/HISTORY` and the history segments (§6.9) carry their own `format_version`, and a reader refuses a major it does not know.
 
 **Worked example.** Version 42, after CODR table 14100287's September release, with census unchanged:
 
@@ -475,10 +485,13 @@ Phase 4's routing fields (`pool`, `pinned`, `location`, `pull_bytes`, `dataflows
     {"edition_id": "01a18e63-e292-7250-a332-b79d9b7a7efd", "previous": "01a17f00-…", "state": "superseded",
      "manifest_sha256": "…", "schema_version": "2.52", "state_changed_at": "2026-10-09T12:30:00.412Z", "release_at": null},
     {"edition_id": "01a18e76-2bad-7480-abfe-2ba8a6889a45", "previous": "01a18e63-e292-7250-a332-b79d9b7a7efd", "state": "live",
-     "manifest_sha256": "…", "schema_version": "2.52", "state_changed_at": "2026-10-09T12:30:00.412Z", "release_at": null}
+     "manifest_sha256": "…", "schema_version": "2.52", "state_changed_at": "2026-10-09T12:30:00.412Z", "release_at": null,
+     "dataflows": ["urn:…Dataflow=STC:DF_14100287(1.0)"], "pull_bytes": 13131776}
   ]
 }
 ```
+
+The live entry carries the routing fields, read from the §4.2 manifest: its one binding's dataflow, and `metadata.duckdb` (9,187,328 bytes) plus `tables.ducklake` (3,944,448 bytes). The superseded entry was recorded before the writer had them, so a router reads its manifest.
 
 ### 6.4 States and transitions
 
@@ -511,7 +524,7 @@ Every entry has one of four states. Retirement is a tombstone, never a state.
 - **Release batches report per product.** `release_due` releases what it can and refuses the rest, persisting each refusal's reason, without failing the batch.
 - **The release clock is the storage server's.** The release job takes `now` from the storage response `Date` header with a skew bound and refuses to run if its own clock is ahead; `release_due(now=None)` defaults to that time and refuses a naive datetime.
 
-sdmxlib states these rules as pure functions a writer calls before it publishes a version (GH-251): given the current root and leaves, an operation and its arguments, they return the new leaf entries or raise a refusal naming the rule.
+sdmxlib states these rules as pure functions a writer calls before it publishes a version (GH-251): given the current root and leaves, an operation and its arguments, they return the new leaf entries or raise a refusal naming the rule. `record` and `reinstate` take the entry's routing fields and `artefacts`, and the other rules carry them unchanged (§6.3).
 
 **The live view.** It is derived inside sdmxlib's reader and never stored. sdmxlib exposes two separately constructed reader types:
 
@@ -810,6 +823,14 @@ class ShardRouter:
     def reload(self, inventory: LiveInventory) -> None
 ```
 
+**Routing from the leaf.** The router builds two maps from the live entries at its schema version (§6.3, the routing fields):
+
+- `shard_for` maps each URN in an entry's `dataflows` to that entry. An entry without `dataflows` contributes its manifest's `bindings[].dataflow`.
+- `shard_for_artefact` maps each URN that a `kind: structure` entry's `artefacts` holds without `partial_of` to that entry: the URN's structure home, of which §6.5 item 7 allows at most one. A structure entry without `artefacts` contributes its manifest's full artefacts (`partial: false`). A request with `latest` or `~` resolves among the URNs of the map with the request's agency and id.
+- `pull_bytes`, or for an entry without it the sum its manifest gives, is the size `registry` pulls before attaching; a pod reads it to plan its local disk and its readiness budget.
+
+A URN with no structure home, such as a DSD several data products vendor, is in neither map; Phase 6 decides how a `/structure` request for one is answered.
+
 Rules: the map holds `live` entries for this pool at this schema; a dataflow routed only to another schema answers 503 naming both; a pod conditional-GETs `CURRENT`, probes forward, fetches the root and only the leaves whose hash changed, verifies a new version and reloads, with in-flight requests finishing on the old registry object; the manifest's SHA-256 is verified against the leaf entry before anything else is read; the LRU budget counts attached catalogs and evicted files stay on node-local disk. A pod fails static on a read error and exposes the Inventory's staleness against the expected release instant as a metric.
 
 **A pod reads only the live view.** It constructs `LiveInventory`, which holds no embargoed entry, so it neither attaches nor prefetches one. An attached catalog is reachable by its alias from any cursor in the engine, so an embargoed edition MUST NOT be attached, which is also why `EditionRegistry` has no `sql()` (§4.3). The day's pinned hot products are promoted to node-local disk before 08:30 by a job outside the pods.
@@ -927,7 +948,7 @@ DuckLake's reads are byte-range GETs of files whose names it holds; it never lis
 
 ### 10.3 Backup invariant
 
-An Inventory version is restorable only while every data file its editions reference exists. Backups copy in dependency order: `data/`, edition directories, leaves, roots, `inventory/HISTORY`, `history/`, then `CURRENT`; `pending/` is excluded. A root missing at copy time was deleted after its segment and `HISTORY` were written, so the later copies hold its line. A restore only adds segments under `history/`, and never deletes or overwrites one (§6.9). `verify-catalog` walks the newest root and checks every leaf, every `manifest_sha256` and every listed file's digest, and on a catalog with history fields the chain, segments and `HISTORY` (§6.9); its exit status is the monthly restore test. After a whole-catalog restore or failover, `catalog.json`'s `restore_epoch` is bumped (§6.1), and a restored Inventory version is never made current: its contents come back through `reinstate`.
+An Inventory version is restorable only while every data file its editions reference exists. Backups copy in dependency order: `data/`, edition directories, leaves, roots, `inventory/HISTORY`, `history/`, then `CURRENT`; `pending/` is excluded. A root missing at copy time was deleted after its segment and `HISTORY` were written, so the later copies hold its line. A restore only adds segments under `history/`, and never deletes or overwrites one (§6.9). `verify-catalog` walks the newest root and checks every leaf, every `manifest_sha256`, every filled `artefacts`, `dataflows` and `pull_bytes` against its manifest (§6.3) and every listed file's digest, and on a catalog with history fields the chain, segments and `HISTORY` (§6.9); its exit status is the monthly restore test. After a whole-catalog restore or failover, `catalog.json`'s `restore_epoch` is bumped (§6.1), and a restored Inventory version is never made current: its contents come back through `reinstate`.
 
 ---
 
