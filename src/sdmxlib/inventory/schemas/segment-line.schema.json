@@ -1,10 +1,9 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$ref": "#/$defs/SegmentLine",
   "$defs": {
     "SegmentLine": {
       "title": "SegmentLine",
-      "description": "One line after a history segment's header: a removed root (spec §6.9).\n\nThe root without ``products`` and ``retired``, in the root's field order, with\n``root_sha256`` last. A line carries both history fields or neither, and a\nline in an ``expiry`` segment always carries both.\n\nAttributes:\n    root_sha256: The SHA-256 of the removed root's stored bytes.",
+      "description": "One line after a segment's header: a removed root without ``products`` and ``retired`` (spec §6.9).\n\nIt keeps the root's other fields in the root's order, and adds\n``root_sha256`` last. A line carries both history fields or neither, and\na line in an ``expiry`` segment carries both.\n\nAttributes:\n    format_version: The root's.\n    seq: The root's.\n    previous_inventory: The root's.\n    restore_epoch: The root's.\n    created_at: The root's.\n    producer: The root's.\n    embargo: The root's.\n    event: The root's.\n    extensions: The root's.\n    previous_root_sha256: The root's, or unset.\n    changes: The root's, or unset.\n    root_sha256: The SHA-256 of the removed root's stored bytes.",
       "type": "object",
       "properties": {
         "format_version": {
@@ -157,7 +156,7 @@
     },
     "ChangeItem": {
       "title": "ChangeItem",
-      "description": "One product whose leaf or tombstones differ from the base version's (spec §6.3).\n\nAttributes:\n    product_id: The product.\n    leaf_sha256: Its leaf hash in the base version and in this version.\n    entries: One item per edition whose entry or tombstone differs, sorted\n        by ``edition_id``.",
+      "description": "One product whose leaf or tombstones differ from the base version's (spec §6.3).\n\nAttributes:\n    product_id: The product.\n    leaf_sha256: Its leaf hash before and after.\n    entries: One item per edition whose entry or tombstone differs,\n        sorted by ``edition_id``.",
       "type": "object",
       "properties": {
         "product_id": {
@@ -181,7 +180,7 @@
     },
     "LeafHashes": {
       "title": "LeafHashes",
-      "description": "A product's leaf hash before and after a version.\n\nAttributes:\n    from: In the base version, or None for a product new to the Inventory.\n    to: In this version, or None for a product removed from it.",
+      "description": "A product's leaf hash in the base version and in this one.\n\nThe two are equal when only the product's tombstones changed.\n\nAttributes:\n    from_: In the base version, or None for a product new to the\n        Inventory. Written ``from``.\n    to: In this version, or None for a product removed from it.",
       "type": "object",
       "properties": {
         "from": {
@@ -214,7 +213,7 @@
     },
     "EntryItem": {
       "title": "EntryItem",
-      "description": "One edition whose entry or tombstone a version changed (spec §6.3).\n\nAttributes:\n    edition_id: The edition.\n    from: Its state in the base version, ``tombstone`` when the base\n        version's ``retired`` holds it, or None when it has neither.\n    to: The same for this version; None drops its tombstone.\n    entry: The new entry's seven fields, present exactly when ``to`` is a\n        state.",
+      "description": "One edition whose entry or tombstone a version changed (spec §6.3).\n\nAn item whose ``from_`` equals ``to`` records an entry that changed and\nkept its state, such as a rescheduled ``release_at``.\n\nAttributes:\n    edition_id: The edition.\n    from_: Its `Marker` in the base version, or None when the base\n        version neither records nor tombstones it. Written ``from``.\n    to: Its `Marker` in this version, or None when this version drops\n        its tombstone.\n    entry: The new entry, present exactly when ``to`` is a state.",
       "type": "object",
       "properties": {
         "edition_id": {
@@ -286,7 +285,7 @@
     },
     "EntryRecord": {
       "title": "EntryRecord",
-      "description": "A change item's copy of a ``LeafEntry``: seven fields, without\n``structure_source``, ``artefacts`` or a later optional field.",
+      "description": "A change item's copy of a `LeafEntry`: its seven required fields and no optional one (spec §6.3).\n\n``structure_source``, ``artefacts`` and every later optional field are\nleft out: ``manifest_sha256`` pins what the manifest holds.\n\nAttributes:\n    edition_id: The edition.\n    previous: Its manifest's ``previous``.\n    state: Its state in this version.\n    manifest_sha256: The SHA-256 of its ``manifest.json``.\n    schema_version: The store schema it was written at.\n    state_changed_at: When it took its state.\n    release_at: For an embargoed entry, when it may be released; None otherwise.",
       "type": "object",
       "properties": {
         "edition_id": {

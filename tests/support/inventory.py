@@ -1,8 +1,10 @@
-"""A minimal Inventory writer over a local directory, for tests (GH-251, GH-252).
+"""A minimal Inventory writer over a local directory, for tests (GH-251, GH-252, GH-361).
 
 statcatlib owns the real writer. This one follows the spec's write protocol
 (§6.6) closely enough to drive the reader and the rules: leaves first, then
 the root created exclusively through `sdmxlib.storage.create_exclusive`, then ``CURRENT``.
+It writes the history fields, built from root ``seq - 1``, and is a writer
+without stage-2 support: it refuses a ``catalog.json`` 2.x.
 """
 
 from collections.abc import Mapping
@@ -20,6 +22,8 @@ from sdmxlib.inventory import (
     FullInventory,
     Leaf,
     Root,
+    change_list,
+    decode_catalog,
     encode,
     leaf_ref,
     local_fetch,
@@ -59,12 +63,16 @@ def write_version(
     Raises:
         FileExistsError: If another writer created the version first.
     """
+    catalog = root / CATALOG_NAME
+    if catalog.exists():
+        decode_catalog(catalog.read_bytes(), decoder="stage-1-writer")
     inventory = FullInventory(local_fetch(root))
     try:
         previous: Root | None = inventory.refresh().root
     except ValueError:
         previous = None
     products = dict(previous.products) if previous is not None else {}
+    base_leaves = {p: inventory.leaf(p) for p in leaves if p in products}
     for product_id, leaf in leaves.items():
         data, ref = leaf_ref(leaf)
         target = root / ref.leaf
@@ -80,6 +88,10 @@ def write_version(
         now=now,
         embargo=embargo,
         restore_epoch=restore_epoch,
+        previous_bytes=None if previous is None else (root / root_path(previous.seq)).read_bytes(),
+        changes=change_list(
+            previous, base_leaves, products=products, leaves=leaves, retired=previous.retired if previous else ()
+        ),
     )
     data = encode(new)
     create_exclusive(root / root_path(new.seq), data)

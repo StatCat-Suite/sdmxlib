@@ -300,6 +300,18 @@ Which edition of each product in a catalog is live: the documents, the rules tha
 
 ---
 
+::: sdmxlib.inventory.change_list
+
+---
+
+::: sdmxlib.inventory.next_created_at
+
+---
+
+::: sdmxlib.inventory.entry_record
+
+---
+
 ::: sdmxlib.inventory.TransitionError
 
 ---
@@ -328,6 +340,62 @@ Which edition of each product in a catalog is live: the documents, the rules tha
 
 ---
 
+::: sdmxlib.inventory.CatalogHistory
+
+---
+
+::: sdmxlib.inventory.decode_catalog
+
+---
+
+::: sdmxlib.inventory.ChangeItem
+
+---
+
+::: sdmxlib.inventory.EntryItem
+
+---
+
+::: sdmxlib.inventory.EntryRecord
+
+---
+
+::: sdmxlib.inventory.LeafHashes
+
+---
+
+::: sdmxlib.inventory.History
+
+---
+
+::: sdmxlib.inventory.decode_history
+
+---
+
+::: sdmxlib.inventory.SegmentHeader
+
+---
+
+::: sdmxlib.inventory.SegmentLine
+
+---
+
+::: sdmxlib.inventory.decode_segment
+
+---
+
+::: sdmxlib.inventory.encode_segment
+
+---
+
+::: sdmxlib.inventory.segment_line
+
+---
+
+::: sdmxlib.inventory.segment_path
+
+---
+
 ::: sdmxlib.inventory.Current
 
 ---
@@ -353,6 +421,14 @@ The protocol's guarantees as checks an implementation runs against its own write
 ---
 
 ::: sdmxlib.inventory.conformance.run
+
+---
+
+::: sdmxlib.inventory.conformance.run_history
+
+---
+
+::: sdmxlib.inventory.conformance.HistoryBackend
 
 ---
 

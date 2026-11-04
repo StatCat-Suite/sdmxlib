@@ -2,7 +2,8 @@
 
 - `FileBackend`: the spec's file protocol over a local directory, written by
   the reference writer in `tests.support.inventory` and read by sdmxlib's
-  `FullInventory`.
+  `FullInventory`. It writes the history fields of Inventory 1.2 and is a
+  `HistoryBackend` without stage-2 support.
 - `DeltaBackend`: a prototype holding each Inventory version as one commit of
   a Delta table of Inventory rows (delta-rs, put-if-absent commits). A test
   fixture that proves the spec's escape route (§6.6), not a supported backend.
@@ -11,6 +12,7 @@
 import json
 import os
 from collections.abc import Mapping, Sequence
+from datetime import datetime
 from pathlib import Path
 
 import msgspec
@@ -28,6 +30,7 @@ from sdmxlib.inventory import (
     Leaf,
     Root,
     Tombstone,
+    change_list,
     decode_catalog,
     decode_leaf,
     decode_root,
@@ -64,10 +67,20 @@ class _FileReader:
 class FileBackend:
     """The spec's file protocol over a local directory."""
 
+    stage_2 = False
+
     def __init__(self, root: Path) -> None:
         """Create an empty catalog at `root`."""
         self.root = root
         new_catalog(root)
+
+    def fetch(self, path: str) -> bytes | None:
+        return local_fetch(self.root)(path)
+
+    def put(self, path: str, data: bytes) -> None:
+        target = self.root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
 
     def head(self) -> Snapshot | None:
         try:
@@ -87,9 +100,13 @@ class FileBackend:
         embargo: bool | None,
         kind: EventKind,
         restore_epoch: int | None = None,
+        now: datetime = NOW,
+        built_from: int | None = None,
     ) -> Root:
+        decode_catalog((self.root / CATALOG_NAME).read_bytes(), decoder="stage-1-writer")
         previous = None if base is None else self._root(base.seq)
         products = dict(previous.products) if previous is not None else {}
+        base_leaves = {} if base is None else base.leaves
         for product, leaf in leaves.items():
             data, ref = leaf_ref(leaf)
             path = self.root / ref.leaf
@@ -97,15 +114,19 @@ class FileBackend:
             if not path.exists():
                 path.write_bytes(data)
             products[product] = ref
+        stones = retired if retired is not None else (previous.retired if previous is not None else ())
         return next_root(
             previous,
             products=products,
             event=Event(actor="conformance", reason="test", kind=kind),
             producer=PRODUCER,
-            now=NOW,
+            now=now,
             retired=retired,
             embargo=embargo,
             restore_epoch=restore_epoch,
+            built_from=built_from,
+            previous_bytes=None if previous is None else (self.root / root_path(previous.seq)).read_bytes(),
+            changes=change_list(previous, base_leaves, products=products, leaves=leaves, retired=stones),
         )
 
     def commit(
@@ -118,6 +139,19 @@ class FileBackend:
         kind: EventKind = "seal",
     ) -> Snapshot:
         root = self._next(base, leaves, retired=retired, embargo=embargo, kind=kind)
+        return self._publish(root)
+
+    def commit_at(
+        self,
+        base: Snapshot | None,
+        leaves: Mapping[str, Leaf],
+        *,
+        now: datetime,
+        retired: Sequence[Tombstone] | None = None,
+        kind: EventKind = "seal",
+        built_from: int | None = None,
+    ) -> Snapshot:
+        root = self._next(base, leaves, retired=retired, embargo=None, kind=kind, now=now, built_from=built_from)
         return self._publish(root)
 
     def _publish(self, root: Root) -> Snapshot:

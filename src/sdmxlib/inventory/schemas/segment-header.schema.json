@@ -1,10 +1,9 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$ref": "#/$defs/SegmentHeader",
   "$defs": {
     "SegmentHeader": {
       "title": "SegmentHeader",
-      "description": "The first line of ``history/<restore_epoch>/<first>-<last>-<uuid7>.jsonl`` (spec §6.9).\n\nAttributes:\n    format_version: ``1.0``.\n    catalog_id: ``catalog.json``'s.\n    kind: ``expiry`` or ``restore``.\n    restore_epoch: The epoch of the roots it records.\n    first: The lowest ``seq`` in ``roots``.\n    last: The highest ``seq`` in ``roots``.\n    previous_segment: ``HISTORY.newest_segment`` when it was written, or\n        None for the catalog's first segment.\n    previous_segment_sha256: The SHA-256 of that segment's bytes.\n    expired_at: When it was written, in storage time.\n    actor: The writer's identity.\n    roots: The ``seq`` of each root the run deletes, ascending: the plan.\n    leaves: Each leaf the run plans to delete; empty in a restore segment.\n    unread: Each root a restore deletes and could not read; empty in an\n        expiry segment.",
+      "description": "The first line of a history segment: its links and its plan (spec §6.9).\n\nAttributes:\n    format_version: `HISTORY_FORMAT`.\n    catalog_id: ``catalog.json``'s.\n    kind: ``expiry`` or ``restore``. The crash rule and\n        ``expired_through`` consider ``expiry`` segments only.\n    restore_epoch: The epoch of the roots it records, which names its\n        directory.\n    first: The lowest ``seq`` in ``roots``.\n    last: The highest ``seq`` in ``roots``.\n    previous_segment: ``HISTORY.newest_segment`` when it was written, or\n        None for the catalog's first segment.\n    previous_segment_sha256: The SHA-256 of that segment's bytes, or None\n        with ``previous_segment``.\n    expired_at: When it was written, in storage time.\n    actor: The writer's identity, as ``event.actor`` takes it.\n    roots: The ``seq`` of each root the run deletes, ascending: the plan.\n    leaves: Each leaf the run plans to delete; empty in a ``restore``\n        segment.\n    unread: Each root in ``roots`` a restore deletes and could not read;\n        empty in an ``expiry`` segment.",
       "type": "object",
       "properties": {
         "format_version": {
@@ -61,29 +60,29 @@
           "type": "string"
         },
         "roots": {
+          "uniqueItems": true,
           "type": "array",
           "items": {
             "type": "integer",
             "minimum": 1
           },
-          "minItems": 1,
-          "uniqueItems": true
+          "minItems": 1
         },
         "leaves": {
+          "uniqueItems": true,
           "type": "array",
           "items": {
             "type": "string",
             "pattern": "^[0-9a-f]{64}$"
-          },
-          "uniqueItems": true
+          }
         },
         "unread": {
+          "uniqueItems": true,
           "type": "array",
           "items": {
             "type": "integer",
             "minimum": 1
-          },
-          "uniqueItems": true
+          }
         }
       },
       "required": [
