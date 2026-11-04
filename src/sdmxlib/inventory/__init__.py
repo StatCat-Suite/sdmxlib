@@ -13,6 +13,9 @@ validation, the state-transition rules and a reader; statcatlib writes it.
   `next_root`):
   pure functions over a product's leaf that return the next one or raise
   `TransitionError`, naming the `Rule`.
+- **Routing** (`routing_fields`, `route`, `verify_entry`): a leaf entry's
+  routing fields computed from its manifest for a writer, read back for a
+  router with the manifest as fallback, and checked by ``verify-catalog``.
 - **Reading** (`LiveInventory`, `FullInventory`): the read protocol over a
   ``fetch(path) -> bytes | None`` callable, since sdmxlib holds no blob
   client. `LiveInventory` holds only live entries; `FullInventory` every
@@ -74,6 +77,7 @@ from sdmxlib.inventory._format import (
     validate_root,
 )
 from sdmxlib.inventory._reader import Fetch, FullInventory, LiveEdition, LiveInventory, local_fetch
+from sdmxlib.inventory._routing import Route, RoutingFields, manifest_records, route, routing_fields, verify_entry
 from sdmxlib.inventory._rules import (
     CREATED_AT_STEP,
     MAX_BASE_AHEAD,
@@ -132,6 +136,8 @@ __all__ = [
     "Marker",
     "PartialRecord",
     "Root",
+    "Route",
+    "RoutingFields",
     "Rule",
     "SegmentHeader",
     "SegmentKind",
@@ -156,6 +162,7 @@ __all__ = [
     "leaf_path",
     "leaf_ref",
     "local_fetch",
+    "manifest_records",
     "next_created_at",
     "next_root",
     "record",
@@ -166,6 +173,8 @@ __all__ = [
     "retire",
     "rollback",
     "root_path",
+    "route",
+    "routing_fields",
     "schema",
     "segment_line",
     "segment_path",
@@ -173,6 +182,7 @@ __all__ = [
     "supersede_pending",
     "validate_leaf",
     "validate_root",
+    "verify_entry",
 ]
 
 
