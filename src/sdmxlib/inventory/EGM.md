@@ -31,6 +31,17 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
   takes `decoder=`: a reader and a stage-2 writer read majors 1 and 2, a
   `stage-1-writer` refuses 2.x. `decode_history`, `decode_segment`,
   `encode_segment`, `segment_line` and `segment_path` read and write them.
+- Routing fields (`_format.py`, `_routing.py`, spec §6.3, §7.3, §10.3;
+  GH-348): `LeafEntry.dataflows` and `pull_bytes`, unset when absent, tested
+  by `LeafEntry.has_routing`; `LeafEntry.full_artefacts`, the records without
+  `partial_of`. `routing_fields(manifest)` computes `RoutingFields`
+  (`dataflows`, `pull_bytes`, `artefacts`, the last by `manifest_records`)
+  for a writer. `route(edition, manifest)` gives a `LiveEdition`'s `Route`
+  (`dataflows`, `pull_bytes`, `homes`), calling `manifest()` only for a field
+  the entry lacks and refusing bytes that do not hash to `manifest_sha256`.
+  `verify_entry(entry, manifest)` lists each filled field that differs from
+  the manifest, for statcatlib's `verify-catalog`. `ShardRouter` is
+  statcat-serve's.
 - `schema(document)` (`__init__.py`): the shipped JSON Schema of `catalog`,
   `current`, `root`, `leaf`, `catalog-2.0`, `root-1.2` (history fields
   required), `history`, `segment-header` or `segment-line`. `generate_schemas`
@@ -40,7 +51,8 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
   `cancel`, `supersede_pending`, `rollback`, `retire`, `reinstate`,
   `leaf_ref` and `next_root`. Each takes a product's current leaf and
   returns the next, or raises `TransitionError` with its `rule`, a `Rule`
-  (exported, GH-339). `reinstate` takes `artefacts`.
+  (exported, GH-339). `record` and `reinstate` take `artefacts`,
+  `dataflows` and `pull_bytes`; every other rule copies them.
 - History rules (`_rules.py`, spec §6.6): `change_list` diffs the base
   version, root `seq - 1`, and its leaves against the new version;
   `next_created_at` keeps `created_at` at least `CREATED_AT_STEP` past the
@@ -50,8 +62,9 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
 - Reading (`_reader.py`): `LiveInventory(fetch, schema_version=...)` and
   `FullInventory(fetch)`, each with `refresh()`, `seq`, `restore_epoch` and
   `skipped`; `LiveInventory.editions()`, `products()` and `head(product)`
-  return `LiveEdition`s; `FullInventory.root`, `embargo`, `retired`,
-  `products()`, `leaf()`, `leaves()` and `entries()`. `local_fetch(dir)`
+  return `LiveEdition`s, which carry the entry's `dataflows`, `pull_bytes`
+  and `artefacts` (None when absent); `FullInventory.root`, `embargo`,
+  `retired`, `products()`, `leaf()`, `leaves()` and `entries()`. `local_fetch(dir)`
   is a `Fetch` over a directory.
 - `repairable(journal, leaves, retired)` (`_rules.py`): the seal-journal
   entries the narrow repair (spec §6.7) may record: those the newest version
@@ -87,6 +100,10 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
   `expired_through`); drops a held root at or below `expired_through`; and
   fails closed with no root above the bound and none held, or on 2.x
   without `HISTORY` (spec §6.6).
+- A leaf entry carries both routing fields or neither; `dataflows` is sorted
+  without duplicates and `pull_bytes` is at least 0. No rule tests
+  `format_version` for them, so an entry without them decodes and routes
+  from its manifest.
 - A root carries both history fields or neither; `previous_root_sha256` is
   None exactly at version 1; changes are sorted by product, entry items by
   edition, and an entry item carries `entry` exactly when `to` is a state.
@@ -98,12 +115,13 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
 
 ## Side Effects
 
-- None: the rules are pure, and the readers read only through `fetch`,
-  caching leaves by hash.
+- None: the rules are pure, the readers read only through `fetch`, caching
+  leaves by hash, and `route` reads only through the `manifest` callable it
+  is given.
 
 ## Verification
 
-- `uv run pytest -m unit tests/unit/test_inventory.py tests/unit/test_inventory_history.py tests/unit/test_inventory_reader_fallback.py tests/unit/test_inventory_history_schemas.py tests/unit/test_inventory_conformance.py`.
+- `uv run pytest -m unit tests/unit/test_inventory.py tests/unit/test_inventory_history.py tests/unit/test_inventory_reader_fallback.py tests/unit/test_inventory_history_schemas.py tests/unit/test_inventory_conformance.py tests/unit/test_inventory_routing.py`.
   The conformance suite runs against two backends in
   `tests/support/inventory_backends.py`: the file protocol, written by the
   reference writer in `tests/support/inventory.py` (it writes the history

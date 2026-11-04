@@ -19,6 +19,37 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## Inventory routing fields
+
+This release adds the routing fields of Inventory 1.1
+([GH-348](https://github.com/StatCat-Suite/sdmxlib/issues/348)): two optional
+`LeafEntry` fields a router reads instead of opening each manifest. Leaves
+stay at format `1.2`, and an entry without the fields reads as before.
+
+- `LeafEntry` has two optional fields, `dataflows` (the edition's binding
+  URNs, sorted and without duplicates, `[]` for a structure edition) and
+  `pull_bytes` (the size of its required tier). Both are unset in an entry
+  that lacks them; `LeafEntry.has_routing` says whether an entry carries
+  both. `LeafEntry.full_artefacts` lists the URNs of its records without
+  `partial_of`.
+- `record` and `reinstate` take `dataflows=` and `pull_bytes=`, both or
+  neither, and `release`, `rollback` and the other rules copy them.
+  `routing_fields(manifest)` computes both and the `artefacts` records from a
+  manifest. A writer passes all three for every entry it records, and
+  `artefacts` for every structure entry.
+- `validate_leaf` and `decode_leaf` refuse an entry with one routing field
+  and not the other, an unsorted or repeating `dataflows`, and a negative
+  `pull_bytes`. The `leaf` schema states each rule except the sort order.
+- `LiveEdition` has `dataflows`, `pull_bytes` and `artefacts`, each None when
+  the entry lacks it. `route(edition, manifest)` gives a router a live
+  edition's dataflows, pull size and structure homes, and fetches the
+  manifest only for an entry without the fields.
+- `verify_entry(entry, manifest)` lists each filled `artefacts`, `dataflows`
+  or `pull_bytes` that differs from the manifest, for `verify-catalog`.
+- The conformance suite's `CHECKS` gain
+  `check_the_routing_fields_survive_a_commit_and_a_reinstate`. A backend that
+  rewrites leaves passes once it keeps every field of a `LeafEntry`.
+
 ## Inventory 1.2: history fields and the reader fallback
 
 This release reads and writes Inventory 1.2
