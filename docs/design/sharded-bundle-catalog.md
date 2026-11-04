@@ -105,10 +105,13 @@ The practical ceiling is the required tier's size: the product's catalog and lab
 ### 4.1 Layout
 
 ```
-<catalog>/catalog.json                       format_version, catalog_id, restore_epoch
+<catalog>/catalog.json                       format_version, catalog_id, restore_epoch, history (2.0)
 <catalog>/CURRENT                            hint: {seq, root_sha256, restore_epoch}
+<catalog>/LOCK                               the local catalog lock (§6.9); created once, never deleted
 <catalog>/inventory/<seq>.json               an Inventory root, created exclusively (seq zero-padded to 12 digits)
 <catalog>/inventory/leaves/<sha256>.json     Inventory leaves, content-addressed
+<catalog>/inventory/HISTORY                  an opted-in catalog's epoch, expired_through and newest segment (§6.9)
+<catalog>/history/<restore_epoch>/<first>-<last>-<uuid7>.jsonl   history segments, create-only (§6.9)
 <catalog>/pending/<product_id>/<edition_id>.json   blob storage only: the upload inbox (§11.2)
 <catalog>/products/<product_id>/
   data/                                      immutable data files shared by every edition of the product
@@ -317,21 +320,35 @@ Decided (GH-134): an overlay MAY change a `name` or `description`, and only `fol
 
 ---
 
-## 6. The Inventory (format 1.0)
+## 6. The Inventory (format 1.2)
 
 The Inventory replaces manifest 2.x's catalog index, its structures document and statcatlib's serving list. It decides each product's live edition on every catalog: a laptop's directory and a .Stat container alike. It is a chain of immutable, versioned documents, each a **root** plus one **leaf** per product.
 
 Ownership (statcatlib RFC decision 8): sdmxlib owns the JSON schemas, validation, the state-transition rules and a reader, and holds no blob client: the reader takes a `fetch(path) -> bytes | None` callable (§11.5). statcatlib owns the writer and the `extensions.statcat` section, which carries the `CatalogDescription`. sdmxlib-rest pods read the Inventory through their sdmxlib dependency.
 
+Inventory 1.2 adds each version's change list and a hash chain over the roots (§6.2, §6.3), the `reinstate` kind, and, on a catalog that opts in, the expiry of old versions into history segments (§6.9). It is specified by the suite design [Inventory: carry each version's changes in its root, and expire old versions into history segments](https://github.com/StatCat-Suite/statcat-suite.github.io/blob/main/docs/design/inventory-history-log.md) (hub `29c5596`, GH-361), whose decisions H1 to H24 this section cites. It ships in two stages. Stage 1 is the history fields, the writer rules and the reader fallback of §6.6, and the decodes of every document below; nothing expires in stage 1. Stage 2 is the catalog lock, opt-in, segments, expiry and restores of §6.9, with statcatlib's writer. The JSON Schemas of every document are in `src/sdmxlib/inventory/schemas/`. The suite design's [informative PROV-O mapping](https://github.com/StatCat-Suite/statcat-suite.github.io/blob/main/docs/design/inventory-history-log.md#data-for-a-prov-o-export-informative-mapping) shows how an exporter reads these records; the normative mapping comes with the first exporter, in stage 3.
+
 ### 6.1 `catalog.json` and `CURRENT`
 
-`catalog.json`, written once when the catalog is created and rewritten only to bump `restore_epoch`:
+`catalog.json`, written once when the catalog is created and rewritten only to bump `restore_epoch` or to opt in to expiry:
 
 | field | presence | meaning |
 |---|---|---|
-| `format_version` | required | `"1.0"`. |
-| `catalog_id` | required | A UUIDv7. An export (`CatalogAdmin.export`) keeps it. |
-| `restore_epoch` | required | An integer, starting at 0. A whole-catalog restore or failover bumps it, and readers reset their `seq` floor when it changes (§6.6). |
+| `format_version` | required | `"1.0"`, or `"2.0"` once the catalog has opted in to expiry. |
+| `catalog_id` | required | A UUIDv7. A full export (`CatalogAdmin.export`) copies `inventory/` and `history/` unchanged and keeps it. A live-only export writes a new chain and takes a new `catalog_id`. |
+| `restore_epoch` | required | An integer, starting at 0. A whole-catalog restore or failover bumps it, and readers reset their `seq` floor when it changes (§6.6). On a 2.0 catalog every restore bumps it (§6.9). |
+| `history` | required in 2.0, absent in 1.0 | `{"since_seq": N}`: the lowest `seq` from which every root carries both history fields (§6.2). Roots below `since_seq` never expire. |
+
+**Decoding.** A reader decodes `catalog.json` majors 1 and 2. A writer decodes a 2.x document only when it declares stage-2 support, which means it takes the catalog lock and checks `expired_through` (§6.6, §6.9); every other writer refuses a 2.x `catalog.json`. A writer decodes `catalog.json` on every commit, so the 2.0 document keeps writers without the lock off an opted-in catalog (H6). A 2.x catalog without `inventory/HISTORY` is an error.
+
+**Opt-in.** Expiry is opt-in per catalog. Opt-in runs under the catalog lock (§6.9). It refuses a catalog whose head lacks the history fields, a catalog in which a root without them follows a root with them, and a catalog on a blob store other than Azure Blob Storage (H21). It then:
+
+1. writes `inventory/HISTORY` (§6.9) with `expired_through: 0`, no segment, and the catalog's `restore_epoch`;
+2. rewrites `catalog.json` as `"2.0"` with `history.since_seq`. Locally the rewrite reads, compares and renames, and refuses if `restore_epoch` changed since the read; on blob storage it is a conditional write.
+
+A writer without stage-2 support can decode `catalog.json` before the rewrite and create a root after it, without the lock. The first expiry therefore runs in a later call than the opt-in, and expiry stops at any root at or above `since_seq` that lacks the history fields (§6.9 step 1). Local catalogs opt in and expire through `CatalogAdmin`; a server catalog opts in before the release job's first expiry. The opt-in documentation tells the operator to upgrade any local sdmxlib-rest first.
+
+**Restores on an opted-in catalog.** Every restore bumps `restore_epoch` and follows §6.9's restore order (H22). A storage-level rollback that keeps the epoch (the conformance suite's `restore_to`) is unsupported on a 2.0 catalog: under object lock the newer segments survive it, and `(restore_epoch, seq)` would be reused. `restore_to` stays for 1.0 catalogs.
 
 `CURRENT`, a hint naming the newest Inventory version: `{"seq": 42, "root_sha256": "…", "restore_epoch": 0}`. Writes to it are conditional and only move forward. Nothing trusts it without verifying the root it names.
 
@@ -341,17 +358,23 @@ Ownership (statcatlib RFC decision 8): sdmxlib owns the JSON schemas, validation
 
 | field | presence | meaning |
 |---|---|---|
-| `format_version` | required | `"1.0"`. |
+| `format_version` | required | `"1.2"` from the release that writes the history fields; `"1.0"` before it (Versioning, §6.3). |
 | `seq` | required | This version's sequence number. The first version is 1. |
-| `previous_inventory` | required | The `seq` this version was built from, or `null` for version 1. |
+| `previous_inventory` | required | The `seq` this version was built from, or `null` for version 1. It equals `seq - 1` for every kind except `correct`, which names an older, known-good version. |
 | `restore_epoch` | required | Equal to `catalog.json`'s when written. |
-| `created_at` | required | An RFC 3339 UTC instant ending in `Z`. |
+| `created_at` | required | An RFC 3339 UTC instant ending in `Z`, and the fifth field of the document, so a ranged GET of a root's first 1 KiB reads it (§6.9 step 1). §6.6 bounds it from below by the base version's. |
 | `producer` | required | `{name, version}` of the library that wrote this root. |
 | `embargo` | required | `true` or `false`. With `false`, a seal releases its edition in the same version (§6.4). |
 | `products` | required | A map from `product_id` to `{leaf, leaf_sha256}`, `leaf` the path `inventory/leaves/<sha256>.json`. |
 | `retired` | required | Tombstones: every `{product_id, edition_id, retired_at}` retired within the tombstone window, so a retired edition stays distinguishable from one never recorded. Kept at least as long as backups (§11.6). |
-| `event` | required | `{actor, reason, kind}`: who acted and why. `kind` is one of `seal`, `release`, `rollback`, `withdraw`, `retire`, `embargo-change`, `restore`, `correct` and `describe`. `describe` records a change to the catalog description in `extensions.statcat` and nothing else. A writer records one of these nine kinds. A reader accepts any `kind` string within format 1.x, and an audit or alerting consumer treats a kind it does not know as other, so a new kind is an additive minor-version change (GH-338). Readers older than sdmxlib 0.82.0 refuse a root whose `kind` they do not know: `describe` needs sdmxlib 0.81.0 or later (GH-334). `actor` comes from the writer's identity (a token's object id), never from the caller. |
+| `event` | required | `{actor, reason, kind}`: who acted and why. `kind` is one of `seal`, `release`, `rollback`, `withdraw`, `retire`, `reinstate`, `embargo-change`, `restore`, `correct` and `describe`; `reinstate` arrives in Inventory 1.2 (H24). A server fold of `pending/` records `seal` (§11.2). `describe` records a change to the catalog description in `extensions.statcat` and nothing else. A writer records one of these ten kinds. A reader accepts any `kind` string within format 1.x, and an audit or alerting consumer treats a kind it does not know as other, so a new kind is an additive minor-version change (GH-338). Readers older than sdmxlib 0.82.0 refuse a root whose `kind` they do not know: `describe` needs sdmxlib 0.81.0 or later (GH-334). `actor` comes from the writer's identity (a token's object id), never from the caller. |
 | `extensions` | optional | Sections keyed by package; `statcat` holds the `CatalogDescription`. |
+| `previous_root_sha256` | with `changes` (1.2) | The SHA-256 of the stored bytes of the base version, root `seq - 1`, or `null` for version 1. After a restore to root S, root S + 1's base is root S (§6.9). |
+| `changes` | with `previous_root_sha256` (1.2) | The change list: one change item per product whose leaf or tombstones differ from the base version's, sorted by `product_id` (§6.3). An empty list for a version that changes no leaf and no tombstone, such as `embargo-change` or `describe`. |
+
+**The history fields.** `previous_root_sha256` and `changes` are the history fields. A root carries both or neither, and a writer that has them writes both in every version, on every catalog. They are defined by their presence (H19): every rule that depends on them (the opt-in refusal of §6.1, `since_seq`, expiry's stop rule and `verify-catalog`, §6.9) tests whether a root carries both, and none tests `format_version`. A 1.x reader that predates them ignores them.
+
+The **base version** of root N is root N - 1: the head the writer read and won the exclusive create against (§6.6). The chain, the change list and the `created_at` rule follow the base version, and `previous_inventory` keeps its meaning, the version this one was built from (H10). A correction at 41 built from 39 therefore links root 40 and diffs against it. The hash is over the base root's stored bytes, as `CURRENT` and `leaf_sha256` hash; no canonical JSON is needed (H3).
 
 ### 6.3 Leaf
 
@@ -377,17 +400,44 @@ Ownership (statcatlib RFC decision 8): sdmxlib owns the JSON schemas, validation
 | `state_changed_at` | required | When the entry took its state, an RFC 3339 UTC instant. |
 | `release_at` | required | For an `embargoed` entry, the instant it becomes releasable, or `null` for no scheduled release; `null` otherwise. |
 | `structure_source` | optional | Where the structures came from when a registry is authoritative: `{registry, query, retrieved_at, fingerprints}` (statcatlib RFC §8). |
-| `artefacts` | optional | `{urn: {fingerprint, partial_of}}`, the manifest's partials, a 1.x optional field (statcatlib RFC decision 25). The release job reads the manifests it verifies, so it enforces the structures-first rule without it. |
+| `artefacts` | optional | `{urn: {fingerprint, partial_of}}`: the artefact records of the manifest `manifest_sha256` names, every full artefact with its `fingerprint` and every partial with its `fingerprint` and `partial_of`, the record statcatlib's `manifest_records` computes (statcatlib RFC decision 25). A 1.x optional field. |
+
+**Filled `artefacts`.** A writer fills `artefacts` in every entry it records from Phase 5 on, and the cross-product rules of §6.5 read the records from leaves instead of opening manifests (owner, 2026-11-04). An entry recorded earlier, with `artefacts` absent, is read from its manifest. `reinstate` takes the entry's `artefacts`, so a reinstated entry keeps them. A filled `artefacts` MUST equal the records of the manifest `manifest_sha256` names. `verify-catalog` checks this for each entry whose manifest exists; GC deletes retired editions' manifests (§11.4), so a checkpoint's old entries are skipped.
+
+**The change list.** A root's `changes` (§6.2) holds change items:
+
+| field | presence | meaning |
+|---|---|---|
+| `product_id` | required | The product. |
+| `leaf_sha256` | required | `{from, to}`: the product's leaf hash in the base version and in this version. `from` is `null` for a product new to the Inventory, `to` is `null` for a product removed from it, and the two are equal when only the product's tombstones changed. |
+| `entries` | required | One entry item per edition whose `LeafEntry` or tombstone differs between the base version and this version, sorted by `edition_id`. |
+
+An entry item:
+
+| field | presence | meaning |
+|---|---|---|
+| `edition_id` | required | The edition. |
+| `from` | required | Its state in the base version (`embargoed`, `live`, `superseded` or `withdrawn`), `tombstone` when the base version's `retired` list holds it, or `null` when the base version has neither. |
+| `to` | required | The same values for this version. `null` means this version drops the edition's tombstone from `retired`. |
+| `entry` | required when `to` is a state, absent otherwise | The new `LeafEntry`'s `edition_id`, `previous`, `state`, `manifest_sha256`, `schema_version`, `state_changed_at` and `release_at`, and no other field. |
+
+- An item whose `from` equals `to` records an entry that changed and kept its state, such as a rescheduled `release_at`.
+- `tombstone` marks the `retired` list and is no fifth state: §6.4's "Retirement is a tombstone, never a state" stands (H18). A tombstone comes from a `retire` version, and `reinstate` writes `from: tombstone, to: superseded`.
+- Nothing removes a tombstone from `retired` today (`prune` never expires one). A later writer that does writes `to: null`, so a replay of `retired` stays exact.
+- `entry` omits `structure_source`, `artefacts` and every later optional `LeafEntry` field (H14). `manifest_sha256` pins what the manifest holds, so the change list keeps its size when `artefacts` is filled; a format minor that wants a later field in `entry` says so.
+- A writer computes the change list from the base version's root and leaves and this version's, and reads no other version (§6.6).
+
+Sizes on the corpus of StatCat-Suite/statcatlib#126 (2,521 one-table products), compact JSON: a release's change item, with its two entry items, is 920 bytes; a release of 200 tables adds 185 KB to its root, and a republish of 7,000 products 6.5 MB, beside a 1.6 MB root. A filled `artefacts` grows a one-edition leaf from 510 bytes to 2.4 KB and leaves the change list unchanged.
 
 Phase 4's routing fields (`pool`, `pinned`, `location`, `pull_bytes`, `dataflows`) arrive as 1.x optional fields.
 
-**Versioning.** A minor version adds only optional fields and new `event.kind` values (§6.2); readers ignore unknown fields, accept an unknown `event.kind`, and refuse a newer major version. The shipped root schema lists the kinds a writer records, so a root with a newer kind fails it and still reads.
+**Versioning.** A minor version adds only optional fields and new `event.kind` values (§6.2); readers ignore unknown fields, accept an unknown `event.kind`, and refuse a newer major version. The shipped root schema lists the kinds a writer records, so a root with a newer kind fails it and still reads. One constant, `INVENTORY_FORMAT`, versions roots and leaves. Inventory 1.1 is Phase 4's routing fields (GH-348). Inventory 1.2 is the history fields and the `reinstate` kind, whichever of the two specifications merges first; a rule that needs the history fields tests for them and never for the minor (H19, H24). `catalog.json` (§6.1), `inventory/HISTORY` and the history segments (§6.9) carry their own `format_version`, and a reader refuses a major it does not know.
 
 **Worked example.** Version 42, after CODR table 14100287's September release, with census unchanged:
 
 ```json
 {
-  "format_version": "1.0",
+  "format_version": "1.2",
   "seq": 42,
   "previous_inventory": 41,
   "restore_epoch": 0,
@@ -400,13 +450,24 @@ Phase 4's routing fields (`pool`, `pinned`, `location`, `pull_bytes`, `dataflows
   },
   "retired": [{"product_id": "14100287", "edition_id": "01a17b02-…", "retired_at": "2026-09-30T00:00:00Z"}],
   "event": {"actor": "release-job@stc", "reason": "08:30 release", "kind": "release"},
-  "extensions": {"statcat": {"format_version": "3", "description": {"title": {"en": "…", "fr": "…"}}}}
+  "extensions": {"statcat": {"format_version": "3", "description": {"title": {"en": "…", "fr": "…"}}}},
+  "previous_root_sha256": "c41d…",
+  "changes": [
+    {"product_id": "14100287", "leaf_sha256": {"from": "77ae…", "to": "9f2c…"}, "entries": [
+      {"edition_id": "01a18e63-e292-7250-a332-b79d9b7a7efd", "from": "live", "to": "superseded",
+       "entry": {"edition_id": "01a18e63-e292-7250-a332-b79d9b7a7efd", "previous": "01a17f00-…", "state": "superseded",
+                 "manifest_sha256": "…", "schema_version": "2.52", "state_changed_at": "2026-10-09T12:30:00.412Z", "release_at": null}},
+      {"edition_id": "01a18e76-2bad-7480-abfe-2ba8a6889a45", "from": "embargoed", "to": "live",
+       "entry": {"edition_id": "01a18e76-2bad-7480-abfe-2ba8a6889a45", "previous": "01a18e63-e292-7250-a332-b79d9b7a7efd", "state": "live",
+                 "manifest_sha256": "…", "schema_version": "2.52", "state_changed_at": "2026-10-09T12:30:00.412Z", "release_at": null}}
+    ]}
+  ]
 }
 ```
 
 ```json
 {
-  "format_version": "1.0",
+  "format_version": "1.2",
   "product_id": "14100287",
   "kind": "data",
   "lifecycle": "revisable",
@@ -473,7 +534,7 @@ sdmxlib states these rules as pure functions a writer calls before it publishes 
 8. Publish order: a data edition is refused `live` until, for each full artefact it holds that has a structure home and for each of its partials, the structure edition whose fingerprint equals the full artefact's fingerprint or the partial's `partial_of` is `live`. An edit to a full artefact at an unchanged URN therefore holds back every product that holds the old one, full or cut, until that product is republished from the new one and the edit is live. Once the edit is live, the product's live edition holding the old copy is stale until that republish (item 4).
 9. References resolve: every reference a data product's edition stores names an artefact or item in that edition, since a data product vendors its closure (§8). A structure product's references resolve within its own edition or in a full artefact, or an item of one, that another live or embargoed structure product's edition holds: a concept scheme in `structure-concepts` whose core representation names a codelist in `structure-classifications`. The publish check is given those structure editions, `check_edition(at="publish", structures=...)`, and reports each reference that none of them holds, naming the editions it looked in. An edition with no bindings is a structure product for this check (§8).
 
-The release job reads every manifest it releases to verify `manifest_sha256`, so it reads the artefacts and partials there. A 7,000-entry catalog's leaf fetch is timed in Phase 4, and a baked summary is added only if that measurement shows the cost (`docs/design/caching.md`).
+The release job reads each incoming edition's manifest to verify `manifest_sha256` (item 2), and reads every other edition's artefact records from its leaf's filled `artefacts` (§6.3). For an entry recorded before Phase 5, with `artefacts` absent, it reads the manifest. StatCat-Suite/statcatlib#126 measured the manifest path: at 6,300 live products, 6,300 manifest reads (91 MB) take 0.81 s of a 1.79 s cold seal on local disk, and are about 6,300 sequential GETs on object storage.
 
 ### 6.6 Write and read protocol
 
@@ -481,9 +542,19 @@ The release job reads every manifest it releases to verify `manifest_sha256`, so
 
 - **Locally:** write a temporary file, fsync it, then `link()` it into place, or rename it with `renameat2(RENAME_NOREPLACE)`, `renamex_np(RENAME_EXCL)` or `MoveFileEx` without the replace flag; then fsync the directory.
 - **On blob storage:** a single-shot `Put Blob` (or `Put Block List`) with `If-None-Match: *`, never DFS create plus append. statcatlib uses `obstore` (`put(..., mode="create")`). Untested on OneLake's Blob API.
-- Leaves are written first, by the same rule; a leaf that exists already has the same bytes, since its name is its hash.
+- Leaves are written first, by the same rule; a leaf that exists already has the same bytes, since its name is its hash. On Azure Blob Storage a writer with stage-2 support instead writes each leaf of its version with an unconditional Put of the same bytes, so a leaf that expiry deletes concurrently survives (§6.9, The catalog lock). Roots stay create-only.
 
-**Retry.** A writer that loses re-reads the new head and re-evaluates every precondition against it: the fast-forward check, the expected live edition, and the `embargo` header. A stale automatic release must not write `live` after a concurrent change turned embargo on.
+The write order is leaves, then the root, then `CURRENT`. The root is the commit point and carries its version's change list, so a version never exists without its record.
+
+**Retry.** A writer that loses re-reads the new head and re-evaluates every precondition against it: the fast-forward check, the expected live edition, and the `embargo` header. A stale automatic release must not write `live` after a concurrent change turned embargo on. It also computes `changes` and `previous_root_sha256` again from the new head, its new base version.
+
+**The history fields.** A writer that writes them (§6.2):
+
+1. computes `changes` and `previous_root_sha256` from the base version, root `seq - 1`, and its leaves, and reads no other version;
+2. writes a `created_at` at least the base version's `created_at` plus one millisecond, across a `restore_epoch` change as well; a writer whose clock reads earlier writes that instant;
+3. refuses a base version whose `created_at` is more than 5 minutes ahead of its own clock, and names the base version's time in the error, so one fast clock cannot pin `created_at` for every later writer;
+4. on a server, takes its time from the storage `Date` header under §6.4's skew bound, as the release clock does;
+5. on an opted-in catalog (§6.1), refuses a base version at or below `HISTORY.expired_through`. Expiry frees the names of the roots it deletes, and the exclusive create would otherwise let a stale writer reuse one. The writer checks after it takes the catalog lock (§6.9), against a fresh read of `inventory/HISTORY`, so an expiry between its head read and the lock cannot reopen a name.
 
 **`CURRENT`.** Written after the root, conditionally and forward only. A reader:
 
@@ -494,9 +565,19 @@ The release job reads every manifest it releases to verify `manifest_sha256`, so
 
 This is Delta's `_last_checkpoint` pattern. The release job brings `CURRENT` up to the newest root on startup. A reader skips an invalid root, alerts, and keeps the last valid version.
 
+**The reader fallback** (stage 1, H13). With `CURRENT` present and naming a root that verifies, the reader reads no object besides `CURRENT` and roots; expiry never removes the root `CURRENT` names (§6.9 step 1). When `CURRENT` is missing or names a root that fails to verify, the reader:
+
+1. reads `catalog.json`, and on a 2.x document `inventory/HISTORY`. It fails closed when a 2.x catalog has no `HISTORY`;
+2. takes the epoch from `HISTORY.restore_epoch`, or from `catalog.json`'s `restore_epoch` on a 1.x catalog;
+3. takes as its lower bound the larger of the `seq` it holds in that epoch and `expired_through` (0 on a 1.x catalog), and drops a held root at or below `expired_through`;
+4. walks back no further than the lower bound, and starts its forward probe one above it;
+5. fails closed when it finds no root above the lower bound and holds none.
+
+The fallback costs one or two GETs, only after `CURRENT` has failed; the pods' read of `catalog.json` and `inventory/HISTORY` is in §10.1.
+
 **Unsupported locations.** Synced folders (Dropbox, OneDrive) and network shares are documented as unsupported.
 
-**An escape route.** The Inventory is a small log of its own, close to Delta's `_delta_log` with a hint pointer. If it ever needs checkpoints, leaf compaction or more tree levels, that need triggers a review of replacing it with a Delta table of Inventory rows rather than adding a feature. GH-252's conformance suite runs against a Delta-backed prototype to prove the route (statcatlib RFC decision 31).
+**An escape route.** The Inventory is a small log of its own, close to Delta's `_delta_log` with a hint pointer. If it ever needs leaf compaction or more tree levels, that need triggers a review of replacing it with a Delta table of Inventory rows rather than adding a feature. GH-252's conformance suite runs against a Delta-backed prototype to prove the route (statcatlib RFC decision 31). The checkpoints that expiry keeps and the history segments (§6.9) do not trigger the review: the suite design ran it when it added them and kept the Inventory (H9), since a Delta reader lists its log, Delta's log retention deletes history, and Delta shares no state per product the way a content-addressed leaf does.
 
 ### 6.7 Crash recovery
 
@@ -516,6 +597,131 @@ A broad scan would re-release withdrawn editions: an edition rolled back and the
 ### 6.8 Multi-vintage products
 
 Census 2021 and 2026 are two products with distinct DSDs, grouped in one `ProductSeries` that statcatlib records in its extension.
+
+### 6.9 History segments and expiry
+
+A catalog that opts in (§6.1) expires old Inventory versions. Expiry moves each expired root into an append-only **history segment**, then deletes the root and the leaves no retained root names. `inventory/` then holds the newest K roots, the roots within the retention window W (§11.6), one checkpoint a month, and the roots from before the opt-in. Nothing under `history/` is ever rewritten or deleted (H2). This section is stage 2; stage 1 ships its documents' decodes and schemas.
+
+Terms:
+
+- A **retained root** is a root under `inventory/`.
+- The **head chain** is the roots and segment lines linked by `previous_root_sha256` from the head down to version 1. After a restore to root S it runs through S and skips the roots the restore discarded.
+- A **checkpoint** is a root expiry never removes. Root N is a checkpoint when N is `history.since_seq`, when N is the first root of its `restore_epoch`, or when the UTC month of N's `created_at` is later than root N - 1's (H4).
+- **`expired_through`** is the highest `seq` expiry has removed from the head chain, whatever the root's epoch. Every root on the head chain above it exists. Below it are checkpoints and the roots older than `history.since_seq`.
+
+**`inventory/HISTORY`** (format 1.0), written at opt-in and then only under the catalog lock: on Azure conditionally and with the lease ID, locally with read, compare and rename.
+
+| field | presence | meaning |
+|---|---|---|
+| `format_version` | required | `"1.0"`. |
+| `catalog_id` | required | `catalog.json`'s. |
+| `restore_epoch` | required | The catalog's epoch. A restore writes the new epoch here before it bumps `catalog.json`, and the reader fallback takes the epoch from here (§6.6). |
+| `expired_through` | required | As defined above; 0 at opt-in. |
+| `newest_segment` | required | The path of the newest segment, relative to the catalog root, or `null` before the first. |
+| `newest_segment_sha256` | required | The SHA-256 of that segment's bytes, or `null` with `newest_segment`. |
+| `cleaned_through` | required | The path of the newest segment whose roots and leaves are deleted (steps 5 and 6), or `null` before the first. It lies on the segment chain at or below `newest_segment`. |
+
+**Segments.** `history/<restore_epoch>/<first:012d>-<last:012d>-<uuid7>.jsonl`, where `first` and `last` are the lowest and highest `seq` in the header's `roots`, padded as `root_path` pads them, and a UUIDv7 suffix makes every name unique, so a rerun never collides with an orphan.
+
+- A segment holds roots of one `restore_epoch` and sits under that epoch's directory, even when a later epoch writes it. A run writes one segment per epoch it expires from, and splits a segment at 1,000 lines or 64 MiB, whichever comes first.
+- A run writes its segments in chain order: each names the one before it as `previous_segment`, and the first names `HISTORY.newest_segment`, whatever its epoch, so all segments form one chain. A reader finds every segment without a LIST by following `newest_segment` and each header's `previous_segment`.
+- A segment is written create-if-absent, complete before it is visible (as a root is, above), and never rewritten or deleted. Object lock on `history/` is recommended for servers (§11.6).
+- A segment is JSON Lines: compact JSON, each line ended by one `\n`. The first line is the header; each following line records one root, in ascending `seq`.
+
+The header:
+
+| field | presence | meaning |
+|---|---|---|
+| `format_version` | required | `"1.0"`. |
+| `catalog_id` | required | `catalog.json`'s (H16). |
+| `kind` | required | `expiry` or `restore`. The crash rule and `expired_through` consider `expiry` segments only. |
+| `restore_epoch` | required | The epoch of the roots it records, which names its directory. |
+| `first`, `last` | required | The lowest and highest `seq` in `roots`. |
+| `previous_segment` | required | `HISTORY.newest_segment` when this segment is written, or `null` for the catalog's first segment. |
+| `previous_segment_sha256` | required | The SHA-256 of that segment's bytes, or `null` with `previous_segment`. |
+| `expired_at` | required | When the segment was written, an RFC 3339 UTC instant in storage time. |
+| `actor` | required | The writer's identity, as `event.actor` takes it (§6.2). |
+| `roots` | required | The `seq` of each root the run deletes, ascending. The header is the plan, written before any deletion. |
+| `leaves` | required | The hash of each leaf that this segment's roots name and that, when the plan is made, no root the run keeps names. Step 6 deletes only these, after checking again. Empty in a `restore` segment. |
+| `unread` | required | The `seq` of each root in `roots` that a restore deletes and could not read. Empty in an `expiry` segment. |
+
+A line is one removed root with `products` and `retired` removed and `root_sha256`, the SHA-256 of the root's stored bytes, added last. It keeps `format_version`, `seq`, `previous_inventory`, `restore_epoch`, `created_at`, `producer`, `embargo`, `event`, `extensions`, `previous_root_sha256` and `changes`, in the root's field order. Every root in `roots` has one line, except those in `unread`. A line in an `expiry` segment always carries the history fields, since expiry stops at a root that lacks them.
+
+**The catalog lock.** Expiry, opt-in, restores and every Inventory write by a writer with stage-2 support run under the catalog lock (H12).
+
+Locally:
+
+- The lock is `fcntl.flock(LOCK_EX)` on POSIX and `LockFileEx` on Windows, on `<catalog>/LOCK`. The writer creates the file once and never deletes it. The OS releases the lock when the process exits, so a crash leaves no stale lock. An advisory lock needs a local filesystem, and network shares are already unsupported (§6.6).
+- statcatlib's `InventoryWriter.try_commit` takes the lock and holds it from its first leaf existence check to `CURRENT`. The stale-base refusal (§6.6) runs inside it, after the lock is taken.
+- The lock is per call and not reentrant. `prune` commits its `retire` version and releases the lock before it takes the lock for expiry. Code that holds the lock and writes a root (a restore) calls the writer's internal commit, which assumes the lock.
+- A writer skips a leaf it finds present. Under the lock no expiry runs between that check and the root, so the skipped leaf survives.
+
+On Azure Blob Storage, on an opted-in catalog:
+
+- The lock is a blob lease on `inventory/HISTORY`. The release job runs one instance at a time and holds the lease for its whole run; a second run fails to take it and writes nothing. statcatlib's blob writer takes the same lease, so a `CatalogAdmin` call under the release job's identity waits for the run.
+- The lease lasts 60 s, and the holder renews it every 20 s. Before each destructive call (a segment write, a `HISTORY` write, a root or leaf delete) the holder checks that its last successful renewal is less than 40 s old, and stops expiry otherwise. A failed renewal stops the run's expiry; the next run's crash rule finishes it.
+- A lease fences writes to `HISTORY` only, and a paused holder can still delete after its lease lapsed. Leaf deletes therefore carry `If-Match` with the ETag read at step 6's final check, and the writer writes each leaf of its version with an unconditional Put of the same bytes (§6.6). In either order the leaf survives: a Put before the delete changes the ETag and the delete fails; a Put after it recreates the leaf. Roots stay create-only.
+- A run holds the lease for at most 30 minutes, then releases it and alerts. A runbook breaks a lease only after the holding job's pod has stopped.
+
+S3 and GCS have no blob lease: server expiry is Azure-only, and opt-in on another blob store is refused (H21, H23).
+
+**Expiry gates.** Every server expiry run checks two gates. A run that fails either skips expiry, alerts, and still performs its release step.
+
+1. **Rollback window.** The release job's configuration holds `expiry_not_before`, the time §9.2's rollback window closes for the last pod image built before the stage-1 sdmxlib. The job refuses every expiry before that time (H20).
+2. **Pod versions.** On every expiry run the job lists the pods of every Inventory-reading Deployment (`hot`, `base`, `search` and the preview deployment) from the Kubernetes API by label, not-Ready pods included, and reads each one's `sdmxlib_version` from sdmxlib-rest's `GET /` payload. An unreachable pod, a missing field, or a version older than stage 1 counts as a failure. Where the job cannot reach the Kubernetes API, gate 1 alone applies and the run reports the pod check as not run. Jobs that read the Inventory and have no endpoint (pre-materialisation, GC) are covered by gate 1.
+
+A reader older than stage 1 misbehaves on an opted-in catalog only when `CURRENT` is missing or fails to verify, since expiry never removes the root `CURRENT` names; gate 1 covers that case. Local catalogs have no pods.
+
+**Expiry.** Expiry runs in the release job's identity, after the release step of the same run and never inside it, and in `CatalogAdmin.prune` (H5). Each run, under the catalog lock:
+
+0. **Advances `CURRENT`** to the head, as the release job does on startup (§6.6).
+1. **Chooses.** It walks the roots in `seq` order from the larger of `expired_through + 1` and `since_seq`, stepping over each checkpoint, which stays. It takes a root when the root is below `CURRENT.seq`, outside the newest K, and its successor's `created_at` is older than W by the storage clock. It stops at the first root that is neither a checkpoint nor taken, and at the first root that lacks the history fields, which `verify-catalog` reports. The candidates are therefore a contiguous run of `seq`, checkpoints excepted, never below `since_seq` and never at or above `CURRENT.seq`.
+2. **Verifies** the chain over the candidates, over stored bytes, from the newest segment's last line (or the checkpoint below the candidates) to the first retained root above them, and stops on a mismatch.
+3. **Writes the segments.** It LISTs `history/` first; a segment `HISTORY` does not reach is a crash's orphan. It adopts orphans only when the first one's `previous_segment` is `HISTORY.newest_segment`, each later one links to the one before, the first one's first line is the lowest candidate, every line lies within the current candidates, and each line matches its root's bytes. It reports and leaves any other orphan. It then writes the remaining segments create-if-absent, in chain order, with the header's `roots` and `leaves`, and checks each line's `root_sha256` against the root's bytes.
+4. **Advances `HISTORY`** to the new `expired_through` and newest segment.
+5. **Deletes the candidate roots**, each only after the SHA-256 of its stored bytes matches `root_sha256` on its line.
+6. **Deletes leaves** that no retained root names. It LISTs `inventory/*.json` and reads every retained root, since the range above `expired_through` misses the roots below `since_seq`, the checkpoints, and the unmatched roots kept below `expired_through`. It deletes each leaf in the headers' `leaves` that no retained root names, with `If-Match` on Azure. The release job caches each root's SHA-256 and leaf set, keyed by the root's path and the ETag the LIST returns, so after its first run it reads only the roots written since; an ETag that differs from the cached one forces a re-read.
+7. **Advances `cleaned_through`** in `HISTORY` to the newest segment.
+8. **Logs** each object deleted in the deletion log. A dry run performs steps 1 and 2 and reports what steps 3 to 7 would do.
+
+**Crashes.** A crash before step 4 leaves orphan segments, which the next run adopts in step 3. A crash after step 4 leaves the plans in the headers of the `expiry` segments after `cleaned_through`, up to `newest_segment`. The next run processes only those headers: it deletes a root they list only when the root's bytes match a line in those segments, and it repeats step 6 for their leaves. Any other root at or below `expired_through` is reported and kept: a checkpoint, a root older than `since_seq`, or a root a stale writer created. Leaves that a crashed commit wrote before its root appear in no header, so expiry never deletes them; the leak is bounded by one version's changed leaves per crash.
+
+**Restores.** On an opted-in catalog a restore to root S runs under the catalog lock, in this order:
+
+1. it writes the roots after S, checkpoints included, into a `restore` segment of the old epoch. After a failover some may be unreadable; the segment holds the lines it can read and lists the rest in `unread`;
+2. it writes `HISTORY` with the new epoch, `expired_through` set to the smaller of its old value and S, and `newest_segment` set to the restore segment;
+3. it bumps `restore_epoch` in `catalog.json`;
+4. it deletes the roots above S;
+5. it writes root S + 1 of the new epoch, with `event.kind: restore` and a `previous_root_sha256` that hashes root S, through the writer's internal commit;
+6. it writes `CURRENT`.
+
+A crash after step 2 leaves readers whose `CURRENT` fails with the new epoch and no root in it, so they fail closed until root S + 1 exists; a rerun resumes from the epoch in `HISTORY`. A restore deletes no leaves: the leaves only its discarded roots named leak as a crashed commit's do. A restore only adds segments under `history/`, and never deletes or overwrites one.
+
+**`verify-catalog`** checks, on a catalog with history fields:
+
+1. the root chain over the union of retained roots and segment lines, keyed by `(restore_epoch, seq)`. The chain branches at each restore's S, and a key present in both a root and a line has the same `root_sha256`;
+2. every retained root's leaves. A checkpoint's leaves can name manifests GC has deleted (§11.4), so for a checkpoint it checks the leaves only;
+3. the segment links and kinds; `HISTORY`: every root on the head chain above `expired_through` exists, no `expiry` line on the head chain lies above it, and `cleaned_through` lies on the segment chain at or below `newest_segment`; that every root at or above `since_seq` carries the history fields; and the checkpoint rule, recomputed from roots and lines. It reports unlinked, orphan and overlapping segments;
+4. each filled `artefacts` against the records of its manifest, where the manifest exists (§6.3).
+
+**Conformance cases.** The conformance suite (GH-252) runs these against a writer. The stage-1 cases run against sdmxlib's reference writer; the cases for expiry, restores and `verify-catalog` also run against statcatlib's writer once its stage 2 lands.
+
+- A correction built from an older version links root `seq - 1` and diffs against it.
+- A writer that loses the race rebuilds its change list against the new head.
+- `created_at` stays monotone across an epoch change, and a base version more than 5 minutes ahead is refused.
+- The change list records an entry that changes and keeps its state, a retire, and a reinstate.
+- The reader with `CURRENT` missing on a 1.x catalog, on a 2.x catalog, and on a 2.x catalog without `HISTORY` (it fails closed).
+- A reader holding a root at or below `expired_through` drops it.
+- The reader takes the epoch from `HISTORY` on a 2.x catalog and from `catalog.json` on a 1.x one.
+- A writer without stage-2 support refuses a 2.x catalog.
+- Opt-in is refused when a root without the history fields follows one with them.
+- A writer refuses a base at or below `expired_through`, read after it takes the lock.
+- With `CURRENT` lagging by more than K, step 0 advances it and step 1 takes no root at or above it.
+- Expiry stops at a root above `since_seq` that lacks the history fields.
+- An expiry crash after each step, in a run of several segments: linked orphans are adopted, an unlinked orphan is left, and `cleaned_through` limits the crash rule.
+- A root below `expired_through` with no matching line is kept.
+- A restore that bumps the epoch writes a `restore` segment, and a crash after its `HISTORY` write fails closed until root S + 1 exists.
+- `verify-catalog` keys by `(restore_epoch, seq)` across a restore, and detects an edited segment line, a deleted root, and a leaf entry whose `artefacts` differs from its manifest's records.
 
 ---
 
@@ -673,6 +879,8 @@ Layered editions (`requires`) remain the recorded alternative and stay rejected.
 | DuckLake spec version | manifest | refuse newer | sdmxlib reader |
 | `canonical_form` | manifest | known values | release job, cache keys |
 | Inventory `format_version` | root, leaf | refuse a newer major | sdmxlib Inventory reader |
+| `catalog.json` `format_version` | `catalog.json` | a reader accepts majors 1 and 2; a writer accepts 2 only with stage-2 support (§6.1) | sdmxlib Inventory reader, statcatlib writer |
+| history `format_version` | `inventory/HISTORY`, segment header | refuse a newer major | sdmxlib Inventory reader |
 | statcat `schema_version` | `statcat._meta` | exact | statcatlib `Catalog.open()` |
 | statcat `index_version` | manifest `extensions.statcat` | known values | statcatlib `Catalog.open()` |
 
@@ -684,6 +892,8 @@ Layered editions (`requires`) remain the recorded alternative and stay rejected.
 4. Roll pods; old pods read the old entries, new pods the new ones; the ingress routes by `product_id`.
 5. Once the rollback window for the pod image closes, supersede the old-schema entries; they follow §11.6.
 
+On a catalog opted in to expiry (§6.1), the pods never roll back to an image built before the stage-1 sdmxlib, which holds the reader fallback (§6.6); the image runbook forbids it. The release job's configuration holds `expiry_not_before`, the time step 5's rollback window closes for the last pod image built before stage 1, and the job refuses every expiry before it (§6.9, Expiry gates).
+
 Result-store keys survive the bump wherever `canonical_form`, fingerprints and render versions are unchanged. A `canonical_form` bump is a one-time cold cache by design. The seal throughput target is a full republish of every live product in at most 8 hours on 4 workers. At the measured 1.6 s per CODR seal (§7.1), a full republish of 7,000 tables takes about 5 hours.
 
 ---
@@ -694,20 +904,22 @@ Result-store keys survive the bump wherever `canonical_form`, fingerprints and r
 
 Blob storage is the only channel between the jobs and the pods. Principals:
 
-| principal | `products/`, `pending/` | `inventory/`, `CURRENT` | `results/` |
-|---|---|---|---|
-| publish job | write | none | write (pre-materialised results) |
-| release job | read | write | none |
-| GC job | delete | read | delete |
-| pods, search pods | read | read | read, write |
-| preview deployment (`EmbargoReader`) | read | read | none |
-| the public, the CDN | none | none | none directly |
+| principal | `products/`, `pending/` | `catalog.json`, `inventory/`, `CURRENT` | `history/` | `results/` |
+|---|---|---|---|---|
+| publish job | write | none | none | write (pre-materialised results) |
+| release job | read | write; delete on expired `inventory/` objects (§6.9) | create only | none |
+| GC job | delete | read | none | delete |
+| pods, search pods | read | read | none | read, write |
+| preview deployment (`EmbargoReader`) | read | read | none | none |
+| the public, the CDN | none | none | none | none directly |
+
+The release job reads `pending/` and never deletes from it; the GC job deletes folded registrations (§11.2, §11.4). The pods read `catalog.json` and `inventory/HISTORY` only on the reader fallback (§6.6). Expiry is the only delete the release job performs, and no principal deletes or overwrites under `history/` (§6.9). A change list names embargoed editions and their `release_at`, as a root does, so `history/` lives in the same container as `inventory/`, behind the same boundary.
 
 **The boundary is the account or container.** On ADLS Gen2, RBAC is evaluated before POSIX ACLs, so any principal with Storage Blob Data Reader on the container reads embargoed bytes, and data engineers and analytics workspaces usually hold that role. So the catalog lives in a container (or account) that only the jobs and the pods hold a role on; `results/` goes on a separate account; and every release checks, as a precondition at the 08:00 pre-flight against a reviewed allowlist, which principals hold Data Reader on the catalog's container, counting nested groups, eligible PIM assignments and inherited subscription roles. "Only the release job writes `inventory/`" needs separate write paths per identity, by ACL-only roles or separate containers. The jobs, the pods and the preview deployment use workload identities, with no keys and no SAS tokens.
 
 The public reaches a result through sdmxlib-rest, which streams `results/<key>` to the CDN (§7.4, Delivery). A pod reads a key only after computing it from a `live` entry, so an embargoed key, though present in `results/`, is unreachable until its release. Nothing serves `products/` or `results/` to the public directly.
 
-A copy of a catalog is outside the embargo boundary. `CatalogAdmin.export(live_only=True)` makes a safe copy, and a live-only replica regenerated from `CURRENT` is the only touchpoint for analytics and governance tools that need their own read identity (statcatlib RFC decision 30).
+A copy of a catalog is outside the embargo boundary. `CatalogAdmin.export(live_only=True)` makes a safe copy, and a live-only replica regenerated from `CURRENT` is the only touchpoint for analytics and governance tools that need their own read identity (statcatlib RFC decision 30). A live-only export writes a new chain with a new `catalog_id` (§6.1), and its change lists carry only transitions into or out of `live`: for an `embargoed` to `live` item it keeps the start of the live state and drops the end of the embargoed one. A full export copies `inventory/` and `history/` unchanged. A local `event.actor` is `<os user>@<hostname>`, which is personal data and stays in segments for good; an operator who needs another identity sets the actor explicitly.
 
 ### 10.2 Namespace
 
@@ -715,7 +927,7 @@ DuckLake's reads are byte-range GETs of files whose names it holds; it never lis
 
 ### 10.3 Backup invariant
 
-An Inventory version is restorable only while every data file its editions reference exists. Backups copy in dependency order: `data/`, edition directories, leaves, roots, then `CURRENT`; `pending/` is excluded. `verify-catalog` walks the newest root and checks every leaf, every `manifest_sha256` and every listed file's digest; its exit status is the monthly restore test. After a whole-catalog restore or failover, `catalog.json`'s `restore_epoch` is bumped (§6.1), and a restored Inventory version is never made current: its contents come back through `reinstate`.
+An Inventory version is restorable only while every data file its editions reference exists. Backups copy in dependency order: `data/`, edition directories, leaves, roots, `inventory/HISTORY`, `history/`, then `CURRENT`; `pending/` is excluded. A root missing at copy time was deleted after its segment and `HISTORY` were written, so the later copies hold its line. A restore only adds segments under `history/`, and never deletes or overwrites one (§6.9). `verify-catalog` walks the newest root and checks every leaf, every `manifest_sha256` and every listed file's digest, and on a catalog with history fields the chain, segments and `HISTORY` (§6.9); its exit status is the monthly restore test. After a whole-catalog restore or failover, `catalog.json`'s `restore_epoch` is bumped (§6.1), and a restored Inventory version is never made current: its contents come back through `reinstate`.
 
 ---
 
@@ -733,7 +945,7 @@ An Inventory version is restorable only while every data file its editions refer
 ### 11.2 Upload and release
 
 1. **Upload never writes `CURRENT` or `inventory/`.** It copies data files with a digest the store keeps (`Content-MD5` on Azure, a full-object CRC32C on S3), then the edition directory with its manifest last, and verifies every file the manifest lists. Then it writes `pending/<product_id>/<edition_id>.json` with the `edition_id` and `release_at`, put-if-absent.
-2. **`pending/` is an inbox, not an authority.** The release job folds pending registrations into an Inventory version as `embargoed` entries, then deletes them; from then on the Inventory is the only authority. Two pending editions of one product built on the same live edition are both refused and reported. A pending entry whose `edition_id` (a UUIDv7, so it carries a time) is older than the tombstone window is refused, so a `pending/` file restored from an old backup cannot resurrect withdrawn data.
+2. **`pending/` is an inbox, not an authority.** The release job folds pending registrations into an Inventory version as `embargoed` entries, with `event.kind: seal`; from then on the Inventory is the only authority. The fold skips a registration whose edition the Inventory already records, in a leaf or in `retired`, so a rerun, or a crash after the Inventory write, writes nothing new. The release job keeps read-only access to `pending/`, and the GC job deletes folded registrations after the retention window (§11.4). Two pending editions of one product built on the same live edition are both refused and reported. A pending entry whose `edition_id` (a UUIDv7, so it carries a time) is older than the tombstone window is refused, so a `pending/` file restored from an old backup cannot resurrect withdrawn data.
 3. **Pre-materialisation.** A job running the **pods' image**, so render versions match, opens each embargoed edition from its own files through `EmbargoReader`, computes the release set (full-table downloads per language, the slices the front end requests on load) and writes it to `results/` under the new keys. It runs in a job, never in a serving pod.
 4. **Release.** At release time the release job writes one Inventory version moving every due `embargoed` entry to `live` and the replaced ones to `superseded`, structure editions first by invariant 8, with `event.kind: release`. Data products that share a changed full artefact with no structure home release in the same version (§6.5 item 4). A released structure edition that edits a full artefact at an unchanged URN makes the data editions holding the old copy stale (§6.5 item 4): the live ones stay live, and the embargoed ones are refused at release until their products are republished. Only the release job writes Inventory versions on the server, once per batch, under `concurrencyPolicy: Forbid`. A batched seal on a laptop likewise records many products in one version.
 
@@ -753,7 +965,7 @@ A release interrupted before step 4 leaves every entry `embargoed`: nothing new 
 
 ### 11.4 Garbage collection
 
-The GC job reads the Inventory chain back through the retention window and deletes: edition directories retired longer than the window; files under `products/<product_id>/data/` listed in no manifest of any edition recorded or tombstoned within the window; `results/` keys reachable from no live entry's fingerprints, after a grace period. GC reads manifests only, never an edition's DuckDB files. The prune job never retires a structure edition that a live or embargoed data edition's `partial_of` cites, so a stale data edition keeps the edition its partials were cut from (§6.5 item 4). GC is the only principal that deletes under `products/`, and it refuses to start if the retention inequalities of §11.6 fail. It has a dry run and a deletion log, and alerts on a deviation from the dry run's forecast.
+The GC job reads the Inventory chain back through the retention window and deletes: edition directories retired longer than the window; files under `products/<product_id>/data/` listed in no manifest of any edition recorded or tombstoned within the window; `results/` keys reachable from no live entry's fingerprints, after a grace period. GC also deletes each `pending/` registration whose edition the Inventory records, once it is older than the retention window (§11.2). On an opted-in catalog the walk stops at `HISTORY.expired_through`, and GC fails closed on a missing root above it; GC never writes or deletes under `inventory/` or `history/` (§6.9). GC reads manifests only, never an edition's DuckDB files. The prune job never retires a structure edition that a live or embargoed data edition's `partial_of` cites, so a stale data edition keeps the edition its partials were cut from (§6.5 item 4). GC is the only principal that deletes under `products/`, and it refuses to start if the retention inequalities of §11.6 fail. It has a dry run and a deletion log, and alerts on a deviation from the dry run's forecast.
 
 ### 11.5 Copy rule
 
@@ -766,12 +978,15 @@ sdmxlib holds no blob client, so a pod pulls from object storage with the deploy
 One configuration states the retention windows and checks their order:
 
 - backup retention ≤ the `data/` GC window ≤ the tombstone window (§10.3);
-- the longest pod poll interval plus fetch time < Inventory version retention;
-- objects reachable from the newest K roots are never deleted.
+- the Inventory version retention window W ≥ the `data/` GC window plus one day, both measured from the superseding root's `created_at` in storage time. Backup retention is at most the GC window, so W covers backups too;
+- the longest pod poll interval plus fetch time < W;
+- objects reachable from the newest K roots are never deleted, with K ≥ 2 and 10 by default (H17). K keeps the fallback walk's reach when `CURRENT` and the head both go bad: at 3 to 10 versions a day, 10 versions is 1 to 3 days.
+
+Object lock on `history/` (Azure immutable blob storage, S3 Object Lock) is recommended for servers: it makes deleting or overwriting a segment impossible for every identity, the release job's included. Local catalogs have no equivalent, so it stays optional.
 
 Old-schema live entries stay until the rollback window for the pod image closes (§9.2 step 5).
 
-Alerts, each with a runbook: embargoed editions past `release_at` (with `release_due`'s persisted refusal reasons and a manual release command that takes a reason); sealed-but-unrecorded editions on a server (an owner, and a discard-or-reinstate decision); `CURRENT` behind the newest root (`advance-current`); GC deletions off the dry-run forecast; storage 503s; the release job missed or failed; a root that fails validation; pod staleness over a threshold; old `pending/` entries; a failed access precondition; backup age; replication lag; stale unsealed editions on build nodes.
+Alerts, each with a runbook: embargoed editions past `release_at` (with `release_due`'s persisted refusal reasons and a manual release command that takes a reason); sealed-but-unrecorded editions on a server (an owner, and a discard-or-reinstate decision); `CURRENT` behind the newest root (`advance-current`); GC deletions off the dry-run forecast; storage 503s; the release job missed or failed; a root that fails validation; pod staleness over a threshold, which fires well inside W, since a pod stuck on one root for W loses its uncached leaves; an expiry run skipped by a gate, stopped by a lease renewal or the 30-minute cap, or reporting an orphan segment or a kept root (§6.9); old `pending/` entries; a failed access precondition; backup age; replication lag; stale unsealed editions on build nodes.
 
 ---
 
@@ -835,6 +1050,9 @@ Each data product's editions carry per-language LanceDB tables over its own data
 50. A whole-catalog restore leaves `CURRENT` below the seq every pod holds → `restore_epoch` resets readers' floor. §6.1, §6.6.
 51. A restored `pending/` file republishes withdrawn data → `pending/` excluded from backups; old edition ids refused; tombstones outlive backups. §11.2, §11.6.
 52. Any principal with Data Reader on the container reads embargoed bytes → the account or container is the boundary; the reader-principal precondition. §10.1.
+53. A version's record and its root disagree after a crash or a lost race → the change list lives in the root, the commit point, and a loser recomputes it. §6.2, §6.6.
+54. Expiry deletes a leaf a new root names → the catalog lock; `If-Match` leaf deletes and unconditional leaf Puts on Azure. §6.9.
+55. A stale writer recreates an expired `seq` → a base at or below `expired_through` is refused after the lock; expiry keeps a root that matches no segment line. §6.6, §6.9.
 
 ---
 

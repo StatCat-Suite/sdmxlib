@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/SegmentHeader",
+  "$defs": {
+    "SegmentHeader": {
+      "title": "SegmentHeader",
+      "description": "The first line of ``history/<restore_epoch>/<first>-<last>-<uuid7>.jsonl`` (spec §6.9).\n\nAttributes:\n    format_version: ``1.0``.\n    catalog_id: ``catalog.json``'s.\n    kind: ``expiry`` or ``restore``.\n    restore_epoch: The epoch of the roots it records.\n    first: The lowest ``seq`` in ``roots``.\n    last: The highest ``seq`` in ``roots``.\n    previous_segment: ``HISTORY.newest_segment`` when it was written, or\n        None for the catalog's first segment.\n    previous_segment_sha256: The SHA-256 of that segment's bytes.\n    expired_at: When it was written, in storage time.\n    actor: The writer's identity.\n    roots: The ``seq`` of each root the run deletes, ascending: the plan.\n    leaves: Each leaf the run plans to delete; empty in a restore segment.\n    unread: Each root a restore deletes and could not read; empty in an\n        expiry segment.",
+      "type": "object",
+      "properties": {
+        "format_version": {
+          "type": "string",
+          "pattern": "^1\\.[0-9]+$"
+        },
+        "catalog_id": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "expiry",
+            "restore"
+          ]
+        },
+        "restore_epoch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "first": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "last": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "previous_segment": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^history/[0-9]+/[0-9]{12}-[0-9]{12}-[0-9a-f-]{36}\\.jsonl$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "previous_segment_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expired_at": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "roots": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "leaves": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "uniqueItems": true
+        },
+        "unread": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "format_version",
+        "catalog_id",
+        "kind",
+        "restore_epoch",
+        "first",
+        "last",
+        "previous_segment",
+        "previous_segment_sha256",
+        "expired_at",
+        "actor",
+        "roots",
+        "leaves",
+        "unread"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "expiry"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "unread": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "restore"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "leaves": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "previous_segment": {
+                "type": "null"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "previous_segment_sha256": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "previous_segment_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

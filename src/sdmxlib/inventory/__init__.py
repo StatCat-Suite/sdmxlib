@@ -126,6 +126,18 @@ __all__ = [
 ]
 
 
-def schema(document: Literal["catalog", "current", "root", "leaf"]) -> bytes:
-    """The shipped JSON Schema for one Inventory document (``schemas/<document>.schema.json``)."""
+def schema(
+    document: Literal[
+        "catalog", "current", "root", "leaf", "catalog-2.0", "root-1.2", "history", "segment-header", "segment-line"
+    ],
+) -> bytes:
+    """The shipped JSON Schema for one Inventory document (``schemas/<document>.schema.json``).
+
+    ``catalog``, ``current``, ``root`` and ``leaf`` are generated from the
+    models. ``catalog-2.0`` (an opted-in ``catalog.json``), ``root-1.2`` (a
+    root with the history fields), ``history`` (``inventory/HISTORY``),
+    ``segment-header`` and ``segment-line`` (a history segment's lines) state
+    the spec's §6.1, §6.2, §6.3 and §6.9 ahead of the models that will read
+    them.
+    """
     return resources.files(__package__).joinpath("schemas", f"{document}.schema.json").read_bytes()
