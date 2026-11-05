@@ -116,6 +116,10 @@ The format itself, field by field, is [the edition format](edition.md).
 
 ---
 
+::: sdmxlib.edition.decode_manifest
+
+---
+
 ::: sdmxlib.edition.manifest_schema
 
 ---

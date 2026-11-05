@@ -592,7 +592,7 @@ not only the first:
 | `manifest` | the manifest's `schema_version`, `duckdb_storage_version` and `ducklake_spec_version` pass the reader's checks, so the files can be opened (§4) | yes | yes | yes | the run stops |
 | `lake` | every file the current snapshot references exists at the size DuckLake recorded and none is a delete file, and every file the catalog references from any snapshot it keeps is in the manifest; runs only when `tables.ducklake` exists | yes | yes | no | continues |
 | `bindings` | the store's bindings are the manifest's, and each table holds the count the manifest gives | yes | yes | no | continues |
-| `references` | every reference in the store names an artefact or an item in the store; for a structure product given `structures=`, or a full artefact or an item of one in those editions | yes | yes | no | continues |
+| `references` | every reference in the store names an artefact or an item in the store; for a structure product given `structures=`, or a full artefact or an item of one in those editions | yes | unless `references=False` | no | continues |
 | `fingerprints` | every artefact, binding and content fingerprint, recomputed, is the manifest's (§9) | unless `fingerprints=False` | with `fingerprints=True` | no | continues |
 | `availability` | every coded column holds codes of its enumeration or `NULL`, and the stored availability is the data's: each dimension's values and the observation count, rescanned (§4) | yes | no | no | continues |
 | `partials` | every partial whose entry records `partial_of` has a full artefact at its URN with that fingerprint in one of the `structures=` editions (one edition, or a sequence of structure products), and the partial's items, each under the same parent, are among the full artefact's; a codelist's, concept scheme's and category scheme's items are compared, another scheme's fingerprint alone | with `structures=` | with `structures=` | no | continues |
@@ -616,7 +616,7 @@ or one another process sealed, with the default
 
 ### The receive stamp
 
-`check_on_open(path, stamps=dir, remote=None, engine=None, lookup=None, extensions=None)` is what a
+`check_on_open(path, stamps=dir, remote=None, engine=None, lookup=None, references=True, extensions=None)` is what a
 server runs when it opens an edition. It runs `receive` once per edition and
 manifest, and `open` after that:
 
@@ -631,6 +631,14 @@ manifest, and `open` after that:
 that machine checked. A `product_id` that cannot name one directory below
 `stamps` is a `manifest` finding, and the check is not stamped. The returned
 report's `at` says which profile ran.
+
+`references=False` runs `receive` without the `references` check, so the stamp's
+checks omit it. A stamp satisfies a full check only when its checks list
+`references`. A call with `references=False` accepts either stamp. A full call
+that meets a deferred stamp runs `receive`, and replaces the stamp when that
+finds nothing; when it finds something, the deferred stamp stays. A stamp
+written before this argument existed lists `references`, so it satisfies a full
+check.
 
 The `references` check reads the stored references in SQL and loads no
 artefact. They are the rows of `sdmx.artefact_ref` and every reference column
@@ -656,6 +664,15 @@ none holds is a finding whose detail names the editions looked in. A data
 product vendors its closure, so its references resolve in its own edition
 alone, with or without `structures=`
 ([GH-351](https://github.com/StatCat-Suite/sdmxlib/issues/351)).
+
+`check_edition(path, at="receive", references=False)` skips the check, for a
+caller that cannot name those other editions, and `Report.checked` omits
+`references`. A later check has to cover them: statcatlib's upload defers it for
+an edition with no bindings, and its fold runs it with `structures=`. The
+argument raises `ValueError` at `publish`, since a seal must check references,
+and at `open`, which never runs the check. An edition with bindings is allowed.
+`structures=` given with `references=False` still runs the `partials` check
+([GH-371](https://github.com/StatCat-Suite/sdmxlib/issues/371)).
 
 A package that owns part of an edition MAY pass its own checks as
 `extensions={name: check}`. Each runs last at every profile, is called as

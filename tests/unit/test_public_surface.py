@@ -387,3 +387,11 @@ def test_the_types_an_inventory_writer_annotates_with_are_public(package: str, n
     assert name in public.__all__
     assert getattr(public, name) is getattr(importlib.import_module(private), name)
     assert f"{package}.{name}" in _RENDERED, "listed in docs/api.md"
+
+
+def test_decode_manifest_is_public_from_the_edition_package() -> None:
+    """statcatlib decodes manifest bytes it read from object storage (GH-371)."""
+    public = importlib.import_module("sdmxlib.edition")
+    assert "decode_manifest" in public.__all__
+    assert public.decode_manifest is importlib.import_module("sdmxlib.storage._manifest").decode_manifest
+    assert "sdmxlib.edition.decode_manifest" in _RENDERED, "listed in docs/api.md"

@@ -11,6 +11,7 @@ and manifest, and ``open`` after. Hashing is counted through
 import base64
 import hashlib
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -21,12 +22,14 @@ from sdmxlib.edition import (
     EditionFile,
     Finding,
     Manifest,
+    ManifestError,
     Producer,
     Profile,
     RemoteFile,
     _check,
     check_edition,
     check_on_open,
+    decode_manifest,
     read_manifest,
     seal,
 )
@@ -43,6 +46,13 @@ def _published(root: Path, rows: int = 200_000) -> Path:
     publication = make_bundle(root, rows)
     seal(publication, product_id="b", producer=_PRODUCER)
     return publication
+
+
+def _unresolved(root: Path) -> Path:
+    """An edition whose DSD names a concept scheme the store does not hold."""
+    edition = make_bundle(root, 10, closed=False)
+    seal(edition, product_id="b", producer=_PRODUCER)
+    return edition
 
 
 def _parquet(root: Path) -> Path:
@@ -274,3 +284,103 @@ def test_a_bundle_id_that_cannot_name_a_directory_is_not_stamped(tmp_path: Path,
     assert report.at == "receive"
     assert [f.check for f in report.findings] == ["manifest"]
     assert not stamps.exists()
+
+
+# ── references=False ────────────────────────────────────────────────────
+
+_DEFERRED = tuple(name for name in _RECEIVE if name != "references")
+
+
+def test_receive_can_defer_the_references_check(tmp_path: Path) -> None:
+    root = _unresolved(tmp_path / "b")
+    deferred = check_edition(root, at="receive", references=False)
+    assert (deferred.checked, deferred.findings) == (_DEFERRED, ())
+    full = check_edition(root, at="receive")
+    assert full.checked == _RECEIVE
+    assert [f.check for f in full.findings] == ["references", "references"], "GEO and OBS_VALUE"
+
+
+@pytest.mark.parametrize("at", ["publish", "open"])
+def test_only_receive_can_defer_the_references_check(tmp_path: Path, at: Profile) -> None:
+    root = _published(tmp_path / "b", rows=10)
+    with pytest.raises(ValueError, match="references=False"):
+        check_edition(root, at=at, references=False)
+
+
+def test_structures_still_runs_the_partials_check_when_references_are_deferred(tmp_path: Path) -> None:
+    root = _unresolved(tmp_path / "b")
+    report = check_edition(root, at="receive", references=False, structures=_published(tmp_path / "s", rows=10))
+    assert report.checked == (*_DEFERRED, "partials")
+    assert report.findings == ()
+
+
+def test_a_deferred_stamp_satisfies_a_deferring_call(tmp_path: Path) -> None:
+    root = _unresolved(tmp_path / "b")
+    stamps = tmp_path / "verified"
+    first = check_on_open(root, stamps=stamps, references=False)
+    assert (first.at, first.ok) == ("receive", True)
+    assert json.loads((stamps / "b" / root.name).read_text())["checked"] == list(_DEFERRED)
+    again = check_on_open(root, stamps=stamps, references=False)
+    assert (again.at, again.ok) == ("open", True)
+
+
+def test_a_full_call_after_a_deferred_stamp_receives_and_reports_the_finding(tmp_path: Path) -> None:
+    root = _unresolved(tmp_path / "b")
+    stamps = tmp_path / "verified"
+    check_on_open(root, stamps=stamps, references=False)
+    report = check_on_open(root, stamps=stamps)
+    assert report.at == "receive"
+    assert [f.check for f in report.findings] == ["references", "references"]
+    assert json.loads((stamps / "b" / root.name).read_text())["checked"] == list(_DEFERRED), (
+        "a failed receive leaves the deferred stamp"
+    )
+
+
+def test_a_clean_full_call_replaces_a_deferred_stamp(tmp_path: Path) -> None:
+    root = _published(tmp_path / "b", rows=10)
+    stamps = tmp_path / "verified"
+    check_on_open(root, stamps=stamps, references=False)
+    assert check_on_open(root, stamps=stamps).at == "receive"
+    assert json.loads((stamps / "b" / root.name).read_text())["checked"] == list(_RECEIVE)
+    assert check_on_open(root, stamps=stamps).at == "open"
+
+
+def test_a_full_stamp_satisfies_a_deferring_call(tmp_path: Path) -> None:
+    root = _published(tmp_path / "b", rows=10)
+    stamps = tmp_path / "verified"
+    assert check_on_open(root, stamps=stamps).at == "receive"
+    written = (stamps / "b" / root.name).read_text()
+    assert check_on_open(root, stamps=stamps, references=False).at == "open"
+    assert (stamps / "b" / root.name).read_text() == written
+
+
+def test_a_stamp_written_before_the_argument_satisfies_a_full_check(tmp_path: Path) -> None:
+    """The literal record the previous release's `_write_stamp` wrote, so a change to the writer cannot move it."""
+    root = _published(tmp_path / "b", rows=10)
+    stamp = tmp_path / "verified" / "b" / root.name
+    stamp.parent.mkdir(parents=True)
+    stamp.write_text(
+        json.dumps(
+            {
+                "manifest_sha256": hashlib.sha256((root / MANIFEST_NAME).read_bytes()).hexdigest(),
+                "at": "receive",
+                "checked": ["manifest", "files", "lake", "bindings", "references", "tags"],
+                "verified_at": "2026-11-04T00:00:00+00:00",
+            }
+        )
+    )
+    assert check_on_open(root, stamps=tmp_path / "verified").at == "open"
+
+
+# ── decode_manifest ─────────────────────────────────────────────────────
+
+
+def test_decode_manifest_decodes_a_sealed_editions_bytes(tmp_path: Path) -> None:
+    root = _published(tmp_path / "b", rows=10)
+    assert decode_manifest((root / MANIFEST_NAME).read_bytes(), "blob://x") == read_manifest(root)
+
+
+@pytest.mark.parametrize("source", ["blob://c/manifest.json", Path("c/manifest.json")])
+def test_decode_manifest_names_its_source_on_malformed_bytes(source: str | Path) -> None:
+    with pytest.raises(ManifestError, match=re.escape(str(source))):
+        decode_manifest(b"not json", source)

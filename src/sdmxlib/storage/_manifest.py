@@ -468,8 +468,18 @@ def read_manifest_bytes(root: Path) -> bytes:
         raise ManifestError(msg) from exc
 
 
-def decode_manifest(raw: bytes, path: Path) -> Manifest:
-    """The manifest `raw` holds, read from `path`, which the errors name.
+def decode_manifest(raw: bytes, source: str | Path) -> Manifest:
+    """The manifest `raw` holds, for bytes read from somewhere other than a local edition directory.
+
+    `read_manifest` reads a local edition directory. This takes bytes a caller
+    already holds, such as those read from object storage.
+
+    Args:
+        raw: The bytes of the manifest.
+        source: Where the bytes came from, which the errors name.
+
+    Returns:
+        The manifest.
 
     Raises:
         ManifestError: If it is malformed, or its major format version is not
@@ -478,18 +488,18 @@ def decode_manifest(raw: bytes, path: Path) -> Manifest:
     try:
         found = msgspec.json.decode(raw, type=_FormatProbe).format_version
     except msgspec.MsgspecError as exc:
-        msg = f"{path} is not an edition manifest: {exc}"
+        msg = f"{source} is not an edition manifest: {exc}"
         raise ManifestError(msg) from exc
     if found is None:
         # A builder's own manifest from before this format existed. sdmxlib
         # owns the format, so it is refused rather than read around.
         msg = (
-            f"{path} has no format_version, so it is not an sdmxlib edition manifest (a builder's own "
+            f"{source} has no format_version, so it is not an sdmxlib edition manifest (a builder's own "
             f"format?). Seal a new edition with sdmxlib.edition.seal."
         )
         raise ManifestError(msg)
     if found.partition(".")[0] != FORMAT_VERSION.partition(".")[0]:
-        msg = f"{path} is manifest format {found}; this sdmxlib reads {FORMAT_VERSION.partition('.')[0]}.x"
+        msg = f"{source} is manifest format {found}; this sdmxlib reads {FORMAT_VERSION.partition('.')[0]}.x"
         if found.partition(".")[0] == "2":
             msg += (
                 ". Manifest 3.0 renamed the format's identities to the product, the edition and the "
@@ -499,5 +509,5 @@ def decode_manifest(raw: bytes, path: Path) -> Manifest:
     try:
         return msgspec.json.decode(raw, type=Manifest)
     except msgspec.MsgspecError as exc:
-        msg = f"{path} is not a valid format {found} manifest: {exc}"
+        msg = f"{source} is not a valid format {found} manifest: {exc}"
         raise ManifestError(msg) from exc

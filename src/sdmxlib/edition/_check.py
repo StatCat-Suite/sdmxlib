@@ -94,6 +94,7 @@ def check_edition(
     fingerprints: bool | None = None,
     expect: Manifest | str | Path | None = None,
     structures: str | Path | Sequence[str | Path] | None = None,
+    references: bool = True,
     extensions: Mapping[str, Check] | None = None,
 ) -> Report:
     """Check a sealed edition against its manifest and against itself, as profile `at` asks.
@@ -107,7 +108,7 @@ def check_edition(
     | remote: ``data/``'s entries in object storage, by size | no | with `remote` and no `lookup` | no |
     | lake: current files at their recorded size, no delete file, every referenced file listed | yes | yes | no |
     | bindings: the manifest's, each with the count it gives | yes | yes | no |
-    | references: every stored reference names something in the store (see `structures`) | yes | yes | no |
+    | references: every stored reference is in the store (see `structures`) | yes | unless `references` is False | no |
     | tags: every stored language tag is in the form `normalize_tag` gives | yes | yes | no |
     | fingerprints: recomputed, equal to the manifest's | unless `fingerprints` is False | if it is True | no |
     | availability: coded columns hold codes; stored availability is the data's | yes | no | no |
@@ -171,6 +172,13 @@ def check_edition(
             of one (sharded catalog spec §6.5 item 9). A data product
             vendors its closure, so its references resolve in the edition
             alone.
+        references: Whether to run the ``references`` check. False is for
+            ``receive`` only, for a caller that cannot name the other editions
+            a structure product's references resolve in, and leaves
+            ``references`` out of `Report.checked`. A later check has to cover
+            them. `structures` then still runs the ``partials`` check. An
+            edition with bindings is allowed, and its references go unchecked
+            too.
         extensions: More checks, by name, for parts of the edition other
             packages own (statcatlib's search index, say).
 
@@ -180,9 +188,12 @@ def check_edition(
     Raises:
         ValueError: If `lookup`, `remote` or `structures` is given at a
             profile that does not use it, `fingerprints` is True at ``open``,
-            or `structures` is an empty sequence.
+            `references` is False at ``publish`` or ``open``, or `structures`
+            is an empty sequence.
     """
-    _refuse_unused(at, lookup=lookup, fingerprints=fingerprints, remote=remote, structures=structures)
+    _refuse_unused(
+        at, lookup=lookup, fingerprints=fingerprints, remote=remote, structures=structures, references=references
+    )
     root = Path(path)
     checked: list[str] = ["manifest"]
     try:
@@ -220,6 +231,7 @@ def check_edition(
             sized_remotely=remote is not None and lookup is None,
             fingerprints=fingerprints,
             structures=_editions(structures),
+            references=references,
             extensions=extensions or {},
         )
         for name, step in steps:
@@ -251,6 +263,7 @@ def _refuse_unused(
     fingerprints: bool | None,
     remote: str | None,
     structures: str | Path | Sequence[str | Path] | None,
+    references: bool,
 ) -> None:
     """Raise for an argument the profile `at` does not use."""
     if structures is not None and not isinstance(structures, (str, Path)) and not structures:
@@ -268,6 +281,12 @@ def _refuse_unused(
     if fingerprints and at == "open":
         msg = "fingerprints=True recomputes them from the store; at='open' reads no store"
         raise ValueError(msg)
+    if not references and at != "receive":
+        msg = (
+            f"references=False defers the references check at receive; at={at!r} "
+            "does not use it, since a seal must check references and open never does"
+        )
+        raise ValueError(msg)
 
 
 def _steps(
@@ -279,6 +298,7 @@ def _steps(
     sized_remotely: bool,
     fingerprints: bool | None,
     structures: tuple[Path, ...] | None,
+    references: bool,
     extensions: Mapping[str, Check],
 ) -> list[tuple[str, Callable[[], Iterable[Finding]]]]:
     """The checks that read the store, by name, in the order profile `at` runs them."""
@@ -288,11 +308,10 @@ def _steps(
     if at != "open":
         if (root / "tables.ducklake").exists():
             steps.append(("lake", partial(_lake, root, manifest, reg)))
-        steps += [
-            ("bindings", partial(_bindings, manifest, reg)),
-            ("references", partial(_references, reg, None if manifest.bindings else structures)),
-            ("tags", partial(_tags, reg)),
-        ]
+        steps.append(("bindings", partial(_bindings, manifest, reg)))
+        if references:
+            steps.append(("references", partial(_references, reg, None if manifest.bindings else structures)))
+        steps.append(("tags", partial(_tags, reg)))
     if fingerprints or (fingerprints is None and at == "publish"):
         steps.append(("fingerprints", partial(_fingerprints, root, manifest, reg)))
     if at == "publish":
@@ -309,6 +328,7 @@ def check_on_open(
     remote: str | None = None,
     engine: EditionEngine | None = None,
     lookup: Lookup | None = None,
+    references: bool = True,
     extensions: Mapping[str, Check] | None = None,
 ) -> Report:
     """Check an edition as a server opens it: ``receive`` once per edition id and manifest, ``open`` after.
@@ -319,6 +339,12 @@ def check_on_open(
     runs, which hashes nothing. With none, or a stamp for another manifest
     under the same edition id, the ``receive`` profile runs first.
 
+    A stamp satisfies a full check only when its recorded checks list
+    ``references``. A call with ``references=False`` accepts either stamp. A
+    full call that meets a stamp from a deferred check runs ``receive``, and
+    replaces the stamp when that finds nothing. A stamp that a deferring call
+    wrote stays in place when that ``receive`` finds something.
+
     Args:
         path: The edition directory.
         stamps: The directory holding the stamps, outside every edition: local
@@ -326,25 +352,37 @@ def check_on_open(
         remote: As `check_edition`'s, for either profile.
         engine: As `check_edition`'s, for either profile.
         lookup: As `check_edition`'s, for the receive check.
+        references: As `check_edition`'s, for the receive check. The ``open``
+            profile never runs that check.
         extensions: As `check_edition`'s, for either profile.
 
     Returns:
         The report of the profile that ran; its ``at`` says which.
     """
     root = Path(path)
+    receive = partial(
+        check_edition,
+        root,
+        at="receive",
+        remote=remote,
+        engine=engine,
+        lookup=lookup,
+        references=references,
+        extensions=extensions,
+    )
     try:
         digest = hashlib.sha256((root / MANIFEST_NAME).read_bytes()).hexdigest()
         manifest = read_manifest(root)
     except OSError, ManifestError:
-        return check_edition(root, at="receive", remote=remote, engine=engine, lookup=lookup, extensions=extensions)
+        return receive()
     stamp = Path(stamps) / manifest.product_id / manifest.edition_id
     if not _names_a_file_under(stamp, Path(stamps)):
-        report = check_edition(root, at="receive", remote=remote, engine=engine, lookup=lookup, extensions=extensions)
+        report = receive()
         detail = f"product_id {manifest.product_id!r} cannot name a stamp directory, so the check is not stamped"
         return attrs.evolve(report, findings=(*report.findings, Finding("manifest", MANIFEST_NAME, detail)))
-    if _stamped(stamp, digest):
+    if _stamped(stamp, digest, references=references):
         return check_edition(root, at="open", remote=remote, engine=engine, extensions=extensions)
-    report = check_edition(root, at="receive", remote=remote, engine=engine, lookup=lookup, extensions=extensions)
+    report = receive()
     if report.ok:
         _write_stamp(stamp, digest, report)
     return report
@@ -359,13 +397,21 @@ def _names_a_file_under(stamp: Path, stamps: Path) -> bool:
     return len(parts) == 2 and all(part not in {".", ".."} for part in parts)
 
 
-def _stamped(stamp: Path, digest: str) -> bool:
-    """Whether `stamp` records a clean receive check of the manifest with sha256 `digest`."""
+def _stamped(stamp: Path, digest: str, *, references: bool) -> bool:
+    """Whether `stamp` records a clean receive check of the manifest with sha256 `digest`.
+
+    When `references` is true, the recorded check must also list ``references``.
+    """
     try:
         recorded = json.loads(stamp.read_text())
     except OSError, ValueError:
         return False
-    return isinstance(recorded, dict) and recorded.get("manifest_sha256") == digest
+    if not isinstance(recorded, dict) or recorded.get("manifest_sha256") != digest:
+        return False
+    if not references:
+        return True
+    checked = recorded.get("checked")
+    return isinstance(checked, list) and "references" in checked
 
 
 def _write_stamp(stamp: Path, digest: str, report: Report) -> None:
