@@ -555,7 +555,7 @@ The release job reads each incoming edition's manifest to verify `manifest_sha25
 
 - **Locally:** write a temporary file, fsync it, then `link()` it into place, or rename it with `renameat2(RENAME_NOREPLACE)`, `renamex_np(RENAME_EXCL)` or `MoveFileEx` without the replace flag; then fsync the directory.
 - **On blob storage:** a single-shot `Put Blob` (or `Put Block List`) with `If-None-Match: *`, never DFS create plus append. statcatlib uses `obstore` (`put(..., mode="create")`). Untested on OneLake's Blob API.
-- Leaves are written first, by the same rule; a leaf that exists already has the same bytes, since its name is its hash. On Azure Blob Storage a writer with stage-2 support instead writes each leaf of its version with an unconditional Put of the same bytes, so a leaf that expiry deletes concurrently survives (§6.9, The catalog lock). Roots stay create-only.
+- Leaves are written first. A local writer creates each one by the same rule; a leaf that exists already has the same bytes, since its name is its hash. A blob writer, on every blob store, writes every leaf of its version with an unconditional single-shot Put of the same bytes, so a leaf that expiry deletes concurrently survives on Azure (§6.9, The catalog lock). Roots stay create-only.
 
 The write order is leaves, then the root, then `CURRENT`. The root is the commit point and carries its version's change list, so a version never exists without its record.
 
@@ -1127,7 +1127,7 @@ Order follows risk removed per unit of work. Synthetic editions and `profile_edi
 
 **M7. sdmxlib: shared engine.** Per-cursor `search_path`; role-to-alias map; edition-keyed caches. Built in GH-133, with the 200-edition test in `tests/unit/test_edition_engine.py`; the edition-keyed caches stay per registry (§7.2, GH-160).
 
-**M8. The Inventory.** sdmxlib: the schemas, validation, transition rules, `LiveInventory`, `FullInventory` and the reader over `fetch` (GH-251), and a conformance suite run against statcatlib's writer and a Delta-backed prototype (GH-252). statcatlib: the writer, the narrow repair, `CatalogAdmin`. Test: each invariant and refusal by name; a one-product change writes one leaf and one root; a reader holding seq 5 never accepts 4 and finds 6 by probing; two concurrent seals on different products both land; a writer killed between create and the last byte leaves the previous head readable and writable.
+**M8. The Inventory.** sdmxlib: the schemas, validation, transition rules, `LiveInventory`, `FullInventory` and the reader over `fetch` (GH-251), and a conformance suite run against statcatlib's writer and a Delta-backed prototype (GH-252). statcatlib: the writer, the narrow repair, `CatalogAdmin`. Test: each invariant and refusal by name; a one-product change writes one new leaf and one root; a reader holding seq 5 never accepts 4 and finds 6 by probing; two concurrent seals on different products both land; a writer killed between create and the last byte leaves the previous head readable and writable.
 
 **M9. statcatlib: upload, release, GC.** `pending/` and the release job; `Content-MD5`; the pre-materialisation job on the pods' image; structures first; GC over the Inventory chain with the retention check. Test: a 200-table synthetic release becomes visible in one Inventory version with zero failed requests; GC deletes exactly the unreferenced files and nothing inside the retention window; a request for an embargoed dataflow returns 404 from every pod; a data edition whose partial gained a code is refused `live` until its structure edition is live.
 
