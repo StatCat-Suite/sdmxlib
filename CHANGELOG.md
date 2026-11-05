@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.86.0] - 2026-11-05
+
+### Bug Fixes
+
+- **release**: Stop a SIGPIPE from passing a breaking release in release-check-upgrading (GH-369)
+
+### Documentation
+
+- **spec**: Write every blob leaf with an unconditional Put (StatCat-Suite/statcatlib#98)
+- **plan**: Restate Phase 4 from the 2026-11-04 scope (StatCat-Suite/statcatlib#98)
+- **spec**: Limit the unconditional blob Put to leaves a version changes (StatCat-Suite/statcatlib#98)
+- **design**: Move the full corpus to Phase 6 and record the 2026-11-04 Phase 4 decisions (StatCat-Suite/statcatlib#98)
+- **design**: Remove the correct rule from Phase 4 and state the actor, clock and upload rules
+- **design**: Name the receive profile for the fold's reference check
+- **plan**: Add verify_remote to Phase 4's upload check
+
+### Features
+
+- **edition**: Add references=False to check_edition and check_on_open; export decode_manifest (GH-371)
+
 ## [0.85.0] - 2026-11-04
 
 ### Breaking Changes
