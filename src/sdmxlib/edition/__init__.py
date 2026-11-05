@@ -6,7 +6,8 @@ edition id, and the ``data/`` every edition shares.
 minting its edition id; `seal` seals it: a file list with a sha256 per file,
 observation counts per binding, and the ``edition_id``, the value a cache or
 an ETag keys on. ``LocalRegistry.edition(edition_dir)`` opens it read-only.
-`read_manifest` reads a manifest back, refusing a format it cannot read;
+`read_manifest` reads a manifest back, refusing a format it cannot read, and
+`decode_manifest` does the same for bytes a caller already holds;
 `check_edition` checks an edition against it and against itself;
 `copy_edition` copies one elsewhere, manifest last, and `edition_files` lists
 what such a copy needs for another tool; `verify_remote` checks the
@@ -88,6 +89,7 @@ from sdmxlib.storage._manifest import (
     SIGNATURE_NAME,
     StoreFormatError,
     Tier,
+    decode_manifest,
     read_manifest,
 )
 
@@ -133,6 +135,7 @@ __all__ = [
     "content_crc32c",
     "content_md5",
     "copy_edition",
+    "decode_manifest",
     "discard",
     "edition_files",
     "effective_token",

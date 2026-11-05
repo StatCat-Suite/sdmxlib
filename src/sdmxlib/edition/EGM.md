@@ -45,12 +45,15 @@ seals through `seal(extensions=...)`.
   `references` check also accepts a reference one of the `structures=`
   editions holds as a full artefact or an item of one
   (`storage._references.held_targets`; spec §6.5 item 9, GH-351). A data
-  product's references resolve in its own edition alone.
+  product's references resolve in its own edition alone. `references=False`
+  skips the `references` check at `receive` and leaves it out of
+  `Report.checked`, and raises `ValueError` at `publish` and `open` (GH-371).
+  `structures=` then still runs the `partials` check.
 - `check_on_open` (`_check.py`): runs one profile per call. Without a stamp
   for this `(product_id, edition id, manifest sha256)` it runs `receive` and writes
   the stamp when the report is clean; with one it runs `open`. An unreadable
   manifest, or a `product_id` that cannot name a stamp path, gets a `receive`
-  check and no stamp.
+  check and no stamp. `references=False` goes to its `receive` calls only.
 - `copy_edition` and `edition_files` (`_copy.py`): copy the files of the chosen
   tiers and verify each one, and list the paths such a copy needs.
 - `verify_remote`, `RemoteFile`, `content_md5` and `content_crc32c`
@@ -90,6 +93,7 @@ seals through `seal(extensions=...)`.
   its availability and for coded-column values outside their enumeration.
   `seal` and `check_edition(at="publish")` both call it.
 - Manifest types, re-exported from `storage._manifest`: `read_manifest`,
+  `decode_manifest` (the same read from bytes, naming `source` in its errors),
   `Manifest`, `Producer`, `Provenance`, `EditionFile`, `ArtefactEntry`,
   `BindingCount`, `Tier`, `ManifestError`, `StoreFormatError`, and the
   constants `DATA_PATH`, `MANIFEST_NAME`, `SIGNATURE_NAME`, `FORMAT_VERSION`
@@ -130,6 +134,10 @@ seals through `seal(extensions=...)`.
   exists.
 - `check_on_open` writes a stamp only after a clean `receive` check, and only
   to a path made of exactly two plain components under the stamps directory.
+- A stamp satisfies a full `check_on_open` only when its `checked` lists
+  `references`. A `references=False` call accepts either stamp. A full call
+  that meets a deferred stamp runs `receive`, and replaces the stamp when that
+  finds nothing.
 - `settle_lake` never deletes files from `data/`.
 - `check_edition`'s `tags` check, at `publish` and `receive`, reports every
   stored language tag `normalize_tag` would change or refuse: a store built

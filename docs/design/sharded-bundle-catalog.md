@@ -269,12 +269,14 @@ check_edition(path, at: Literal["publish", "receive", "open"], ...)
 | remote: `data/` in the object store, size and a digest the store keeps | no | with `lookup=` (or sizes with `remote=`) | no |
 | lake: every file the current snapshot references exists at the recorded size | yes | yes | no |
 | bindings counts | yes | yes | no |
-| references (SQL, §4.8) | yes | yes | no |
+| references (SQL, §4.8) | yes | unless `references=False` | no |
 | fingerprint recompute | yes | optional | no |
 | availability: coded columns hold codes, stored availability is the data's | yes | no | no |
 | tags: every stored language tag is in normalised form | yes | yes | no |
 | partials: each `partial_of` equals the full artefact's fingerprint, and the partial's codes and parents are in it | with `structures=` | with `structures=` | refused |
 | extensions (statcat) | yes | yes | section only |
+
+`references=False` raises `ValueError` at `publish` and `open`, and at `receive` omits `references` from `Report.checked`. It is for a caller that cannot name the other editions a structure product's references resolve in (§6.5 item 9); the fold runs the check with `structures=`. `check_on_open(references=False)` passes it to its `receive` calls.
 
 Orphans are defined over the union of manifests and belong to GC (§11.4).
 
@@ -283,6 +285,8 @@ Orphans are defined over the union of manifests and belong to GC (§11.4).
 After a successful receive-time check a reader MAY write `<pod-local>/verified/<product_id>/<edition_id>` recording the manifest SHA-256. A later open of the same edition with the same manifest SHA-256 runs the `open` profile; with no stamp, or a stamp for another manifest digest, the reader runs the `receive` profile first.
 
 Built in GH-130 as `check_on_open(path, stamps=dir)`: the stamp is `<stamps>/<product_id>/<edition_id>`, JSON holding the manifest sha256, the checks that ran and the time, written by a rename once `receive` finds nothing. At `receive`, `data/` is checked by local size, or with `lookup=` by size and a digest the store keeps through `verify_remote`; the lake and the bindings still read the data where the registry reads it. `check_edition(at="receive", fingerprints=True)` opts into the recompute; `check_on_open` takes no `fingerprints=`, so a server's receive check never recomputes. Extensions take the profile as a fourth argument.
+
+`check_on_open(references=False)` defers the references check, so its stamp's checks omit `references` (GH-371). A stamp satisfies a full check only when its checks list `references`. A deferring call accepts either stamp. A full call that meets a deferred stamp runs `receive` and replaces the stamp when that finds nothing. A stamp written before this argument existed lists `references`, so it stays valid.
 
 ### 4.8 `references` as SQL
 
