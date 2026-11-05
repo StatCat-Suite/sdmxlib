@@ -360,7 +360,7 @@ Starts once Phase 4 is done; Q9 and Q10 are decided (2026-11-03). statcatlib's d
 *   **Repair and alerts.** The server sweep of sealed but unrecorded editions reports each for an owner's discard-or-reinstate decision (specification §6.7, §11.6). `advance-current` brings `CURRENT` up to the newest root. The jobs log each §11.6 alert they detect as a structured event with a fixed name; Phase 8 wires them to alerting.
 *   **Gating tests**
     *   A 200-table synthetic release becomes visible in one Inventory version.
-    *   The fold runs the publish check, with `structures=`, on an edition with no bindings before it records it, since upload and `view` defer those references.
+    *   The fold runs `check_edition(at="receive", remote=, structures=)` on an edition with no bindings before it records it, since upload and `view` defer those references.
     *   A release interrupted before that version leaves every entry `embargoed`, and a re-run releases them.
     *   The fold refuses two pending editions on the same live edition and a pending entry older than the tombstone window.
     *   A stale automatic release after embargo was turned on is refused.
