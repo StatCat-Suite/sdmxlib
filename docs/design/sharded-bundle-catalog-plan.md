@@ -91,7 +91,7 @@ Each question names the phase that must answer it. A decision is recorded in a P
 
 Specification §4.0 sets the rule (a product groups dataflows released together with one lifecycle) and the CODR default of one product per table. Three groupings meet the rule.
 
-The owner chose option C on 2026-11-03: one product per table by default, and a producer may group tables that always release together into one product. The synthetic corpus for Phases 5 to 9 has about 7,000 tables: about 6,500 one-table products and about 50 products of 5 to 20 tables each. StatCat-Suite/statcatlib#124 builds the corpus generator and the no-home measurement, which uses one-table products up to 7,000. The table below keeps the options weighed:
+The owner chose option C on 2026-11-03: one product per table by default, and a producer may group tables that always release together into one product. The synthetic corpus for Phases 6 to 9 has about 7,000 tables: about 6,500 one-table products and about 50 products of 5 to 20 tables each. StatCat-Suite/statcatlib#124 builds the corpus generator and the no-home measurement, which uses one-table products up to 7,000. The table below keeps the options weighed:
 
 | option | products in the synthetic corpus | effect |
 |---|---|---|
@@ -102,12 +102,12 @@ The owner chose option C on 2026-11-03: one product per table by default, and a 
 What each phase needs from the answer:
 
 *   **Phase 3** needs none. Its CODR generator builds one table per product by default, and a test with two tables in one product covers B.
-*   **Phase 4** builds the corpus in the shape above. Its 7,000-leaf read is timed at 7,000 one-table products, the most leaves any grouping gives.
+*   **Phase 4** generates Inventory documents only. Its 7,000-leaf read is timed at 7,000 one-table products, the most leaves any grouping gives.
 *   **Phase 5** tests a release of 200 tables that mixes both shapes: one-table products, and grouped products where each per-product refusal of `release_due` holds back several tables.
-*   **Phase 6** routes, pins, evicts and checks readiness per product, so the attach unit, the LRU's `max_attached` and Goal 1's first-attach target are measured on both one-table products and products of 5 to 20 tables.
+*   **Phase 6** builds the full corpus in the shape above. It routes, pins, evicts and checks readiness per product, so the attach unit, the LRU's `max_attached` and Goal 1's first-attach target are measured on both one-table products and products of 5 to 20 tables.
 *   **Phase 8** measures the remap bound over product keys.
 
-The corpus is the gating fixture of Phases 5 to 9. Its generator takes the mix of product sizes as a parameter.
+The full corpus is the gating fixture of Phases 6 to 9; Phase 5 uses its own 200-table synthetic release. The generator takes the mix of product sizes as a parameter.
 
 ## Critical User Journeys (CUJs)
 
@@ -165,7 +165,7 @@ Phases, in build order:
 | 1 | Closure builder, partials, `partial_of` | sdmxlib | M6 (sdmxlib part) | 0 | done, sdmxlib 0.76.0 |
 | 2a | Products, editions, the Inventory on local disk | all three | M8 (core and local writer) | 1 | done: sdmxlib 0.80.0 to 0.82.0, sdmxlib-rest 0.9.0, statcatlib 0.12.0 |
 | 3 | Structure products; partials checked against them; the CODR generator | sdmxlib, then statcatlib | M6 | 2a | done: sdmxlib 0.83.0 and 0.84.0, statcatlib 0.13.0, sdmxlib-rest 0.9.2 |
-| 4 | The Inventory on blob storage, upload and `pending/`; the routing fields; `correct` and `reinstate`; the synthetic corpus | sdmxlib, then statcatlib | M8 (corpus), M9 (upload) | 2a and Q7; the corpus also 3 and Q1 | open |
+| 4 | The Inventory on blob storage, upload and `pending/`; `correct` and `reinstate`; the 7,000-leaf read measurement | statcatlib | M8 (Inventory documents), M9 (upload) | 2a and Q1 | open |
 | 5 | Fold, release, `release_due`, GC of `products/` | statcatlib | M9 | 4 | open |
 | 6 | Router, tiers, pools, result store and its GC, pre-materialisation | statcat-serve, with four seams in sdmxlib-rest | M10 | 4, 5 | open |
 | 7 | Catalog-level search and the search pool | statcatlib, sdmxlib-rest | M13 | 3, 4 and 5 (statcatlib half), 6 (serving half), Q3 | outline |
@@ -209,7 +209,7 @@ The specification records the design alternatives and their rejections (§6.6, �
 ### Alternative C: The CODR generator under `tests/support/`
 
 *   **Pros**: test code stays out of the package.
-*   **Cons**: Phases 5 to 9 build their corpus from scripts and benches outside statcatlib's test suite, and those cannot import from `tests/`. The second revision of this plan put the generator there.
+*   **Cons**: Phases 6 to 9 build their corpus from scripts and benches outside statcatlib's test suite, and those cannot import from `tests/`. The second revision of this plan put the generator there.
 *   **Reason for Rejection**: the generator goes in `statcatlib.testing`, beside `synthetic_catalog` (Phase 3).
 
 ### Alternative D: Plan all phases to implementation level now
@@ -325,12 +325,13 @@ StatCat-Suite/statcatlib#98, restated on 2026-11-04, holds the current scope and
 
 Built: sdmxlib 0.85.0 (GH-348, GH-367) and statcatlib 0.14.0 (StatCat-Suite/statcatlib#128) record the routing fields `dataflows`, `pull_bytes` and, for structure products, `artefacts`; StatCat-Suite/statcatlib#126 shipped the corpus generator and recorded the no-home measurement.
 
-*   **Object storage** (statcatlib). The writer and upload use `obstore`'s stores directly (`AzureStore`, `S3Store`, `LocalStore` for tests); the Inventory reader's `fetch(path) -> bytes | None` is a small adapter over `get`.
+*   **Object storage** (statcatlib). The writer and upload use `obstore`'s stores directly (`AzureStore`, `S3Store`, `MemoryStore` for tests, since `LocalStore` has no update mode for `CURRENT`); the Inventory reader's `fetch(path) -> bytes | None` is a small adapter over `get`.
 *   **The Inventory writer on blob storage.** Leaves, roots and `CURRENT` follow specification §6.6 as the Inventory history log design amends it: a single-shot `put(mode="create")` (`Put Blob` with `If-None-Match: *`) for every root, an unconditional single-shot `Put Blob` of the same bytes for every leaf the version changes, never ADLS DFS create plus append, and a conditional, forward-only `CURRENT`. The writer rewrites no carried-forward leaf. It skips no changed leaf it finds present, so a leaf whose bytes reappear survives an expiry run's `If-Match` delete: a Put before the delete changes the ETag and the delete fails, and a Put after it recreates the leaf. `event.actor` comes from the writer's storage identity (the Phase 2a design's risk table). Roots carry the history fields, computed from root `seq - 1` and recomputed after a lost race. The writer refuses a 2.x `catalog.json` until StatCat-Suite/statcatlib#125 stage 2 adds the `HISTORY` lease.
-*   **Upload** (`statcat upload`, specification §11.2 step 1). It copies the data files with a digest the store keeps (`Content-MD5` on Azure, a full-object CRC32C on S3), then the edition directory with `manifest.json` last, verifies every listed file with `check_edition(at="receive", lookup=)`, and writes `pending/<product_id>/<edition_id>.json` (`edition_id`, `release_at`) put-if-absent. It never writes `CURRENT` or `inventory/`.
+*   **Upload** (`statcat upload`, specification §11.2 step 1). It supports Azure only in this phase and refuses an `S3Store`, because `obstore` cannot set or read CRC32C; the full-object CRC32C on S3 waits for a deployment on S3. It copies the data files with the `Content-MD5` Azure keeps for a single-shot Put, then the edition directory with `manifest.json` last, verifies every listed file with `check_edition(at="receive", lookup=)`, and writes `pending/<product_id>/<edition_id>.json` (`edition_id`, `release_at`) put-if-absent. It never writes `CURRENT` or `inventory/`.
 *   **Remote catalogs.** `Catalog.open` and `EditionView` read an edition with its data files in object storage through `LocalRegistry.edition(path, remote=, engine=, manifest_sha256=)` and an `EditionEngine` holding the store's secret. statcatlib's design gives the signature and where the required tier lands on local disk.
-*   **`CatalogAdmin.correct` and `reinstate`** (the Phase 2a design's P6). `correct(from_seq=, if_seq=, reason=)` fixes the defects the Phase 2a review found (DES-M6, N13, ZM2). `if_seq` is an expected-head precondition, so a retry cannot erase concurrent commits; the RFC omits this parameter. `reinstate(product, edition, reason=)` moves a tombstone back to `superseded` once its manifest and every listed file verify. Neither gates Phases 5 or 6; Phase 9's restore drill is their first real use.
-*   **The Inventory corpus and read measurement**: the corpus holds Inventory documents only (owner, 2026-11-04), since a full corpus needs about 117 GB (statcatlib's `bench/corpus-results.md`). A `statcatlib.testing` function and a script under `bench/` generate 7,000 leaves and their roots with sdmxlib's rules, with both live and embargoed entries and no data files, and write them through the blob writer. The read touches only `CURRENT`, roots and leaves. Azurite gives the fetch count and bytes. Its wall time excludes real storage latency, so the report states that and estimates the wall time per GET.
+*   **`CatalogAdmin.correct` and `reinstate`** (the Phase 2a design's P6). `correct(from_seq=, if_seq=, reason=)` fixes the defects the Phase 2a review found (DES-M6, N13, ZM2). `if_seq` is an expected-head precondition, so a retry cannot erase concurrent commits; the RFC omits this parameter. It tombstones each entry recorded after `from_seq` that the correction drops, so `reinstate` can bring that edition back and GC keeps its files for the retention window. `reinstate(product, edition, reason=)` moves a tombstone back to `superseded` once its manifest and every listed file verify. Neither gates Phases 5 or 6; Phase 9's restore drill is their first real use.
+*   **The Inventory corpus and read measurement**: the corpus holds Inventory documents only (owner, 2026-11-04), since a full corpus needs about 117 GB (statcatlib's `bench/corpus-results.md`) and moves to Phase 6. A `statcatlib.testing` function and a script under `bench/` generate 7,000 leaves and their roots with sdmxlib's rules, with both live and embargoed entries and no data files, and write them through the blob writer. The read touches only `CURRENT`, roots and leaves. Azurite gives the fetch count and bytes. Its wall time excludes real storage latency, so the report states that and estimates the wall time per GET.
+*   **Test rig.** statcatlib adds a `stores` tier following sdmxlib's `tests/stores/` and runs it in `just ci`. The tier fails when no container runtime exists, because the pre-push hook is statcatlib's only gate.
 *   **Gating tests**
     *   `sdmxlib.inventory.conformance.run` passes against the blob writer over Azurite.
     *   The blob writer refuses a 2.x `catalog.json` and names the reason.
@@ -339,7 +340,7 @@ Built: sdmxlib 0.85.0 (GH-348, GH-367) and statcatlib 0.14.0 (StatCat-Suite/stat
     *   A second upload of the same edition writes no second `pending/` entry.
     *   A remote edition opened with a wrong `manifest_sha256` is refused before any other file is read.
     *   `Catalog.open` over a blob catalog with embargoed entries never returns one.
-    *   `correct` refuses a stale `if_seq`, a pruned or invalid `from_seq`, and a restored entry whose files fail to verify, and it keeps tombstones added since `from_seq` and the head's embargo setting. `reinstate` refuses an edition whose manifest or listed files fail to verify.
+    *   `correct` refuses a stale `if_seq`, a pruned or invalid `from_seq`, and a restored entry whose files fail to verify, and it keeps tombstones added since `from_seq` and the head's embargo setting, and it tombstones each entry it drops that was recorded after `from_seq`. An edition a correction dropped can be reinstated. `reinstate` refuses an edition whose manifest or listed files fail to verify.
     *   A 7,000-leaf Inventory read records its wall time, its fetch count and the bytes fetched. The measurement goes into specification §6.5 and decides whether the baked summary is built.
 
 ### Phase 5: release and garbage collection (statcatlib; StatCat-Suite/statcatlib#52; spec M9)
@@ -372,7 +373,7 @@ Starts once Phase 4 is done; Q9 and Q10 are decided (2026-11-03). statcatlib's d
 
 ### Phase 6: serving a catalog (statcat-serve and sdmxlib-rest; StatCat-Suite/sdmxlib-rest#46, StatCat-Suite/sdmxlib-rest#47, StatCat-Suite/sdmxlib-rest#48, StatCat-Suite/sdmxlib-rest#52, StatCat-Suite/sdmxlib-rest#10, StatCat-Suite/sdmxlib-rest#69, StatCat-Suite/sdmxlib-rest#70; spec M10)
 
-Q8 is decided (2026-11-03): sdmxlib-rest adds four seams (a per-request catalog resolver, the ETag set by the route, routing refusals mapped to 404 and 503, and a published `RENDER_VERSION`) and statcat-serve holds the rest. sdmxlib-rest's tests write Inventory versions with sdmxlib's rules (`next_root`), as `tests/test_inventory_describe.py` does, since sdmxlib-rest never imports statcatlib; the benches read Phase 4's corpus as data.
+Q8 is decided (2026-11-03): sdmxlib-rest adds four seams (a per-request catalog resolver, the ETag set by the route, routing refusals mapped to 404 and 503, and a published `RENDER_VERSION`) and statcat-serve holds the rest. sdmxlib-rest's tests write Inventory versions with sdmxlib's rules (`next_root`), as `tests/test_inventory_describe.py` does, since sdmxlib-rest never imports statcatlib; the benches read the full corpus as data. Phase 6 builds that corpus with the shipped `codr_corpus`, about 117 GB and about 4 hours (statcatlib's `bench/corpus-results.md`), and copies it through the blob writer and upload.
 
 *   **Pin**: the sdmxlib release that carries Phase 4's routing fields.
 *   **Partial references** (StatCat-Suite/sdmxlib-rest#69): `detail=referencepartial` returns the edition's stored partials and, for a codelist the edition holds in full, cuts a partial with `Codelist.partial`, in place of the `referencestubs` answer sdmxlib-rest returns today.
@@ -397,7 +398,7 @@ Q8 is decided (2026-11-03): sdmxlib-rest adds four seams (a per-request catalog 
     *   GC of `results/` deletes keys no live entry reaches, after a grace period, through an index of keys by product and fingerprints that the result store writes.
 *   **Pre-materialisation** (StatCat-Suite/sdmxlib-rest#70): a command that opens each embargoed edition from its own files, in its own job with its own identity, renders the release set and writes `results/`. It lives in statcat-serve and reads embargoed editions through statcatlib's `EmbargoReader`, as specification §11.2 step 3 states. The release-set file's format and its writer are this phase's to define.
 *   **Ingress resolution**: Q5 is decided here. The remap bound of consistent hashing is tested in-process over the hash ring, without Kubernetes; Phase 8 repeats it on a cluster.
-*   **Load driver**: `bench/load.py` replays a Zipf-distributed request mix over Phase 4's corpus.
+*   **Load driver**: `bench/load.py` replays a Zipf-distributed request mix over Phase 6's full corpus.
 *   **Gating tests**
     *   A release version under the load driver fails no request.
     *   A dataflow live only at another schema answers 503 naming both schema versions.
@@ -436,7 +437,7 @@ The §9.2 schema bump with mixed pods and zero non-2xx responses, which fails if
 *   **Integration**:
     *   sdmxlib's `just test-integration` replays Phase 1's FMR cassettes with no network.
     *   The blob tests of Phases 4 and 5 run against Azurite, as sdmxlib's `just test-stores` does.
-    *   Phase 4's synthetic corpus serves Phases 5 to 9.
+    *   Phase 6's full corpus serves Phases 6 to 9. Phase 4 uses Inventory documents only, and Phase 5 its own 200-table synthetic release.
     *   The kind cluster carries Phases 8 and 9.
 
 --------------------------------------------------------------------------------

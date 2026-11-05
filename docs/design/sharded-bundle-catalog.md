@@ -424,7 +424,7 @@ An entry item:
 | `entry` | required when `to` is a state, absent otherwise | The new `LeafEntry`'s `edition_id`, `previous`, `state`, `manifest_sha256`, `schema_version`, `state_changed_at` and `release_at`, and no other field. |
 
 - An item whose `from` equals `to` records an entry that changed and kept its state, such as a rescheduled `release_at`.
-- `tombstone` marks the `retired` list and is no fifth state: §6.4's "Retirement is a tombstone, never a state" stands (H18). A tombstone comes from a `retire` version, and `reinstate` writes `from: tombstone, to: superseded`.
+- `tombstone` marks the `retired` list and is no fifth state: §6.4's "Retirement is a tombstone, never a state" stands (H18). A tombstone comes from a `retire` or `correct` version, and `reinstate` writes `from: tombstone, to: superseded`.
 - Nothing removes a tombstone from `retired` today (`prune` never expires one). A later writer that does writes `to: null`, so a replay of `retired` stays exact.
 - `entry` omits `structure_source`, `artefacts` and every later optional `LeafEntry` field (H14). `manifest_sha256` pins what the manifest holds, so the change list keeps its size when `artefacts` is filled; a format minor that wants a later field in `entry` says so.
 - A writer computes the change list from the base version's root and leaves and this version's, and reads no other version (§6.6).
@@ -516,13 +516,14 @@ Every entry has one of four states. Retirement is a tombstone, never a state.
 | `superseded` | `live` | the same rollback | as above | `CatalogAdmin` |
 | (tombstone) | `superseded` | `reinstate(product, edition, reason)` | the manifest and every listed file verify | `CatalogAdmin` |
 | `superseded`, `withdrawn` | tombstone | retention | past the window | prune job |
+| any state | tombstone | `correct(from_seq, if_seq, reason)` | the entry was recorded after `from_seq` and the correction drops it, so `reinstate` can bring it back and GC keeps its files for the window | `CatalogAdmin` |
 
 - **The head.** A product's head is its `live` entry at the reader's `schema_version` (statcatlib RFC decision 24). During a store schema rollout (§9.2) a product has one live edition per schema version: old pods read the old one, new pods the new one. A product with no live edition has no head.
 - **Fast-forward.** A release whose edition's `previous` is not the product's live edition at its `schema_version` is refused, naming both editions. Forks are refused here, at release, and never at seal: a seal-time refusal would block every publish after a rollback.
 - **Rollback is conditional and forward.** `if_live` defaults to the edition live when the call started; a retry is refused if the live edition is no longer X. `to` defaults to the most recent superseded edition. A rollback is a new Inventory version; it never moves `CURRENT` back, which would drop other products' later releases.
 - **Rollback ripples.** An unsealed or pending edition built on a withdrawn one then fails the fast-forward check. The error names the withdrawn base, the current live edition, and the fix: discard, then build from the live edition.
 - **Release batches report per product.** `release_due` releases what it can and refuses the rest, persisting each refusal's reason, without failing the batch.
-- **The release clock is the storage server's.** The release job takes `now` from the storage response `Date` header with a skew bound and refuses to run if its own clock is ahead; `release_due(now=None)` defaults to that time and refuses a naive datetime.
+- **The release clock is the storage server's.** The release job takes `now` from the storage response `Date` header with a skew bound of 30 s and refuses to run if its own clock is ahead; `release_due(now=None)` defaults to that time and refuses a naive datetime.
 
 sdmxlib states these rules as pure functions a writer calls before it publishes a version (GH-251): given the current root and leaves, an operation and its arguments, they return the new leaf entries or raise a refusal naming the rule. `record` and `reinstate` take the entry's routing fields and `artefacts`, and the other rules carry them unchanged (§6.3).
 
@@ -965,7 +966,7 @@ An Inventory version is restorable only while every data file its editions refer
 
 ### 11.2 Upload and release
 
-1. **Upload never writes `CURRENT` or `inventory/`.** It copies data files with a digest the store keeps (`Content-MD5` on Azure, a full-object CRC32C on S3), then the edition directory with its manifest last, and verifies every file the manifest lists. Then it writes `pending/<product_id>/<edition_id>.json` with the `edition_id` and `release_at`, put-if-absent.
+1. **Upload never writes `CURRENT` or `inventory/`.** It copies data files with a digest the store keeps (`Content-MD5` on Azure; a full-object CRC32C on S3 once a deployment runs on S3, since `obstore` cannot set or read CRC32C and Phase 4's upload therefore supports Azure only), then the edition directory with its manifest last, and verifies every file the manifest lists. Then it writes `pending/<product_id>/<edition_id>.json` with the `edition_id` and `release_at`, put-if-absent.
 2. **`pending/` is an inbox, not an authority.** The release job folds pending registrations into an Inventory version as `embargoed` entries, with `event.kind: seal`; from then on the Inventory is the only authority. The fold skips a registration whose edition the Inventory already records, in a leaf or in `retired`, so a rerun, or a crash after the Inventory write, writes nothing new. The release job keeps read-only access to `pending/`, and the GC job deletes folded registrations after the retention window (§11.4). Two pending editions of one product built on the same live edition are both refused and reported. A pending entry whose `edition_id` (a UUIDv7, so it carries a time) is older than the tombstone window is refused, so a `pending/` file restored from an old backup cannot resurrect withdrawn data.
 3. **Pre-materialisation.** A job running the **pods' image**, so render versions match, opens each embargoed edition from its own files through `EmbargoReader`, computes the release set (full-table downloads per language, the slices the front end requests on load) and writes it to `results/` under the new keys. It runs in a job, never in a serving pod.
 4. **Release.** At release time the release job writes one Inventory version moving every due `embargoed` entry to `live` and the replaced ones to `superseded`, structure editions first by invariant 8, with `event.kind: release`. Data products that share a changed full artefact with no structure home release in the same version (§6.5 item 4). A released structure edition that edits a full artefact at an unchanged URN makes the data editions holding the old copy stale (§6.5 item 4): the live ones stay live, and the embargoed ones are refused at release until their products are republished. Only the release job writes Inventory versions on the server, once per batch, under `concurrencyPolicy: Forbid`. A batched seal on a laptop likewise records many products in one version.
@@ -1109,7 +1110,7 @@ A central Postgres DuckLake catalog is an option for governance and analytics ac
 
 ## 16. Prototype plan
 
-Order follows risk removed per unit of work. Synthetic editions and `profile_edition` shapes supply the corpus; a synthetic CODR-shaped catalog (7,000 small products, Zipf traffic) arrives at M8.
+Order follows risk removed per unit of work. Synthetic editions and `profile_edition` shapes supply the corpus; a synthetic CODR-shaped catalog (7,000 small products, Zipf traffic) arrives in two steps: its Inventory documents with M8, and the full catalog with M10.
 
 **M0. sdmxlib: read-only open.** `LocalRegistry.build(path)` for writers; `LocalRegistry.edition(path)` requires a manifest and returns `EditionRegistry` with no `sql()`; `access_mode=READ_ONLY`; `ATTACH (READ_ONLY)`; `temp_directory` outside the edition; `CHECKPOINT` in the seal; `.wal` refused by the files check. Built in GH-122.
 
