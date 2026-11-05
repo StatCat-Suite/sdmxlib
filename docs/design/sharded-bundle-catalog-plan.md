@@ -165,7 +165,7 @@ Phases, in build order:
 | 1 | Closure builder, partials, `partial_of` | sdmxlib | M6 (sdmxlib part) | 0 | done, sdmxlib 0.76.0 |
 | 2a | Products, editions, the Inventory on local disk | all three | M8 (core and local writer) | 1 | done: sdmxlib 0.80.0 to 0.82.0, sdmxlib-rest 0.9.0, statcatlib 0.12.0 |
 | 3 | Structure products; partials checked against them; the CODR generator | sdmxlib, then statcatlib | M6 | 2a | done: sdmxlib 0.83.0 and 0.84.0, statcatlib 0.13.0, sdmxlib-rest 0.9.2 |
-| 4 | The Inventory on blob storage, upload and `pending/`; `correct` and `reinstate`; the 7,000-leaf read measurement | statcatlib | M8 (Inventory documents), M9 (upload) | 2a and Q1 | open |
+| 4 | The Inventory on blob storage, upload and `pending/`; remote catalogs; the 7,000-leaf read measurement | statcatlib | M8 (Inventory documents), M9 (upload) | 2a and Q1 | open |
 | 5 | Fold, release, `release_due`, GC of `products/` | statcatlib | M9 | 4 | open |
 | 6 | Router, tiers, pools, result store and its GC, pre-materialisation | statcat-serve, with four seams in sdmxlib-rest | M10 | 4, 5 | open |
 | 7 | Catalog-level search and the search pool | statcatlib, sdmxlib-rest | M13 | 3, 4 and 5 (statcatlib half), 6 (serving half), Q3 | outline |
@@ -321,7 +321,11 @@ Built (2026-11-03); [Built](#phase-3-structure-products-shipped-2026-11-03) reco
 
 ### Phase 4: the catalog on blob storage (statcatlib; StatCat-Suite/statcatlib#98; spec M8, M9)
 
-StatCat-Suite/statcatlib#98, restated on 2026-11-04, holds the current scope and the full acceptance list. statcatlib RFC §7 and the Phase 2a design's non-goals define the phase: everything a catalog needs on object storage short of the release job. statcatlib drafts a local design with `/egm-draft` before any code, and that design settles the questions the issue lists. The parts below can land separately.
+StatCat-Suite/statcatlib#98, restated on 2026-11-04, holds the current scope and the full acceptance list. statcatlib RFC §7 and the Phase 2a design's non-goals define the phase: everything a catalog needs on object storage short of the release job. statcatlib drafts a local design with `/egm-draft` before any code, and that design settles the questions the issue lists. Four parts, which can land separately: the blob writer, upload, remote catalogs and the read measurement.
+
+`CatalogAdmin.correct` and `reinstate` (the Phase 2a design's P6) land in StatCat-Suite/statcatlib#130 before Phase 9's restore drill, which is their first real use. A catalog-wide `correct` needs a rule table for head state, so `sdmxlib.inventory` gains no `correct` rule in this phase. Neither gates Phase 5 or Phase 6.
+
+Upload and remote catalogs need GH-371's `references=False`, because neither can name the structure editions that an edition with no bindings may reference.
 
 Built: sdmxlib 0.85.0 (GH-348, GH-367) and statcatlib 0.14.0 (StatCat-Suite/statcatlib#128) record the routing fields `dataflows`, `pull_bytes` and, for structure products, `artefacts`; StatCat-Suite/statcatlib#126 shipped the corpus generator and recorded the no-home measurement.
 
@@ -329,7 +333,6 @@ Built: sdmxlib 0.85.0 (GH-348, GH-367) and statcatlib 0.14.0 (StatCat-Suite/stat
 *   **The Inventory writer on blob storage.** Leaves, roots and `CURRENT` follow specification §6.6 as the Inventory history log design amends it: a single-shot `put(mode="create")` (`Put Blob` with `If-None-Match: *`) for every root, an unconditional single-shot `Put Blob` of the same bytes for every leaf the version changes, never ADLS DFS create plus append, and a conditional, forward-only `CURRENT`. The writer rewrites no carried-forward leaf. It skips no changed leaf it finds present, so a leaf whose bytes reappear survives an expiry run's `If-Match` delete: a Put before the delete changes the ETag and the delete fails, and a Put after it recreates the leaf. `event.actor` comes from the writer's storage identity (the Phase 2a design's risk table). Roots carry the history fields, computed from root `seq - 1` and recomputed after a lost race. The writer refuses a 2.x `catalog.json` until StatCat-Suite/statcatlib#125 stage 2 adds the `HISTORY` lease.
 *   **Upload** (`statcat upload`, specification §11.2 step 1). It supports Azure only in this phase and refuses an `S3Store`, because `obstore` cannot set or read CRC32C; the full-object CRC32C on S3 waits for a deployment on S3. It copies the data files with the `Content-MD5` Azure keeps for a single-shot Put, then the edition directory with `manifest.json` last, verifies every listed file with `check_edition(at="receive", lookup=)`, and writes `pending/<product_id>/<edition_id>.json` (`edition_id`, `release_at`) put-if-absent. It never writes `CURRENT` or `inventory/`.
 *   **Remote catalogs.** `Catalog.open` and `EditionView` read an edition with its data files in object storage through `LocalRegistry.edition(path, remote=, engine=, manifest_sha256=)` and an `EditionEngine` holding the store's secret. statcatlib's design gives the signature and where the required tier lands on local disk.
-*   **`CatalogAdmin.correct` and `reinstate`** (the Phase 2a design's P6). `correct(from_seq=, if_seq=, reason=)` fixes the defects the Phase 2a review found (DES-M6, N13, ZM2). `if_seq` is an expected-head precondition, so a retry cannot erase concurrent commits; the RFC omits this parameter. It tombstones each entry recorded after `from_seq` that the correction drops, so `reinstate` can bring that edition back and GC keeps its files for the retention window. `reinstate(product, edition, reason=)` moves a tombstone back to `superseded` once its manifest and every listed file verify. Neither gates Phases 5 or 6; Phase 9's restore drill is their first real use.
 *   **The Inventory corpus and read measurement**: the corpus holds Inventory documents only (owner, 2026-11-04), since a full corpus needs about 117 GB (statcatlib's `bench/corpus-results.md`) and moves to Phase 6. A `statcatlib.testing` function and a script under `bench/` generate 7,000 leaves and their roots with sdmxlib's rules, with both live and embargoed entries and no data files, and write them through the blob writer. The read touches only `CURRENT`, roots and leaves. Azurite gives the fetch count and bytes. Its wall time excludes real storage latency, so the report states that and estimates the wall time per GET.
 *   **Test rig.** statcatlib adds a `stores` tier following sdmxlib's `tests/stores/` and runs it in `just ci`. The tier fails when no container runtime exists, because the pre-push hook is statcatlib's only gate.
 *   **Gating tests**
@@ -340,7 +343,6 @@ Built: sdmxlib 0.85.0 (GH-348, GH-367) and statcatlib 0.14.0 (StatCat-Suite/stat
     *   A second upload of the same edition writes no second `pending/` entry.
     *   A remote edition opened with a wrong `manifest_sha256` is refused before any other file is read.
     *   `Catalog.open` over a blob catalog with embargoed entries never returns one.
-    *   `correct` refuses a stale `if_seq`, a pruned or invalid `from_seq`, and a restored entry whose files fail to verify, and it keeps tombstones added since `from_seq` and the head's embargo setting, and it tombstones each entry it drops that was recorded after `from_seq`. An edition a correction dropped can be reinstated. `reinstate` refuses an edition whose manifest or listed files fail to verify.
     *   A 7,000-leaf Inventory read records its wall time, its fetch count and the bytes fetched. The measurement goes into specification §6.5 and decides whether the baked summary is built.
 
 ### Phase 5: release and garbage collection (statcatlib; StatCat-Suite/statcatlib#52; spec M9)
@@ -358,6 +360,7 @@ Starts once Phase 4 is done; Q9 and Q10 are decided (2026-11-03). statcatlib's d
 *   **Repair and alerts.** The server sweep of sealed but unrecorded editions reports each for an owner's discard-or-reinstate decision (specification §6.7, §11.6). `advance-current` brings `CURRENT` up to the newest root. The jobs log each §11.6 alert they detect as a structured event with a fixed name; Phase 8 wires them to alerting.
 *   **Gating tests**
     *   A 200-table synthetic release becomes visible in one Inventory version.
+    *   The fold runs the publish check, with `structures=`, on an edition with no bindings before it records it, since upload and `view` defer those references.
     *   A release interrupted before that version leaves every entry `embargoed`, and a re-run releases them.
     *   The fold refuses two pending editions on the same live edition and a pending entry older than the tombstone window.
     *   A stale automatic release after embargo was turned on is refused.
