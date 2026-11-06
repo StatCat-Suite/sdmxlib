@@ -3,7 +3,8 @@
 sdmxlib holds no blob client (spec §11.5): a reader is given
 ``fetch(path) -> bytes | None``, a path relative to the catalog root to its
 bytes, or None when nothing is there. `local_fetch` reads a directory; a
-pod passes one over ``obstore`` or ``fsspec``.
+pod passes one over ``obstore`` or ``fsspec``. A reader may call `fetch` from
+several threads at once, so a `fetch` must be safe to call that way.
 
 The read protocol (spec §6.6):
 
@@ -27,6 +28,13 @@ has no ``HISTORY``.
 A root that does not validate is skipped and reported in `skipped`, and the
 last valid version is kept.
 
+A read of every product (`LiveInventory.editions`, `LiveInventory.products`,
+`FullInventory.leaves`) fetches the leaves the reader does not hold on a pool
+of ``leaf_threads`` threads, then checks and decodes them in the calling thread
+in sorted product order. The first bad leaf in that order raises. The leaves
+before it stay held, and fetches not yet started are cancelled. A read of one
+product, and a read with one leaf to fetch, fetch in the calling thread.
+
 Two views, constructed separately so a public reader holds nothing it must
 filter:
 
@@ -36,7 +44,8 @@ filter:
   and the operational objects.
 """
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterable, Mapping
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Self
 
@@ -68,7 +77,14 @@ from sdmxlib.inventory._format import (
 from sdmxlib.storage.schema import SCHEMA_VERSION
 
 #: A path under the catalog root to its bytes, or None when nothing is there.
+#: A reader calls it from several threads at once, each on a worker thread that
+#: does not inherit the caller's context variables, unless ``leaf_threads`` is 1.
 type Fetch = Callable[[str], bytes | None]
+
+#: The threads a reader fetches leaves on unless told otherwise. It comes from an
+#: estimate at an assumed 10 ms a request (spec §6.5), and no real store has
+#: measured it.
+DEFAULT_LEAF_THREADS = 64
 
 
 def local_fetch(root: str | Path) -> Fetch:
@@ -118,8 +134,22 @@ class LiveEdition(msgspec.Struct, frozen=True, kw_only=True):
 class _Chain:
     """The read protocol over `fetch`: the newest valid root, never behind the floor."""
 
-    def __init__(self, fetch: Fetch) -> None:
+    def __init__(self, fetch: Fetch, *, leaf_threads: int = DEFAULT_LEAF_THREADS) -> None:
+        """Read through `fetch`.
+
+        Args:
+            fetch: The reader's only route to the catalog.
+            leaf_threads: The threads a read of every product fetches leaves
+                on. 1 fetches each in the calling thread.
+
+        Raises:
+            ValueError: If `leaf_threads` is below 1.
+        """
+        if leaf_threads < 1:
+            msg = f"leaf_threads must be at least 1, got {leaf_threads}"
+            raise ValueError(msg)
         self._fetch = fetch
+        self._leaf_threads = leaf_threads
         self._root: Root | None = None
         self._leaves: dict[str, Leaf] = {}
         self.skipped: list[str] = []
@@ -257,7 +287,10 @@ class _Chain:
         cached = self._leaves.get(ref.leaf_sha256)
         if cached is not None:
             return cached
-        raw = self._fetch(ref.leaf)
+        return self._keep_leaf(ref, self._fetch(ref.leaf))
+
+    def _keep_leaf(self, ref: LeafRef, raw: bytes | None) -> Leaf:
+        """Check `raw` against `ref`, decode it and hold the leaf by its hash."""
         if raw is None:
             msg = f"{ref.leaf} is missing"
             raise InventoryError(msg)
@@ -268,9 +301,38 @@ class _Chain:
         self._leaves[ref.leaf_sha256] = leaf
         return leaf
 
+    def _read_leaves(self, refs: Iterable[LeafRef]) -> None:
+        """Fetch the leaves of `refs` not held on a pool, and hold them, in the order of `refs`.
+
+        Only `fetch` runs on a worker, so ``_leaves`` is written from the
+        calling thread alone. Checking in order makes the error the one a
+        sequential read raises, and holds the same leaves before it. With fewer
+        than two leaves to fetch, or one thread, it does nothing, and `_leaf`
+        fetches each in the calling thread.
+        """
+        missing = {ref.leaf_sha256: ref for ref in refs if ref.leaf_sha256 not in self._leaves}
+        if len(missing) < 2 or self._leaf_threads == 1:
+            return
+        pool = ThreadPoolExecutor(self._leaf_threads, thread_name_prefix="sdmxlib-inventory-leaf")
+        try:
+            reads = [(ref, pool.submit(self._fetch, ref.leaf)) for ref in missing.values()]
+            for ref, read in reads:
+                self._keep_leaf(ref, read.result())
+        finally:
+            pool.shutdown(cancel_futures=True)
+
+    def _products_read(self) -> list[tuple[str, LeafRef]]:
+        """The held version's products in sorted order, with their leaves fetched."""
+        products = sorted(self._current.products.items())
+        self._read_leaves(ref for _, ref in products)
+        return products
+
 
 class FullInventory(_Chain):
-    """Every entry of every product, and the tombstones: for the release job and the operational objects."""
+    """Every entry of every product, and the tombstones: for the release job and the operational objects.
+
+    It takes the same arguments as `LiveInventory`, without ``schema_version``.
+    """
 
     @property
     def root(self) -> Root:
@@ -301,7 +363,7 @@ class FullInventory(_Chain):
 
     def leaves(self) -> Mapping[str, Leaf]:
         """Every product's leaf, by product."""
-        return {p: self._leaf(ref) for p, ref in sorted(self._current.products.items())}
+        return {p: self._leaf(ref) for p, ref in self._products_read()}
 
     def entries(self, product_id: str) -> tuple[LeafEntry, ...]:
         """The product's entries in every state."""
@@ -315,9 +377,21 @@ class LiveInventory(_Chain):
     through it needs filtering.
     """
 
-    def __init__(self, fetch: Fetch, *, schema_version: str = SCHEMA_VERSION) -> None:
-        """Read through `fetch`, routing to the live editions at `schema_version` (this sdmxlib's by default)."""
-        super().__init__(fetch)
+    def __init__(
+        self, fetch: Fetch, *, schema_version: str = SCHEMA_VERSION, leaf_threads: int = DEFAULT_LEAF_THREADS
+    ) -> None:
+        """Read through `fetch`, routing to the live editions at `schema_version` (this sdmxlib's by default).
+
+        Args:
+            fetch: The reader's only route to the catalog.
+            schema_version: The store schema to route to.
+            leaf_threads: The threads a read of every product fetches leaves
+                on. 1 fetches each in the calling thread.
+
+        Raises:
+            ValueError: If `leaf_threads` is below 1.
+        """
+        super().__init__(fetch, leaf_threads=leaf_threads)
         self.schema_version = schema_version
 
     def _live(self, product_id: str, ref: LeafRef) -> LiveEdition | None:
@@ -339,7 +413,7 @@ class LiveInventory(_Chain):
 
     def editions(self) -> Mapping[str, LiveEdition]:
         """Each product's live edition, by product; a product with none is absent."""
-        found = {p: self._live(p, ref) for p, ref in sorted(self._current.products.items())}
+        found = {p: self._live(p, ref) for p, ref in self._products_read()}
         return {p: e for p, e in found.items() if e is not None}
 
     def products(self) -> list[str]:

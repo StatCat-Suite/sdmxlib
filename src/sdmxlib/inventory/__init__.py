@@ -76,7 +76,14 @@ from sdmxlib.inventory._format import (
     validate_leaf,
     validate_root,
 )
-from sdmxlib.inventory._reader import Fetch, FullInventory, LiveEdition, LiveInventory, local_fetch
+from sdmxlib.inventory._reader import (
+    DEFAULT_LEAF_THREADS,
+    Fetch,
+    FullInventory,
+    LiveEdition,
+    LiveInventory,
+    local_fetch,
+)
 from sdmxlib.inventory._routing import Route, RoutingFields, manifest_records, route, routing_fields, verify_entry
 from sdmxlib.inventory._rules import (
     CREATED_AT_STEP,
@@ -106,6 +113,7 @@ __all__ = [
     "CATALOG_NAME",
     "CREATED_AT_STEP",
     "CURRENT_NAME",
+    "DEFAULT_LEAF_THREADS",
     "HISTORY_DIR",
     "HISTORY_FORMAT",
     "HISTORY_NAME",
