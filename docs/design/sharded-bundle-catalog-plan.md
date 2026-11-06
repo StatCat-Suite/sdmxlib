@@ -188,7 +188,7 @@ Phase 5's release job is tested against the Inventory alone, with no pods: the f
 | Two writers race for one Inventory version on blob storage | Exclusive creation with a single-shot `Put Blob` and `If-None-Match: *` (specification §6.6); Phase 4 runs sdmxlib's conformance suite against the blob writer. |
 | The hot pool goes unready at 08:30, when the release adds pinned editions no pod could pull before | A pod adopts a new Inventory version only after attaching the version's new pinned editions, and stays ready on the old version meanwhile (Phase 6). |
 | statcatlib or sdmxlib-rest cannot adopt a breaking sdmxlib release in one step | Each phase pins one minor and lists the moves in `docs/upgrading.md`. |
-| Reading 7,000 leaves at pod start or at each release is slow | Readers fetch only the leaves whose hash changed. Phase 4 times a 7,000-leaf read, and a baked summary is added only if the measurement shows the cost (specification §6.5, `docs/design/caching.md`). |
+| Reading 7,000 leaves at pod start or at each release is slow | Readers fetch only the leaves whose hash changed. Phase 4 measured a cold read of every leaf at 7,003 GETs, about 70 s in sequence by estimate at an assumed 10 ms a request, and the owner decided to build no baked summary now (specification §6.5, Future Improvements, `docs/design/caching.md`). |
 
 ## Alternatives Considered
 
@@ -252,7 +252,7 @@ The specification records the design alternatives and their rejections (§6.6, �
 
 *   **Shared structure caches across editions** (GH-160): re-measured once a deployment holds many distinct editions; GH-133 measured 2.2 MB per registry, too small to share across 16 registries. Phase 6's load bench is the first such deployment.
 *   **Signed manifests**: `manifest.json.sig` is reserved (specification §4.3).
-*   **A baked Inventory summary**, if Phase 4's measurement shows that reading 7,000 leaves is slow.
+*   **A baked Inventory summary**: the owner decided on 2026-11-06 to build none for now, on Phase 4's measurement; specification §6.5 holds the numbers and the reasons. The results of statcatlib's real-account checklist, which tests a thread pool against real storage (StatCat-Suite/statcatlib#134), can reopen it.
 
 --------------------------------------------------------------------------------
 
@@ -343,7 +343,7 @@ Built: sdmxlib 0.85.0 (GH-348, GH-367) and statcatlib 0.14.0 (StatCat-Suite/stat
     *   A second upload of the same edition writes no second `pending/` entry.
     *   A remote edition opened with a wrong `manifest_sha256` is refused before any other file is read.
     *   `Catalog.open` over a blob catalog with embargoed entries never returns one.
-    *   A 7,000-leaf Inventory read records its wall time, its fetch count and the bytes fetched. The measurement goes into specification §6.5 and decides whether the baked summary is built.
+    *   A 7,000-leaf Inventory read records its wall time, its fetch count and the bytes fetched. The measurement goes into specification §6.5, with the owner's decision on the baked summary.
 
 ### Phase 5: release and garbage collection (statcatlib; StatCat-Suite/statcatlib#52; spec M9)
 
