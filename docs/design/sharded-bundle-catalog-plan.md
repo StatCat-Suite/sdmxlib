@@ -188,7 +188,7 @@ Phase 5's release job is tested against the Inventory alone, with no pods: the f
 | Two writers race for one Inventory version on blob storage | Exclusive creation with a single-shot `Put Blob` and `If-None-Match: *` (specification §6.6); Phase 4 runs sdmxlib's conformance suite against the blob writer. |
 | The hot pool goes unready at 08:30, when the release adds pinned editions no pod could pull before | A pod adopts a new Inventory version only after attaching the version's new pinned editions, and stays ready on the old version meanwhile (Phase 6). |
 | statcatlib or sdmxlib-rest cannot adopt a breaking sdmxlib release in one step | Each phase pins one minor and lists the moves in `docs/upgrading.md`. |
-| Reading 7,000 leaves at pod start or at each release is slow | Readers fetch only the leaves whose hash changed. Phase 4 measured a cold read of every leaf at 7,003 GETs, about 70 s in sequence by estimate at an assumed 10 ms a request, and the owner decided to build no baked summary now (specification §6.5, Future Improvements, `docs/design/caching.md`). |
+| Reading 7,000 leaves at pod start or at each release is slow | Concurrent leaf reads in sdmxlib (GH-375), required before Phase 6's bench tests. A cold pod reads every leaf (specification §7.3), which Phase 4 measured at 7,003 GETs. By estimate at an assumed 10 ms a request, that is about 70 s in sequence, which would likely miss Goal 1, and about 1.1 s at 64 threads. After the cold read, readers fetch only the leaves whose hash changed. The owner decided on 2026-11-06 to build no baked summary (specification §6.5, Future Improvements, `docs/design/caching.md`). |
 
 ## Alternatives Considered
 
@@ -252,7 +252,7 @@ The specification records the design alternatives and their rejections (§6.6, �
 
 *   **Shared structure caches across editions** (GH-160): re-measured once a deployment holds many distinct editions; GH-133 measured 2.2 MB per registry, too small to share across 16 registries. Phase 6's load bench is the first such deployment.
 *   **Signed manifests**: `manifest.json.sig` is reserved (specification §4.3).
-*   **A baked Inventory summary**: the owner decided on 2026-11-06 to build none for now, on Phase 4's measurement; specification §6.5 holds the numbers and the reasons. The results of statcatlib's real-account checklist, which tests a thread pool against real storage (StatCat-Suite/statcatlib#134), can reopen it.
+*   **A baked Inventory summary**: the owner decided on 2026-11-06 to build none and to require concurrent leaf reads before Phase 6 (GH-375); specification §6.5 holds the numbers and the reasons. Item 9 of statcatlib's real-account checklist runs a 64-thread read of every leaf on a real account, with results in StatCat-Suite/statcatlib#134. If the concurrent read cannot serve Goal 1 on real storage, the baked summary returns as the fallback.
 
 --------------------------------------------------------------------------------
 
@@ -379,6 +379,7 @@ Starts once Phase 4 is done; Q9 and Q10 are decided (2026-11-03). statcatlib's d
 Q8 is decided (2026-11-03): sdmxlib-rest adds four seams (a per-request catalog resolver, the ETag set by the route, routing refusals mapped to 404 and 503, and a published `RENDER_VERSION`) and statcat-serve holds the rest. sdmxlib-rest's tests write Inventory versions with sdmxlib's rules (`next_root`), as `tests/test_inventory_describe.py` does, since sdmxlib-rest never imports statcatlib; the benches read the full corpus as data. Phase 6 builds that corpus with the shipped `codr_corpus`, about 117 GB and about 4 hours (statcatlib's `bench/corpus-results.md`), and copies it through the blob writer and upload.
 
 *   **Pin**: the sdmxlib release that carries Phase 4's routing fields.
+*   **Concurrent leaf reads** (GH-375): required before this phase's bench tests measure Goal 1. A cold pod reads every leaf, about 70 s in sequence by estimate (specification §6.5), so this phase pins the sdmxlib release that carries GH-375.
 *   **Partial references** (StatCat-Suite/sdmxlib-rest#69): `detail=referencepartial` returns the edition's stored partials and, for a codelist the edition holds in full, cuts a partial with `Codelist.partial`, in place of the `referencestubs` answer sdmxlib-rest returns today.
 *   **Inventory polling**: a `LiveInventory` over a `fetch` that conditional-GETs `CURRENT`, probes forward and fetches only the leaves whose hash changed (specification §7.3), on an interval this phase sets (5 s proposed).
 *   **Pull** (StatCat-Suite/sdmxlib-rest#48): the required tier through `edition_files(manifest, tiers=("required",))` and any copy tool, checked with `check_on_open(stamps=, remote=)`; the remote tier read through `LocalRegistry.edition(path, remote=, engine=, manifest_sha256=)`.
