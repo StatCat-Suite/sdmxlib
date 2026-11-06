@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.87.0] - 2026-11-06
+
+### Breaking Changes
+
+- **inventory**: Call a custom `Fetch` from worker threads in `LiveInventory.editions()`, `LiveInventory.products()` and `FullInventory.leaves()`; pass `leaf_threads=1` to keep sequential reads (GH-375)
+
+### Documentation
+
+- **spec**: Record the Inventory read cost and the baked-summary decision (StatCat-Suite/statcatlib#98)
+- **spec**: Require concurrent leaf reads before Phase 6 (GH-375)
+- **plan**: Mark Phase 4 built (StatCat-Suite/statcatlib#98)
+- **design**: State the Inventory reader's concurrent leaf reads (GH-375)
+- **upgrading**: State that the Inventory reader calls fetch from worker threads (GH-375)
+
+### Features
+
+- **inventory**: Read a version's leaves on a thread pool (GH-375)
+
 ## [0.86.0] - 2026-11-05
 
 ### Bug Fixes
