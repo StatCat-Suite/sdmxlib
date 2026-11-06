@@ -59,13 +59,15 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
   base's and refuses a base more than `MAX_BASE_AHEAD` ahead; `next_root`
   takes `previous_bytes` and `changes` together and writes both history
   fields; `entry_record` is a change item's copy of a `LeafEntry`.
-- Reading (`_reader.py`): `LiveInventory(fetch, schema_version=...)` and
-  `FullInventory(fetch)`, each with `refresh()`, `seq`, `restore_epoch` and
-  `skipped`; `LiveInventory.editions()`, `products()` and `head(product)`
+- Reading (`_reader.py`): `LiveInventory(fetch, schema_version=...,
+  leaf_threads=...)` and `FullInventory(fetch, leaf_threads=...)`
+  (`DEFAULT_LEAF_THREADS`, 64), each with `refresh()`, `seq`, `restore_epoch`
+  and `skipped`; `LiveInventory.editions()`, `products()` and `head(product)`
   return `LiveEdition`s, which carry the entry's `dataflows`, `pull_bytes`
   and `artefacts` (None when absent); `FullInventory.root`, `embargo`,
   `retired`, `products()`, `leaf()`, `leaves()` and `entries()`. `local_fetch(dir)`
-  is a `Fetch` over a directory.
+  is a `Fetch` over a directory. A `Fetch` may be called from several threads
+  at once.
 - `repairable(journal, leaves, retired)` (`_rules.py`): the seal-journal
   entries the narrow repair (spec §6.7) may record: those the newest version
   neither names nor tombstones.
@@ -93,6 +95,14 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
   `restore_epoch` changed; it verifies the root `CURRENT` names, probes
   `seq + 1` onward without listing, and skips an invalid root into
   `skipped`. A leaf must hash to its name.
+- `LiveInventory.editions()`, `LiveInventory.products()` and
+  `FullInventory.leaves()` make one GET per leaf the reader does not hold. With
+  two or more to fetch and `leaf_threads` above 1, the GETs run on a pool that
+  ends before the call returns or raises. Only `fetch` runs on a worker: the
+  calling thread checks, decodes and holds each leaf in sorted product order.
+  The first bad leaf in that order raises and the leaves before it stay held,
+  as in a sequential read. Fetches in flight then finish, and fetches not yet
+  started are cancelled. A read of one product fetches in the calling thread.
 - With `CURRENT` present and verifying, a reader fetches only `CURRENT` and
   roots. Otherwise it reads `catalog.json` and, on 2.x, `inventory/HISTORY`;
   takes the epoch from `HISTORY` (2.x) or `catalog.json` (1.x); bounds its
@@ -115,13 +125,14 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
 
 ## Side Effects
 
-- None: the rules are pure, the readers read only through `fetch`, caching
-  leaves by hash, and `route` reads only through the `manifest` callable it
-  is given.
+- None on the catalog: the rules are pure, the readers read only through
+  `fetch`, caching leaves by hash, and `route` reads only through the
+  `manifest` callable it is given. A read of every product starts up to
+  `leaf_threads` threads for its own duration.
 
 ## Verification
 
-- `uv run pytest -m unit tests/unit/test_inventory.py tests/unit/test_inventory_history.py tests/unit/test_inventory_reader_fallback.py tests/unit/test_inventory_history_schemas.py tests/unit/test_inventory_conformance.py tests/unit/test_inventory_routing.py`.
+- `uv run pytest -m unit tests/unit/test_inventory.py tests/unit/test_inventory_history.py tests/unit/test_inventory_reader_fallback.py tests/unit/test_inventory_history_schemas.py tests/unit/test_inventory_conformance.py tests/unit/test_inventory_routing.py tests/unit/test_inventory_concurrent_leaves.py`.
   The conformance suite runs against two backends in
   `tests/support/inventory_backends.py`: the file protocol, written by the
   reference writer in `tests/support/inventory.py` (it writes the history

@@ -19,6 +19,28 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## The Inventory reader calls `fetch` from worker threads
+
+From 0.87.0, `LiveInventory.editions()`, `LiveInventory.products()` and
+`FullInventory.leaves()` call `fetch` from worker threads, up to
+`DEFAULT_LEAF_THREADS` (64) at once
+([GH-375](https://github.com/StatCat-Suite/sdmxlib/issues/375)). A custom
+`Fetch` must be safe to call from several threads at once. Thread-locals and
+context variables the caller sets are not available inside it.
+
+Pass `leaf_threads=1` to keep sequential reads:
+
+```python
+from sdmxlib.inventory import FullInventory, LiveInventory, local_fetch
+
+fetch = local_fetch("catalog")    # or your own Fetch
+live = LiveInventory(fetch, leaf_threads=1)
+full = FullInventory(fetch, leaf_threads=1)
+```
+
+These reads raise the error a sequential read raises, and by then they may
+have fetched leaves after the bad one.
+
 ## Inventory routing fields
 
 This release adds the routing fields of Inventory 1.1
