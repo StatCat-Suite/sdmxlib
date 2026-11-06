@@ -433,7 +433,7 @@ An entry item:
 - `entry` omits `structure_source`, `artefacts` and every later optional `LeafEntry` field (H14). `manifest_sha256` pins what the manifest holds, so the change list keeps its size when `artefacts` is filled; a format minor that wants a later field in `entry` says so.
 - A writer computes the change list from the base version's root and leaves and this version's, and reads no other version (§6.6).
 
-Sizes on the corpus of StatCat-Suite/statcatlib#126 (2,521 one-table products), compact JSON: a release's change item, with its two entry items, is 920 bytes; a release of 200 tables adds 185 KB to its root, and a republish of 7,000 products 6.5 MB, beside a 1.6 MB root. A filled `artefacts` grows a one-edition leaf from 510 bytes to 2.4 KB and leaves the change list unchanged.
+Sizes on the corpus of StatCat-Suite/statcatlib#126 (2,521 one-table products), compact JSON: a release's change item, with its two entry items, is 920 bytes; a release of 200 tables adds 185 KB to its root, and a republish of 7,000 products 6.5 MB, beside a 1.6 MB root. A one-edition leaf as written, in indented JSON, averages 665 bytes on §6.5's corpus with one dataflow URN and `pull_bytes`, and 2,579 bytes with 10 artefact records as well. A filled `artefacts` leaves the change list unchanged.
 
 **The routing fields.** `dataflows` and `pull_bytes` are the routing fields (GH-348). A `LeafEntry` carries both or neither, and a writer that has them fills both in every entry it records, of either leaf kind, from its manifest. They are defined by their presence, as the history fields are (§6.2, H19): every rule that reads them tests whether an entry carries both, and none tests `format_version`, so Inventory 1.1 and 1.2 ship in either order. A 1.x reader that predates them ignores them, and an entry without them still reads.
 
@@ -552,6 +552,19 @@ sdmxlib states these rules as pure functions a writer calls before it publishes 
 9. References resolve: every reference a data product's edition stores names an artefact or item in that edition, since a data product vendors its closure (§8). A structure product's references resolve within its own edition or in a full artefact, or an item of one, that another live or embargoed structure product's edition holds: a concept scheme in `structure-concepts` whose core representation names a codelist in `structure-classifications`. The publish check is given those structure editions, `check_edition(at="publish", structures=...)`, and reports each reference that none of them holds, naming the editions it looked in. An edition with no bindings is a structure product for this check (§8).
 
 The release job reads each incoming edition's manifest to verify `manifest_sha256` (item 2), and reads every other edition's artefact records from its leaf's filled `artefacts` (§6.3). For an entry recorded before Phase 5, with `artefacts` absent, it reads the manifest. StatCat-Suite/statcatlib#126 measured the manifest path: at 6,300 live products, 6,300 manifest reads (91 MB) take 0.81 s of a 1.79 s cold seal on local disk, and are about 6,300 sequential GETs on object storage.
+
+**The Inventory read at 7,000 products** (StatCat-Suite/statcatlib#98; [`bench/inventory-read-results.md`](https://github.com/StatCat-Suite/statcatlib/blob/main/bench/inventory-read-results.md), sdmxlib 0.86.0). The corpus holds Inventory documents only: 7,000 one-edition products in 14 roots, once with no artefact records (4.7 MB of leaves) and once with 10 a leaf (18.1 MB). The GET counts, bytes and wall times were measured on Azurite, in a container on the reader's machine, so the wall times exclude real storage latency. No real store was measured. The two estimate columns are arithmetic on the GET counts at an assumed 10 ms a request, `GETs x 10 ms` in sequence and `ceil(GETs / 64) x 10 ms` at 64 threads, and exclude transfer time. `LiveInventory` and `FullInventory` make the same GETs. A refresh row is a reader that holds every leaf of the version before.
+
+| read | GETs | bytes, no records / 10 records | Azurite wall, median | estimate in sequence | estimate at 64 threads |
+|---|---:|---:|---:|---:|---:|
+| every leaf, cold | 7,003 | 6.6 MB / 20.0 MB | 4.7 to 4.9 s | 70 s | 1.1 s |
+| one product, cold | 4 | 1.9 MB / 1.9 MB | 0.01 s | 0.04 s | 0.01 s |
+| refresh after 1 product changed | 4 | 1.6 MB / 1.6 MB | 0.01 to 0.03 s | 0.04 s | 0.01 s |
+| refresh after 200 products changed | 203 | 2.1 MB / 2.8 MB | 0.13 to 0.15 s | 2.03 s | 0.04 s |
+
+A pool of 64 threads exists only in the bench, where filling a dictionary of every leaf and serving a new reader from it took 1.7 to 1.8 s on Azurite. GH-375 adds concurrent leaf reads to sdmxlib's Inventory reader. §7.1 sets no number for a pod's Inventory read, and this record sets none.
+
+**The baked summary.** The owner decided on 2026-11-06 to build no baked summary, a single document of all leaves, and to make concurrent leaf reads in sdmxlib required work before Phase 6 (GH-375). Every cold pod reads every leaf, because its router builds its maps from all live entries and the pod constructs `LiveInventory` (§7.3). That read takes 7,003 GETs. In sequence it takes about 70 s by the estimate above, against plan Goal 1's "a cold pod with one pinned product is ready in under 60 s", with the pinned edition's pull on top. At 64 threads it takes about 1.1 s by the same estimate. Neither figure is measured on real storage. Item 9 of statcatlib's real-account checklist runs a 64-thread read of every leaf on a real account, with results in StatCat-Suite/statcatlib#134. A one-product read and a refresh after one product changed each still take 4 GETs. A summary would add a format document to specify and keep consistent, rewritten on every version, and a cold read would still download about 5 to 18 MB, the leaf bytes of the two shapes. If the concurrent read cannot serve Goal 1 on real storage, the baked summary returns as the fallback.
 
 ### 6.6 Write and read protocol
 
@@ -834,6 +847,8 @@ class ShardRouter:
 - `pull_bytes`, or for an entry without it the sum its manifest gives, is the size `registry` pulls before attaching; a pod reads it to plan its local disk and its readiness budget.
 
 A URN with no structure home, such as a DSD several data products vendor, is in neither map; Phase 6 decides how a `/structure` request for one is answered.
+
+A cold pod reads every leaf to build these maps, 7,003 GETs at 7,000 products (§6.5), and GH-375 makes that read concurrent.
 
 Rules: the map holds `live` entries for this pool at this schema; a dataflow routed only to another schema answers 503 naming both; a pod conditional-GETs `CURRENT`, probes forward, fetches the root and only the leaves whose hash changed, verifies a new version and reloads, with in-flight requests finishing on the old registry object; the manifest's SHA-256 is verified against the leaf entry before anything else is read; the LRU budget counts attached catalogs and evicted files stay on node-local disk. A pod fails static on a read error and exposes the Inventory's staleness against the expected release instant as a metric.
 
