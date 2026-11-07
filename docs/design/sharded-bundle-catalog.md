@@ -980,7 +980,7 @@ An Inventory version is restorable only while every data file its editions refer
 3. `build_index()`; drop orphaned search tables.
 4. `seal(edition_dir, product_id=..., ...)`: write the journal entry (§6.7); checkpoint every DuckDB file; flush inlined data; optionally expire snapshots; compact if `final`; fingerprint; compact the store; write `manifest.json` last with `previous`, fingerprints, `canonical_form`, and carry-forward with `carried_from`. No cleanup against `data/`.
 5. `check_edition(at="publish")`.
-6. Record: on a laptop with embargo off, statcatlib writes the Inventory version that makes the edition `live`, then removes the journal entry. On a server, upload (§11.2).
+6. Record: on a laptop with embargo off, statcatlib writes the Inventory version that makes the edition `live`, then removes the journal entry; with embargo on, the version records the edition `embargoed`. On a server, upload (§11.2).
 
 ### 11.2 Upload and release
 
