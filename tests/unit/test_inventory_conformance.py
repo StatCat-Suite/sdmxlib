@@ -111,12 +111,37 @@ class _DropsRouting(FileBackend):
         return super().commit(base, stripped, retired=retired, embargo=embargo, kind=kind)
 
 
+class _StructureArtefactsOnly(FileBackend):
+    """A sabotaged backend that keeps ``artefacts`` in structure leaves only, as a writer before Phase 5 did."""
+
+    @override
+    def commit(
+        self,
+        base: Snapshot | None,
+        leaves: Mapping[str, Leaf],
+        *,
+        retired: Sequence[Tombstone] | None = None,
+        embargo: bool | None = None,
+        kind: EventKind = "seal",
+    ) -> Snapshot:
+        stripped = {
+            p: leaf
+            if leaf.kind == "structure"
+            else msgspec.structs.replace(
+                leaf, editions=tuple(msgspec.structs.replace(e, artefacts=None) for e in leaf.editions)
+            )
+            for p, leaf in leaves.items()
+        }
+        return super().commit(base, stripped, retired=retired, embargo=embargo, kind=kind)
+
+
 @pytest.mark.parametrize(
     ("sabotaged", "failing"),
     [
         (_NoConflict, "check_a_stale_commit_is_refused"),
         (_GoesBack, "check_a_reader_finds_newer_versions_and_never_goes_back"),
         (_DropsRouting, "check_the_routing_fields_survive_a_commit_and_a_reinstate"),
+        (_StructureArtefactsOnly, "check_the_routing_fields_survive_a_commit_and_a_reinstate"),
     ],
 )
 def test_a_backend_breaking_the_protocol_fails_its_check(
