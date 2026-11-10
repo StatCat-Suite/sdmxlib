@@ -93,7 +93,8 @@ seals through `seal(extensions=...)`.
   its availability and for coded-column values outside their enumeration.
   `seal` and `check_edition(at="publish")` both call it.
 - Manifest types, re-exported from `storage._manifest`: `read_manifest`,
-  `decode_manifest` (the same read from bytes, naming `source` in its errors),
+  `decode_manifest` (the same read from bytes, naming `source` in its errors;
+  both refuse a path that could name a file outside the product, GH-380),
   `Manifest`, `Producer`, `Provenance`, `EditionFile`, `ArtefactEntry`,
   `BindingCount`, `Tier`, `ManifestError`, `StoreFormatError`, and the
   constants `DATA_PATH`, `MANIFEST_NAME`, `SIGNATURE_NAME`, `FORMAT_VERSION`
@@ -128,6 +129,9 @@ seals through `seal(extensions=...)`.
   names: the manifest, its signature, and a staged manifest a crash left.
 - Data files are always tier 3. `metadata.duckdb` and `tables.ducklake` default to
   tier 1, and other files to tier 2.
+- `copy_edition` and `check_edition` read and write no listed file for a
+  manifest `decode_manifest` refuses: an unsafe `files` path or a
+  `data_path` outside the product raises `ManifestError` first.
 - `copy_edition` skips a `data/` file already present with the same size and
   digest, raises when a copied file does not match, and refuses a destination
   that is already sealed. Every file it copied is fsynced before the manifest

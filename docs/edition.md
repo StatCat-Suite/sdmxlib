@@ -97,7 +97,7 @@ two spaces, but a reader MUST NOT depend on the layout.
 | `duckdb_storage_version` | required | The newest storage version among `metadata.duckdb` and `tables.ducklake`, the integer each file's header records (§4). |
 | `ducklake_version` | required | The DuckLake extension that wrote `tables.ducklake`, or `null` for an edition without one. |
 | `ducklake_spec_version` | required | The DuckLake format the catalog records, such as `"1.1"`, or `null` for an edition without one (§4). |
-| `data_path` | required | Where the data files live, relative to the edition directory: `"../data/"`. |
+| `data_path` | required | Where the data files live, relative to the edition directory: `"../data/"`. It MUST stay inside the product directory (below). |
 | `files` | required | Every file in the edition directory except the manifest, and every data file the lake catalog references, as `EditionFile`s sorted by `root`, then `path`. |
 | `bindings` | required | One `BindingCount` per bound dataflow, sorted by `dataflow`. |
 | `artefacts` | required | One `ArtefactEntry` per maintainable artefact in the store but the `DataflowBinding`s, sorted by `urn`. |
@@ -118,7 +118,7 @@ two spaces, but a reader MUST NOT depend on the layout.
 
 | field | presence | meaning |
 | --- | --- | --- |
-| `path` | required | The file's path, `/`-separated, relative to the directory `root` names. |
+| `path` | required | The file's path, `/`-separated, relative to the directory `root` names. Every segment is a plain name (below). |
 | `size` | required | Its size in bytes. |
 | `digests` | required | Its contents' digests, an object of algorithm name to lowercase hex. It MUST hold `sha256`, `md5` and `crc32c` (below), and MAY hold others; a reader compares those it knows and ignores the rest. |
 | `root` | required | `"edition"` for a file in the edition directory, `"data"` for a data file under `data_path`. |
@@ -183,7 +183,17 @@ A minor format version only adds optional fields. A reader of `3.x`:
   migrator before sdmxlib 1.0;
 - MUST refuse a `manifest.json` with no `format_version`. That file is a
   builder's own format from before this one, and the producer must seal a new
-  edition with `seal`.
+  edition with `seal`;
+- MUST refuse a manifest with a path that could name a file outside the
+  product, before it reads or writes any file the manifest lists. A `files`
+  entry's `path` is refused when it is empty or absolute (a leading `/`, or
+  a drive such as `C:`), or when a `/`-separated segment is empty, is `.` or
+  `..`, or holds a backslash or NUL. An `edition` entry whose `path` is
+  `manifest.json` is refused too. `data_path` is refused when it is
+  absolute, is a URL, holds a backslash or NUL, or, resolved against the
+  edition directory, leaves the product directory. `decode_manifest` and
+  `read_manifest` raise `ManifestError` for each. `seal` never writes such a
+  path, so this rule changes no format version.
 
 A producer MUST NOT add top-level fields of its own. Its fields go in
 `producer_fields`, and fields another package owns go in `extensions` under
