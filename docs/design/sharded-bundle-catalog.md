@@ -368,13 +368,13 @@ A writer without stage-2 support can decode `catalog.json` before the rewrite an
 | `restore_epoch` | required | Equal to `catalog.json`'s when written. |
 | `created_at` | required | An RFC 3339 UTC instant ending in `Z`, and the fifth field of the document, so a ranged GET of a root's first 1 KiB reads it (§6.9 step 1). §6.6 bounds it from below by the base version's. |
 | `producer` | required | `{name, version}` of the library that wrote this root. |
-| `embargo` | required | `true` or `false`. With `false`, a seal releases its edition in the same version (§6.4). |
+| `embargo` | required | `true` or `false`. With `false`, a seal releases its edition in the same version, and the release job releases what is due (§6.4). With `true`, a seal records its edition `embargoed` and no automatic release runs: the release job releases nothing, and only an explicit release, such as `CatalogAdmin.release`, makes an edition `live` (§6.4). A server catalog runs with `false`, and an operator sets `true` to stop releases. |
 | `products` | required | A map from `product_id` to `{leaf, leaf_sha256}`, `leaf` the path `inventory/leaves/<sha256>.json`. |
 | `retired` | required | Tombstones: every `{product_id, edition_id, retired_at}` retired within the tombstone window, so a retired edition stays distinguishable from one never recorded. Kept at least as long as backups (§11.6). |
-| `event` | required | `{actor, reason, kind}`: who acted and why. `kind` is one of `seal`, `release`, `rollback`, `withdraw`, `retire`, `reinstate`, `embargo-change`, `restore`, `correct` and `describe`; `reinstate` arrives in Inventory 1.2 (H24). A server fold of `pending/` records `seal` (§11.2). `describe` records a change to the catalog description in `extensions.statcat` and nothing else. A writer records one of these ten kinds. A reader accepts any `kind` string within format 1.x, and an audit or alerting consumer treats a kind it does not know as other, so a new kind is an additive minor-version change (GH-338). Readers older than sdmxlib 0.82.0 refuse a root whose `kind` they do not know: `describe` needs sdmxlib 0.81.0 or later (GH-334). `actor` comes from the writer's identity (a token's object id). It is fixed when the writer's storage is constructed, and no write method takes one. |
-| `extensions` | optional | Sections keyed by package; `statcat` holds the `CatalogDescription`. |
+| `event` | required | `{actor, reason, kind}`: who acted and why. `kind` is one of `seal`, `release`, `rollback`, `withdraw`, `retire`, `reinstate`, `embargo-change`, `restore`, `correct` and `describe`; `reinstate` arrives in Inventory 1.2 (H24). A server fold of `pending/` records `seal` (§11.2). `describe` records a change to the catalog description in `extensions.statcat` and nothing else. A version that changes only the release job's refusal record in `extensions.statcat` records `release`, with empty `changes`. A writer records one of these ten kinds. A reader accepts any `kind` string within format 1.x, and an audit or alerting consumer treats a kind it does not know as other, so a new kind is an additive minor-version change (GH-338). Readers older than sdmxlib 0.82.0 refuse a root whose `kind` they do not know: `describe` needs sdmxlib 0.81.0 or later (GH-334). `actor` comes from the writer's identity (a token's object id). It is fixed when the writer's storage is constructed, and no write method takes one. |
+| `extensions` | optional | Sections keyed by package; `statcat` holds the `CatalogDescription` and, on a server, the release job's refusal record: the refusals of its newest run, each with its reason (§6.4). statcatlib's catalog format defines the section. |
 | `previous_root_sha256` | with `changes` (1.2) | The SHA-256 of the stored bytes of the base version, root `seq - 1`, or `null` for version 1. After a restore to root S, root S + 1's base is root S (§6.9). |
-| `changes` | with `previous_root_sha256` (1.2) | The change list: one change item per product whose leaf or tombstones differ from the base version's, sorted by `product_id` (§6.3). An empty list for a version that changes no leaf and no tombstone, such as `embargo-change` or `describe`. |
+| `changes` | with `previous_root_sha256` (1.2) | The change list: one change item per product whose leaf or tombstones differ from the base version's, sorted by `product_id` (§6.3). An empty list for a version that changes no leaf and no tombstone, such as `embargo-change`, `describe`, or a `release` that changes only the refusal record. |
 
 **The history fields.** `previous_root_sha256` and `changes` are the history fields. A root carries both or neither, and a writer that has them writes both in every version, on every catalog. They are defined by their presence (H19): every rule that depends on them (the opt-in refusal of §6.1, `since_seq`, expiry's stop rule and `verify-catalog`, §6.9) tests whether a root carries both, and none tests `format_version`. A 1.x reader that predates them ignores them.
 
@@ -457,7 +457,7 @@ Sizes on the corpus of StatCat-Suite/statcatlib#126 (2,521 one-table products), 
   "restore_epoch": 0,
   "created_at": "2026-10-09T12:30:00.412Z",
   "producer": {"name": "statcatlib", "version": "0.12.0"},
-  "embargo": true,
+  "embargo": false,
   "products": {
     "14100287": {"leaf": "inventory/leaves/9f2c….json", "leaf_sha256": "9f2c…"},
     "census-2021-cpt": {"leaf": "inventory/leaves/41b0….json", "leaf_sha256": "41b0…"}
@@ -519,13 +519,14 @@ Every entry has one of four states. Retirement is a tombstone, never a state.
 | `live` | `withdrawn` | `rollback(product, to=Y, if_live=X)` | the live edition is X (by default the one live when the call started), and Y is `superseded` | `CatalogAdmin` |
 | `superseded` | `live` | the same rollback | as above | `CatalogAdmin` |
 | (tombstone) | `superseded` | `reinstate(product, edition, reason)` | the manifest and every listed file verify | `CatalogAdmin` |
-| `superseded`, `withdrawn` | tombstone | retention | past the window | prune job |
+| `superseded`, `withdrawn` | tombstone | retention | `state_changed_at` older than the retire window (§11.6) | prune job |
 
 - **The head.** A product's head is its `live` entry at the reader's `schema_version` (statcatlib RFC decision 24). During a store schema rollout (§9.2) a product has one live edition per schema version: old pods read the old one, new pods the new one. A product with no live edition has no head.
 - **Fast-forward.** A release whose edition's `previous` is not the product's live edition at its `schema_version` is refused, naming both editions. Forks are refused here, at release, and never at seal: a seal-time refusal would block every publish after a rollback.
 - **Rollback is conditional and forward.** `if_live` defaults to the edition live when the call started; a retry is refused if the live edition is no longer X. `to` defaults to the most recent superseded edition. A rollback is a new Inventory version; it never moves `CURRENT` back, which would drop other products' later releases.
 - **Rollback ripples.** An unsealed or pending edition built on a withdrawn one then fails the fast-forward check. The error names the withdrawn base, the current live edition, and the fix: discard, then build from the live edition.
-- **Release batches report per product.** `release_due` releases what it can and refuses the rest, persisting each refusal's reason, without failing the batch.
+- **Release batches report per product.** `release_due` releases what it can and refuses the rest without failing the batch. The release job persists the refusals of its newest run, each with its reason, in the root's `extensions.statcat` (§6.2), where an operator and the §11.6 alert read them.
+- **Embargo holds automatic releases.** An automatic release is one no operator asked for. While the head's `embargo` is `true`, the release job releases nothing, and an explicit release still does. `release_due` reads no flag: the release job checks `embargo` before it calls `release_due`, and again on each retry (§6.6).
 - **The release clock is the storage server's.** The release job takes `now` from the storage response `Date` header with a skew bound of 30 s and refuses to run if its own clock is ahead; `release_due(now=None)` defaults to that time and refuses a naive datetime.
 
 sdmxlib states these rules as pure functions a writer calls before it publishes a version (GH-251): given the current root and leaves, an operation and its arguments, they return the new leaf entries or raise a refusal naming the rule. `record` and `reinstate` take the entry's routing fields and `artefacts`, and the other rules carry them unchanged (§6.3).
@@ -959,7 +960,7 @@ The publish job's write includes reading its own uploads for the digest check (�
 
 The public reaches a result through sdmxlib-rest, which streams `results/<key>` to the CDN (§7.4, Delivery). A pod reads a key only after computing it from a `live` entry, so an embargoed key, though present in `results/`, is unreachable until its release. Nothing serves `products/` or `results/` to the public directly.
 
-A copy of a catalog is outside the embargo boundary. `CatalogAdmin.export(live_only=True)` makes a safe copy, and a live-only replica regenerated from `CURRENT` is the only touchpoint for analytics and governance tools that need their own read identity (statcatlib RFC decision 30). A live-only export writes a new chain with a new `catalog_id` (§6.1), and its change lists carry only transitions into or out of `live`: for an `embargoed` to `live` item it keeps the start of the live state and drops the end of the embargoed one. A full export copies `inventory/` and `history/` unchanged. A local `event.actor` is `<os user>@<hostname>`, which is personal data and stays in segments for good; an operator who needs another identity sets the actor when constructing the writer's storage (§6.2).
+A copy of a catalog is outside the embargo boundary. `CatalogAdmin.export(live_only=True)` makes a safe copy, and a live-only replica regenerated from `CURRENT` is the only touchpoint for analytics and governance tools that need their own read identity (statcatlib RFC decision 30). A live-only export writes a new chain with a new `catalog_id` (§6.1), and its change lists carry only transitions into or out of `live`: for an `embargoed` to `live` item it keeps the start of the live state and drops the end of the embargoed one. It also drops the release job's refusal record from `extensions.statcat`, since the record names embargoed editions. A full export copies `inventory/` and `history/` unchanged. A local `event.actor` is `<os user>@<hostname>`, which is personal data and stays in segments for good; an operator who needs another identity sets the actor when constructing the writer's storage (§6.2).
 
 ### 10.2 Namespace
 
@@ -1017,11 +1018,12 @@ sdmxlib holds no blob client, so a pod pulls from object storage with the deploy
 
 ### 11.6 Retention and alerts
 
-One configuration states the retention windows and checks their order:
+One configuration, which the release job and GC both read, states the retention windows and bounds and checks their order:
 
 - backup retention ≤ the `data/` GC window ≤ the tombstone window (§10.3);
 - the Inventory version retention window W ≥ the `data/` GC window plus one day, both measured from the superseding root's `created_at` in storage time. Backup retention is at most the GC window, so W covers backups too;
-- the longest pod poll interval plus fetch time < W;
+- the pod staleness bound (`pod_staleness` in statcatlib's jobs configuration), the longest pod poll interval plus fetch time, < W;
+- the retire window (`retire_after`): a `superseded` or `withdrawn` entry becomes a tombstone once its `state_changed_at` is older than the retire window by the storage clock (§6.4), except a structure edition that a live or embargoed data edition's `partial_of` cites (§11.4);
 - objects reachable from the newest K roots are never deleted, with K ≥ 2 and 10 by default (H17). K keeps the fallback walk's reach when `CURRENT` and the head both go bad: at 3 to 10 versions a day, 10 versions is 1 to 3 days.
 - the upload grace period, 24 h by default, exceeds the longest upload, measured from a data file's last-modified time to the upload's `pending/` registration (§11.2 step 1). GC deletes no `data/` file younger than the grace period, and the grace period is the only protection of an uploaded edition with no `pending/` registration (§11.4).
 
@@ -1029,7 +1031,7 @@ Object lock on `history/` (Azure immutable blob storage, S3 Object Lock) is reco
 
 Old-schema live entries stay until the rollback window for the pod image closes (§9.2 step 5).
 
-Alerts, each with a runbook: embargoed editions past `release_at` (with `release_due`'s persisted refusal reasons and a manual release command that takes a reason); sealed-but-unrecorded editions on a server (an owner, and a discard-or-reinstate decision); `CURRENT` behind the newest root (`advance-current`); GC deletions off the dry-run forecast; storage 503s; the release job missed or failed; a root that fails validation; pod staleness over a threshold, which fires well inside W, since a pod stuck on one root for W loses its uncached leaves; an expiry run skipped by a gate, stopped by a lease renewal or the 30-minute cap, or reporting an orphan segment or a kept root (§6.9); old `pending/` entries; a `pending/` registration whose manifest GC cannot read or verify; an uploaded edition with no `pending/` registration (rerun the upload); a failed access precondition; backup age; replication lag; stale unsealed editions on build nodes.
+Alerts, each with a runbook: embargoed editions past `release_at` (with the refusal reasons persisted in the root's `extensions.statcat` (§6.4) and a manual release command that takes a reason); sealed-but-unrecorded editions on a server (an owner, and a discard-or-reinstate decision); `CURRENT` behind the newest root (`advance-current`); GC deletions off the dry-run forecast; storage 503s; the release job missed or failed; a root that fails validation; pod staleness over a threshold, which fires well inside W, since a pod stuck on one root for W loses its uncached leaves; an expiry run skipped by a gate, stopped by a lease renewal or the 30-minute cap, or reporting an orphan segment or a kept root (§6.9); old `pending/` entries; a `pending/` registration whose manifest GC cannot read or verify; an uploaded edition with no `pending/` registration (rerun the upload); a failed access precondition; backup age; replication lag; stale unsealed editions on build nodes.
 
 ---
 
