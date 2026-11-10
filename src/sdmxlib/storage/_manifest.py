@@ -15,10 +15,12 @@ proof the files are the ones the manifest describes, which the edition checker
 verifies (GH-67).
 """
 
+import posixpath
 import tempfile
 from datetime import datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Annotated, Literal
+from urllib.parse import urlsplit
 
 import duckdb
 import msgspec
@@ -240,6 +242,9 @@ class EditionFile(msgspec.Struct, frozen=True, kw_only=True):
 
     Attributes:
         path: ``/``-separated, relative to the directory `root` names.
+            Every segment is a plain name: not empty, ``.`` or ``..``, and
+            free of backslashes and NUL. `decode_manifest` refuses any
+            other path.
         size: In bytes.
         digests: The file's digests by algorithm, each lowercase hex: every
             one of `REQUIRED_DIGESTS`, and any other an algorithm name keys.
@@ -381,7 +386,8 @@ class Manifest(msgspec.Struct, frozen=True, kw_only=True):
             None for an edition without one. A reader refuses one newer
             than its own.
         data_path: Where the data files live, relative to the edition
-            directory: `DATA_PATH`.
+            directory: `DATA_PATH`. `decode_manifest` refuses one that
+            leaves the product directory.
         files: Every file of the edition but the manifest, and every data
             file its lake catalog references, sorted by root and path.
         bindings: Observation counts per bound dataflow, sorted by URN.
@@ -449,8 +455,9 @@ def read_manifest(root: Path) -> Manifest:
         The manifest.
 
     Raises:
-        ManifestError: If there is none, it is malformed, or its major format
-            version is not one this build reads.
+        ManifestError: If there is none, it is malformed, its major format
+            version is not one this build reads, or a path in it could name a
+            file outside the product.
     """
     return decode_manifest(read_manifest_bytes(root), root / MANIFEST_NAME)
 
@@ -482,8 +489,9 @@ def decode_manifest(raw: bytes, source: str | Path) -> Manifest:
         The manifest.
 
     Raises:
-        ManifestError: If it is malformed, or its major format version is not
-            one this build reads.
+        ManifestError: If it is malformed, its major format version is not
+            one this build reads, or a path in it could name a file outside
+            the product (`refuse_unsafe_paths`).
     """
     try:
         found = msgspec.json.decode(raw, type=_FormatProbe).format_version
@@ -507,7 +515,60 @@ def decode_manifest(raw: bytes, source: str | Path) -> Manifest:
             )
         raise ManifestError(msg)
     try:
-        return msgspec.json.decode(raw, type=Manifest)
+        manifest = msgspec.json.decode(raw, type=Manifest)
     except msgspec.MsgspecError as exc:
         msg = f"{source} is not a valid format {found} manifest: {exc}"
         raise ManifestError(msg) from exc
+    refuse_unsafe_paths(manifest, source)
+    return manifest
+
+
+def refuse_unsafe_paths(manifest: Manifest, source: str | Path) -> None:
+    """Refuse a manifest whose ``files`` or ``data_path`` could name a file outside its product.
+
+    A `files` path must be relative, with every ``/``-separated segment
+    non-empty, free of backslashes and NUL, and neither ``.`` nor ``..``; an
+    ``edition`` entry must not be the manifest itself. `data_path` must be
+    relative, free of backslashes and NUL, and stay inside the product directory
+    once resolved against the edition directory. statcatlib's pull applies
+    the same rule (``store/blob.py``).
+
+    Raises:
+        ManifestError: Naming `source` and the first path refused.
+    """
+    for entry in manifest.files:
+        if not _is_safe_path(entry.path) or (entry.root == "edition" and entry.path == MANIFEST_NAME):
+            msg = (
+                f"{source} files lists the path {entry.path!r} under the {entry.root} root, which could name a "
+                "file outside the edition; a path is relative and every segment a plain name"
+            )
+            raise ManifestError(msg)
+    if not _stays_in_product(manifest.data_path):
+        msg = f"{source} has data_path {manifest.data_path!r}, which leads outside the product directory"
+        raise ManifestError(msg)
+
+
+def _is_relative(path: str) -> bool:
+    """Whether `path` has no root and no drive, read as a POSIX path and as a Windows one."""
+    return not PurePosixPath(path).anchor and not PureWindowsPath(path).anchor
+
+
+def _is_plain_name(name: str) -> bool:
+    """Whether `name` is one path segment: not empty, no separator, no NUL, not ``.`` or ``..``."""
+    return bool(name) and not {"/", "\\", "\0"} & set(name) and name not in {".", ".."}
+
+
+def _is_safe_path(path: str) -> bool:
+    """Whether `path` stays below the directory it is joined to: relative, with only plain segments."""
+    return _is_relative(path) and all(_is_plain_name(part) for part in path.split("/"))
+
+
+def _stays_in_product(data_path: str) -> bool:
+    """Whether `data_path`, resolved against an edition directory, names a directory in its product.
+
+    The edition directory is one segment below the product directory, so a
+    stand-in segment resolves it the same way for every edition id.
+    """
+    if not _is_relative(data_path) or urlsplit(data_path).scheme or {"\\", "\0"} & set(data_path):
+        return False
+    return posixpath.normpath(posixpath.join("edition", data_path)).split("/")[0] != ".."
