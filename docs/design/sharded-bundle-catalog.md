@@ -428,7 +428,7 @@ An entry item:
 | `entry` | required when `to` is a state, absent otherwise | The new `LeafEntry`'s `edition_id`, `previous`, `state`, `manifest_sha256`, `schema_version`, `state_changed_at` and `release_at`, and no other field. |
 
 - An item whose `from` equals `to` records an entry that changed and kept its state, such as a rescheduled `release_at`.
-- `tombstone` marks the `retired` list and is no fifth state: §6.4's "Retirement is a tombstone, never a state" stands (H18). A tombstone comes from a `retire` version, and `reinstate` writes `from: tombstone, to: superseded`.
+- `tombstone` marks the `retired` list and is no fifth state: §6.4's "Retirement is a tombstone, never a state" stands (H18). A tombstone comes from a `retire` version, or from the `restore` version for an edition only the discarded roots recorded (§6.9, Restores), and `reinstate` writes `from: tombstone, to: superseded`.
 - Nothing removes a tombstone from `retired` today (`prune` never expires one). A later writer that does writes `to: null`, so a replay of `retired` stays exact.
 - `entry` omits `structure_source`, `artefacts` and every later optional `LeafEntry` field (H14). `manifest_sha256` pins what the manifest holds, so the change list keeps its size when `artefacts` is filled; a format minor that wants a later field in `entry` says so.
 - A writer computes the change list from the base version's root and leaves and this version's, and reads no other version (§6.6).
@@ -689,7 +689,7 @@ Locally:
 
 On Azure Blob Storage, on an opted-in catalog:
 
-- The lock is a blob lease on `inventory/HISTORY`. The release job runs one instance at a time and holds the lease for its whole run; a second run fails to take it and writes nothing. statcatlib's blob writer takes the same lease, so a `CatalogAdmin` call under the release job's identity waits for the run.
+- The lock is a blob lease on `inventory/HISTORY`. The release job runs one instance at a time and holds the lease for its whole run; a second run fails to take it and writes nothing. statcatlib's blob writer takes the same lease: a `CatalogAdmin` call under the release job's identity waits up to 120 s for it, then fails and names the runbook that breaks a lease. The release job expires only in runs scheduled for expiry, at times with no release, so a run at a release time holds the lease for the seconds its other steps take.
 - The lease lasts 60 s, and the holder renews it every 20 s. Before each destructive call (a segment write, a `HISTORY` write, a root or leaf delete) the holder checks that its last successful renewal is less than 40 s old, and stops expiry otherwise. A failed renewal stops the run's expiry; the next run's crash rule finishes it.
 - A lease fences writes to `HISTORY` only, and a paused holder can still delete after its lease lapsed. Leaf deletes therefore carry `If-Match` with the ETag read at step 6's final check, and the writer writes each leaf its version changes with an unconditional Put of the same bytes (§6.6). In either order the leaf survives: a Put before the delete changes the ETag and the delete fails; a Put after it recreates the leaf. Roots stay create-only.
 - A run holds the lease for at most 30 minutes, then releases it and alerts. A runbook breaks a lease only after the holding job's pod has stopped.
@@ -723,7 +723,7 @@ A reader older than stage 1 misbehaves on an opted-in catalog only when `CURRENT
 2. it writes `HISTORY` with the new epoch, `expired_through` set to the smaller of its old value and S, and `newest_segment` set to the restore segment;
 3. it bumps `restore_epoch` in `catalog.json`;
 4. it deletes the roots above S;
-5. it writes root S + 1 of the new epoch, with `event.kind: restore` and a `previous_root_sha256` that hashes root S, through the writer's internal commit;
+5. it writes root S + 1 of the new epoch, with `event.kind: restore` and a `previous_root_sha256` that hashes root S, through the writer's internal commit. Its `retired` holds root S's tombstones and a tombstone for each edition that a discarded root it could read records in a leaf and that root S records in neither a leaf nor `retired`. GC then keeps those editions' files while the tombstones are within the window (§11.4), and `reinstate` can bring one back (§10.3);
 6. it writes `CURRENT`.
 
 A crash after step 2 leaves readers whose `CURRENT` fails with the new epoch and no root in it, so they fail closed until root S + 1 exists; a rerun resumes from the epoch in `HISTORY`. A restore deletes no leaves: the leaves only its discarded roots named leak as a crashed commit's do. A restore only adds segments under `history/`, and never deletes or overwrites one.
