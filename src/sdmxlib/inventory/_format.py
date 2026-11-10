@@ -329,11 +329,12 @@ class StructureSource(msgspec.Struct, frozen=True, kw_only=True):
 
 
 class PartialRecord(msgspec.Struct, frozen=True, kw_only=True, omit_defaults=True):
-    """One artefact of an edition as its manifest fingerprints it.
+    """One artefact of an edition as its manifest fingerprints it: a full artefact or a partial.
 
     Attributes:
         fingerprint: The artefact fingerprint.
-        partial_of: For a partial, the fingerprint of the full artefact it was cut from.
+        partial_of: For a partial, the fingerprint of the full artefact it was
+            cut from; absent for a full artefact.
     """
 
     fingerprint: str
@@ -356,9 +357,12 @@ class LeafEntry(msgspec.Struct, frozen=True, kw_only=True):
             authoritative.
         artefacts: The artefact records of its manifest, by URN: every full
             artefact with its fingerprint, and every partial with its
-            fingerprint and ``partial_of``. Optional in 1.x; a writer fills it
-            in every structure entry, and an entry without it is read from
-            its manifest (spec §6.3).
+            fingerprint and ``partial_of``. Optional in 1.x. A writer fills
+            it in every structure entry, and from Phase 5 in every entry it
+            records, so the cross-product rules read it in place of the
+            manifest; a filled value equals the records of the manifest
+            ``manifest_sha256`` names. An entry without it is read from its
+            manifest (spec §6.3).
         dataflows: A routing field: the URNs of its manifest's bindings,
             sorted and without duplicates; empty for a structure edition.
             Unset in an entry without the routing fields.
