@@ -75,7 +75,9 @@ statcatlib owns the writer. sdmxlib holds no blob client: the reader takes a
   `commit` raising `ConflictError` on a stale base, `commit_interrupted`,
   `reader`, `hint_behind`, `restore_to`, `restore_with_new_epoch`), the
   `Snapshot` it returns, the checks in `CHECKS`, and `run(new)`, which runs
-  every check against fresh backends. An implementation of the protocol
+  every check against fresh backends. The routing check reads back the
+  `artefacts` of a structure entry, a reinstated one and a data entry, since
+  a writer fills them in every entry from Phase 5 (spec §6.3). An implementation of the protocol
   (statcatlib's writer) runs it as a test. A writer of the history fields
   also provides a `HistoryBackend` (`stage_2`, `fetch`, `put`, `commit_at`)
   and runs `run_history`, the stage-1 checks in `HISTORY_CHECKS`. The §6.9

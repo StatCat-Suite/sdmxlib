@@ -325,6 +325,11 @@ _FLOWS = (
 _HOME = "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=STC:CL_GEO(1.0)"
 _CUT = "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=STC:CL_FREQ(1.0)"
 _RECORDS = {_HOME: PartialRecord(fingerprint="f1"), _CUT: PartialRecord(fingerprint="f2", partial_of="f3")}
+#: A data edition's records: its full data structure and a partial cut from the structure home.
+_DATA_RECORDS = {
+    "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=STC:DSD_A(1.0)": PartialRecord(fingerprint="f4"),
+    _CUT: PartialRecord(fingerprint="f5", partial_of="f1"),
+}
 
 
 def _routed(leaf: Leaf | None, edition: str, previous: str | None) -> Leaf:
@@ -358,7 +363,9 @@ def _routing_of(snapshot: Snapshot | None, product: str, edition: str) -> object
 def check_the_routing_fields_survive_a_commit_and_a_reinstate(new: Callable[[], Backend]) -> None:
     """An entry's routing fields and ``artefacts`` read back as recorded, and a reinstated entry keeps them.
 
-    An entry recorded without them reads with them absent (spec §6.3).
+    A data entry's ``artefacts`` read back as a structure entry's do, since
+    a writer fills them in every entry from Phase 5. An entry recorded
+    without them reads with them absent (spec §6.3).
     """
     backend = new()
     data = record(
@@ -372,6 +379,7 @@ def check_the_routing_fields_survive_a_commit_and_a_reinstate(new: Callable[[], 
         schema_version=SCHEMA_VERSION,
         embargo=False,
         now=_T0 + _MINUTE,
+        artefacts=_DATA_RECORDS,
         dataflows=_FLOWS,
         pull_bytes=13131776,
     )
@@ -383,7 +391,7 @@ def check_the_routing_fields_survive_a_commit_and_a_reinstate(new: Callable[[], 
         if bare != (msgspec.UNSET, msgspec.UNSET, None):
             msg = f"{who} read routing fields {bare} into an entry recorded without them"
             raise _fail(msg)
-        if (found := _routing_of(snapshot, "d", _edition(2))) != (tuple(sorted(_FLOWS)), 13131776, None):
+        if (found := _routing_of(snapshot, "d", _edition(2))) != (tuple(sorted(_FLOWS)), 13131776, _DATA_RECORDS):
             msg = f"{who} read the data entry's routing fields as {found}"
             raise _fail(msg)
         if (found := _routing_of(snapshot, "s", _edition(3))) != ((), 4096, _RECORDS):
