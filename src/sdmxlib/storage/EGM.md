@@ -64,7 +64,11 @@ of the store that edition ships (`_trim.py`).
   then `decode_manifest(raw, source)`, split so `LocalRegistry.edition` hashes
   the bytes it parses; `source` is a `str` or `Path` the errors name, and
   `sdmxlib.edition` exports the function for bytes read from object storage.
-  The module also defines `ManifestError`,
+  `decode_manifest` ends with `refuse_unsafe_paths`, which raises
+  `ManifestError` for a `files` path that is empty or absolute or holds an
+  empty, `.`, `..`, backslash or NUL segment, for an `edition` entry named
+  `manifest.json`, and for a `data_path` that leaves the product directory
+  (GH-380). The module also defines `ManifestError`,
   `StoreFormatError`, `MANIFEST_NAME`, `FORMAT_VERSION`, `DATA_PATH`,
   `DUCKLAKE_SPEC_VERSION`, `edition_storage_version`,
   `engine_storage_version` and `generate_schema` (the manifest's JSON Schema).
