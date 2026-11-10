@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.88.0] - 2026-11-10
+
+### Bug Fixes
+
+- **edition**: Refuse a manifest path that leaves the product on decode (GH-380)
+
+### Documentation
+
+- **design**: Record the owner's Phase 5 decisions on GC, pending/ and the access check
+- **design**: Name the local embargoed seal in the §6.4 table
+- **design**: State the embargo-on laptop seal in §11.1 step 6
+- **design**: State the upload grace period in the retention configuration (GH-382)
+- **spec**: State the fold's lifecycle, fork and restore rules (StatCat-Suite/statcatlib#52)
+- **spec**: State the embargo hold and the persisted refusal record (StatCat-Suite/statcatlib#52)
+- **spec**: State GC's reads, log and discard, and the access check's role (StatCat-Suite/statcatlib#52)
+- **spec**: Tombstone discarded editions at restore and bound the admin lease wait (StatCat-Suite/statcatlib#52)
+- **plan**: Align Phase 5 with the release job's specification changes (StatCat-Suite/statcatlib#52)
+- **spec**: Name the release job as the retire writer (StatCat-Suite/statcatlib#52)
+- **inventory**: State that a writer fills artefacts in every entry from Phase 5 (GH-361)
+- **spec**: State the manifest path rule (GH-380)
+
+### Features
+
+- **inventory**: Check that a data entry's artefacts survive a commit (GH-361)
+
 ## [0.87.0] - 2026-11-06
 
 ### Breaking Changes
