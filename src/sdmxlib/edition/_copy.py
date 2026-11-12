@@ -50,7 +50,8 @@ def copy_edition(
     `tiers` limits the copy to the files of those placement tiers: a server
     pulls tiers 1 and 2 and reads tier 3 remotely, so ``tiers=("required", "lazy")`` is what
     it holds. A copy without every tier is incomplete by intent, and
-    `check_edition` reports the files it left out.
+    `check_edition` reports the files it left out unless it is given the same
+    `tiers`.
 
     Args:
         source: A sealed edition directory.

@@ -1617,6 +1617,7 @@ def _bundle_page() -> Generator[dict[str, Any]]:
             "trade_path": publish(make_bundle(root / "trade", 3)),
             "pod_path": pod,
             "store_url": f"file://{census}/",
+            "stamps": root / "stamps",
             "sas": "sv=2026-01-01&sig=placeholder",
         }
 

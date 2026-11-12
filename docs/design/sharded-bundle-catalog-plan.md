@@ -121,7 +121,7 @@ The full corpus is the gating fixture of Phases 6 to 9; Phase 5 uses its own 200
 
 *   **Given**: an Inventory whose live view pins 12 products in the `hot` pool; a new pod starts.
 *   **When**: it reads `CURRENT`, the root it names and the leaves.
-*   **Then**: it pulls the required tier of each pinned live edition, verifies each against the leaf's `manifest_sha256` and with `check_on_open`, attaches them into one `EditionEngine`, and only then reports ready. Remote-tier data files stay in object storage.
+*   **Then**: it pulls the required tier of each pinned live edition, verifies each against the leaf's `manifest_sha256` and with `check_on_open(tiers=("required",))`, attaches them into one `EditionEngine`, and only then reports ready. Remote-tier data files stay in object storage.
 
 ### CUJ 3: A request for an unpinned table
 
@@ -383,7 +383,7 @@ Q8 is decided (2026-11-03): sdmxlib-rest adds four seams (a per-request catalog 
 *   **Concurrent leaf reads** (GH-375): this phase's bench tests measure Goal 1 with them. A cold pod reads every leaf, about 70 s in sequence and about 1.1 s at the reader's default 64 threads by estimate (specification §6.5), so this phase pins the sdmxlib release that carries GH-375.
 *   **Partial references** (StatCat-Suite/sdmxlib-rest#69): `detail=referencepartial` returns the edition's stored partials and, for a codelist the edition holds in full, cuts a partial with `Codelist.partial`, in place of the `referencestubs` answer sdmxlib-rest returns today.
 *   **Inventory polling**: a `LiveInventory` over a `fetch` that conditional-GETs `CURRENT`, probes forward and fetches only the leaves whose hash changed (specification §7.3), on an interval this phase sets (5 s proposed).
-*   **Pull** (StatCat-Suite/sdmxlib-rest#48): the required tier through `edition_files(manifest, tiers=("required",))` and any copy tool, checked with `check_on_open(stamps=, remote=)`; the remote tier read through `LocalRegistry.edition(path, remote=, engine=, manifest_sha256=)`.
+*   **Pull** (StatCat-Suite/sdmxlib-rest#48): the required tier through `edition_files(manifest, tiers=("required",))` and any copy tool, checked with `check_on_open(stamps=, remote=, tiers=("required",))` before the pod reports ready; the lazy tier pulled in the background and checked with `check_on_open(stamps=, remote=, tiers=("required", "lazy"))`, which runs `receive` again because the stamp records the required tier alone (GH-384, specification §7.1); the remote tier read through `LocalRegistry.edition(path, remote=, engine=, manifest_sha256=)`.
 *   **Extensions at `open`** (statcatlib's Phase 4 design, open item S15): specification §4.6 runs the statcat extension's section check alone at `open`, while statcatlib's `check_catalog` runs its full check, so each `view()` pays for it. This phase aligns the table or gives `check_catalog` the profile, with GH-384's `tiers=` (open item S4). statcatlib's Phase 5 design moved it here, since no Phase 5 job opens a view other than `EmbargoReader`, which runs `Product.view`'s check.
 *   **Router** (StatCat-Suite/sdmxlib-rest#46): `ShardRouter` over one `EditionEngine`, as specification §7.3 declares.
     *   Attaches are single-flight per `product_id`.

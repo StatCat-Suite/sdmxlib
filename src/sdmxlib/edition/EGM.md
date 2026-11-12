@@ -34,7 +34,11 @@ seals through `seal(extensions=...)`.
   implements, and `Profile` is the profile literal. Findings are `Finding`s
   (`_finding.py`). An argument the profile does not use (`structures=` at
   `open`, `remote=` at `publish`, `lookup=` outside `receive`,
-  `fingerprints=True` at `open`) raises `ValueError`. `fingerprints=None`
+  `fingerprints=True` at `open`) raises `ValueError`. `tiers=` names the
+  placement tiers held on local disk, at every profile: the `files` check
+  reports a missing file only when its tier is in `tiers`, and checks a
+  present file whatever its tier (GH-384). The `remote`, `lake` and
+  `bindings` checks ignore `tiers`, and an extension check is not told it. `fingerprints=None`
   (the default) recomputes the fingerprints at `publish` only;
   `fingerprints=True` adds them at `receive`, and `fingerprints=False` skips
   them at `publish`, for the process that sealed the edition, right after
@@ -53,7 +57,8 @@ seals through `seal(extensions=...)`.
   for this `(product_id, edition id, manifest sha256)` it runs `receive` and writes
   the stamp when the report is clean; with one it runs `open`. An unreadable
   manifest, or a `product_id` that cannot name a stamp path, gets a `receive`
-  check and no stamp. `references=False` goes to its `receive` calls only.
+  check and no stamp. `references=False` goes to its `receive` calls only,
+  and `tiers=` to both profiles.
 - `copy_edition` and `edition_files` (`_copy.py`): copy the files of the chosen
   tiers and verify each one, and list the paths such a copy needs.
 - `verify_remote`, `RemoteFile`, `content_md5` and `content_crc32c`
@@ -142,6 +147,13 @@ seals through `seal(extensions=...)`.
   `references`. A `references=False` call accepts either stamp. A full call
   that meets a deferred stamp runs `receive`, and replaces the stamp when that
   finds nothing.
+- A stamp records the tiers its check covered, as `tiers`, and satisfies a
+  call only when it records every tier in the call's `tiers` (GH-384). A
+  stamp without `tiers`, as releases through 0.88 wrote, records every tier. A
+  clean `receive` writes the call's tiers and the tiers of the same-manifest
+  stamp it replaces; its `checked` is the new report's alone, so a
+  `references=False` call that needs more tiers than a full stamp records
+  leaves a deferred stamp.
 - `settle_lake` never deletes files from `data/`.
 - `check_edition`'s `tags` check, at `publish` and `receive`, reports every
   stored language tag `normalize_tag` would change or refuse: a store built

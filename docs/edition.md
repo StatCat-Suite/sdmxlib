@@ -624,16 +624,47 @@ recomputation and 46 s without it. Check an edition received from elsewhere,
 or one another process sealed, with the default
 ([GH-357](https://github.com/StatCat-Suite/sdmxlib/issues/357)).
 
+### A server holding some tiers
+
+`check_edition` and `check_on_open` take `tiers=`, the placement tiers the
+caller holds on local disk, with the meaning and default of `copy_edition`'s
+and `edition_files`'s: `("required", "lazy", "remote")`
+([GH-384](https://github.com/StatCat-Suite/sdmxlib/issues/384)). At every profile, the `files` check reports a missing file only when
+its `tier` is in `tiers`. A file that is present is checked as the profile
+asks whatever its tier: its size, and at `publish` and `receive` its digests.
+An unlisted file in the edition directory is a finding as before. With the
+default, every missing file is a finding.
+
+`tiers` and `remote=` are independent. `remote=` and `lookup=` say where the
+data files are read and checked, and with either the `files` check skips
+`data/` whatever `tiers` holds. The `remote`, `lake` and `bindings` checks
+cover every data file whatever `tiers` holds, since they read the data where
+the registry reads it. A call without `remote=` whose `tiers` leaves out
+`"remote"` gets no `files` finding for an absent data file, and its `lake`
+check reports that file. A server that pulled the required tier and reads its
+data from object storage passes both:
+
+```python
+from sdmxlib.edition import check_edition
+
+report = check_edition(pod_path, at="receive", remote=store_url, engine=engine, tiers=("required",))
+report.ok  # True when the required tier is whole, whatever the pod lacks of the others
+```
+
+An extension check is not told `tiers`. Pass an extension that reads the files
+of one tier, a search index under `search/` say, only in a call whose `tiers`
+holds that tier.
+
 ### The receive stamp
 
-`check_on_open(path, stamps=dir, remote=None, engine=None, lookup=None, references=True, extensions=None)` is what a
+`check_on_open(path, stamps=dir, remote=None, engine=None, lookup=None, references=True, tiers=("required", "lazy", "remote"), extensions=None)` is what a
 server runs when it opens an edition. It runs `receive` once per edition and
 manifest, and `open` after that:
 
 - With no stamp at `<stamps>/<product_id>/<edition_id>`, or a stamp for
   another manifest under the same edition id, it runs `receive`. When that finds nothing,
   it writes the stamp: a JSON file holding the manifest's `sha256`, the checks
-  that ran and the time.
+  that ran, the tiers they covered and the time.
 - With a stamp holding this manifest's `sha256`, it runs `open`, which hashes
   nothing.
 
@@ -649,6 +680,41 @@ that meets a deferred stamp runs `receive`, and replaces the stamp when that
 finds nothing; when it finds something, the deferred stamp stays. A stamp
 written before this argument existed lists `references`, so it satisfies a full
 check.
+
+`tiers=` goes to both profiles, and the stamp records it as `tiers`
+([GH-384](https://github.com/StatCat-Suite/sdmxlib/issues/384)). A stamp satisfies a call only when it records every tier in the call's
+`tiers`, so a stamp for the required tier never lets a server skip the
+`receive` check of files it pulls later. A server that becomes ready on the
+required tier checks twice:
+
+```python
+from sdmxlib.edition import check_on_open
+
+# before ready: the required tier is on disk
+check_on_open(pod_path, stamps=stamps, remote=store_url, engine=engine, tiers=("required",))
+# after the background pull of the lazy tier
+check_on_open(pod_path, stamps=stamps, remote=store_url, engine=engine, tiers=("required", "lazy"))
+```
+
+The first call runs `receive` and writes a stamp with `"tiers": ["required"]`.
+The second finds that the stamp lacks `lazy`, runs `receive` again, which
+hashes every listed edition file on disk, and writes a stamp with both tiers.
+After a restart either call runs `open`. `check_on_open` is the check for the
+later pull because `receive` compares the pulled files with the manifest's
+size and digests, reports an unlisted file among them, and stamps the result;
+`verify_remote` compares what an object store reports and reads no local file.
+
+A clean `receive` writes a stamp recording the call's tiers and the tiers of
+the stamp it replaces, when that stamp is for the same manifest: `receive`
+hashes every listed edition file that is present whatever `tiers` holds, and
+`open` reports a file of the call's tiers that has gone missing since. So a
+second call with `tiers=("lazy",)` also leaves a stamp for both tiers.
+
+A stamp without `tiers`, as releases through 0.88 wrote, records every tier: it
+came from a check that required every file, and it satisfies any `tiers`.
+Those releases ignore `tiers` in a stamp and read a stamp for the required
+tier as a stamp for the whole edition. Clear the stamps directory when moving
+a server back to one.
 
 The `references` check reads the stored references in SQL and loads no
 artefact. They are the rows of `sdmx.artefact_ref` and every reference column
@@ -868,7 +934,9 @@ and `check_edition` reports as unsealed; running the copy again completes it.
 `tiers=` (`--tiers required,lazy` from a shell) copies only the files of
 those placement tiers, which is what a server holds when it reads the
 `remote` tier remotely. Such a copy
-is incomplete by intent: `check_edition` reports the files it left out.
+is incomplete by intent: `check_edition` reports the files it left out, unless
+it is given the same `tiers=`
+([A server holding some tiers](#a-server-holding-some-tiers)).
 
 ### Pulling from object storage
 
@@ -896,7 +964,9 @@ sdmxlib edition files /stage/census --manifest \
 ```
 
 `check_on_open` then verifies the copy, with `remote=` when the remote tier stays in
-the store ([Data files in object storage](#data-files-in-object-storage)).
+the store ([Data files in object storage](#data-files-in-object-storage)), and
+with `tiers=` naming the tiers pulled when the server holds fewer than the
+manifest lists ([The receive stamp](#the-receive-stamp)).
 
 ## 9. Fingerprints
 
