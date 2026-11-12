@@ -9,11 +9,15 @@ read them where the registry does (GH-180). ``open`` runs each time a server ope
 only. `check_on_open` runs ``receive`` once per edition id and manifest, records
 a stamp, and runs ``open`` after that. Each check names what it found rather
 than stopping at the first, so one run lists everything wrong.
+
+A server that holds part of an edition names the placement tiers it holds in
+``tiers=``, and the ``files`` check then accepts the absence of a file of any
+other tier (GH-384). A stamp records the tiers its ``receive`` check covered.
 """
 
 import hashlib
 import json
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from contextlib import ExitStack
 from datetime import UTC, datetime
 from functools import partial
@@ -42,6 +46,7 @@ from sdmxlib.storage._manifest import (
     Manifest,
     ManifestError,
     StoreFormatError,
+    Tier,
     read_manifest,
     unlisted,
 )
@@ -59,6 +64,9 @@ type Check = Callable[[Path, Manifest, EditionRegistry, Profile], Iterable[Findi
 
 #: A blob store's report of one file, as `verify_remote` takes it.
 type Lookup = Callable[[EditionFile], RemoteFile | None]
+
+#: Every placement tier, in the order a stamp lists them.
+_TIERS: tuple[Tier, ...] = ("required", "lazy", "remote")
 
 
 @frozen
@@ -95,6 +103,7 @@ def check_edition(
     expect: Manifest | str | Path | None = None,
     structures: str | Path | Sequence[str | Path] | None = None,
     references: bool = True,
+    tiers: Collection[Tier] = ("required", "lazy", "remote"),
     extensions: Mapping[str, Check] | None = None,
 ) -> Report:
     """Check a sealed edition against its manifest and against itself, as profile `at` asks.
@@ -123,6 +132,18 @@ def check_edition(
     registry, and with it the lake and the bindings checks, reads them there
     through `engine`, and without a `lookup` the ``remote`` check sizes each
     listed one there.
+
+    `tiers` names the placement tiers the caller holds on local disk, as
+    `copy_edition` and `edition_files` take it. The ``files`` check reports a
+    missing file only when its tier is in `tiers`. A file that is present is
+    checked as the profile asks whatever its tier, and an unlisted file is
+    reported as before. `tiers` and `remote` are independent. `remote` and
+    `lookup` say where the data files are read and checked, and with either
+    the ``files`` check skips ``data/`` whatever `tiers` holds. The
+    ``remote``, ``lake`` and ``bindings`` checks cover every data file
+    whatever `tiers` holds, since they read the data where the registry reads
+    it. A server that pulled the required tier and reads its data from object
+    storage passes ``remote=`` and ``tiers=("required",)``.
 
     A manifest that cannot be read, or a store on another schema version or in
     a DuckDB or DuckLake format this engine cannot read, ends the run there:
@@ -179,8 +200,13 @@ def check_edition(
             them. `structures` then still runs the ``partials`` check. An
             edition with bindings is allowed, and its references go unchecked
             too.
+        tiers: The placement tiers held on local disk. A manifest entry of
+            another tier is not reported when its file is missing. The
+            default holds every tier, so every missing file is a finding.
         extensions: More checks, by name, for parts of the edition other
-            packages own (statcatlib's search index, say).
+            packages own (statcatlib's search index, say). An extension
+            check is not told `tiers`: pass an extension that reads the files
+            of a tier only in a call whose `tiers` holds that tier.
 
     Returns:
         What was checked and what was found.
@@ -200,7 +226,7 @@ def check_edition(
         manifest = read_manifest(root)
     except ManifestError as exc:
         return Report(root, at, tuple(checked), (Finding("manifest", MANIFEST_NAME, str(exc)),))
-    findings = list(_files(root, manifest, at, remote=lookup is not None or remote is not None))
+    findings = list(_files(root, manifest, at, remote=lookup is not None or remote is not None, tiers=tiers))
     checked.append("files")
     if expect is not None:
         try:
@@ -329,6 +355,7 @@ def check_on_open(
     engine: EditionEngine | None = None,
     lookup: Lookup | None = None,
     references: bool = True,
+    tiers: Collection[Tier] = ("required", "lazy", "remote"),
     extensions: Mapping[str, Check] | None = None,
 ) -> Report:
     """Check an edition as a server opens it: ``receive`` once per edition id and manifest, ``open`` after.
@@ -345,6 +372,21 @@ def check_on_open(
     replaces the stamp when that finds nothing. A stamp that a deferring call
     wrote stays in place when that ``receive`` finds something.
 
+    A stamp also records the tiers its check covered, and satisfies a call
+    only when it records every tier in the call's `tiers`. A server pulls the
+    required tier, calls with ``tiers=("required",)`` and reports ready. Once
+    it has pulled the lazy tier it calls with ``tiers=("required", "lazy")``:
+    the stamp records the required tier alone, so ``receive`` runs again and
+    hashes the files pulled since. A clean ``receive`` writes a stamp
+    recording the call's tiers and the tiers of the stamp it replaces, when
+    that stamp is for the same manifest. A ``receive`` check hashes every
+    listed edition file that is present, so the earlier tiers stay verified,
+    and the ``open`` profile reports a file that has gone missing since. A
+    stamp without recorded tiers, as releases through 0.88 wrote, records every
+    tier. Those releases ignore the recorded tiers, so they read a stamp for
+    the required tier as a stamp for the whole edition: clear the stamps
+    directory when moving a server back to one.
+
     Args:
         path: The edition directory.
         stamps: The directory holding the stamps, outside every edition: local
@@ -354,6 +396,7 @@ def check_on_open(
         lookup: As `check_edition`'s, for the receive check.
         references: As `check_edition`'s, for the receive check. The ``open``
             profile never runs that check.
+        tiers: As `check_edition`'s, for either profile.
         extensions: As `check_edition`'s, for either profile.
 
     Returns:
@@ -368,6 +411,7 @@ def check_on_open(
         engine=engine,
         lookup=lookup,
         references=references,
+        tiers=tiers,
         extensions=extensions,
     )
     try:
@@ -380,11 +424,13 @@ def check_on_open(
         report = receive()
         detail = f"product_id {manifest.product_id!r} cannot name a stamp directory, so the check is not stamped"
         return attrs.evolve(report, findings=(*report.findings, Finding("manifest", MANIFEST_NAME, detail)))
-    if _stamped(stamp, digest, references=references):
-        return check_edition(root, at="open", remote=remote, engine=engine, extensions=extensions)
+    recorded = _recorded(stamp, digest)
+    held = _stamped_tiers(recorded)
+    if recorded is not None and held.issuperset(tiers) and (not references or _lists_references(recorded)):
+        return check_edition(root, at="open", remote=remote, engine=engine, tiers=tiers, extensions=extensions)
     report = receive()
     if report.ok:
-        _write_stamp(stamp, digest, report)
+        _write_stamp(stamp, digest, report, held.union(tiers))
     return report
 
 
@@ -397,35 +443,49 @@ def _names_a_file_under(stamp: Path, stamps: Path) -> bool:
     return len(parts) == 2 and all(part not in {".", ".."} for part in parts)
 
 
-def _stamped(stamp: Path, digest: str, *, references: bool) -> bool:
-    """Whether `stamp` records a clean receive check of the manifest with sha256 `digest`.
-
-    When `references` is true, the recorded check must also list ``references``.
-    """
+def _recorded(stamp: Path, digest: str) -> dict[str, object] | None:
+    """The record `stamp` holds, when it is of a clean receive check of the manifest with sha256 `digest`."""
     try:
         recorded = json.loads(stamp.read_text())
     except OSError, ValueError:
-        return False
+        return None
     if not isinstance(recorded, dict) or recorded.get("manifest_sha256") != digest:
-        return False
-    if not references:
-        return True
+        return None
+    return {str(key): value for key, value in recorded.items()}
+
+
+def _lists_references(recorded: Mapping[str, object]) -> bool:
+    """Whether the stamp's recorded checks list ``references``."""
     checked = recorded.get("checked")
     return isinstance(checked, list) and "references" in checked
 
 
-def _write_stamp(stamp: Path, digest: str, report: Report) -> None:
-    """Record `report` under `stamp`, whole or not at all, replacing any stamp there."""
+def _stamped_tiers(recorded: Mapping[str, object] | None) -> frozenset[str]:
+    """The tiers a stamp's check covered: every tier for a stamp that records none, as releases through 0.88 wrote."""
+    if recorded is None:
+        return frozenset()
+    if "tiers" not in recorded:
+        return frozenset(_TIERS)
+    tiers = recorded["tiers"]
+    if not isinstance(tiers, list):
+        return frozenset()
+    return frozenset(tier for tier in tiers if isinstance(tier, str))
+
+
+def _write_stamp(stamp: Path, digest: str, report: Report, tiers: Collection[str]) -> None:
+    """Record `report` and the `tiers` it covers under `stamp`, whole or not at all, replacing any stamp there."""
     record = {
         "manifest_sha256": digest,
         "at": report.at,
         "checked": list(report.checked),
+        "tiers": [tier for tier in _TIERS if tier in tiers],
         "verified_at": datetime.now(UTC).isoformat(),
     }
     replace_durably(stamp, json.dumps(record, indent=2).encode())
 
 
-def _files(root: Path, manifest: Manifest, at: Profile, *, remote: bool) -> Iterable[Finding]:
+def _files(root: Path, manifest: Manifest, at: Profile, *, remote: bool, tiers: Collection[Tier]) -> Iterable[Finding]:
+    """What the ``files`` check finds; a missing file is reported only when its tier is in `tiers`."""
     on_disk = {
         p.relative_to(root).as_posix(): p
         for p in sorted(root.rglob("*"))
@@ -443,12 +503,10 @@ def _files(root: Path, manifest: Manifest, at: Profile, *, remote: bool) -> Iter
             subject = entry.path
             found = on_disk.pop(entry.path, None)
             hashed = at != "open"
-        if found is None:
+        if found is not None:
+            yield from _listed_file(entry, subject, found, hashed=hashed)
+        elif entry.tier in tiers:
             yield Finding("files", subject, "listed in the manifest but missing")
-        elif (size := found.stat().st_size) != entry.size:
-            yield Finding("files", subject, f"{size} bytes, the manifest says {entry.size}")
-        elif hashed and (differs := differing(entry, digests_of(found))):
-            yield Finding("files", subject, f"contents differ from the manifest's {', '.join(differs)}")
     if at == "open":
         return
     for extra in on_disk:
@@ -458,6 +516,14 @@ def _files(root: Path, manifest: Manifest, at: Profile, *, remote: bool) -> Iter
             yield Finding("files", extra, "a write-ahead log: its database was not checkpointed before sealing")
         else:
             yield Finding("files", extra, "in the edition but not in the manifest")
+
+
+def _listed_file(entry: EditionFile, subject: str, found: Path, *, hashed: bool) -> Iterable[Finding]:
+    """How the file `found` differs from its manifest `entry`: by size, or when `hashed`, by digest."""
+    if (size := found.stat().st_size) != entry.size:
+        yield Finding("files", subject, f"{size} bytes, the manifest says {entry.size}")
+    elif hashed and (differs := differing(entry, digests_of(found))):
+        yield Finding("files", subject, f"contents differ from the manifest's {', '.join(differs)}")
 
 
 def _fingerprints(root: Path, manifest: Manifest, opened: EditionRegistry) -> list[Finding]:
