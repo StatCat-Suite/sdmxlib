@@ -645,7 +645,10 @@ check reports that file. A server that pulled the required tier and reads its
 data from object storage passes both:
 
 ```python
-report = check_edition(pod_path, at="receive", remote=remote, engine=engine, tiers=("required",))
+from sdmxlib.edition import check_edition
+
+report = check_edition(pod_path, at="receive", remote=store_url, engine=engine, tiers=("required",))
+report.ok  # True when the required tier is whole, whatever the pod lacks of the others
 ```
 
 An extension check is not told `tiers`. Pass an extension that reads the files
@@ -685,10 +688,12 @@ check.
 required tier checks twice:
 
 ```python
+from sdmxlib.edition import check_on_open
+
 # before ready: the required tier is on disk
-check_on_open(pod_path, stamps=stamps, remote=remote, engine=engine, tiers=("required",))
+check_on_open(pod_path, stamps=stamps, remote=store_url, engine=engine, tiers=("required",))
 # after the background pull of the lazy tier
-check_on_open(pod_path, stamps=stamps, remote=remote, engine=engine, tiers=("required", "lazy"))
+check_on_open(pod_path, stamps=stamps, remote=store_url, engine=engine, tiers=("required", "lazy"))
 ```
 
 The first call runs `receive` and writes a stamp with `"tiers": ["required"]`.
