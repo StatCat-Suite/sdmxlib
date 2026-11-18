@@ -61,6 +61,10 @@ plane: it attaches the catalogs, serves observation reads and takes writes.
 - `DuckDBDataStore` (`data_store.py`): the data-plane store. Provides `open`,
   `from_registry`, `inspect`, `obs`, `ingest_csv`, `write_observations` and
   `close`. `store_path` and `column_types` are module-level helpers.
+  `write_observations` takes `mode="overwrite"`, `"append"` or `"merge"`. A
+  merge takes `keys`, refuses a source holding a key twice or with columns
+  other than the table's, and runs one `MERGE INTO` (one DuckLake snapshot);
+  `LocalRegistry.write_observations` passes `keys` through.
 - `DuckLakeVersionError` (`data_store.py`): raised by `ATTACH` when a DuckLake
   catalog's format is newer than the installed extension supports, matched on
   DuckDB's error text. `EditionRegistry.edition` usually refuses such a

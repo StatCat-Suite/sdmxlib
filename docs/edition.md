@@ -806,8 +806,8 @@ every check.
    and ships with the edition, and a query reads the partitioning from there
    ([GH-205](https://github.com/StatCat-Suite/sdmxlib/issues/205)).
    `write_observations` replaces the table by default; `mode="append"`
-   inserts into it and keeps its layout, so it refuses a `partition_by` or
-   `sorted_by`. A builder
+   inserts into it and `mode="merge"` revises it by `keys`; both keep its
+   layout, so they refuse a `partition_by` or `sorted_by`. A builder
    that writes in more than one step reopens the edition with
    `build(product, resume=edition_id)`. Close every connection that wrote: DuckDB
    checkpoints a database when its last connection closes, and a write-ahead
