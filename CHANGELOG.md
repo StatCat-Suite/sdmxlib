@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.89.0] - 2026-11-18
+
+### Breaking Changes
+
+- **builders**: Give the time dimension as a TimeRange in availability constraints (GH-392): `build_dataflow_constraint` and `build_component_availability` give the DSD's time dimension as a `KeyValue` whose `time_range` runs from the earliest period's start to the latest period's end, both inclusive and zoneless, with empty `values`; pass `time_dimension="values"` to keep the list of periods. See [Upgrading](https://statcat-suite.github.io/sdmxlib/upgrading/#the-availability-builders-give-the-time-dimension-as-a-range)
+- **sdmx_json**: Write a time range's start and end without a zone when given so, a declared deviation from the SDMX-JSON schema ([#496](https://github.com/StatCat-Suite/sdmxlib/blob/main/history/gitlab/issues/496.md)), because the .Stat Data Explorer reads a bound with a zone, or a bare date, as UTC; a zoneless validity date-time is still refused (GH-392)
+- **sdmx_json**: Give `start` and `end` bounds to reporting-period time values (`2021-A1`, `2021-T2`, `2021-M06`, `2021-W01`, `2021-D181`) in the SDMX-JSON data writers; a `YYYY-MM-DD` that is not a calendar date, such as `2021-02-30`, loses its bounds (GH-392)
+
+### Documentation
+
+- **spec**: Name tiers= in the pod's pull and readiness check (GH-384)
+- **edition**: Make the tiers examples run under the docs tests (GH-384)
+- **cookbook**: Describe write_observations mode="merge" (GH-393)
+- **spec**: State that a final seal keeps files at the lake's target size (GH-385)
+
+### Features
+
+- **edition**: Add tiers to check_edition and check_on_open (GH-384)
+- **local**: Add write_observations mode="merge" keyed on explicit columns (GH-393)
+
+### Refactoring
+
+- **edition**: Merge a final lake's files without max_file_size (GH-385)
+
+### Testing
+
+- **edition**: Seal a final table larger than the lake's target file size (GH-385)
+
 ## [0.88.0] - 2026-11-10
 
 ### Bug Fixes
