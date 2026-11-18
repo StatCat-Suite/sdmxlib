@@ -2,7 +2,7 @@
 
 `seal` settles the lake before its inventory: inlined rows flushed
 into data files, every table holding delete files rewritten without them, a
-``final`` publication compacted to one file per table, and with
+``final`` publication's small files merged up to the lake's target file size, and with
 ``expire_snapshots`` one snapshot left. Nothing is deleted from ``data/``.
 """
 
@@ -114,6 +114,26 @@ def test_a_final_publication_has_one_file_and_the_same_content(tmp_path: Path) -
     with _lake(tmp_path / "revisable" / live.edition_id) as conn:
         assert len(_current(conn)) == 4, "one file per insert while live"
     assert live.bindings[0].fingerprint == final.bindings[0].fingerprint, "compaction changes no row"
+
+
+def test_a_final_table_over_the_target_size_keeps_its_files(tmp_path: Path) -> None:
+    """A final seal leaves the files DuckLake wrote at the lake's ``target_file_size`` (GH-385).
+
+    The target is 100 KB, so DuckLake splits the one insert at a row group
+    (122,880 rows): two full files and a remainder. Spec §4.5 keeps those
+    files, so the manifest lists the three files the insert wrote.
+    """
+    started = make_bundle(tmp_path / "b", 0)
+    with sl.LocalRegistry.build(started.parent, resume=started.name) as builder:
+        builder._data_plane()
+        builder.connection.execute("CALL lake.set_option('target_file_size', '100KB')")
+        builder.connection.execute("INSERT INTO lake.d.obs SELECT 'G' || (range % 7), range::DOUBLE FROM range(300000)")
+        written = {Path(data).name for data, _ in _current(builder.connection)}
+    assert len(written) == 3, "the insert is split at the target size"
+    manifest = seal(started, product_id="b", producer=_PRODUCER, lifecycle="final")
+    assert {Path(f.path).name for f in manifest.files if f.root == "data"} == written
+    with sl.LocalRegistry.edition(started) as reg:
+        assert reg.obs(FLOW.urn).count() == 300_000
 
 
 def test_a_sort_the_producer_set_is_kept(tmp_path: Path) -> None:
