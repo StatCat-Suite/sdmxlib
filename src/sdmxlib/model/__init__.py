@@ -130,6 +130,7 @@ from sdmxlib.model.organisation import (
 from sdmxlib.model.provision import ProvisionAgreement
 from sdmxlib.model.ref import short_urn as short_urn
 from sdmxlib.model.ref import Ref, SdmxRef, UnresolvedRef
+from sdmxlib.model.period import period_bounds, period_range
 from sdmxlib.model.in_memory_registry import InMemoryRegistry
 from sdmxlib.model.registry import RegistryReader, artefact_urn
 from sdmxlib.model.representation import DataType, Facet, Representation, SentinelValue
@@ -274,6 +275,8 @@ __all__ = [
     "from_dict",
     "item",
     "normalize_tag",
+    "period_bounds",
+    "period_range",
     "tag_alias",
     "to_dict",
     "validate",

@@ -342,7 +342,7 @@ def dot_stat_shape_setup() -> tuple[DataStructure, Dataflow, list[pa.RecordBatch
     - **Sparse observations** — a typical .Stat Data Explorer query is for a
       single area or small slice, not the whole universe.
     - **Single annual TIME_PERIOD** value across all rows (FREQ=A5,
-      e.g. ``2021``). Exercises the ``_period_bounds`` path on a
+      e.g. ``2021``). Exercises the ``period_bounds`` path on a
       single value, where the cost has to stay negligible.
     - Many CENSUS_CHARACTERISTIC measures collapsed into a single
       observation map (modeled here as a CHAR dimension with ~200

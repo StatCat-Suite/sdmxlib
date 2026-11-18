@@ -891,8 +891,9 @@ def message() -> StructureMessage:
                         KeyValue(
                             dimension_id="TIME_PERIOD",
                             include=False,
-                            # Zoned: SDMX-JSON refuses a date-time without
-                            # one, which SDMX-ML allows (#496).
+                            # Zoned: the schemas require a zone, and SDMX-JSON
+                            # writes a zoneless bound only as a declared
+                            # deviation for .Stat (#496, GH-392).
                             time_range=TimeRange(
                                 start=TimeBound(period="2020-01-01T00:00:00Z", inclusive=False),
                                 # Exclusive too: an inclusive bound is the default, left out (#503).

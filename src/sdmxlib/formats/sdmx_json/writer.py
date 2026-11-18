@@ -241,14 +241,15 @@ def _refuse_unwritable(msg: StructureMessage) -> None:
     """Refuse what SDMX-JSON cannot write, before anything is encoded, as the SDMX-ML writers do.
 
     Raises:
-        ValidationError: If a constraint's period is a date-time with no zone.
+        ValidationError: If a constraint's validity is a date-time with no zone.
     """
     # The structure schema's `VersionType` is SDMX-ML 3.0's, so a version 3.0
     # refuses would be written here schema-invalid (#417).
     for artefact in msg.all_artefacts():
         if isinstance(artefact, MaintainableArtefact):
             check_writable(artefact.version, "json", artefact=f"{type(artefact).__name__}:{artefact.id}")
-    # Nor can it write a date-time period with no zone, which SDMX-ML can (#496).
+    # Nor can it write a validity date-time with no zone, which SDMX-ML can
+    # (#496). A time range's zoneless bound is written, for .Stat (GH-392).
     constraints = [*msg.constraints, *msg.attachment_constraints]
     if issues := [issue for cc in constraints for issue in zoneless_periods(cc)]:
         raise ValidationError(issues)

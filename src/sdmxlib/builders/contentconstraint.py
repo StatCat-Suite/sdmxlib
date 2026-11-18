@@ -3,7 +3,8 @@
 `build_dataflow_constraint` scans the observation table bound to a
 dataflow and emits a `DataConstraint` (the SDMX-3 spelling of the 2.1
 ContentConstraint) whose single inclusive `CubeRegion` lists each
-dimension's distinct lake values. This is the framework-free core of the
+dimension's distinct lake values, and gives the time dimension as the
+`TimeRange` those values cover. This is the framework-free core of the
 SDMX REST ``/availability`` response for ``context=dataflow``,
 ``componentID=all`` — no HTTP layer, no async.
 
@@ -45,6 +46,7 @@ from sdmxlib.model.constraint import (
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.model.istring import InternationalString
+from sdmxlib.model.period import period_range
 from sdmxlib.model.ref import Ref
 from sdmxlib.model.rest_api import ApiVersion
 from sdmxlib.model.urn import SdmxUrn
@@ -59,6 +61,7 @@ def build_dataflow_constraint(
     conn: duckdb.DuckDBPyConnection | None = None,
     constraint_id: str | None = None,
     version: str = "1.0",
+    time_dimension: Literal["range", "values"] = "range",
 ) -> DataConstraint:
     """Synthesise the dataflow's availability ContentConstraint from the lake.
 
@@ -67,6 +70,15 @@ def build_dataflow_constraint(
     values into a `KeyValue`. The result is a single inclusive
     `CubeRegion` describing what is *actually* present
     (`ConstraintType.ACTUAL`).
+
+    The DSD's time dimension is given as a `TimeRange` by default, from the
+    earliest period's start to the latest period's end, both inclusive
+    (`period_range`): the .Stat Suite Data Explorer reads a time
+    dimension's availability only from a range. Gaps between periods are
+    not recorded. The time dimension keeps its list of periods when
+    ``time_dimension="values"``, when any period is one `period_bounds`
+    cannot read (a date-time, a ``<start>/<duration>`` interval), when it
+    holds no periods, and when the registry holds no DSD for the dataflow.
 
     The dimension set and physical column names come from the binding's
     ``dimension_column_map`` — the binding is the authoritative record of
@@ -86,17 +98,21 @@ def build_dataflow_constraint(
             dataflow id. Override for byte-compatibility with an existing
             consumer's naming scheme.
         version: Version for the emitted constraint. Defaults to ``"1.0"``.
+        time_dimension: ``"range"`` gives the time dimension as a
+            `TimeRange`; ``"values"`` gives its distinct periods.
 
     Returns:
         A `DataConstraint` of type ``ACTUAL`` attached to the dataflow,
         carrying one inclusive `CubeRegion` of per-dimension distinct
-        values.
+        values, with the time dimension's as a range.
 
     Raises:
         KeyError: If no `DataflowBinding` exists for ``dataflow_urn``.
+        ValueError: If ``time_dimension`` is neither ``"range"`` nor ``"values"``.
         TypeError: If ``conn`` is omitted and the registry cannot
             not expose a DuckDB ``connection``.
     """
+    _check_time_dimension(time_dimension)
     binding = registry.binding_for(dataflow_urn)
     if binding is None:
         err = (
@@ -115,12 +131,13 @@ def build_dataflow_constraint(
             )
             raise TypeError(err)
 
+    time_id = _time_dimension_id(registry, dataflow_urn) if time_dimension == "range" else None
     table = located(binding.database_role, binding.table_location)
     key_values: list[KeyValue] = []
     for dim_id in sorted(binding.dimension_column_map):
         column = binding.dimension_column_map[dim_id]
         values = _distinct_values(conn, table, column)
-        key_values.append(KeyValue(dimension_id=dim_id, values=frozenset(values)))
+        key_values.append(_key_value(dim_id, frozenset(values), time_id))
 
     region = CubeRegion(include=True, keys=tuple(key_values))
     attachment = ConstraintAttachment(dataflows=(Ref[Dataflow].unresolved(dataflow_urn),))
@@ -147,6 +164,7 @@ def build_component_availability(
     conn: duckdb.DuckDBPyConnection | None = None,
     constraint_id: str | None = None,
     version: str = "1.0",
+    time_dimension: Literal["range", "values"] = "range",
 ) -> DataConstraint:
     """Synthesise the per-component availability slice for ``(key, component_id, mode)``.
 
@@ -188,6 +206,12 @@ def build_component_availability(
       ``C``'s own constraint **dropped**, i.e. the values that would still
       leave the cube non-empty if added to the key.
 
+    The DSD's time dimension is given as a `TimeRange` by default, as in
+    `build_dataflow_constraint`, and under the same rules: it keeps its list
+    of periods when ``time_dimension="values"``, when any period is one
+    `period_bounds` cannot read, when it holds no periods, and when the
+    registry holds no DSD for the dataflow.
+
     Args:
         registry: An open registry: a published `EditionRegistry` or a `LocalRegistry`.
         dataflow_urn: URN of the dataflow to describe.
@@ -211,6 +235,8 @@ def build_component_availability(
         constraint_id: Id for the emitted constraint. Defaults to the
             dataflow id.
         version: Version for the emitted constraint. Defaults to ``"1.0"``.
+        time_dimension: ``"range"`` gives the time dimension as a
+            `TimeRange`; ``"values"`` gives its distinct periods.
 
     Returns:
         A `DataConstraint` of type ``ACTUAL`` attached to the dataflow,
@@ -221,14 +247,16 @@ def build_component_availability(
     Raises:
         KeyError: If no `DataflowBinding` exists, or ``component_id`` (when
             not ``"all"``) is not a column on the bound table.
-        ValueError: If ``mode`` is unrecognised, or the dotted ``key`` has a
-            segment count that does not match the DSD's key dimensions.
+        ValueError: If ``mode`` or ``time_dimension`` is unrecognised, or the
+            dotted ``key`` has a segment count that does not match the DSD's
+            key dimensions.
         TypeError: If ``conn`` is omitted and the registry cannot
             not expose a DuckDB ``connection``.
     """
     if mode not in ("exact", "available"):
         err = f"Unrecognised mode {mode!r}; expected 'exact' or 'available'."
         raise ValueError(err)
+    _check_time_dimension(time_dimension)
 
     binding = registry.binding_for(dataflow_urn)
     if binding is None:
@@ -261,6 +289,7 @@ def build_component_availability(
     held = _held_values(registry, dataflow_urn)
     component_filter = _drop_covering(component_filter, held)
 
+    time_id = _time_dimension_id(registry, dataflow_urn) if time_dimension == "range" else None
     table = located(binding.database_role, binding.table_location)
     key_values: list[KeyValue] = []
     components: list[ComponentValueSet] = []
@@ -279,7 +308,7 @@ def build_component_availability(
         # value sets (2.1 `Attribute`, 3.x `Component`). Both were keys until
         # #433 gave components a field, so an attribute read as a dimension.
         if target in binding.dimension_column_map:
-            key_values.append(KeyValue(dimension_id=target, values=values))
+            key_values.append(_key_value(target, values, time_id))
         else:
             components.append(ComponentValueSet(component_id=target, values=values))
 
@@ -314,6 +343,42 @@ def _resolve_key_slot_ids(registry: EditionRegistry, dataflow_urn: SdmxUrn[Dataf
         err = f"Structure {structure.urn} for {dataflow_urn} did not resolve to a DataStructure."
         raise ValueError(err)  # noqa: TRY004
     return dsd.key_slot_ids(api)
+
+
+def _check_time_dimension(time_dimension: str) -> None:
+    """Refuse a ``time_dimension`` other than ``"range"`` or ``"values"``.
+
+    Raises:
+        ValueError: If ``time_dimension`` is unrecognised.
+    """
+    if time_dimension not in ("range", "values"):
+        err = f"Unrecognised time_dimension {time_dimension!r}; expected 'range' or 'values'."
+        raise ValueError(err)
+
+
+def _time_dimension_id(registry: EditionRegistry, dataflow_urn: SdmxUrn[Dataflow]) -> str | None:
+    """The id of the dataflow's DSD's time dimension; None without a DSD in the registry or a time dimension in it."""
+    flow = registry.get(dataflow_urn)
+    structure = flow.structure if isinstance(flow, Dataflow) else None
+    if not isinstance(structure, Ref):
+        return None
+    dsd = registry.get(structure.urn)
+    if not isinstance(dsd, DataStructure) or dsd.time_dimension is None:
+        return None
+    return dsd.time_dimension.id
+
+
+def _key_value(dimension_id: str, values: frozenset[str], time_id: str | None) -> KeyValue:
+    """One dimension's `KeyValue`: the `TimeRange` its periods cover for the time dimension, else its values.
+
+    The time dimension keeps its values when `period_range` gives no range:
+    it holds no periods, or a period whose bounds cannot be read.
+    """
+    if dimension_id == time_id:
+        time_range = period_range(values)
+        if time_range is not None:
+            return KeyValue(dimension_id=dimension_id, time_range=time_range)
+    return KeyValue(dimension_id=dimension_id, values=values)
 
 
 def _component_column(binding: DataflowBinding, component_id: str) -> str:

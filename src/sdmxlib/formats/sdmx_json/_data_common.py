@@ -27,6 +27,7 @@ from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import Component, DataStructure, Dimension
 from sdmxlib.model.errors import SdmxParseError
 from sdmxlib.model.istring import InternationalString, normalize_tag
+from sdmxlib.model.period import period_bounds
 from sdmxlib.model.ref import Ref
 
 from ._dto import ENCODER, _camel_rename
@@ -35,83 +36,11 @@ from .structure_values import AnnotationJson, annotation_dict
 ComponentKind = Literal["dimension", "attribute"]
 
 
-_PERIOD_ANNUAL = re.compile(r"^(\d{4})$")
-_PERIOD_MONTHLY = re.compile(r"^(\d{4})-(\d{2})$")
-_PERIOD_DAILY = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
-_PERIOD_QUARTERLY = re.compile(r"^(\d{4})-Q([1-4])$")
-_PERIOD_SEMESTER = re.compile(r"^(\d{4})-S([12])$")
-
-
-def _period_bounds(period_id: str) -> tuple[str, str] | None:
-    """Compute ``(start, end)`` ISO-8601 timestamps for a TIME_PERIOD id.
-
-    Returns ``None`` for unrecognised shapes — including SDMX's
-    ``<start>/<duration>`` form (``"2021-01-01/P5Y"``), which the
-    downstream consumer (e.g. ``.Stat``'s ``refineTimePeriod``) parses
-    itself. Output format ``YYYY-MM-DDTHH:MM:SS`` **without a zone**, which
-    the schema's ``date-time`` requires — a declared deviation (#496). The
-    consumer these bounds exist for, .Stat's ``refineTimePeriod``, parses
-    them with ``date-fns.parseISO`` and then adds the local UTC offset back
-    (``dateWithTZ``), which is right only for a zoneless value: given
-    ``2021-01-01T00:00:00Z`` it shows 2020-12-31 19:00 in Toronto. The NSI web
-    service writes them zoneless too. The schema tests excuse exactly this
-    (``tests/support/json_schema.py:is_declared_time_bound``) and nothing else.
-
-    Supported shapes:
-
-    - ``YYYY``        annual            (``"2021"`` → 2021-01-01 .. 2021-12-31)
-    - ``YYYY-MM``     monthly           (last day computed via calendar.monthrange)
-    - ``YYYY-MM-DD``  daily
-    - ``YYYY-Qn``     quarterly         (Q1=Jan-Mar, Q2=Apr-Jun, Q3=Jul-Sep, Q4=Oct-Dec)
-    - ``YYYY-Sn``     semester (half)   (S1=Jan-Jun, S2=Jul-Dec)
-
-    Multi-year periods (``A5``, ``A10``) need extra context that's not
-    in the period id alone — that's a follow-up gated on a frequency
-    resolver. For now ``"2021"`` always means a single calendar year.
-    """
-    m = _PERIOD_DAILY.match(period_id)
-    if m:
-        y, mo, d = m.groups()
-        return f"{y}-{mo}-{d}T00:00:00", f"{y}-{mo}-{d}T23:59:59"
-    m = _PERIOD_MONTHLY.match(period_id)
-    if m:
-        y, mo = m.groups()
-        if not 1 <= int(mo) <= 12:
-            return None
-        last = calendar.monthrange(int(y), int(mo))[1]
-        return f"{y}-{mo}-01T00:00:00", f"{y}-{mo}-{last:02d}T23:59:59"
-    m = _PERIOD_QUARTERLY.match(period_id)
-    if m:
-        y, q = m.groups()
-        start_month = (int(q) - 1) * 3 + 1
-        end_month = start_month + 2
-        last = calendar.monthrange(int(y), end_month)[1]
-        return (
-            f"{y}-{start_month:02d}-01T00:00:00",
-            f"{y}-{end_month:02d}-{last:02d}T23:59:59",
-        )
-    m = _PERIOD_SEMESTER.match(period_id)
-    if m:
-        y, s = m.groups()
-        start_month = 1 if s == "1" else 7
-        end_month = 6 if s == "1" else 12
-        last = calendar.monthrange(int(y), end_month)[1]
-        return (
-            f"{y}-{start_month:02d}-01T00:00:00",
-            f"{y}-{end_month:02d}-{last:02d}T23:59:59",
-        )
-    m = _PERIOD_ANNUAL.match(period_id)
-    if m:
-        y = m.group(1)
-        return f"{y}-01-01T00:00:00", f"{y}-12-31T23:59:59"
-    return None
-
-
 # ── FREQ-driven multi-period bounds (issue #149) ──────────────────────────────
 #
 # A bare TIME_PERIOD id like ``"2021"`` is only a *start anchor*; the period's
 # length comes from the FREQ dimension's code (``A`` = 1 year, ``A5`` = 5 years,
-# ``Q`` = 1 quarter, ...). ``_period_bounds`` alone treats ``"2021"`` as a single
+# ``Q`` = 1 quarter, ...). ``period_bounds`` alone treats ``"2021"`` as a single
 # calendar year, which under-reports coverage for multi-year frequencies. The
 # writer resolves each FREQ code to a duration — an explicit ``duration``
 # annotation on the code overrides the standard/``A{n}`` convention — and uses it
@@ -220,12 +149,12 @@ def _add_duration(start: datetime, duration: _Duration) -> datetime:
 def _bounds_from_anchor(period_id: str, duration: _Duration | None) -> tuple[str, str] | None:
     """``(start, end)`` for *period_id* extended by *duration*.
 
-    ``start`` is the id's anchor (reusing `_period_bounds`); ``end`` is
+    ``start`` is the id's anchor (from `period_bounds`); ``end`` is
     ``start + duration - 1s``. Returns the plain id-shape bounds when *duration*
     is None, and None when the id shape itself is unrecognised (e.g. the
     ``<start>/<duration>`` form the consumer parses itself).
     """
-    base = _period_bounds(period_id)
+    base = period_bounds(period_id)
     if base is None or duration is None:
         return base
     start_dt = datetime.fromisoformat(base[0])
@@ -508,7 +437,7 @@ class ComponentTable:
         to the id-shape default. A period that co-occurs with conflicting
         durations (mixed FREQ) falls back to the id-shape default.
         """
-        base = _period_bounds(code_id)
+        base = period_bounds(code_id)
         freqs = self._time_freqs.get(code_id)
         if base is None or not freqs:
             return base

@@ -11,15 +11,16 @@ output.
 ## Interface
 
 - `build_dataflow_constraint(registry, dataflow_urn, *, name, conn=None,
-  constraint_id=None, version="1.0")` (`contentconstraint.py`): runs a
-  `SELECT DISTINCT` for each bound dimension and returns one inclusive
-  CubeRegion `DataConstraint` of type ACTUAL.
+  constraint_id=None, version="1.0", time_dimension="range" | "values")`
+  (`contentconstraint.py`): runs a `SELECT DISTINCT` for each bound dimension
+  and returns one inclusive CubeRegion `DataConstraint` of type ACTUAL.
 - `build_component_availability(registry, dataflow_urn, *, name, key,
-  component_id, api, mode="exact" | "available", conn=None, ...)`
-  (`contentconstraint.py`): the availability of one component for a key, in
-  the given mode. `component_id="all"` covers every bound dimension. A
-  dimension comes back as a `KeyValue` and an attribute as a
-  `ComponentValueSet` in the one CubeRegion.
+  component_id, api, mode="exact" | "available", conn=None, ...,
+  time_dimension="range" | "values")` (`contentconstraint.py`): the
+  availability of one component for a key, in the given mode.
+  `component_id="all"` covers every bound dimension. A dimension comes back
+  as a `KeyValue` and an attribute as a `ComponentValueSet` in the one
+  CubeRegion.
 - `build_dsd_metadata_map(registry, *, conn=None)` (`metadata_annotation.py`):
   maps each DSD URN to a list of `DsdMetadataLink`. The links combine the
   targets of populated MetadataSets with those declared by Metadataflows and
@@ -35,6 +36,13 @@ output.
   `NUM_QUERIES = 3` (`metadata_annotation.py`).
 
 ## Invariants
+
+- With `time_dimension="range"`, the default, both builders give the DSD's
+  time dimension as a `KeyValue` whose `TimeRange` runs from the earliest
+  period's start to the latest period's end, both inclusive and zoneless
+  (`sdmxlib.model.period.period_range`). The time dimension keeps its values
+  when `"values"` is asked for, when a period does not parse, when it holds
+  no periods, and when the registry holds no DSD for the dataflow.
 
 - `annotate_structure_message` is idempotent and leaves its input unchanged.
   It builds new DSDs with `attrs.evolve`, keeps existing annotations in order,
