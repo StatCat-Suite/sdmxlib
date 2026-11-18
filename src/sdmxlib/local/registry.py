@@ -2890,7 +2890,8 @@ class LocalRegistry(EditionRegistry):
         source: WriteSource,
         partition_by: tuple[str, ...] = (),
         sorted_by: tuple[str, ...] = (),
-        mode: Literal["overwrite", "append"] = "overwrite",
+        mode: Literal["overwrite", "append", "merge"] = "overwrite",
+        keys: tuple[str, ...] = (),
     ) -> None:
         """Write rows into a table of this registry's lake, ``<lake>.<schema>.<table>``.
 
@@ -2911,15 +2912,25 @@ class LocalRegistry(EditionRegistry):
                 sorted (`DuckDBDataStore.write_observations`).
             mode: ``"overwrite"`` replaces the whole table; ``"append"``
                 inserts into it, matching no keys, and keeps its
-                partitioning. Neither is an SDMX action: an SDMX ``Replace``
-                replaces only the observations it names.
+                partitioning. ``"merge"`` applies a revision delta by
+                ``keys``: a source row whose keys match a table row replaces
+                it, other source rows are inserted, and the table's other
+                rows stay, in one ``MERGE INTO`` that commits as one snapshot
+                or not at all (`DuckDBDataStore.write_observations`). No mode
+                reads an SDMX action: an overwrite replaces the whole table,
+                which an SDMX ``Replace`` does not.
+            keys: For a merge, the columns that identify a row, such as the
+                dimension and time columns: required, each a column of both
+                ``source`` and the table. Refused with another mode.
 
         Raises:
             KeyError: If this registry has no lake: one `build` starts has it,
                 `LocalRegistry(path)` has not.
             ValueError: If a name is not an identifier, a ``partition_by``
-                column is not one of ``source``'s, or an append names
-                ``partition_by`` or ``sorted_by``.
+                column is not one of ``source``'s, an append or a merge names
+                ``partition_by`` or ``sorted_by``, ``keys`` does not fit the
+                mode, or a merge's table, columns or keys do not fit its
+                source (`DuckDBDataStore.write_observations`).
         """
         store = self._data_plane()
         attached = {
@@ -2939,6 +2950,7 @@ class LocalRegistry(EditionRegistry):
             partition_by=partition_by,
             sorted_by=sorted_by,
             mode=mode,
+            keys=keys,
             lake_alias=self.lake_alias,
         )
 

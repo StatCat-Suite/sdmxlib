@@ -647,7 +647,8 @@ class DuckDBDataStore(SessionFactory):
         source: WriteSource,
         partition_by: tuple[str, ...] = (),
         sorted_by: tuple[str, ...] = (),
-        mode: Literal["overwrite", "append"] = "overwrite",
+        mode: Literal["overwrite", "append", "merge"] = "overwrite",
+        keys: tuple[str, ...] = (),
         lake_alias: str = "lake",
     ) -> None:
         """Materialise observation rows into a DuckLake-managed table.
@@ -656,8 +657,22 @@ class DuckDBDataStore(SessionFactory):
         Schema is created if missing. ``mode="overwrite"`` replaces the
         whole table; ``mode="append"`` uses ``INSERT INTO``, matching no keys,
         and requires the target table to already exist with a compatible
-        schema. Neither is an SDMX action: an SDMX ``Replace`` replaces only
-        the observations it names.
+        schema. No mode reads an SDMX action: an overwrite replaces the
+        whole table, which an SDMX ``Replace`` does not, and an append and a
+        merge take the source's rows as they are.
+
+        ``mode="merge"`` applies a revision delta by ``keys``, the columns
+        that identify an observation (the dimension columns and the time
+        column, usually). A source row whose keys match a table row replaces
+        that row, a source row with no match is inserted, and table rows the
+        source does not name stay. Keys match when equal, and a null key
+        matches a null key. It runs as one ``MERGE INTO`` statement, so it
+        commits as one transaction and, on DuckLake, one snapshot, or not at
+        all. The source and the table must have the same columns, by name,
+        and the source must hold each key once; both are checked before
+        anything is written. On DuckLake the replaced rows leave a delete
+        file, which `seal` rewrites away. A target outside DuckLake merges the
+        same way, as one DuckDB transaction.
 
         Args:
             schema: Target schema inside the lake (created if absent).
@@ -694,11 +709,25 @@ class DuckDBDataStore(SessionFactory):
                 (StatCat-Suite/cpt-builder#25): one sort order serves one
                 access pattern.
             mode: ``"overwrite"`` replaces the table atomically;
-                ``"append"`` inserts into an existing table.
+                ``"append"`` inserts into an existing table; ``"merge"``
+                replaces and inserts rows of an existing table by ``keys``.
+                A merge keeps the table's partitioning and sort, and refuses
+                a ``partition_by`` or ``sorted_by``.
+            keys: For a merge, the columns that identify a row: required,
+                each a column of both ``source`` and the table. Refused with
+                another mode.
             lake_alias: ATTACH alias of the target lake. Defaults to
                 ``"lake"`` to match the conventional edition layout.
+
+        Raises:
+            ValueError: If a name is not an identifier, the mode is unknown,
+                ``keys`` is given without a merge or missing from one,
+                ``partition_by`` or ``sorted_by`` comes with an append or a
+                merge, a ``partition_by`` column is not one of ``source``'s,
+                a merge's table is missing, its columns differ from
+                ``source``'s or lack a key, or ``source`` holds a key twice.
         """
-        _check_write_target(schema=schema, table=table, lake_alias=lake_alias, mode=mode)
+        _check_write_target(schema=schema, table=table, lake_alias=lake_alias, mode=mode, keys=keys)
 
         conn = self.connection
         # Registered for this session, not created as a view: a view is
@@ -715,14 +744,17 @@ class DuckDBDataStore(SessionFactory):
                     "write the rows in the order wanted instead"
                 )
                 raise ValueError(msg)
-            if mode == "append" and (partitions or sorted_by):
+            if mode != "overwrite" and (partitions or sorted_by):
+                write = "an append" if mode == "append" else "a merge"
                 msg = (
-                    f"an append keeps {target}'s partitioning and sort; partition_by and sorted_by apply only "
+                    f"{write} keeps {target}'s partitioning and sort; partition_by and sorted_by apply only "
                     "to an overwrite, which creates the table"
                 )
                 raise ValueError(msg)
             if mode == "append":
                 conn.execute(f"INSERT INTO {target} SELECT * FROM {view_name}")
+            elif mode == "merge":
+                _merge(conn, target, view_name, keys)
             elif partitions or sorted_by:
                 _create_laid_out(conn, target, view_name, partitions=partitions, sorted_by=sorted_by)
             else:
@@ -741,15 +773,81 @@ class DuckDBDataStore(SessionFactory):
 # ── SQL helpers ─────────────────────────────────────────────────────────
 
 
-def _check_write_target(*, schema: str, table: str, lake_alias: str, mode: str) -> None:
-    """Refuse a write whose names are not identifiers or whose mode is unknown."""
+def _check_write_target(*, schema: str, table: str, lake_alias: str, mode: str, keys: tuple[str, ...]) -> None:
+    """Refuse a write whose names are not identifiers, whose mode is unknown, or whose ``keys`` do not fit the mode."""
     for kind, name in (("schema identifier", schema), ("table identifier", table), ("lake alias", lake_alias)):
         if not _is_valid_identifier(name):
             msg = f"Invalid {kind}: {name!r}"
             raise ValueError(msg)
-    if mode not in {"overwrite", "append"}:
-        msg = f"Unknown mode: {mode!r} (expected 'overwrite' or 'append')"
+    if mode not in {"overwrite", "append", "merge"}:
+        msg = f"Unknown mode: {mode!r} (expected 'overwrite', 'append' or 'merge')"
         raise ValueError(msg)
+    if mode == "merge" and not keys:
+        msg = "a merge needs keys=(...), the columns that identify a row, such as the dimension and time columns"
+        raise ValueError(msg)
+    if mode != "merge" and keys:
+        msg = f"keys= applies only to mode='merge'; mode={mode!r} matches no keys"
+        raise ValueError(msg)
+
+
+def _columns_of(conn: duckdb.DuckDBPyConnection, relation: str) -> list[str]:
+    """The column names of `relation`, a table or a registered view, in order."""
+    return [str(row[0]) for row in conn.execute(f"DESCRIBE {relation}").fetchall()]
+
+
+def _merge(conn: duckdb.DuckDBPyConnection, target: str, view_name: str, keys: tuple[str, ...]) -> None:
+    """Merge `view_name`'s rows into `target` by `keys`: replace the matched rows, insert the others.
+
+    One ``MERGE INTO`` with one ``UPDATE`` action, the most DuckLake allows in
+    a merge. Columns are named on both sides, so the source's column order
+    does not matter. A table whose every column is a key has nothing to
+    update, and its matched rows are left as they are.
+
+    Raises:
+        ValueError: If `target` does not exist, its columns and the source's
+            differ, a key is not a column of both, or the source holds a key
+            twice.
+    """
+    try:
+        columns = _columns_of(conn, target)
+    except duckdb.CatalogException as e:
+        msg = f"a merge writes into an existing table, and {target} does not exist; write it with an overwrite first"
+        raise ValueError(msg) from e
+    source_columns = _columns_of(conn, view_name)
+    missing = [key for key in keys if key not in columns or key not in source_columns]
+    if missing:
+        msg = (
+            f"cannot merge on {', '.join(missing)}: keys must be columns of both the source "
+            f"({', '.join(source_columns)}) and {target} ({', '.join(columns)})"
+        )
+        raise ValueError(msg)
+    if set(columns) != set(source_columns):
+        msg = (
+            f"a merge needs the source and {target} to have the same columns; "
+            f"only in the source: {', '.join(sorted(set(source_columns) - set(columns))) or 'none'}; "
+            f"only in the table: {', '.join(sorted(set(columns) - set(source_columns))) or 'none'}"
+        )
+        raise ValueError(msg)
+    # Every name below is a column the catalog reported, so quoting is enough.
+    key_list = ", ".join(quote_identifier(key) for key in keys)
+    duplicates = conn.execute(
+        f"SELECT {key_list} FROM {view_name} GROUP BY {key_list} HAVING count(*) > 1 LIMIT 1"
+    ).fetchall()
+    if duplicates:
+        (duplicate,) = duplicates
+        named = ", ".join(f"{key}={value!r}" for key, value in zip(keys, duplicate, strict=True))
+        msg = f"the source holds the key ({named}) more than once; a merge takes each key once"
+        raise ValueError(msg)
+    on = " AND ".join(f"t.{quote_identifier(key)} IS NOT DISTINCT FROM s.{quote_identifier(key)}" for key in keys)
+    updates = ", ".join(f"{quote_identifier(c)} = s.{quote_identifier(c)}" for c in columns if c not in keys)
+    matched = f"WHEN MATCHED THEN UPDATE SET {updates}" if updates else ""
+    names = ", ".join(quote_identifier(c) for c in columns)
+    values = ", ".join(f"s.{quote_identifier(c)}" for c in columns)
+    conn.execute(f"""
+        MERGE INTO {target} AS t USING {view_name} AS s ON ({on})
+        {matched}
+        WHEN NOT MATCHED THEN INSERT ({names}) VALUES ({values})
+    """)
 
 
 def _create_laid_out(
