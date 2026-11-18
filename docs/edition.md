@@ -806,8 +806,8 @@ every check.
    and ships with the edition, and a query reads the partitioning from there
    ([GH-205](https://github.com/StatCat-Suite/sdmxlib/issues/205)).
    `write_observations` replaces the table by default; `mode="append"`
-   inserts into it and keeps its layout, so it refuses a `partition_by` or
-   `sorted_by`. A builder
+   inserts into it and `mode="merge"` revises it by `keys`; both keep its
+   layout, so they refuse a `partition_by` or `sorted_by`. A builder
    that writes in more than one step reopens the edition with
    `build(product, resume=edition_id)`. Close every connection that wrote: DuckDB
    checkpoints a database when its last connection closes, and a write-ahead
@@ -828,9 +828,12 @@ every check.
    - every table holding delete files is rewritten into data files without
      them (`ducklake_rewrite_data_files` with `delete_threshold => 0`: the
      default threshold keeps a small delete, which is exactly a daily delta);
-   - with `lifecycle="final"`, the lake's files are merged, so a table holds
-     one file, or one per partition. DuckLake sorts what it merges by the
-     table's `SORTED BY`; `seal` sets no sort of its own;
+   - with `lifecycle="final"`, adjacent files smaller than the lake's
+     `target_file_size` (DuckLake's default is 512 MB) are merged together,
+     and a file DuckLake wrote at that size stays as written. A table under
+     the target size holds one file, or one per partition; a larger table
+     keeps about one file per target size. DuckLake sorts what it merges by
+     the table's `SORTED BY`; `seal` sets no sort of its own;
    - with `expire_snapshots=True`, every snapshot but the current one is
      expired. Without it, earlier snapshots stay readable and the manifest
      lists the files they reach.

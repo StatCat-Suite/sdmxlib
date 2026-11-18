@@ -372,6 +372,54 @@ Writing observations with `write_observations` is a load, not an SDMX
 update: `mode="overwrite"` replaces the whole table, which an SDMX
 `Replace` does not, and `mode="append"` adds rows without matching keys.
 
+### Applying a revision delta with `mode="merge"`
+
+A revisable product's daily delta adds new periods and revises earlier ones.
+`mode="merge"` applies it by `keys`, the columns that identify an
+observation. A producer usually merges into an edition started with
+`LocalRegistry.build(product, previous=edition_id)`, which holds the earlier
+edition's rows; this example writes the table first:
+
+```python
+import polars as pl
+
+table = pl.DataFrame(
+    {"GEO": ["CA", "CA", "ON"], "TIME_PERIOD": ["2020", "2021", "2020"], "OBS_VALUE": [1.0, 2.0, 3.0]}
+)
+# Revises CA 2021 and adds ON 2021.
+delta = pl.DataFrame({"GEO": ["CA", "ON"], "TIME_PERIOD": ["2021", "2021"], "OBS_VALUE": [2.5, 4.0]})
+
+with sl.LocalRegistry.build("t14100287") as reg:
+    reg.write_observations(schema="codr", table="obs", source=table)
+    reg.write_observations(
+        schema="codr", table="obs", source=delta, mode="merge", keys=("GEO", "TIME_PERIOD")
+    )
+    rows = reg.connection.execute(
+        f"SELECT GEO, TIME_PERIOD, OBS_VALUE FROM {reg.lake_alias}.codr.obs ORDER BY ALL"
+    ).fetchall()
+
+print(rows)  # [('CA', '2020', 1.0), ('CA', '2021', 2.5), ('ON', '2020', 3.0), ('ON', '2021', 4.0)]
+```
+
+- A delta row whose keys match a table row replaces that row, a delta row
+  with no match is inserted, and table rows the delta does not name stay.
+  Keys match when equal, and a null key matches a null key.
+- It runs as one DuckLake `MERGE INTO`, so the delta commits as one snapshot
+  or not at all: a failure leaves the table as it was.
+- `keys` is required, and each key must be a column of both the delta and
+  the table. The delta and the table must have the same columns, by name, in
+  any order.
+- A delta holding one key twice is refused with an error naming the key,
+  before anything is written.
+- The table must exist. A merge keeps its partitioning and sort, so it
+  refuses `partition_by` and `sorted_by`, as an append does.
+- A merge cannot withdraw an observation. A delta whose rows say what to
+  remove needs a separate `DELETE` through `reg.connection`.
+
+The replaced rows leave a DuckLake delete file, and `seal` rewrites every
+table holding one, so the sealed edition ships none. A table in a catalog
+that is not DuckLake merges the same way, as one DuckDB transaction.
+
 ---
 
 ## Filtering by code

@@ -309,10 +309,6 @@ def artefact_entries(
     return tuple(entries)
 
 
-#: Larger than any data file, so a merge leaves one file per table.
-_ONE_FILE = 1 << 62
-
-
 def settle_lake(
     conn: duckdb.DuckDBPyConnection,
     *,
@@ -326,10 +322,15 @@ def settle_lake(
       (``delete_threshold => 0``: DuckLake's default skips a table whose
       deleted rows are few, which is exactly a daily delta), so no delete file
       ships and every edition reads its rows from data files alone.
-    - A ``final`` edition's tables have their files merged: nothing will
-      be appended. DuckLake sorts what it merges by a table's ``SORTED BY``,
-      which the producer sets (`write_observations`' ``sorted_by``); this sets
-      no sort of its own.
+    - A ``final`` edition's tables have their adjacent small files merged:
+      nothing will be appended. The lake's ``target_file_size`` (DuckLake's
+      default is 512 MB) decides which files merge: adjacent files smaller
+      than it are merged together, and a file DuckLake wrote at that size
+      stays as written. A table under the target size ends in one file, or one per
+      partition; a larger table keeps about one file per target size (design
+      §4.5 says why). DuckLake sorts what it merges by a table's
+      ``SORTED BY``, which the producer sets (`write_observations`'
+      ``sorted_by``); this sets no sort of its own.
     - With `expire_snapshots`, every snapshot but the current one is expired,
       so the catalog and the manifest hold only current files.
 
@@ -345,7 +346,7 @@ def settle_lake(
     conn.execute("CALL ducklake_flush_inlined_data('lake')")
     conn.execute("CALL ducklake_rewrite_data_files('lake', delete_threshold => 0)")
     if lifecycle == "final":
-        conn.execute("CALL ducklake_merge_adjacent_files('lake', max_file_size => ?)", [_ONE_FILE])
+        conn.execute("CALL ducklake_merge_adjacent_files('lake')")
     if expire_snapshots:
         conn.execute("CALL ducklake_expire_snapshots('lake', older_than => now())")
 
