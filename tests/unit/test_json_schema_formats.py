@@ -9,9 +9,10 @@ tests here fail if one goes missing, rather than the schema checks quietly
 passing again.
 
 The rest is what checking formats found, and what was done about each: map
-validity dates written as midnight UTC, a zoneless period refused, `prepared`
-taken as an aware `datetime`, and the one declared deviation, a time dimension
-value's bounds, which stay zoneless for .Stat.
+validity dates written as midnight UTC, a zoneless validity refused, `prepared`
+taken as an aware `datetime`, and the two declared deviations, a time
+dimension value's bounds and a constraint time range's bounds, which stay
+zoneless for .Stat (GH-392).
 """
 
 import json
@@ -153,7 +154,7 @@ def test_any_other_instant_is_refused_rather_than_truncated(text: str) -> None:
         sl.parse(msgspec.json.encode(doc))
 
 
-def _constraint(period: str) -> DataConstraint:
+def _constraint(period: str, *, valid_to: str | None = None) -> DataConstraint:
     flow = sl.Dataflow(id="DF", maintainer="AG", version="1.0", name={"en": "df"})
     return DataConstraint(
         id="CC",
@@ -163,21 +164,29 @@ def _constraint(period: str) -> DataConstraint:
         constraint_type=ConstraintType.ALLOWED,
         attachment=ConstraintAttachment(dataflows=(sl.Ref[sl.Dataflow].to(flow),)),
         regions=(
-            CubeRegion(keys=(KeyValue(dimension_id="TIME_PERIOD", time_range=TimeRange(end=TimeBound(period))),)),
+            CubeRegion(
+                keys=(
+                    KeyValue(
+                        dimension_id="TIME_PERIOD", time_range=TimeRange(end=TimeBound(period), valid_to=valid_to)
+                    ),
+                )
+            ),
         ),
     )
 
 
-def test_a_period_with_no_zone_is_refused_by_name() -> None:
+def test_a_validity_with_no_zone_is_refused_by_name() -> None:
     """Valid `xs:dateTime` in SDMX-ML, and nothing SDMX-JSON can write without inventing a zone."""
     with pytest.raises(ValidationError) as caught:
-        json_writer.write(sl.StructureMessage(constraints=[_constraint("2025-06-30T00:00:00")]))
+        json_writer.write(sl.StructureMessage(constraints=[_constraint("2025", valid_to="2025-06-30T00:00:00")]))
     assert [issue.path for issue in caught.value.issues] == [
-        "DataConstraint:CC.regions[0].keys[TIME_PERIOD].time_range.end.period"
+        "DataConstraint:CC.regions[0].keys[TIME_PERIOD].time_range.valid_to"
     ]
 
 
-@pytest.mark.parametrize("period", ["2025-06-30T00:00:00Z", "2025-06-30T00:00:00-05:00", "2025-06-30", "2025-Q2"])
+@pytest.mark.parametrize(
+    "period", ["2025-06-30T00:00:00Z", "2025-06-30T00:00:00-05:00", "2025-06-30", "2025-Q2", "2025-06-30T00:00:00"]
+)
 def test_a_period_json_can_write_is_written_as_given(period: str) -> None:
     out = json_writer.write(sl.StructureMessage(constraints=[_constraint(period)]))
     assert_valid_sdmx_json(out, compile_json_schema("structure", "2.0"))
@@ -185,11 +194,13 @@ def test_a_period_json_can_write_is_written_as_given(period: str) -> None:
     assert key["timeRange"] == {"beforePeriod": {"period": period}}
 
 
-def test_the_1_0_constraint_writer_refuses_a_period_with_no_zone() -> None:
+def test_the_1_0_constraint_writer_refuses_a_validity_with_no_zone() -> None:
+    """1.0 has no time range validity at all, so the zone is the second reason given."""
     with pytest.raises(ValidationError) as caught:
-        write_contentconstraint(_constraint("2025-06-30T00:00:00"))
+        write_contentconstraint(_constraint("2025", valid_to="2025-06-30T00:00:00"))
     assert [issue.path for issue in caught.value.issues] == [
-        "DataConstraint:CC.regions[0].keys[TIME_PERIOD].time_range.end.period"
+        "DataConstraint:CC.regions[0].keys[TIME_PERIOD].time_range",
+        "DataConstraint:CC.regions[0].keys[TIME_PERIOD].time_range.valid_to",
     ]
 
 
@@ -266,3 +277,40 @@ def test_a_zoneless_date_time_elsewhere_is_not_excused() -> None:
     doc["meta"]["prepared"] = "2026-06-16T00:00:00"
     with pytest.raises(AssertionError, match=r"/meta/prepared"):
         assert_valid_sdmx_json(doc, compile_json_schema("data", "2.0"))
+
+
+# ── the declared deviation: a constraint time range's bounds (GH-392) ─────
+
+
+def _structure(period: str) -> dict[str, Any]:
+    return msgspec.json.decode(
+        json_writer.write(sl.StructureMessage(constraints=[_constraint(period)])), type=dict[str, Any]
+    )
+
+
+def test_a_zoneless_time_range_bound_is_written_as_given_by_both_writers() -> None:
+    """As NSI writes it: the .Stat Data Explorer reads a zoneless bound as local time."""
+    bound = "2025-12-31T23:59:59"
+    one = msgspec.json.decode(write_contentconstraint(_constraint(bound)), type=dict[str, Any])
+    (key,) = one["data"]["contentConstraints"][0]["cubeRegions"][0]["keyValues"]
+    assert key["timeRange"] == {"beforePeriod": {"period": bound}}
+    (key,) = _structure(bound)["data"]["dataConstraints"][0]["cubeRegions"][0]["keyValues"]
+    assert key["timeRange"] == {"beforePeriod": {"period": bound}}
+
+
+def test_the_zoneless_time_range_bound_is_the_constraint_s_only_violation() -> None:
+    """Exact, and not empty: the schema refuses the bound, and the excusal covers it alone."""
+    doc = _structure("2025-12-31T23:59:59")
+    errors = list(compile_json_schema("structure", "2.0").iter_errors(doc))
+    assert ["/".join(map(str, e.absolute_path)) for e in errors] == [
+        "data/dataConstraints/0/cubeRegions/0/keyValues/0/timeRange"
+    ]
+    assert_valid_sdmx_json(doc, compile_json_schema("structure", "2.0"))
+
+
+@pytest.mark.parametrize("bound", ["not a time", "2025-13-01T00:00:00"])
+def test_a_malformed_time_range_bound_is_not_excused(bound: str) -> None:
+    doc = _structure("2025-12-31T23:59:59")
+    doc["data"]["dataConstraints"][0]["cubeRegions"][0]["keyValues"][0]["timeRange"]["beforePeriod"]["period"] = bound
+    with pytest.raises(AssertionError, match=r"timeRange"):
+        assert_valid_sdmx_json(doc, compile_json_schema("structure", "2.0"))

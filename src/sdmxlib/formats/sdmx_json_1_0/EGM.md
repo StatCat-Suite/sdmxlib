@@ -27,8 +27,9 @@ are msgspec Structs encoded with the shared `formats/sdmx_json/_dto.py`
 - No wall-clock timestamp is written. `meta.prepared` appears only when the
   caller passes `prepared`.
 - Content that 1.0 cannot express raises `ValidationError(issues)` before
-  anything is written. A date-time period with no time zone is one of those
-  issues (`zoneless_periods`).
+  anything is written. A validity date-time with no time zone is one of those
+  issues (`zoneless_periods`). A time range's zoneless start or end is
+  written as given (GH-392).
 - A naive `prepared` raises `ValueError`, since SDMX-JSON requires a zone.
 
 ## Side Effects

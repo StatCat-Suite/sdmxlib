@@ -56,8 +56,10 @@ serialisers in `structure_values.py`.
   `serialize_concepts` (`structure_values.py`): the public `__all__`; each
   returns TypedDicts.
 - `resolve_urn` and `resolve_any_urn` (`_resolve.py`), and `zoneless_periods`
-  (`_periods.py`): resolve URNs to Refs, and find date-time periods that have
-  no time zone.
+  (`_periods.py`): resolve URNs to Refs, and find a constraint's validity
+  date-times that have no time zone. A time range's start and end are exempt:
+  the writers write them zoneless, as NSI does, for the .Stat Data Explorer
+  (GH-392).
 
 ## Invariants
 
@@ -78,8 +80,8 @@ serialisers in `structure_values.py`.
   its own, and an entry its struct cannot decode is refused alone.
 - `write` passes the message through `without_dropped(msg, "json")`.
   `_refuse_unwritable` then raises `ValidationError` for a version that fails
-  `check_writable(..., "json")`, or for a constraint with a date-time period
-  that has no zone. Both checks finish before any encoding.
+  `check_writable(..., "json")`, or for a constraint with a validity
+  date-time that has no zone. Both checks finish before any encoding.
 - Pretty printing uses `msgspec.json.format(indent=2)`.
 - A singular `name` (or `description`, `text`) with no map states no
   language. It is read in the language `meta.contentLanguages` declares when

@@ -156,6 +156,36 @@ cc.allows({"FREQ": "A", "REF_AREA": "ZZ"})   # False — no rows, though the cod
 A dimension value that is `NULL` in the lake is **excluded** rather than
 collected as an empty string: a missing value is not a value the cube contains.
 
+### The time dimension is a range
+
+Both builders give the DSD's time dimension as a `TimeRange`, from the
+earliest period's start to the latest period's end, both inclusive. The .Stat
+Suite Data Explorer reads a time dimension's availability only as a range:
+given a list of periods, its Start and End dropdowns are empty and "Last N
+periods" returns nothing. Gaps between periods are not recorded. Pass
+`time_dimension="values"` to keep the list of periods.
+
+The bounds come from each period's own extent, as `sl.period_bounds` reads
+it, and `sl.period_range` computes the range:
+
+```python
+print(sl.period_bounds("2021-Q2"))  # ('2021-04-01T00:00:00', '2021-06-30T23:59:59')
+rng = sl.period_range(["2019", "2021-M06"])
+print((rng.start.period, rng.end.period))  # ('2019-01-01T00:00:00', '2021-06-30T23:59:59')
+print(sl.period_range(["2021", "2021-01-01/P5Y"]))  # None
+```
+
+The bounds carry no time zone, as NSI writes them. The Data Explorer parses a
+zoneless date-time as local time, and a bare date or a bound with `Z` as UTC,
+which shows west of UTC as the day before. The SDMX-JSON writers write these
+bounds zoneless, a declared deviation from the schema, and refuse a zoneless
+validity date-time as before.
+
+The time dimension stays a list of values when a period does not parse (a
+date-time, a `<start>/<duration>` interval), when it holds no periods, and
+when the registry holds no DSD for the dataflow, since only the DSD says which
+dimension is the time dimension.
+
 ### One component at a time
 
 `build_component_availability` is the framework-free core of the SDMX REST

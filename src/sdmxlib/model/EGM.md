@@ -82,6 +82,12 @@ hierarchical roll-ups.
 - `StructureMessage` and `MetadataMessage` (`message.py`): message containers
   holding `ArtefactList`s. Each records the read's losses in `lost`;
   `StructureMessage` also records `refused` and `assumed`.
+- `period_bounds` and `period_range` (`period.py`): the first and last
+  second of an SDMX time period (`2021`, `2021-Q2`, `2021-M06`, `2021-W01`
+  and the other Gregorian and reporting shapes) as zoneless ISO date-times,
+  and the inclusive `TimeRange` a set of periods covers. Either gives None
+  for a period it cannot read. Exported as `sl.period_bounds` and
+  `sl.period_range`.
 - Other artefact classes: `Codelist`/`Code` (`codelist.py`),
   `ConceptScheme`/`Concept` (`concept.py`), `Dataflow` (`dataflow.py`),
   `CategoryScheme`/`Categorisation` (`category.py`), `DataConstraint`

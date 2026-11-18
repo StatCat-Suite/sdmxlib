@@ -1,12 +1,23 @@
-"""A date-time with no zone is SDMX-ML's, and SDMX-JSON cannot write it (#496).
+"""A date-time with no zone is SDMX-ML's, and SDMX-JSON writes it only as a time range's bound (#496).
 
 A constraint's periods are held as written: a `TimeBound.period` and every
 selection's ``valid_from`` / ``valid_to`` are SDMX's time-period text, which in
 SDMX-ML may be an ``xs:dateTime``, and an ``xs:dateTime``'s zone is optional.
 SDMX-JSON's period types admit a date-time only as JSON Schema's ``date-time``
-(RFC 3339), which requires one. Writing ``2025-06-30T00:00:00`` verbatim is
-schema-invalid, and appending ``Z`` would state a zone the source never gave,
-so the JSON writers refuse it, as they refuse an unwritable version.
+(RFC 3339), which requires one. Appending ``Z`` would state a zone the source
+never gave, so the JSON writers refuse a zoneless validity date-time, as they
+refuse an unwritable version.
+
+A `TimeRange`'s start and end are the declared exception, written zoneless
+and schema-invalid, as NSI writes them (GH-392). The .Stat Suite Data Explorer
+turns each bound into a JavaScript ``Date`` with ``new Date(p.toString())``
+(dotstatsuite-data-explorer ``src/web/lib/sdmx/index.js``, line 158 at
+``b85ec0a4``). A bare date or a bound with ``Z`` parses as UTC, so west of UTC
+``2021-01-01`` shows as the previous day, and an annual range's first year as
+the year before; a zoneless date-time parses as local time and shows as
+written. `sdmxlib.builders` writes availability bounds this way
+(`sdmxlib.model.period`), and the data messages' time bounds carry the same
+deviation.
 """
 
 from collections.abc import Iterator
@@ -34,10 +45,9 @@ def is_zoneless_date_time(text: str) -> bool:
 
 
 def _range(path: str, time_range: TimeRange | None) -> Iterator[tuple[str, str | None]]:
+    """A time range's validity; its start and end are written as given, zoneless or not (the module says why)."""
     if time_range is None:
         return
-    yield f"{path}.start.period", time_range.start.period if time_range.start is not None else None
-    yield f"{path}.end.period", time_range.end.period if time_range.end is not None else None
     yield f"{path}.valid_from", time_range.valid_from
     yield f"{path}.valid_to", time_range.valid_to
 
@@ -74,7 +84,7 @@ def _periods(constraint: DataConstraint | AttachmentConstraint) -> Iterator[tupl
 
 
 def zoneless_periods(constraint: DataConstraint | AttachmentConstraint) -> list[ValidationIssue]:
-    """One issue per period in *constraint* that is a date-time with no zone."""
+    """One issue per validity date-time in *constraint* with no zone; a time range's bounds are exempt."""
     return [
         ValidationIssue(
             path=path,

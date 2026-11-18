@@ -2,7 +2,7 @@
 
 Two layers:
 
-1. Unit tests for `_period_bounds` covering every supported period
+1. Unit tests for `period_bounds` covering every supported period
    format (annual, monthly, daily, quarterly, semester) and the
    non-handled cases that must return ``None``.
 2. End-to-end writer tests that build a DSD with a formal
@@ -27,12 +27,12 @@ import msgspec
 import pyarrow as pa
 import pytest
 
-from sdmxlib.formats.sdmx_json._data_common import _period_bounds
 from sdmxlib.formats.sdmx_json.data_v2 import write_sdmx_json_data
 from sdmxlib.model.codelist import Code, Codelist
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure, Dimension, Measure, TimeDimension
 from sdmxlib.model.istring import InternationalString
+from sdmxlib.model.period import period_bounds
 from sdmxlib.model.ref import Ref
 from tests.support.factories import concept_ref, dsd_binding
 
@@ -42,7 +42,7 @@ if TYPE_CHECKING:
 pytestmark = pytest.mark.unit
 
 
-# ── _period_bounds unit coverage ──────────────────────────────────────────────
+# ── period_bounds unit coverage ──────────────────────────────────────────────
 
 
 @pytest.mark.parametrize(
@@ -60,8 +60,8 @@ pytestmark = pytest.mark.unit
         ("2021-S2", "2021-07-01T00:00:00", "2021-12-31T23:59:59"),
     ],
 )
-def test_period_bounds_supported_shapes(period_id: str, start: str, end: str) -> None:
-    assert _period_bounds(period_id) == (start, end)
+def testperiod_bounds_supported_shapes(period_id: str, start: str, end: str) -> None:
+    assert period_bounds(period_id) == (start, end)
 
 
 @pytest.mark.parametrize(
@@ -74,11 +74,11 @@ def test_period_bounds_supported_shapes(period_id: str, start: str, end: str) ->
         "",
     ],
 )
-def test_period_bounds_unsupported_returns_none(period_id: str) -> None:
+def testperiod_bounds_unsupported_returns_none(period_id: str) -> None:
     """Unsupported shapes return None so the writer doesn't fabricate
     bogus dates. ``<start>/<duration>`` is intentionally None too —
     downstream parsers like ``.Stat`` handle that shape natively."""
-    assert _period_bounds(period_id) is None
+    assert period_bounds(period_id) is None
 
 
 # ── writer integration ───────────────────────────────────────────────────────

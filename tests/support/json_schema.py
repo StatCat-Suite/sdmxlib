@@ -105,7 +105,7 @@ def is_declared_time_bound(err: ValidationError) -> bool:
     ``refineTimePeriod`` reads these with ``parseISO`` and then shifts by the
     local offset (``dateWithTZ``), which is right only for a zoneless value —
     a ``Z`` would show 2021-01-01 as 2020-12-31 west of UTC. The data writers'
-    ``_period_bounds`` says why. Only that: a well-formed date-time at a time
+    `sdmxlib.model.period` says why. Only that: a well-formed date-time at a time
     dimension value's ``start``/``end``, lacking only its zone.
     """
     path = list(err.absolute_path)
@@ -122,13 +122,52 @@ def is_declared_time_bound(err: ValidationError) -> bool:
         return False
 
 
+_TIME_RANGE_BOUNDS = ("startPeriod", "endPeriod", "beforePeriod", "afterPeriod")
+
+
+def _is_zoneless_date_time(text: object) -> bool:
+    if not isinstance(text, str) or "T" not in text:
+        return False
+    try:
+        return datetime.fromisoformat(text).tzinfo is None
+    except ValueError:
+        return False
+
+
+def with_time_range_bounds_zoned(node: Any) -> Any:
+    """A copy of *node* with ``Z`` added to each zoneless date-time bound of a constraint's ``timeRange``.
+
+    The second declared deviation (#496, GH-392): the constraint writers write
+    a time range's bounds zoneless, as NSI does, because the .Stat Data
+    Explorer reads a bound with a zone, or a bare date, as UTC and shows it a
+    day or a year early west of UTC (`sdmx_json/_periods.py` says how). Adding
+    the zone makes exactly those bounds valid, so the schema still checks every
+    other field and refuses a malformed bound. Only a bound's ``period`` is
+    touched, and only one that reads as a date-time with no zone.
+    """
+    if isinstance(node, list):
+        return [with_time_range_bounds_zoned(item) for item in node]
+    if not isinstance(node, dict):
+        return node
+    out = {key: with_time_range_bounds_zoned(value) for key, value in node.items()}
+    time_range = out.get("timeRange")
+    if isinstance(time_range, dict):
+        for name in _TIME_RANGE_BOUNDS:
+            bound = time_range.get(name)
+            if isinstance(bound, dict) and _is_zoneless_date_time(bound.get("period")):
+                time_range[name] = {**bound, "period": f"{bound['period']}Z"}
+    return out
+
+
 def assert_valid_sdmx_json(data: bytes | str | dict[str, Any], validator: Validator) -> None:
     """Validate *data* against *validator*. Raises a readable AssertionError.
 
     Accepts raw bytes (decoded as UTF-8), a JSON string, or an already-
     parsed dict. The error list is sorted by JSON path so failures
-    surface in document order. A zoneless TIME_PERIOD bound is excused,
-    and nothing else: see `is_declared_time_bound`.
+    surface in document order. Two declared deviations are excused, and
+    nothing else: a data message's zoneless TIME_PERIOD bound
+    (`is_declared_time_bound`) and a constraint time range's zoneless bound
+    (`with_time_range_bounds_zoned`).
     """
     if isinstance(data, bytes):
         parsed: Any = json.loads(data.decode())
@@ -138,7 +177,7 @@ def assert_valid_sdmx_json(data: bytes | str | dict[str, Any], validator: Valida
         parsed = data
 
     errors = sorted(
-        (e for e in validator.iter_errors(parsed) if not is_declared_time_bound(e)),
+        (e for e in validator.iter_errors(with_time_range_bounds_zoned(parsed)) if not is_declared_time_bound(e)),
         key=lambda e: list(e.absolute_path),
     )
     if not errors:
@@ -153,4 +192,4 @@ def assert_valid_sdmx_json(data: bytes | str | dict[str, Any], validator: Valida
 
 def is_valid_sdmx_json(data: bytes, validator: Validator) -> bool:
     """Whether *data* validates against *validator*: for a test whose expectation the schema decides."""
-    return validator.is_valid(json.loads(data))
+    return validator.is_valid(with_time_range_bounds_zoned(json.loads(data)))

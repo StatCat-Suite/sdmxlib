@@ -19,6 +19,38 @@ Names that left the public API entirely: `Registry`, `FederatedCatalog`,
 
 ---
 
+## The availability builders give the time dimension as a range
+
+From 0.89.0, `build_dataflow_constraint` and `build_component_availability`
+(`sdmxlib.builders`) give the DSD's time dimension as a `KeyValue` whose
+`time_range` runs from the earliest period's start to the latest period's
+end, both inclusive, with no time zone
+([GH-392](https://github.com/StatCat-Suite/sdmxlib/issues/392)). Its
+`values` is empty. The .Stat Suite Data Explorer reads availability for time
+only as a range. Pass `time_dimension="values"` to either builder to keep the
+list of periods.
+
+The time dimension keeps its values when a period does not parse, when it
+holds no periods, and when the registry holds no DSD for the dataflow.
+`sl.period_bounds` and `sl.period_range` are the public functions behind the
+range:
+
+```python
+rng = sl.period_range(["2019", "2021-Q2"])
+print((rng.start.period, rng.end.period))  # ('2019-01-01T00:00:00', '2021-06-30T23:59:59')
+```
+
+Two writer changes come with it:
+
+- The SDMX-JSON writers (`write_contentconstraint` for 1.0, `sl.to_json`
+  for 2.0) write a time range's start and end as given, zoneless or not, as
+  NSI writes them. They still refuse a zoneless validity date-time.
+- The SDMX-JSON data writers give a time dimension value's `start` and `end`
+  for reporting periods as well: `2021-A1`, `2021-T2`, `2021-M06`,
+  `2021-W01` and `2021-D181` gain bounds, which they lacked. A `YYYY-MM-DD`
+  that is not a calendar date, such as `2021-02-30`, loses the bounds it was
+  given.
+
 ## The Inventory reader calls `fetch` from worker threads
 
 From 0.87.0, `LiveInventory.editions()`, `LiveInventory.products()` and
@@ -3202,10 +3234,11 @@ Two structure-message changes come with it:
   (`2026-01-01T00:00:00Z`) and reads midnight UTC back as that date. Any other
   instant, a bare date, or a date-time with no zone refuses the artefact
   rather than being truncated.
-- **A constraint period that is a date-time with no zone**, which SDMX-ML's
-  `xs:dateTime` allows, is refused by the SDMX-JSON 2.0 structure writer and
-  the SDMX-JSON 1.0 constraint writer, naming its path. Give it a zone, or
-  write SDMX-ML.
+- **A constraint's validity that is a date-time with no zone**, which
+  SDMX-ML's `xs:dateTime` allows, is refused by the SDMX-JSON 2.0 structure
+  writer and the SDMX-JSON 1.0 constraint writer, naming its path. Give it a
+  zone, or write SDMX-ML. A time range's start and end are written as given
+  (see [the availability builders](#the-availability-builders-give-the-time-dimension-as-a-range)).
 
 A time dimension value's start and end in an SDMX-JSON data message are still
 written without a zone: the consumer they exist for, .Stat, reads them as
