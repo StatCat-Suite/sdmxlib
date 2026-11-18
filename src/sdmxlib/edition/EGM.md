@@ -26,8 +26,8 @@ seals through `seal(extensions=...)`.
   inventory, the data files DuckLake references, and each file's placement
   tier (by longest prefix match).
 - `settle_lake` (`_write.py`): flushes inlined data and rewrites delete files.
-  For a final edition it also merges adjacent files, and on request it
-  expires snapshots.
+  For a final edition it also merges adjacent files smaller than the lake's
+  `target_file_size`, and on request it expires snapshots.
 - `check_edition` (`_check.py`): checks an edition against its manifest under the
   profile `at="publish"`, `"receive"` or `"open"` and returns a `Report`.
   `Report.ok` says whether it passed. `Check` is the type an extension check
