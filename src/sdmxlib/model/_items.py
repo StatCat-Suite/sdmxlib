@@ -185,6 +185,26 @@ def scheme_urn_of(item_urn: SdmxUrn[object], owner: type[MaintainableArtefact]) 
     )
 
 
+def owner_urn(urn: SdmxUrn[object]) -> SdmxUrn[object]:
+    """The URN of the maintainable that holds what *urn* names; `SdmxUrn.owner`'s body.
+
+    A maintainable URN is its own owner. An item or component URN names its own
+    class (`Concept=A:CS(1.0).FREQ`), and the owner is the scheme class that
+    holds that class (`ConceptScheme=A:CS(1.0)`), found through `owner_classes`.
+
+    Raises:
+        ValueError: If no scheme class holds the item class, or more than one does.
+    """
+    if urn.item_id is None:
+        return urn
+    owners = owner_classes(urn.artefact_class)
+    if len(owners) != 1:
+        held = f"held by {', '.join(owner.__name__ for owner in owners)}" if owners else "held by no scheme class"
+        msg = f"{urn}: its item class {urn.artefact_class!r} is {held}, so it has no one owner"
+        raise ValueError(msg)
+    return scheme_urn_of(urn, owners[0])
+
+
 def resolve_item(index: Mapping[str, object], item_urn: SdmxUrn[object]) -> SdmxItem | None:
     """The item *item_urn* names, looked up through an index of schemes.
 

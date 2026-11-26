@@ -18,7 +18,9 @@ hierarchical roll-ups.
 ## Interface
 
 - `SdmxUrn[T]` (`urn.py`): generic typed SDMX URN. `ParsesUrn` gives a class a
-  `parse_urn` classmethod that returns its own URN type.
+  `parse_urn` classmethod that returns its own URN type. `SdmxUrn.owner()`
+  gives the URN of the maintainable holding an item or component, and a
+  maintainable URN unchanged (GH-404), through `_items.owner_urn`.
 - `Ref[T]` (`ref.py`): frozen reference that always carries a URN. Build it
   with `Ref.to`, `Ref.of`, `Ref.unresolved` or `Ref(urn)`, and call it to
   unwrap the target. On access it asks its bound resolver first, then the

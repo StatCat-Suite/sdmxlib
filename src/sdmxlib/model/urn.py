@@ -206,6 +206,28 @@ class SdmxUrn(Generic[T_co]):  # noqa: UP046 — see above; verified against bot
         """True if this URN points to an item within a scheme (e.g. a Code)."""
         return self.item_id is not None
 
+    def owner(self) -> SdmxUrn[object]:
+        """The URN of the maintainable that holds what this URN names.
+
+        An item or component URN names its own class, so the owner of
+        `Concept=A:CS(1.0).FREQ` is `ConceptScheme=A:CS(1.0)`, and of
+        `Dimension=A:DSD(1.0).FREQ` is `DataStructure=A:DSD(1.0)`. A
+        maintainable URN is its own owner, so a reference rewrite can call this
+        on every URN it meets.
+
+        Returns:
+            The owning maintainable's URN.
+
+        Raises:
+            ValueError: If the URN names an item class no scheme class holds.
+
+        Example:
+            sl.Concept.parse_urn("urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=A:CS(1.0).FREQ").owner()
+        """
+        from sdmxlib.model._items import owner_urn  # noqa: PLC0415  (cycle: _items imports base, which imports urn)
+
+        return owner_urn(self)
+
 
 type _Fields = tuple[str, str, str, str, str, str | None]
 
