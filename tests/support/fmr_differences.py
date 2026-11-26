@@ -1,4 +1,4 @@
-"""Every way FMR 12.4.2's copy of our artefacts differs from what we sent, and whose it is (#457).
+"""Every way FMR's copy of our artefacts differs from what we sent, and whose it is (#457).
 
 `tests.support.fmr_oracle.differences` reads both through our reader and
 lists what differs beyond the gaps `formats.gaps` already declares. Each
@@ -17,10 +17,11 @@ and the coding-format types below):
 - **ours** -- a defect of ours, with its issue.
 - **equivalent** -- the two sides hold equal values in different types.
 
-Checked both ways: every difference is matched by exactly one rule -- the
-rules are disjoint, so a broad rule cannot quietly absorb what a narrow one
-was written for -- and every rule matches a difference, so a rule FMR stops
-needing is reported.
+Checked both ways, for each FMR version recorded: every difference is matched
+by exactly one rule -- the rules are disjoint, so a broad rule cannot quietly
+absorb what a narrow one was written for -- and every rule matches a
+difference, so a rule FMR stops needing is reported. A rule carries the FMR
+versions it holds for (`Rule.versions`) when they differ (GH-407).
 """
 
 from typing import Literal
@@ -109,6 +110,22 @@ RULES: tuple[Rule[Kind], ...] = (
         r"2\.1-maximal:ml(?:21|30)",
         "fmr-converts",
         "FMR gives the hierarchy its 2.1 HierarchicalCodelist's annotations as well as its own",
+    ),
+    Rule(
+        r"EXTRA HierarchicalCodelist AG:H@HCL\(1\.0\)",
+        r"(?:2\.1|3\.0)-maximal:ml21",
+        "fmr-converts",
+        "FMR 12.5.0 serves a 3.x hierarchy in 2.1 inside a HierarchicalCodelist named after it, under the "
+        "container's own URN; 12.4.2 gave the container the hierarchy's URN, so it read as the hierarchy",
+        versions=frozenset({"12.5.0"}),
+    ),
+    Rule(
+        r"Hierarchy\.annotations \(length\)",
+        r"3\.0-maximal:ml21",
+        "fmr-converts",
+        "FMR 12.5.0's 2.1 output puts a 3.x hierarchy's annotations on the HierarchicalCodelist it wraps it in, "
+        "and none on the hierarchy",
+        versions=frozenset({"12.5.0"}),
     ),
     Rule(
         r"Codelist\.extensions \(length\)",
@@ -211,7 +228,8 @@ RULES: tuple[Rule[Kind], ...] = (
         r"DataStructure\.(?:dimensions\[\]|attributes\[\]|measure_dimension)\.concept_role \(length\)",
         r"2\.1-maximal:ml21",
         "fmr-drops",
-        "FMR's 2.1 output carries no ConceptRole",
+        "FMR 12.4.2's 2.1 output carries no ConceptRole; 12.5.0's does",
+        versions=frozenset({"12.4.2"}),
     ),
     Rule(
         r"DataStructure\.attributes\[\]\.attachment_groups \(length\)",
@@ -220,10 +238,19 @@ RULES: tuple[Rule[Kind], ...] = (
         "FMR's 2.1 output carries no AttachmentGroup beside an attribute's dimensions",
     ),
     Rule(
-        r"DataStructure\.attributes\[\]\.optional_dimensions",
+        r"DataStructure\.(?:attributes|metadata_attributes)\[\]\.optional_dimensions",
         r"3\.0-maximal:ml30",
         "fmr-drops",
-        "FMR drops @optional on an attribute relationship's dimension",
+        "FMR drops @optional on an attribute relationship's dimension, a metadata attribute usage's too (seen "
+        "once 12.5.0 read the usage)",
+    ),
+    Rule(
+        r"DataStructure\.\w+_descriptor_annotations\[\]\.urls \(length\)",
+        r"3\.0-maximal:ml30",
+        "fmr-drops",
+        "FMR 12.5.0 keeps a component list's annotations, and like every annotation with one AnnotationURL, the "
+        "last, without its xml:lang",
+        versions=frozenset({"12.5.0"}),
     ),
     Rule(
         r"DataConstraint\.(?:regions \(length\)|regions\[\]\.(?:keys|components) \(length\))",
@@ -236,7 +263,8 @@ RULES: tuple[Rule[Kind], ...] = (
         r"DataConstraint\.reference_period \(type\)",
         r"2\.1-maximal:ml21",
         "fmr-drops",
-        "FMR's 2.1 output carries no ReferencePeriod",
+        "FMR 12.4.2's 2.1 output carries no ReferencePeriod; 12.5.0's does",
+        versions=frozenset({"12.4.2"}),
     ),
     Rule(
         r"Hierarchy\.tree\[\](?:\.children\[\])?\.level \(type\)",
@@ -318,10 +346,10 @@ RULES: tuple[Rule[Kind], ...] = (
 _LINK = "an annotation's URL served as a link with no rel, which the schema requires"
 _UNIT_VERSION = "an organisation unit scheme with @version, which 3.0 prohibits on every organisation scheme (#469)"
 
-#: Every FMR response that fails its schema -- the XSD for SDMX-ML, the
+#: Every FMR 12.4.2 response that fails its schema -- the XSD for SDMX-ML, the
 #: vendored JSON schema for SDMX-JSON -- by ``case/agency-format``, and why.
 #: Exact both ways: a response newly invalid, or newly valid, fails the test.
-INVALID: dict[str, str] = {
+_INVALID_12_4_2: dict[str, str] = {
     "2.1-maximal/AG-json10": _LINK,
     "2.1-maximal/AG-json20": _LINK,
     "2.1-maximal/AG_MD-json10": _LINK,
@@ -346,3 +374,7 @@ INVALID: dict[str, str] = {
     "2.1-shape/AG-ml30": _UNIT_VERSION,
     "3.0-shape/AG-json20": "an empty targetValues for a mapping with no target, where the schema requires one or more",
 }
+
+
+#: `_INVALID_12_4_2` for each FMR version recorded.
+INVALID: dict[str, dict[str, str]] = {"12.4.2": _INVALID_12_4_2, "12.5.0": dict(_INVALID_12_4_2)}

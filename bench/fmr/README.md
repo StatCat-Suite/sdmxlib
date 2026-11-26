@@ -22,11 +22,17 @@ Colima is enough to run it:
 brew install colima docker
 colima start --cpu 4 --memory 6 --vm-type vz
 docker run -d --name fmr -p 127.0.0.1:8080:8080 sdmxio/fmr-mysql:12.4.2
+docker run -d --name fmr-12.5 -p 127.0.0.1:8081:8080 sdmxio/fmr-mysql:12.5.0
+uv run python -m bench.fmr record --url http://127.0.0.1:8081
 ```
 
 The image is pinned so the recordings say which FMR made them; the recorder
 reads the version from FMR itself (`/ws/fusion/info/product`) and writes under
-it. The admin account is `root` / `password` (`--url`, `FMR_USER`,
+it. Each version recorded is replayed (`FMR_VERSIONS` in
+`tests/support/fmr_oracle.py`), and an adjustment or a difference rule that
+holds for some versions only names them (GH-407). A fresh 12.5.0 is not empty:
+it ships ECB demo content, which the recorder never reads, since it fetches
+and wipes only the test agencies. The admin account is `root` / `password` (`--url`, `FMR_USER`,
 `FMR_PASSWORD` override). FMR is free to use under the BIS SDMX Community
 Tools Public License; its responses to our own artefacts are what is recorded,
 and nothing here suggests its makers endorse sdmxlib.
@@ -47,7 +53,8 @@ And once: `setup.xml` (the agencies and role concepts FMR needs first) and
 
 ## The two ledgers
 
-- **`ledger.py`** — what is removed before FMR will take a document. FMR
+- **`ledger.py`** — what is removed before FMR will take a document, per FMR
+  version (`Adjustment.fmr`). FMR
   refuses some of what the maximal fixture carries, since that fixture sets
   every field rather than meaningful combinations. Each adjustment is classed:
   `fmr-deviation` (the XSD declares it, FMR refuses it), `fmr-bug`, `fmr-gap`

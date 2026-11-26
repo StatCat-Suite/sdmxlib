@@ -1,0 +1,38 @@
+[
+  {
+    "accepted": [],
+    "refusal": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_GRID(1.0): Can not submit a partial codelist: urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_GRID(1.0)",
+    "status": 400,
+    "xpath": "//*[local-name()='Codelist'][@isPartial='true']/@isPartial"
+  },
+  {
+    "accepted": [],
+    "refusal": "Error while creating structure: urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD(1.0)\nStructure Fails Validation: urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataAttribute=AG:MSD(1.0).MA\nMetadata Attribute 'MA' is presentational so can not have coded representation",
+    "status": 400,
+    "xpath": "//*[local-name()='MetadataAttribute'][@isPresentational='true']/*[local-name()='LocalRepresentation']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Constraint with Release Calendar must not contain Cube Region restrictions",
+    "status": 501,
+    "xpath": "//*[local-name()='ContentConstraint' or local-name()='DataConstraint'][*[local-name()='CubeRegion']]/*[local-name()='ReleaseCalendar']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Error while creating structure: urn:sdmx:org.sdmx.infomodel.structuremapping.StructureMap=AG:SM(1.0)\nDuplicate Mapping for Components: DIM-DIM",
+    "status": 400,
+    "xpath": "//*[local-name()='StructureMap']/*[local-name()='ComponentMap'][preceding-sibling::*[local-name()='ComponentMap']]"
+  },
+  {
+    "accepted": [],
+    "refusal": "Could not resolve reference from structure Concept 'AG:CS(1.0).CODED' to structure Concept 'urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=ISO:ISO_SCHEME(1.0).ISO_CONCEPT'",
+    "status": 404,
+    "xpath": "//*[local-name()='Concept']/*[local-name()='ISOConceptReference']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Error while creating structure: urn:sdmx:org.sdmx.infomodel.registry.ProvisionAgreement=AG:MPA(1.0)\nURN 'urn:sdmx:org.sdmx.infomodel.metadatastructure.Metadataflow=AG:MDF(1.0)' is not of expected type 'Dataflow'",
+    "status": 400,
+    "xpath": "//*[local-name()='ProvisionAgreement'][*[local-name()='StructureUsage']/Ref[@class='Metadataflow']]"
+  }
+]

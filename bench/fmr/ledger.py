@@ -34,13 +34,23 @@ KINDS: dict[Kind, str] = {
 
 @frozen
 class Adjustment:
-    """One thing removed from one document, and why."""
+    """One thing removed from one document, and why.
+
+    `fmr` names the FMR versions it holds for, None for every version
+    recorded: a version that no longer refuses the construct records it
+    without the adjustment (GH-407).
+    """
 
     version: Version
     document: Document
     xpath: str
     kind: Kind
     reason: str
+    fmr: frozenset[str] | None = None
+
+    def holds(self, fmr: str) -> bool:
+        """Whether the adjustment applies to documents sent to FMR `fmr`."""
+        return self.fmr is None or fmr in self.fmr
 
 
 def _el(*names: str) -> str:
@@ -257,7 +267,8 @@ ADJUSTMENTS: tuple[Adjustment, ...] = (
         _el("AttributeList", "MetadataAttributeUsage"),
         "fmr-gap",
         "FMR's 3.0 reader refuses MetadataAttributeUsage outright -- with a flat MSD, and with the usage's "
-        "annotations, links and nested reference removed",
+        "annotations, links and nested reference removed. FMR 12.5.0 reads it",
+        fmr=frozenset({"12.4.2"}),
     ),
     Adjustment(
         "2.1",

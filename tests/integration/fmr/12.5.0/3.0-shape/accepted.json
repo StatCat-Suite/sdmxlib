@@ -1,0 +1,20 @@
+{
+  "accepted": [
+    "urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=AG:CAT_S(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=AG:CAT_T(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_OTHER(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_SHAPES(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=AG:CS_SHAPES(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD_SHAPES(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF_SHAPES(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF_SHAPES_2(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD_SHAPES(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=AG:DC_SHAPES(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.structuremapping.RepresentationMap=AG:RM_N_TO_M(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.structuremapping.RepresentationMap=AG:RM_TYPES(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.structuremapping.RepresentationMap=AG:RM_VARIANTS(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.structuremapping.StructureMap=AG:SM_N_TO_M(1.0)"
+  ],
+  "refusal": null,
+  "status": 200
+}

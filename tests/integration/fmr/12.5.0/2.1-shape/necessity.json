@@ -1,0 +1,26 @@
+[
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/Constraints/ContentConstraint/ConstraintAttachment/QueryableDataSource",
+    "status": 400,
+    "xpath": "//*[local-name()='ContentConstraint'][not(*[local-name()='CubeRegion' or local-name()='DataKeySet'])]"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/DataStructures/DataStructure/DataStructureComponents/Group/AttachmentConstraint",
+    "status": 400,
+    "xpath": "//*[local-name()='Group'][*[local-name()='AttachmentConstraint']]"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/DataStructures/DataStructure/DataStructureComponents/AttributeList/ReportingYearStartDay/Annotations",
+    "status": 400,
+    "xpath": "//*[local-name()='ReportingYearStartDay']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/Constraints/AttachmentConstraint",
+    "status": 400,
+    "xpath": "//*[local-name()='Constraints']/*[local-name()='AttachmentConstraint']"
+  }
+]
