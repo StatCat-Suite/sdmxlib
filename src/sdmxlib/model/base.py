@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, ClassVar, Self
 
+from sdmxlib.model.annotations import Annotations
 from sdmxlib.model.istring import InternationalString
 from sdmxlib.model.urn import ParsesUrn, SdmxUrn
 from sdmxlib.model.version import is_final
@@ -80,6 +81,19 @@ class MaintainableArtefact(ParsesUrn):
     @property
     def name(self) -> InternationalString:
         """The artefact's name, in each language it has."""
+        raise NotImplementedError
+
+    # ``NameableArtefact`` in the IM: optional, so an artefact with none holds
+    # an empty `InternationalString`.
+    @property
+    def description(self) -> InternationalString:
+        """The artefact's description, in each language it has; empty when it has none."""
+        raise NotImplementedError
+
+    # ``AnnotableArtefact`` in the IM, which every maintainable descends from.
+    @property
+    def annotations(self) -> Annotations:
+        """The artefact's annotations; empty when it has none."""
         raise NotImplementedError
 
     # ``@uri`` on ``IdentifiableType``: "a URI that contains a link to a

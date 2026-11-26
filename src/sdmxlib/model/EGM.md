@@ -33,7 +33,11 @@ hierarchical roll-ups.
   text. `urn_of`, `artefact_urn`, `short_urn` and `target_urn` are URN helpers.
 - `MaintainableArtefact` (`base.py`): base for top-level artefacts. It
   annotates the `sdmx_package`, `sdmx_class` and `msg_field` ClassVars, and
-  `urn_for(...)` builds its typed URN.
+  `urn_for(...)` builds its typed URN. It declares every maintainable's
+  fields (`id`, `maintainer`, `version`, `name`, `description`,
+  `annotations`, `uri` and the external-reference fields) as read-only
+  properties each attrs subclass overrides, so code generic over artefacts
+  reads them without narrowing (GH-403).
 - `ItemList[T: SupportsId]` and `ArtefactList[T: Maintainable]`
   (`collections.py`): sequences. `ItemList` is indexed by item id.
   `ArtefactList` is indexed by int, slice, bare id, `"AG:ID"`, `"AG:ID(ver)"`,
