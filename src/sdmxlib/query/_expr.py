@@ -31,7 +31,7 @@ import attrs
 from sdmxlib._time import to_storage
 from sdmxlib.model._label_match import Fold
 from sdmxlib.model.istring import normalize_tag, tag_alias
-from sdmxlib.model.version import sort_key as version_sort_key
+from sdmxlib.model.version import version_key
 from sdmxlib.query._common import Descending, canonical_key
 from sdmxlib.query._joins import STRUCTURAL_SCHEMA, KeyRank, PathError, RootJoin, trim
 from sdmxlib.sql import SqlRelation
@@ -1622,7 +1622,7 @@ class Version[R: RowKind](Str[R]):
 
         Nothing new is needed. `version_sort` is already baked beside the
         column and already what `order_by` and `rank()` compare, and the same
-        `sort_key` that produced it maps the literal. So the comparison is
+        `version_key` that produced it maps the literal. So the comparison is
         exact, not approximate, and agrees with the ordering by construction
         rather than by promise.
         """
@@ -1634,7 +1634,7 @@ class Version[R: RowKind](Str[R]):
             )
             raise TypeError(msg)
         key: Str[R] = Str(tuple(self.path), self.table, self.sort_column)
-        return Compare(key, op, version_sort_key(other))
+        return Compare(key, op, version_key(other))
 
     def __lt__(self, other: object) -> Pred[R]:
         return self._ordered("<", other)

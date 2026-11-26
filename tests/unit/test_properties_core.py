@@ -17,7 +17,7 @@ from hypothesis import strategies as st
 from sdmxlib.model.collections import ArtefactList, ItemList
 from sdmxlib.model.istring import InternationalString, LocalisedString
 from sdmxlib.model.urn import SdmxUrn
-from sdmxlib.model.version import sort_key
+from sdmxlib.model.version import version_key
 from tests.support.strategies import (
     agency_ids,
     codelists,
@@ -103,11 +103,11 @@ def test_version_key_is_antisymmetric(a: str, b: str):
     These two properties used to run against `api.session._version_key`, a
     second, cruder version parser that existed only to pick a winner for the
     `latest` cache index. #338 removed that index, and with it the parser —
-    so they now run against `model.version.sort_key` (#311), which is the one
+    so they now run against `model.version.version_key` (#311), which is the one
     the storage layer bakes and the query language orders by. Same properties,
     pointed at the implementation that is actually load-bearing.
     """
-    ka, kb = sort_key(a), sort_key(b)
+    ka, kb = version_key(a), version_key(b)
     assert not (ka < kb < ka)
     if ka == kb:
         assert not ka < kb
@@ -117,7 +117,7 @@ def test_version_key_is_antisymmetric(a: str, b: str):
 @given(a=versions(), b=versions(), c=versions())
 def test_version_key_is_transitive(a: str, b: str, c: str):
     """a < b and b < c implies a < c."""
-    ka, kb, kc = sort_key(a), sort_key(b), sort_key(c)
+    ka, kb, kc = version_key(a), version_key(b), version_key(c)
     if ka < kb < kc:
         assert ka < kc
 

@@ -179,6 +179,7 @@ from sdmxlib.model import (
     period_bounds,
     period_range,
     tag_alias,
+    version_key,
     Maintainable,
     MaintainableArtefact,
     MapDataType,
@@ -472,6 +473,7 @@ __all__ = [
     "unrepresentable",
     "validate",
     "validate_references",
+    "version_key",
     "versions",
     "widen_key",
 ]

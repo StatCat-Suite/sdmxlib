@@ -127,7 +127,7 @@ hierarchical roll-ups.
   metadata structure nests an attribute or lacks one its usages name
   (SDMX-ML 3.x's documentation, GH-299). `sdmxlib._facets` checks a
   value against a text format.
-- `sort_key`, `compliance`, `unwritable`, `is_final`, `unreferenceable` and
+- `version_key`, `compliance`, `unwritable`, `is_final`, `unreferenceable` and
   `late_binds` (`version.py`): version ordering, which SDMX grammar (2.1 or
   3.x) accepts a version, and which versions a late-bound reference takes.
 

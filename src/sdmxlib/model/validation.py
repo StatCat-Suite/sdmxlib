@@ -105,7 +105,7 @@ from sdmxlib.model.ref import Ref, artefact_urn
 from sdmxlib.model.representation import DataType, Facet
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.model.valuelist import ValueList
-from sdmxlib.model.version import late_binds, sort_key, unreferenceable, unwritable
+from sdmxlib.model.version import late_binds, unreferenceable, unwritable, version_key
 
 # Formal type patterns from SDMXCommonReferences.xsd. There are *three* id
 # types and the distinction is load-bearing — applying IDType everywhere let
@@ -1774,7 +1774,7 @@ def _held_as[T](urn: SdmxUrn[object], held: Sequence[T]) -> list[T]:
     """
     same = [a for a in held if isinstance(a, MaintainableArtefact) and (a.agency_id, a.id) == (urn.agency, urn.id)]
     if urn.is_latest:
-        newest = max(same, key=lambda a: sort_key(a.version), default=None)
+        newest = max(same, key=lambda a: version_key(a.version), default=None)
         return [] if newest is None else [newest]
     return [a for a in same if a.version == urn.version or late_binds(urn.version, a.version)]
 
