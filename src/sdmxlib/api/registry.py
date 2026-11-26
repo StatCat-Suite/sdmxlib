@@ -9,13 +9,23 @@ from typing import Literal, Never, Self, Unpack, cast, overload
 
 import attrs
 
+from sdmxlib import migration
 from sdmxlib._read_errors import reading_csv
 from sdmxlib._singleflight import SingleFlight
 from sdmxlib.api.client import NOT_MODIFIED, HttpxAuthOption, HttpxOptions, HttpxTransportOptions, SdmxClient
 from sdmxlib.api.providers import ProviderInfo
 from sdmxlib.api.session import Completeness, Session, completeness_of
+from sdmxlib.api.submit import (
+    SubmissionReport,
+    SubmissionResult,
+    results_of,
+    submission_order,
+    submit_url,
+)
 from sdmxlib.formats import parse as _parse
+from sdmxlib.formats import serialize
 from sdmxlib.formats.data_format import DataFormat
+from sdmxlib.formats.gaps import dropped
 from sdmxlib.formats.sdmx_json.data import read_observations
 from sdmxlib.local._scan import resolve_flow, scan_csv_into, scan_frame_into
 from sdmxlib.local.data_store import DuckDBDataStore, column_types
@@ -31,7 +41,7 @@ from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.provision import ProvisionAgreement
 from sdmxlib.model.ref import Ref, SupportsUrn, artefact_urn, target_urn
 from sdmxlib.model.urn import SdmxUrn
-from sdmxlib.model.validation import SdmxConformanceError
+from sdmxlib.model.validation import SdmxConformanceError, check_serialisable
 from sdmxlib.query._closure import closure, detail_for, reached_columns, references_for
 from sdmxlib.query._common import canonical_key
 from sdmxlib.query._execute import fetch_into
@@ -1332,6 +1342,9 @@ class FmrRegistry(RestRegistry):
             ...
         with sl.FmrRegistry(auth=("user", "pass")) as reg:
             ...
+
+    `submit` loads structures into the registry. Its URL is derived
+    from a ``/ws/public/`` endpoint, or given as ``submit_url``.
     """
 
     def __init__(
@@ -1339,6 +1352,7 @@ class FmrRegistry(RestRegistry):
         endpoint: str = SDMX_GLOBAL_REGISTRY,
         *,
         auth: tuple[str, str] | BearerToken | None = None,
+        submit_url: str | None = None,
         timeout: float = 30.0,
         id: str | None = None,
         store: LocalRegistry | None = None,
@@ -1358,6 +1372,8 @@ class FmrRegistry(RestRegistry):
             headers["Authorization"] = f"Bearer {auth.token}"
         elif isinstance(auth, tuple):
             auth_option["auth"] = auth
+        self._endpoint = endpoint
+        self._submit_url = submit_url
         # The SDMX Global Registry currently serves 2.1 format responses.
         super().__init__(
             endpoint,
@@ -1369,3 +1385,60 @@ class FmrRegistry(RestRegistry):
             **kwargs,
             **auth_option,
         )
+
+    def submit(
+        self,
+        msg: StructureMessage,
+        *,
+        target: migration.Target | None = None,
+        action: Literal["replace", "append", "delete"] = "replace",
+        granularity: Literal["artefact", "message"] = "artefact",
+    ) -> SubmissionReport:
+        """Load *msg*'s structures into the registry, with its verdict on each.
+
+        The whole message is checked as writable for *target* first, so a
+        message the format refuses never leaves the machine. Then each
+        artefact is written alone and sent in `submission_order`, so the
+        registry's verdict names every artefact rather than the first problem
+        in an atomic message; ``granularity="message"`` sends one document.
+        An artefact the format leaves out (`formats.gaps.dropped`, such as a
+        StructureSet in 3.0) is not sent, and has no result.
+
+        Args:
+            msg: The structures to load.
+            target: The format and deviations to write
+                (`sl.migration.Target`); SDMX-ML 3.0 by default.
+                `Target.fmr("12.5.0")` writes what FMR accepts beyond the XSD.
+            action: ``"replace"``, ``"append"`` or ``"delete"``.
+            granularity: ``"artefact"``, one POST each, or ``"message"``.
+
+        Returns:
+            A verdict per artefact sent. `SubmissionReport.verify` reads the
+            accepted ones back.
+
+        Raises:
+            ValidationError: If the message cannot be written for *target*.
+            ValueError: If no submission URL is known (`submit_url=`).
+
+        Example:
+            with sl.FmrRegistry(url, auth=("root", "password")) as fmr:
+                report = fmr.submit(migrated, target=sl.migration.Target.fmr("12.5.0"))
+                report.verify(fmr)
+        """
+        chosen = target or migration.Target(version="3.0")
+        url = self._submit_url or submit_url(self._endpoint)
+        check_serialisable(msg, version=chosen.version, allow=chosen.allow)
+        if granularity == "message":
+            gone = {drop.urn for drop in dropped(msg, chosen.version)}
+            sent = [str(artefact_urn(a)) for a in msg.all_artefacts() if str(artefact_urn(a)) not in gone]
+            body = serialize(msg, version=chosen.version, validate=False)
+            return SubmissionReport(results_of(self._client.post_structures(url, body, action=action), sent))
+        gone = {drop.urn for drop in dropped(msg, chosen.version)}
+        results: list[SubmissionResult] = []
+        for artefact in submission_order(msg):
+            if str(artefact_urn(artefact)) in gone:
+                continue
+            body = serialize(StructureMessage.containing(artefact), version=chosen.version, validate=False)
+            response = self._client.post_structures(url, body, action=action)
+            results.extend(results_of(response, [str(artefact_urn(artefact))]))
+        return SubmissionReport(tuple(results))

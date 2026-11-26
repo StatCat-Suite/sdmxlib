@@ -11,6 +11,7 @@ from sdmxlib.formats.data_format import DataFormat
 from sdmxlib.formats.gaps import DroppedArtefact, Gap, dropped, unrepresentable
 from sdmxlib.api.client import ResponseTooLargeError
 from sdmxlib.api.registry import BearerToken, FmrRegistry, Resolve, RestRegistry
+from sdmxlib.api.submit import SubmissionNotHeldError, SubmissionReport, SubmissionResult
 from sdmxlib.data_store import DataStore, WriteSource
 from sdmxlib.model.datastructure import ComponentRole
 from sdmxlib.model.ref import short_urn as short_urn
@@ -207,6 +208,7 @@ from sdmxlib.model import (
     Ref,
     Refusal,
     RegistryReader,
+    SupportsGet,
     Representation,
     RepresentationMap,
     SdmxRef,
@@ -437,6 +439,10 @@ __all__ = [
     "StructureMap",
     "StructureMessage",
     "StructureSet",
+    "SubmissionNotHeldError",
+    "SubmissionReport",
+    "SubmissionResult",
+    "SupportsGet",
     "SupportsUrn",
     "TimeBound",
     "TimeDimension",

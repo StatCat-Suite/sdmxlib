@@ -36,7 +36,7 @@ from sdmxlib.model.representation import Facet
 _AGENCY = "AG"
 
 
-def _base() -> StructureMessage:
+def base() -> StructureMessage:
     """A DSD whose attribute relates to its dimensions out of order, its flow, and an MSD with a monolingual facet."""
     concepts = ConceptScheme(
         id="CS",
@@ -89,7 +89,7 @@ def _base() -> StructureMessage:
     )
 
 
-def _actual(base: StructureMessage) -> StructureMessage:
+def actual(base: StructureMessage) -> StructureMessage:
     """An Actual constraint on the base's flow."""
     (flow,) = base.dataflows
     constraint = DataConstraint(
@@ -132,10 +132,10 @@ def _parented() -> StructureMessage:
 
 def steps() -> list[tuple[str, bytes]]:
     """Each step's name and the document it submits, in order."""
-    base = _base()
+    built = base()
     return [
-        ("base", to_xml(base, version="3.0")),
-        ("actual", to_xml(_actual(base), version="3.0", validate=False)),
+        ("base", to_xml(built, version="3.0")),
+        ("actual", to_xml(actual(built), version="3.0", validate=False)),
         ("codelist-1.0.0", to_xml(_codelist("1.0.0", "AB"), version="3.0")),
         ("codelist-1.1.0-removes", to_xml(_codelist("1.1.0", "A"), version="3.0")),
         ("codelist-1.1.0-adds", to_xml(_codelist("1.1.0", "ABC"), version="3.0")),

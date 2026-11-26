@@ -605,6 +605,16 @@ class SdmxClient:
         _require_csv(response, accept=self._csv_media_type, url=url)
         return response.content
 
+    def post_structures(self, url: str, body: bytes, *, action: str) -> httpx2.Response:
+        """POST a structure document to a registry's submission *url*, with its ``ACTION``.
+
+        Through this client, so the caller's auth and transport options apply.
+        The response is returned whatever its status: a registry refuses in
+        its body, which the caller reads (`api.submit.results_of`).
+        """
+        headers = {"ACTION": action.upper(), "Content-Type": "application/xml", "Accept": "application/xml"}
+        return self._client.post(url, content=body, headers=headers)
+
     def stream_data_at(self, path: str, params: Mapping[str, str], *, to: Path) -> None:
         """Stream an already-built data request straight to a file.
 
