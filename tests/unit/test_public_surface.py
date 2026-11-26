@@ -154,6 +154,22 @@ def test_no_private_name_appears_in_a_rendered_signature() -> None:
     assert not offenders, "private names in the published API reference:\n  " + "\n  ".join(offenders)
 
 
+def _in_exported_submodule(module: str, name: str) -> bool:
+    """Whether `module.name` in a signature is `sl.<module>.<name>`: a submodule `sl` exports, listing it."""
+    if not module or module not in sl.__all__:
+        return False
+    found: object = getattr(sl, module, None)
+    return inspect.ismodule(found) and name in getattr(found, "__all__", ())
+
+
+def test_a_qualified_name_counts_only_from_an_exported_submodule() -> None:
+    """`migration.Target` is `sl.migration.Target`; an unexported module or an unlisted name is not."""
+    assert _in_exported_submodule("migration", "Target")
+    assert not _in_exported_submodule("migration", "Nonexistent")
+    assert not _in_exported_submodule("registry", "FmrRegistry")
+    assert not _in_exported_submodule("", "Target")
+
+
 def test_every_type_in_a_public_signature_is_importable_from_sdmxlib() -> None:
     """The gap that remained, and the one a user actually hits.
 
@@ -219,8 +235,10 @@ def test_every_type_in_a_public_signature_is_importable_from_sdmxlib() -> None:
     missing: dict[str, set[str]] = {}
     for dotted in _exported_classes():
         for name, sig in _public_signatures(dotted):
-            for candidate in re.findall(r"\b[A-Z]\w+", sig):
+            for module, candidate in re.findall(r"(?:\b(\w+)\.)?\b([A-Z]\w+)", sig):
                 if candidate in foreign or candidate in literals or candidate in exported:
+                    continue
+                if _in_exported_submodule(module, candidate):
                     continue
                 missing.setdefault(f"{dotted}.{name}", set()).add(candidate)
     assert not missing, (

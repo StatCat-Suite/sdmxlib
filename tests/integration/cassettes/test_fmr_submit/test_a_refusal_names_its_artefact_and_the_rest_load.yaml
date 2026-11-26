@@ -1,0 +1,703 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/xml
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/agencyscheme/SDMX/AGENCIES/1.0?detail=full
+  response:
+    body:
+      string: !!binary |
+        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
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 17:48:08 GMT
+      etag:
+      - f3fe3c4c09390e5b
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      set-cookie:
+      - JSESSIONID=2959E5B0951ED3B017E6ADFCA1AB9A3B; Path=/; HttpOnly
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: ''
+- request:
+    body: "<?xml version='1.0' encoding='UTF-8'?>\n<mes:Structure xmlns:mes=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message\"
+      xmlns:str=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure\" xmlns:com=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common\"><mes:Header><mes:ID>SDMX_MSG</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2000-01-01T00:00:00</mes:Prepared><mes:Sender
+      id=\"sdmxlib\"/></mes:Header><mes:Structures><str:AgencySchemes><str:AgencyScheme
+      agencyID=\"SDMX\" id=\"AGENCIES\"><com:Name xml:lang=\"en\">SDMX Agency Scheme</com:Name><str:Agency
+      id=\"SDMX\"><com:Name xml:lang=\"en\">SDMX</com:Name><com:Description xml:lang=\"en\">SDMX
+      is an initiative to foster standards for the exchange of statistical information.
+      It is sponsored by the Bank for International Settlements (BIS), the European
+      Central Bank (ECB), the Statistical Office of the European Union (Eurostat),
+      the International Monetary Fund (IMF), the Organization for Economic Co-Operation
+      and Development (OECD), the United Nations (UN) and the World Bank.</com:Description><str:Contact><com:Name
+      xml:lang=\"en\">SDMX Secretariat</com:Name><str:Department xml:lang=\"en\">SDMX
+      Secretariat</str:Department><str:Role xml:lang=\"en\">Single entry point for
+      external inquiries</str:Role><str:URI>http://sdmx.org</str:URI><str:Email>secretariat@sdmx.org</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"IMF\"><com:Name xml:lang=\"en\">International Monetary Fund (IMF)</com:Name><com:Description
+      xml:lang=\"en\">The IMF works to foster global growth and economic stability.
+      It provides policy advice and financing to members in economic difficulties
+      and also works with developing nations to help them achieve macroeconomic stability
+      and reduce poverty.</com:Description><str:Contact><com:Name xml:lang=\"en\">Single
+      point of contact for external inquiries</com:Name><str:Department xml:lang=\"en\">Statistics
+      Department</str:Department><str:Role xml:lang=\"en\">Single point of contact
+      for external inquiries</str:Role><str:URI>http://www.imf.org</str:URI><str:Email>StatisticsQuery@imf.org</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"ESTAT\"><com:Name xml:lang=\"en\">Statistical Office of the European Union
+      (Eurostat)</com:Name><com:Description xml:lang=\"en\">Eurostat is the statistical
+      office of the European Union situated in Luxembourg. Its task is to provide
+      the European Union with high quality statistics at European level that enable
+      comparisons between countries and regions. Website: http://ec.europa.eu/eurostat/.</com:Description><str:Contact><com:Name
+      xml:lang=\"en\">SDMX Support</com:Name><str:Department xml:lang=\"en\">Various
+      units involved in SDMX</str:Department><str:Role xml:lang=\"en\">SDMX Support</str:Role><str:URI>http://ec.europa.eu/eurostat/</str:URI><str:Email>estat-support-sdmx@ec.europa.eu</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"UIS\"><com:Name xml:lang=\"en\">UNESCO Institute for Statistics (UIS)</com:Name><com:Description
+      xml:lang=\"en\">The UNESCO Institute for Statistics (UIS) is the statistical
+      office of the United Nations Educational, Scientific and Cultural Organization
+      (UNESCO). The Institute produces the data and methodologies to monitor trends
+      at national and international levels. It delivers comparative data for countries
+      at all stages of development to provide a global perspective on education, science
+      and technology, culture, and communication. The UIS is the official source for
+      the indicators needed to achieve SDG 4\u2013Education 2030 and key targets in
+      science and innovation, culture and communication.</com:Description><str:Contact><com:Name
+      xml:lang=\"en\">UNESCO Institute for Statistics (UIS)</com:Name><str:Department
+      xml:lang=\"en\">UNESCO Institute for Statistics (UIS)</str:Department><str:Role
+      xml:lang=\"en\">Single entry point for external inquiries</str:Role><str:URI>http://uis.unesco.org</str:URI><str:Email>uis.datarequests@unesco.org</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"OECD\"><com:Name xml:lang=\"en\">Organisation for Economic Co-operation
+      and Development (OECD)</com:Name><com:Description xml:lang=\"en\">The mission
+      of the Organisation for Economic Co-operation and Development (OECD) is to promote
+      policies that will improve the economic and social well-being of people around
+      the world.\n\nThe OECD provides a forum in which governments can work together
+      to share experiences and seek solutions to common problems. We work with governments
+      to understand what drives economic, social and environmental change. We measure
+      productivity and global flows of trade and investment. We analyse and compare
+      data to predict future trends. We set international standards on a wide range
+      of things, from agriculture and tax to the safety of chemicals.\n\nWe look,
+      too, at issues that directly affect the lives of ordinary people, like how much
+      they pay in taxes and social security, and how much leisure time they can take.
+      We compare how different countries\u2019 school systems are readying their young
+      people for modern life, and how different countries\u2019 pension systems will
+      look after their citizens in old age.\n\nDrawing on facts and real-life experience,
+      we recommend policies designed to make the lives of ordinary people better.
+      We work with business, through the Business and Industry Advisory Committee
+      to the OECD, and with labour, through the Trade Union Advisory Committee. We
+      have active contacts as well with other civil society organisations. The common
+      thread of our work is a shared commitment to market economies backed by democratic
+      institutions and focused on the wellbeing of all citizens. Along the way, we
+      also set out to make life harder for the terrorists, tax dodgers, crooked businessmen
+      and others whose actions undermine a fair and open society.</com:Description></str:Agency><str:Agency
+      id=\"METATECH\"><com:Name xml:lang=\"en\">Metadata Technology</com:Name><com:Description
+      xml:lang=\"en\">Provider of consultancy, software, and services to the SDMX
+      community.</com:Description><str:Contact><com:Name xml:lang=\"en\">Chris Nelson</com:Name><str:Department
+      xml:lang=\"en\">Standards</str:Department><str:Role xml:lang=\"en\">Standards
+      Consultant</str:Role><str:Telephone>+44 1483 418058</str:Telephone><str:URI>http://www.metadatatechnology.com</str:URI><str:URI>http://www.sdmxfusion.com</str:URI><str:URI>http://registry.sdmxcloud.org</str:URI><str:URI>http://data.sdmxcloud.org</str:URI><str:Email>chris.nelson@metadatatechnology.com</str:Email></str:Contact><str:Contact><com:Name
+      xml:lang=\"en\">Matthew Nelson</com:Name><str:Department xml:lang=\"en\">IT</str:Department><str:Role
+      xml:lang=\"en\">Software Architect</str:Role><str:Telephone>+44 1483 418058</str:Telephone><str:URI>http://sdmxsource.org</str:URI><str:Email>matt.nelson@metadatatechnology.com</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"ILO\"><com:Name xml:lang=\"en\">International Labour Organization</com:Name><com:Description
+      xml:lang=\"en\">The ILO was founded in 1919, in the wake of a destructive war,
+      to pursue a vision based on the premise that universal, lasting peace can be
+      established only if it is based on social justice. The ILO became the first
+      specialized agency of the UN in 1946.\n\nThe main aims of the ILO are to promote
+      rights at work, encourage decent employment opportunities, enhance social protection
+      and strengthen dialogue on work-related issues.</com:Description></str:Agency><str:Agency
+      id=\"IBGE\"><com:Name xml:lang=\"en\">The Brazilian Institute of Geography and
+      Statistics</com:Name><com:Name xml:lang=\"br\">Instituto Brasileiro de Geografia
+      e Estat\xEDstica</com:Name></str:Agency><str:Agency id=\"NG_NSB\"><com:Name
+      xml:lang=\"en\">Nigerian National Bureau of Statistics (NBS)</com:Name><com:Description
+      xml:lang=\"en\">The National Bureau of Statistics Nigeria as the mandate to
+      generate, on a continuous and sustainable basis, socio-economic statistics on
+      all facets of development in Nigeria.</com:Description><str:Contact><com:Name
+      xml:lang=\"en\">Lucky OGIDAN</com:Name><str:Department xml:lang=\"en\">Information
+      and Communication Technology Department</str:Department><str:Role xml:lang=\"en\">Web
+      Application Manager</str:Role><str:URI>http://www.nigerianstat.gov.ng</str:URI><str:Email>feedback@nigerianstat.gov.ng</str:Email><str:Email>laogidan@nigerianstat.gov.ng</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"GW_INE\"><com:Name xml:lang=\"en\">National Statistical Institute of Guinea-Bissau
+      - Instituto Nacional de Estat\xEDstica da Guin\xE9-Bissau (INE)</com:Name></str:Agency><str:Agency
+      id=\"BT_NSB\"><com:Name xml:lang=\"en\">Bhutan National Statistics Bureau (NSB)</com:Name></str:Agency><str:Agency
+      id=\"WB\"><com:Name xml:lang=\"en\">World Bank</com:Name><str:Contact><com:Name
+      xml:lang=\"en\">Demo Contact</com:Name><str:Department xml:lang=\"en\">IT</str:Department><str:Role
+      xml:lang=\"en\">IT Officer</str:Role><str:Telephone>+00 111 222 333</str:Telephone><str:Email>demo@democontact.com</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"IAEG\"><com:Name xml:lang=\"en\">Inter Agency Group</com:Name></str:Agency><str:Agency
+      id=\"BIS\"><com:Name xml:lang=\"en\">Bank for International Settlements</com:Name></str:Agency><str:Agency
+      id=\"ONS\"><com:Name xml:lang=\"en\">Office for National Statistics</com:Name><str:Contact><com:Name
+      xml:lang=\"en\">Demo Contact</com:Name><str:Department xml:lang=\"en\">Statistics</str:Department><str:Role
+      xml:lang=\"en\">Statistics Officer</str:Role><str:Telephone>+44 111 222 333</str:Telephone><str:URI>http://metadatatechnology.com</str:URI><str:Email>demo@democontact.com</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"ECB\"><com:Name xml:lang=\"en\">European Central Bank</com:Name></str:Agency><str:Agency
+      id=\"EUROSTAT\"><com:Name xml:lang=\"en\">Eurostat</com:Name></str:Agency><str:Agency
+      id=\"MT\"><com:Name xml:lang=\"en\">Metadata Technology</com:Name><com:Description
+      xml:lang=\"en\">Metadata Technology</com:Description></str:Agency><str:Agency
+      id=\"GCCSTAT\"><com:Name xml:lang=\"en\">Statistical Centre for the Cooperation
+      Council for the Arab Countries of the Gulf</com:Name><com:Description xml:lang=\"en\">Statistical
+      Centre for the Cooperation Council for the Arab Countries of the Gulf</com:Description></str:Agency><str:Agency
+      id=\"AG\"><com:Name xml:lang=\"en\">test agency</com:Name></str:Agency></str:AgencyScheme></str:AgencySchemes></mes:Structures></mes:Structure>"
+    headers:
+      accept:
+      - application/xml
+      accept-encoding:
+      - gzip, deflate, zstd
+      action:
+      - REPLACE
+      connection:
+      - keep-alive
+      content-length:
+      - '10263'
+      content-type:
+      - application/xml
+      cookie:
+      - JSESSIONID=2959E5B0951ED3B017E6ADFCA1AB9A3B
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: POST
+    uri: http://127.0.0.1:8081/ws/secure/sdmxapi/rest/
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52SQYvCMBCF7/6K0ktPmtS9aLHxIrsrrLBYF8SLxHSsgSaRTGrdf7+xqLW4J2FO
+        j/e9ycxkMj2rMjiBRWl0GsUDGgWghcmlLtLoZ/XeH0VT1psoQOQFJEsoJDr7O9cO7J4LCDyvMTmj
+        TMODc8eEkLquB/XbwNiCDCmNyXrxlYkDKN6XGh3XAsIbpcr/KA+QeDweEc193yNvgeszOhDm6txg
+        FtBUVgCSi6RKgk1XJKfhNiZX9JYkjHolxWPK6FuIheKVEHtdYsh6QXBf7SfwHOxFehDnM5bNFuvt
+        IvuYkAex61oBOrbnJUJrarSu7dvCkVvImT8L7dPY14rSpKlNS95tXToD7d8XyDwNL0OVcheSZgDy
+        PEELVTslXeZsJVxlYenPaTQCYS319KXYH36DtHeVAgAA
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      date:
+      - Thu, 26 Nov 2026 17:48:08 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: ''
+- request:
+    body: '<?xml version=''1.0'' encoding=''UTF-8''?>
+
+      <mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+      xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><mes:Header><mes:ID>SDMX_MSG</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2000-01-01T00:00:00</mes:Prepared><mes:Sender
+      id="sdmxlib"/></mes:Header><mes:Structures><str:Codelists><str:Codelist id="CL"
+      agencyID="AG" version="1.0.0"><com:Name xml:lang="en">codes</com:Name><str:Code
+      id="X"><com:Name xml:lang="en">X</com:Name></str:Code><str:Code id="Y"><com:Name
+      xml:lang="en">Y</com:Name></str:Code></str:Codelist></str:Codelists></mes:Structures></mes:Structure>'
+    headers:
+      accept:
+      - application/xml
+      accept-encoding:
+      - gzip, deflate, zstd
+      action:
+      - REPLACE
+      connection:
+      - keep-alive
+      content-length:
+      - '730'
+      content-type:
+      - application/xml
+      cookie:
+      - JSESSIONID=2959E5B0951ED3B017E6ADFCA1AB9A3B
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: POST
+    uri: http://127.0.0.1:8081/ws/secure/sdmxapi/rest/
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52SQYvCMBCF7/6K0ktPmtS9aLHxIrsrrLBYF8SLxHSsgSaRTGrdf7+xqLW4J2FO
+        j/e9ycxkMj2rMjiBRWl0GsUDGgWghcmlLtLoZ/XeH0VT1psoQOQFJEsoJDr7O9cO7J4LCDyvMTmj
+        TMODc8eEkLquB/XbwNiCDCmNyXrxlYkDKN6XGh3XAsIbpcr/KA+QeDweEc193yNvgeszOhDm6txg
+        FtBUVgCSi6RKgk1XJKfhNiZX9JYkjHolxWPK6FuIheKVEHtdYsh6QXBf7SfwHOxFehDnM5bNFuvt
+        IvuYkAex61oBOrbnJUJrarSu7dvCkVvImT8L7dPY14rSpKlNS95tXToD7d8XyDwNL0OVcheSZgDy
+        PEELVTslXeZsJVxlYenPaTQCYS319KXYH36DtHeVAgAA
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      date:
+      - Thu, 26 Nov 2026 17:48:08 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: ''
+- request:
+    body: '<?xml version=''1.0'' encoding=''UTF-8''?>
+
+      <mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+      xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><mes:Header><mes:ID>SDMX_MSG</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2000-01-01T00:00:00</mes:Prepared><mes:Sender
+      id="sdmxlib"/></mes:Header><mes:Structures><str:ConceptSchemes><str:ConceptScheme
+      id="CS" agencyID="AG" version="1.0.0"><com:Name xml:lang="en">concepts</com:Name><str:Concept
+      id="D1"><com:Name xml:lang="en">D1</com:Name></str:Concept><str:Concept id="D2"><com:Name
+      xml:lang="en">D2</com:Name></str:Concept><str:Concept id="A1"><com:Name xml:lang="en">A1</com:Name></str:Concept><str:Concept
+      id="OBS"><com:Name xml:lang="en">OBS</com:Name></str:Concept><str:Concept id="MA"><com:Name
+      xml:lang="en">MA</com:Name></str:Concept></str:ConceptScheme></str:ConceptSchemes></mes:Structures></mes:Structure>'
+    headers:
+      accept:
+      - application/xml
+      accept-encoding:
+      - gzip, deflate, zstd
+      action:
+      - REPLACE
+      connection:
+      - keep-alive
+      content-length:
+      - '987'
+      content-type:
+      - application/xml
+      cookie:
+      - JSESSIONID=2959E5B0951ED3B017E6ADFCA1AB9A3B
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: POST
+    uri: http://127.0.0.1:8081/ws/secure/sdmxapi/rest/
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52SQYvCMBCF7/6K0ktPmtS9aLHxIrsrrLBYF8SLxHSsgSaRTGrdf7+xqLW4J2FO
+        j/e9ycxkMj2rMjiBRWl0GsUDGgWghcmlLtLoZ/XeH0VT1psoQOQFJEsoJDr7O9cO7J4LCDyvMTmj
+        TMODc8eEkLquB/XbwNiCDCmNyXrxlYkDKN6XGh3XAsIbpcr/KA+QeDweEc193yNvgeszOhDm6txg
+        FtBUVgCSi6RKgk1XJKfhNiZX9JYkjHolxWPK6FuIheKVEHtdYsh6QXBf7SfwHOxFehDnM5bNFuvt
+        IvuYkAex61oBOrbnJUJrarSu7dvCkVvImT8L7dPY14rSpKlNS95tXToD7d8XyDwNL0OVcheSZgDy
+        PEELVTslXeZsJVxlYenPaTQCYS319KXYH36DtHeVAgAA
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      date:
+      - Thu, 26 Nov 2026 17:48:08 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: ''
+- request:
+    body: '<?xml version=''1.0'' encoding=''UTF-8''?>
+
+      <mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+      xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><mes:Header><mes:ID>SDMX_MSG</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2000-01-01T00:00:00</mes:Prepared><mes:Sender
+      id="sdmxlib"/></mes:Header><mes:Structures><str:DataStructures><str:DataStructure
+      id="DSD" agencyID="AG" version="1.0.0"><com:Name xml:lang="en">dsd</com:Name><str:DataStructureComponents><str:DimensionList
+      id="DimensionDescriptor"><str:Dimension id="D1" position="1"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0.0).D1</str:ConceptIdentity><str:LocalRepresentation><str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0.0)</str:Enumeration></str:LocalRepresentation></str:Dimension><str:Dimension
+      id="D2" position="2"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0.0).D2</str:ConceptIdentity><str:LocalRepresentation><str:Enumeration>urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0.0)</str:Enumeration></str:LocalRepresentation></str:Dimension></str:DimensionList><str:AttributeList
+      id="AttributeDescriptor"><str:Attribute id="A1"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0.0).A1</str:ConceptIdentity><str:AttributeRelationship><str:Dimension>D2</str:Dimension><str:Dimension>D1</str:Dimension></str:AttributeRelationship></str:Attribute></str:AttributeList><str:MeasureList
+      id="MeasureDescriptor"><str:Measure id="OBS"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0.0).OBS</str:ConceptIdentity><str:LocalRepresentation><str:TextFormat
+      textType="Double" isMultiLingual="false"/></str:LocalRepresentation></str:Measure></str:MeasureList></str:DataStructureComponents></str:DataStructure></str:DataStructures></mes:Structures></mes:Structure>'
+    headers:
+      accept:
+      - application/xml
+      accept-encoding:
+      - gzip, deflate, zstd
+      action:
+      - REPLACE
+      connection:
+      - keep-alive
+      content-length:
+      - '1996'
+      content-type:
+      - application/xml
+      cookie:
+      - JSESSIONID=2959E5B0951ED3B017E6ADFCA1AB9A3B
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: POST
+    uri: http://127.0.0.1:8081/ws/secure/sdmxapi/rest/
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52SQYvCMBCF7/6K0ktPmtS9aLHxIrsrrLBYF8SLxHSsgSaRTGrdf7+xqLW4J2FO
+        j/e9ycxkMj2rMjiBRWl0GsUDGgWghcmlLtLoZ/XeH0VT1psoQOQFJEsoJDr7O9cO7J4LCDyvMTmj
+        TMODc8eEkLquB/XbwNiCDCmNyXrxlYkDKN6XGh3XAsIbpcr/KA+QeDweEc193yNvgeszOhDm6txg
+        FtBUVgCSi6RKgk1XJKfhNiZX9JYkjHolxWPK6FuIheKVEHtdYsh6QXBf7SfwHOxFehDnM5bNFuvt
+        IvuYkAex61oBOrbnJUJrarSu7dvCkVvImT8L7dPY14rSpKlNS95tXToD7d8XyDwNL0OVcheSZgDy
+        PEELVTslXeZsJVxlYenPaTQCYS319KXYH36DtHeVAgAA
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      date:
+      - Thu, 26 Nov 2026 17:48:08 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: ''
+- request:
+    body: '<?xml version=''1.0'' encoding=''UTF-8''?>
+
+      <mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+      xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><mes:Header><mes:ID>SDMX_MSG</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2000-01-01T00:00:00</mes:Prepared><mes:Sender
+      id="sdmxlib"/></mes:Header><mes:Structures><str:Dataflows><str:Dataflow id="DF"
+      agencyID="AG" version="1.0.0"><com:Name xml:lang="en">flow</com:Name><str:Structure>urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0.0)</str:Structure></str:Dataflow></str:Dataflows></mes:Structures></mes:Structure>'
+    headers:
+      accept:
+      - application/xml
+      accept-encoding:
+      - gzip, deflate, zstd
+      action:
+      - REPLACE
+      connection:
+      - keep-alive
+      content-length:
+      - '701'
+      content-type:
+      - application/xml
+      cookie:
+      - JSESSIONID=2959E5B0951ED3B017E6ADFCA1AB9A3B
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: POST
+    uri: http://127.0.0.1:8081/ws/secure/sdmxapi/rest/
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52SQYvCMBCF7/6K0ktPmtS9aLHxIrsrrLBYF8SLxHSsgSaRTGrdf7+xqLW4J2FO
+        j/e9ycxkMj2rMjiBRWl0GsUDGgWghcmlLtLoZ/XeH0VT1psoQOQFJEsoJDr7O9cO7J4LCDyvMTmj
+        TMODc8eEkLquB/XbwNiCDCmNyXrxlYkDKN6XGh3XAsIbpcr/KA+QeDweEc193yNvgeszOhDm6txg
+        FtBUVgCSi6RKgk1XJKfhNiZX9JYkjHolxWPK6FuIheKVEHtdYsh6QXBf7SfwHOxFehDnM5bNFuvt
+        IvuYkAex61oBOrbnJUJrarSu7dvCkVvImT8L7dPY14rSpKlNS95tXToD7d8XyDwNL0OVcheSZgDy
+        PEELVTslXeZsJVxlYenPaTQCYS319KXYH36DtHeVAgAA
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      date:
+      - Thu, 26 Nov 2026 17:48:08 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: ''
+- request:
+    body: '<?xml version=''1.0'' encoding=''UTF-8''?>
+
+      <mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+      xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><mes:Header><mes:ID>SDMX_MSG</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2000-01-01T00:00:00</mes:Prepared><mes:Sender
+      id="sdmxlib"/></mes:Header><mes:Structures><str:DataConstraints><str:DataConstraint
+      id="CC_ACTUAL" agencyID="AG" version="1.0.0" role="Actual"><com:Name xml:lang="en">actual</com:Name><str:ConstraintAttachment><str:Dataflow>urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0.0)</str:Dataflow></str:ConstraintAttachment><str:CubeRegion><str:KeyValue
+      id="D1"><str:Value>X</str:Value></str:KeyValue></str:CubeRegion></str:DataConstraint></str:DataConstraints></mes:Structures></mes:Structure>'
+    headers:
+      accept:
+      - application/xml
+      accept-encoding:
+      - gzip, deflate, zstd
+      action:
+      - REPLACE
+      connection:
+      - keep-alive
+      content-length:
+      - '887'
+      content-type:
+      - application/xml
+      cookie:
+      - JSESSIONID=2959E5B0951ED3B017E6ADFCA1AB9A3B
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: POST
+    uri: http://127.0.0.1:8081/ws/secure/sdmxapi/rest/
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/51Uy27bMBC85ysIXdQeLEpumjqCpMBwktZA3BZ+AIUvAS2tbRYSKZCr2Pn7UA9b
+        cmP3kIMOWs7szD7I4G6fpeQFlOZShLbnuDYBEcuEi01oL+aPvYF9F10FGWjNNuBPYcM1qtexQFBr
+        FgMxfKH9veahtUXMfUp3u52z++JItaF91/Xon8nTLN5CxnpcaGQiBuvAytJzLEOg3u3tgApmdHPW
+        EhobJySdZPuKpkDLQsWgaRnKUqorVU1f+s8ebaiHTLHMPpLF0DIpDkkUbD6SRDVNtKIrQo6t/QEs
+        AVWGOsHxfTSePjx6X/uDay+gnfApbg4aozVLNbSgKnYK+60gZwqSqO/2b3qe1+vfzL1v/vXAdwfL
+        lnmEnbJnIIxDwpPQWi6XFq3s0/f+W0KxyjjOUBUxFgqmZphSaGjSmjbUCF0unzks0sZv9xARkmOG
+        w3EDmDAu0HxslcKv1V+IsQUYyGL6MyqU8MsZ+GYs9Xy4WMtMJpA6hzk49wzZyDhDVSYMh9/90eh5
+        OJovhk+fzJVw3M8BLZO16vT/8vX5Zf91eciw0JO6V0RXf6H1yHhqkFZHzCyd38DmsD+tsQo8KCUV
+        2XHckqzjiTCFYC4pErkm+JoDsU2VCAJJW61NmEjMTE2Ur7l5CIh9pn47oOel2wGWIqeN1LWlqTRW
+        dA5xmT8hrFQw3WCpTbgmQiLRRZ5L4zX5VyWgF2pvGtztYLNV9NJatZt6aS1bxLtnLnoDCoLwhSkF
+        AAA=
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - close
+      content-encoding:
+      - gzip
+      date:
+      - Thu, 26 Nov 2026 17:48:08 GMT
+      expires:
+      - '0'
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 400
+      message: ''
+- request:
+    body: '<?xml version=''1.0'' encoding=''UTF-8''?>
+
+      <mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+      xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><mes:Header><mes:ID>SDMX_MSG</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2000-01-01T00:00:00</mes:Prepared><mes:Sender
+      id="sdmxlib"/></mes:Header><mes:Structures><str:MetadataStructures><str:MetadataStructure
+      agencyID="AG" id="MSD" version="1.0.0"><com:Name xml:lang="en">msd</com:Name><str:MetadataStructureComponents><str:MetadataAttributeList
+      id="MetadataAttributeDescriptor"><str:MetadataAttribute id="MA" minOccurs="0"><str:ConceptIdentity>urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=AG:CS(1.0.0).MA</str:ConceptIdentity><str:LocalRepresentation><str:TextFormat
+      isMultiLingual="false"/></str:LocalRepresentation></str:MetadataAttribute></str:MetadataAttributeList></str:MetadataStructureComponents></str:MetadataStructure></str:MetadataStructures></mes:Structures></mes:Structure>'
+    headers:
+      accept:
+      - application/xml
+      accept-encoding:
+      - gzip, deflate, zstd
+      action:
+      - REPLACE
+      connection:
+      - keep-alive
+      content-length:
+      - '1060'
+      content-type:
+      - application/xml
+      cookie:
+      - JSESSIONID=2959E5B0951ED3B017E6ADFCA1AB9A3B
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: POST
+    uri: http://127.0.0.1:8081/ws/secure/sdmxapi/rest/
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52SQYvCMBCF7/6K0ktPmtS9aLHxIrsrrLBYF8SLxHSsgSaRTGrdf7+xqLW4J2FO
+        j/e9ycxkMj2rMjiBRWl0GsUDGgWghcmlLtLoZ/XeH0VT1psoQOQFJEsoJDr7O9cO7J4LCDyvMTmj
+        TMODc8eEkLquB/XbwNiCDCmNyXrxlYkDKN6XGh3XAsIbpcr/KA+QeDweEc193yNvgeszOhDm6txg
+        FtBUVgCSi6RKgk1XJKfhNiZX9JYkjHolxWPK6FuIheKVEHtdYsh6QXBf7SfwHOxFehDnM5bNFuvt
+        IvuYkAex61oBOrbnJUJrarSu7dvCkVvImT8L7dPY14rSpKlNS95tXToD7d8XyDwNL0OVcheSZgDy
+        PEELVTslXeZsJVxlYenPaTQCYS319KXYH36DtHeVAgAA
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      date:
+      - Thu, 26 Nov 2026 17:48:08 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: ''
+version: 1

@@ -14,6 +14,14 @@ The entry point for connecting to an SDMX REST endpoint over HTTP.
 
 ---
 
+::: sdmxlib.api.submit.SubmissionReport
+
+---
+
+::: sdmxlib.api.submit.SubmissionResult
+
+---
+
 ::: sdmxlib.api.registry.BearerToken
 
 ---

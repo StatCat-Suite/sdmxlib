@@ -420,11 +420,6 @@ class SdmxClient:
         """
         return "3.0" if self._v3 else "2.1"
 
-    @property
-    def _parse_version(self) -> str:
-        """Format version string passed to the parser."""
-        return "3.0" if self._v3 else "2.1"
-
     # ── HTTP methods ──────────────────────────────────────────────────────────
 
     def get_artefact(
@@ -522,8 +517,10 @@ class SdmxClient:
             return NOT_MODIFIED
         _raise_for_status(response, url=url)
         # Not strict: one refused artefact must not cost the rest of a
-        # registry's document (#419). The refusals ride on the message.
-        msg = parse(response.content, version=self._parse_version, strict=False)
+        # registry's document (#419). The refusals ride on the message. The
+        # version is read from the document: FMR 12.5.0 answers a 2.1 path with
+        # SDMX-ML 3.0 for some artefacts, which a 2.1 hint read as empty.
+        msg = parse(response.content, strict=False)
         if not isinstance(msg, StructureMessage):
             err = f"Expected StructureMessage from structure endpoint, got {type(msg).__name__}"
             raise TypeError(err)
@@ -546,8 +543,10 @@ class SdmxClient:
             response = self._client.get(url, params=params)
         _raise_for_status(response, url=url)
         # Not strict: one refused artefact must not cost the rest of a
-        # registry's document (#419). The refusals ride on the message.
-        msg = parse(response.content, version=self._parse_version, strict=False)
+        # registry's document (#419). The refusals ride on the message. The
+        # version is read from the document: FMR 12.5.0 answers a 2.1 path with
+        # SDMX-ML 3.0 for some artefacts, which a 2.1 hint read as empty.
+        msg = parse(response.content, strict=False)
         if not isinstance(msg, StructureMessage):
             err = f"Expected StructureMessage from structure endpoint, got {type(msg).__name__}"
             raise TypeError(err)
@@ -605,6 +604,16 @@ class SdmxClient:
         _raise_for_status(response, url=url)
         _require_csv(response, accept=self._csv_media_type, url=url)
         return response.content
+
+    def post_structures(self, url: str, body: bytes, *, action: str) -> httpx2.Response:
+        """POST a structure document to a registry's submission *url*, with its ``ACTION``.
+
+        Through this client, so the caller's auth and transport options apply.
+        The response is returned whatever its status: a registry refuses in
+        its body, which the caller reads (`api.submit.results_of`).
+        """
+        headers = {"ACTION": action.upper(), "Content-Type": "application/xml", "Accept": "application/xml"}
+        return self._client.post(url, content=body, headers=headers)
 
     def stream_data_at(self, path: str, params: Mapping[str, str], *, to: Path) -> None:
         """Stream an already-built data request straight to a file.

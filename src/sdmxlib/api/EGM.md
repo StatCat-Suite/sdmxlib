@@ -40,7 +40,17 @@ through `RestRegistry.query` (structures) and `RestRegistry.obs`
 - `FmrRegistry` and `BearerToken` (`registry.py`): a `RestRegistry` for FMR.
   `auth=` takes a `BearerToken`, sent as an `Authorization` header, or a
   `(user, pass)` tuple, passed to httpx2. It always uses `api="2.1"` and
-  forwards only `HttpxTransportOptions`.
+  forwards only `HttpxTransportOptions`. `FmrRegistry.submit(msg, *, target,
+  action, granularity)` loads structures (GH-400): it checks the whole message
+  with `check_serialisable` for the `sl.migration.Target`, then posts each
+  artefact alone in `submission_order` (or the message whole) to the
+  submission URL, derived from a `/ws/public/` endpoint or given as
+  `submit_url=`, and returns a `SubmissionReport`.
+- `SubmissionReport`, `SubmissionResult`, `SubmissionNotHeldError`,
+  `submission_order`, `results_of` and `submit_url` (`submit.py`): a verdict per
+  artefact (`accepted`, `unchanged` for a 200 with no result, `refused` with
+  FMR's text); `verify(registry)` reads each accepted artefact back and raises
+  naming any not served.
 - `FederatedRegistry` (`federated.py`): read-only router built from a
   `routing` map (agency id to `RegistryReader`) and an optional `default`.
   Provides `get`, `source_for`, `__contains__` and binding checks. `get`
@@ -110,7 +120,8 @@ through `RestRegistry.query` (structures) and `RestRegistry.obs`
 
 ## Side Effects
 
-- Makes HTTP GETs through the single `httpx2.Client` that `SdmxClient` owns.
+- Makes HTTP GETs through the single `httpx2.Client` that `SdmxClient` owns,
+  and POSTs only from `FmrRegistry.submit`, which writes to the registry.
   The client carries default headers, a timeout (30 s by default) and the
   forwarded options.
 - `get_artefact_if_changed` sends conditional requests: a 304 means unchanged
