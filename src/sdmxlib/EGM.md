@@ -90,6 +90,8 @@ the subpackages share.
     fingerprints.
   - [`builders/`](./builders/EGM.md): availability constraints and DSD
     metadata annotations, computed from an edition.
+  - [`migration/`](./migration/EGM.md): `sl.migration`, plan and apply a
+    2.1 → 3.x move of a structure message.
 
 ## Invariants
 

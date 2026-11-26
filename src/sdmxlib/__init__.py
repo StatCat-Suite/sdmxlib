@@ -19,7 +19,7 @@ from sdmxlib.model.rest_api import ApiVersion
 from sdmxlib.model.rollup import AncestorMap
 from sdmxlib.session import Session, SessionHook, ValueSet
 from sdmxlib.query import RawSql, RawSqlError, schema
-from sdmxlib import versions
+from sdmxlib import migration, versions
 from sdmxlib.versions import RewrittenVersion, VersionRewrite
 from sdmxlib.query.accessors import ArtefactRow, CodeRow, HCodeRow, ReportedAttributeRow, q
 from sdmxlib.query._compile import CompiledQuery
@@ -461,6 +461,7 @@ __all__ = [
     "from_dict",
     "item",
     "len",
+    "migration",
     "normalize_tag",
     "parse",
     "parse_components",
