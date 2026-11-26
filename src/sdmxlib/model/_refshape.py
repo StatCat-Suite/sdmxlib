@@ -82,6 +82,18 @@ def derived_view() -> dict[str, bool]:
     return {DERIVED_VIEW: True}
 
 
+#: Marks a sequence field whose order the IM does not give: `sl.diff`
+#: compares it as a set. The field keeps the order it was read in, so writers
+#: still round-trip it. An attribute's relationship to dimensions is one: FMR
+#: serves the related dimensions in the DSD's order (GH-401).
+UNORDERED: Final = "sdmxlib.unordered"
+
+
+def unordered() -> dict[str, bool]:
+    """Field metadata marking a sequence whose order means nothing — see `UNORDERED`."""
+    return {UNORDERED: True}
+
+
 #: Containers whose *elements* may be attrs objects. A tuple rather than a
 #: `|` union because `issubclass` needs bare runtime classes, and writing the
 #: union inline made pyrefly ask for type arguments it cannot have there.

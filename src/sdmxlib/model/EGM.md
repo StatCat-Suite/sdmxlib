@@ -127,6 +127,11 @@ hierarchical roll-ups.
   (`validation.py`): what a message and a target format require before
   writing. `allow` takes `Deviation` names (`DEVIATIONS`), each skipping one
   check; an unknown name raises `ValueError` (GH-398).
+- `diff(left, right)` (`diff.py`, `sl.diff`): normalised field path → first
+  example where two model objects disagree. A `Ref` is equal by URN, private
+  fields are skipped, an `ItemList` is compared by id, and a field marked
+  `unordered()` (`_refshape.py`: an attribute's and a metadata attribute
+  usage's `related_dimensions`) as a set (GH-401).
 - `validate` and `validate_references` (`validation.py`), `to_dict` and
   `from_dict` (`convert.py`), and `DataflowBinding`, `DriftIssue` and
   `DriftError` (`binding.py`). `validate_references` accepts a late-bound

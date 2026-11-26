@@ -33,12 +33,12 @@ from lxml import etree
 from bench.sweep.census import census, gained, lost
 from bench.sweep.endpoints import Endpoint
 from bench.sweep.fetch import raw_path, read_meta
-from bench.sweep.modeldiff import diff
 from bench.sweep.split import SPLIT_ABOVE, chunk_dir, ensure_chunks
 from sdmxlib.formats import parse, serialize
 from sdmxlib.formats.gaps import unrepresentable
 from sdmxlib.local.registry import LocalRegistry
 from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.diff import diff
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.ref import SupportsUrn, artefact_urn
 from sdmxlib.model.validation import ValidationError, check_serialisable

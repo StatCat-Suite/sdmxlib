@@ -193,7 +193,7 @@ RULES: tuple[Rule[Kind], ...] = (
         "an optional value becomes required, a repeatable one single",
     ),
     Rule(
-        r"DataStructure\.attributes\[\]\.(?:attachment|related_dimensions \(type\)|related_measures \(type\))",
+        r"DataStructure\.attributes\[\]\.(?:attachment|related_dimensions \(set\)|related_measures \(type\))",
         _MAXIMAL,
         "pysdmx-changes",
         "pysdmx attaches an attribute related to a dimension and a measure to the observation, and relates an "

@@ -3,7 +3,7 @@
 The external oracles -- FMR (`tests.support.fmr_oracle`) and pysdmx
 (`tests.support.pysdmx_oracle`) -- each take a document of ours and give back
 their own copy of it. Both sides are read *through our reader* and diffed field
-by field (`bench.sweep.modeldiff`), so a difference is one the model can see,
+by field (`sl.diff`), so a difference is one the model can see,
 not one of serialisation. Each difference is then classified by one `Rule`.
 
 An artefact is matched across the two by its URN with the id upper-cased,
@@ -18,18 +18,14 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 
 import attrs
-import pytest
 from attrs import field, frozen
 
 from sdmxlib.formats import parse
 from sdmxlib.formats.gaps import unrepresentable
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.collections import ArtefactList
+from sdmxlib.model.diff import diff
 from tests.support.roundtrip import as_structure
-
-# `bench/` is outside what mutmut copies into `mutants/`, so it is imported
-# as `test_sweep.py` imports it: skipped there rather than aborting the run.
-diff = pytest.importorskip("bench.sweep.modeldiff").diff
 
 
 def load_json(path: Path) -> object:
@@ -67,7 +63,7 @@ def refusals(document: bytes) -> dict[str, str]:
 
 
 def _bare(path: str) -> str:
-    """A modeldiff path as `formats.gaps` writes a field: no class prefix, no ``(type)`` / ``(length)``."""
+    """An `sl.diff` path as `formats.gaps` writes a field: no class prefix, no ``(type)`` / ``(length)``."""
     path = re.sub(r" \((type|length)\)$", "", path)
     return path.split(".", 1)[1] if "." in path else ""
 
@@ -97,7 +93,7 @@ def compare(
 
     Each entry is one of:
 
-    - a `modeldiff` path, for a field of an artefact both sides hold;
+    - an `sl.diff` path, for a field of an artefact both sides hold;
     - ``REFUSED <class>: <reason>``, when they hold it and our reader refused their copy;
     - ``MISSING <class> <identity>``, when they do not hold it at all;
     - ``EXTRA <class> <identity>``, when they hold one that was not sent.
