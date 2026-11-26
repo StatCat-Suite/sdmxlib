@@ -22,6 +22,14 @@ The entry point for connecting to an SDMX REST endpoint over HTTP.
 
 ---
 
+::: sdmxlib.api.structure_download.StructureDownload
+
+---
+
+::: sdmxlib.formats.structure_format.StructureFormat
+
+---
+
 ::: sdmxlib.api.registry.BearerToken
 
 ---

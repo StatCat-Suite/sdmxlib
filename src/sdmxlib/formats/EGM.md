@@ -33,6 +33,10 @@ target format cannot carry.
   NCNames, as .Stat NSI and FMR exchange them (GH-398).
   `to_xml(msg, *, version="2.1", ...)` writes SDMX-ML, and always writes a
   `MetadataMessage` as 3.0. `to_json(msg, ...)` writes SDMX-JSON 2.0.
+- `StructureFormat` and `sniff(head)` (`structure_format.py`): the structure
+  media types a registry serves, and the version a body's first bytes declare
+  (an SDMX-ML root namespace, an SDMX-JSON `meta.schema` URL), read without
+  parsing the body (GH-402).
 - `frame_of(batch)` (`_arrow.py`): Arrow `RecordBatch` to a polars DataFrame,
   zero-copy through `pl.from_arrow` where possible.
 - `match_dimension_case(holders, dimension_ids)` (`_attachment.py`): changes a

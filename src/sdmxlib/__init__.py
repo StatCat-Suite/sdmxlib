@@ -11,7 +11,9 @@ from sdmxlib.formats.data_format import DataFormat
 from sdmxlib.formats.gaps import DroppedArtefact, Gap, dropped, unrepresentable
 from sdmxlib.api.client import ResponseTooLargeError
 from sdmxlib.api.registry import BearerToken, FmrRegistry, Resolve, RestRegistry
+from sdmxlib.api.structure_download import StructureDownload
 from sdmxlib.api.submit import SubmissionNotHeldError, SubmissionReport, SubmissionResult
+from sdmxlib.formats.structure_format import StructureFormat
 from sdmxlib.data_store import DataStore, WriteSource
 from sdmxlib.model.datastructure import ComponentRole
 from sdmxlib.model.ref import short_urn as short_urn
@@ -437,6 +439,8 @@ __all__ = [
     "StoreSchemaError",
     "StoreSecret",
     "Str",
+    "StructureDownload",
+    "StructureFormat",
     "StructureMap",
     "StructureMessage",
     "StructureSet",

@@ -1,0 +1,1563 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/xml
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/agencyscheme/SDMX/AGENCIES/1.0?detail=full
+  response:
+    body:
+      string: !!binary |
+        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
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      etag:
+      - 59782a946b389bd9
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      set-cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66; Path=/; HttpOnly
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: ''
+- request:
+    body: "<?xml version='1.0' encoding='UTF-8'?>\n<mes:Structure xmlns:mes=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message\"
+      xmlns:str=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure\" xmlns:com=\"http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common\"><mes:Header><mes:ID>SDMX_MSG</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2000-01-01T00:00:00</mes:Prepared><mes:Sender
+      id=\"sdmxlib\"/></mes:Header><mes:Structures><str:AgencySchemes><str:AgencyScheme
+      agencyID=\"SDMX\" id=\"AGENCIES\"><com:Name xml:lang=\"en\">SDMX Agency Scheme</com:Name><str:Agency
+      id=\"SDMX\"><com:Name xml:lang=\"en\">SDMX</com:Name><com:Description xml:lang=\"en\">SDMX
+      is an initiative to foster standards for the exchange of statistical information.
+      It is sponsored by the Bank for International Settlements (BIS), the European
+      Central Bank (ECB), the Statistical Office of the European Union (Eurostat),
+      the International Monetary Fund (IMF), the Organization for Economic Co-Operation
+      and Development (OECD), the United Nations (UN) and the World Bank.</com:Description><str:Contact><com:Name
+      xml:lang=\"en\">SDMX Secretariat</com:Name><str:Department xml:lang=\"en\">SDMX
+      Secretariat</str:Department><str:Role xml:lang=\"en\">Single entry point for
+      external inquiries</str:Role><str:URI>http://sdmx.org</str:URI><str:Email>secretariat@sdmx.org</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"IMF\"><com:Name xml:lang=\"en\">International Monetary Fund (IMF)</com:Name><com:Description
+      xml:lang=\"en\">The IMF works to foster global growth and economic stability.
+      It provides policy advice and financing to members in economic difficulties
+      and also works with developing nations to help them achieve macroeconomic stability
+      and reduce poverty.</com:Description><str:Contact><com:Name xml:lang=\"en\">Single
+      point of contact for external inquiries</com:Name><str:Department xml:lang=\"en\">Statistics
+      Department</str:Department><str:Role xml:lang=\"en\">Single point of contact
+      for external inquiries</str:Role><str:URI>http://www.imf.org</str:URI><str:Email>StatisticsQuery@imf.org</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"ESTAT\"><com:Name xml:lang=\"en\">Statistical Office of the European Union
+      (Eurostat)</com:Name><com:Description xml:lang=\"en\">Eurostat is the statistical
+      office of the European Union situated in Luxembourg. Its task is to provide
+      the European Union with high quality statistics at European level that enable
+      comparisons between countries and regions. Website: http://ec.europa.eu/eurostat/.</com:Description><str:Contact><com:Name
+      xml:lang=\"en\">SDMX Support</com:Name><str:Department xml:lang=\"en\">Various
+      units involved in SDMX</str:Department><str:Role xml:lang=\"en\">SDMX Support</str:Role><str:URI>http://ec.europa.eu/eurostat/</str:URI><str:Email>estat-support-sdmx@ec.europa.eu</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"UIS\"><com:Name xml:lang=\"en\">UNESCO Institute for Statistics (UIS)</com:Name><com:Description
+      xml:lang=\"en\">The UNESCO Institute for Statistics (UIS) is the statistical
+      office of the United Nations Educational, Scientific and Cultural Organization
+      (UNESCO). The Institute produces the data and methodologies to monitor trends
+      at national and international levels. It delivers comparative data for countries
+      at all stages of development to provide a global perspective on education, science
+      and technology, culture, and communication. The UIS is the official source for
+      the indicators needed to achieve SDG 4\u2013Education 2030 and key targets in
+      science and innovation, culture and communication.</com:Description><str:Contact><com:Name
+      xml:lang=\"en\">UNESCO Institute for Statistics (UIS)</com:Name><str:Department
+      xml:lang=\"en\">UNESCO Institute for Statistics (UIS)</str:Department><str:Role
+      xml:lang=\"en\">Single entry point for external inquiries</str:Role><str:URI>http://uis.unesco.org</str:URI><str:Email>uis.datarequests@unesco.org</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"OECD\"><com:Name xml:lang=\"en\">Organisation for Economic Co-operation
+      and Development (OECD)</com:Name><com:Description xml:lang=\"en\">The mission
+      of the Organisation for Economic Co-operation and Development (OECD) is to promote
+      policies that will improve the economic and social well-being of people around
+      the world.\n\nThe OECD provides a forum in which governments can work together
+      to share experiences and seek solutions to common problems. We work with governments
+      to understand what drives economic, social and environmental change. We measure
+      productivity and global flows of trade and investment. We analyse and compare
+      data to predict future trends. We set international standards on a wide range
+      of things, from agriculture and tax to the safety of chemicals.\n\nWe look,
+      too, at issues that directly affect the lives of ordinary people, like how much
+      they pay in taxes and social security, and how much leisure time they can take.
+      We compare how different countries\u2019 school systems are readying their young
+      people for modern life, and how different countries\u2019 pension systems will
+      look after their citizens in old age.\n\nDrawing on facts and real-life experience,
+      we recommend policies designed to make the lives of ordinary people better.
+      We work with business, through the Business and Industry Advisory Committee
+      to the OECD, and with labour, through the Trade Union Advisory Committee. We
+      have active contacts as well with other civil society organisations. The common
+      thread of our work is a shared commitment to market economies backed by democratic
+      institutions and focused on the wellbeing of all citizens. Along the way, we
+      also set out to make life harder for the terrorists, tax dodgers, crooked businessmen
+      and others whose actions undermine a fair and open society.</com:Description></str:Agency><str:Agency
+      id=\"METATECH\"><com:Name xml:lang=\"en\">Metadata Technology</com:Name><com:Description
+      xml:lang=\"en\">Provider of consultancy, software, and services to the SDMX
+      community.</com:Description><str:Contact><com:Name xml:lang=\"en\">Chris Nelson</com:Name><str:Department
+      xml:lang=\"en\">Standards</str:Department><str:Role xml:lang=\"en\">Standards
+      Consultant</str:Role><str:Telephone>+44 1483 418058</str:Telephone><str:URI>http://www.metadatatechnology.com</str:URI><str:URI>http://www.sdmxfusion.com</str:URI><str:URI>http://registry.sdmxcloud.org</str:URI><str:URI>http://data.sdmxcloud.org</str:URI><str:Email>chris.nelson@metadatatechnology.com</str:Email></str:Contact><str:Contact><com:Name
+      xml:lang=\"en\">Matthew Nelson</com:Name><str:Department xml:lang=\"en\">IT</str:Department><str:Role
+      xml:lang=\"en\">Software Architect</str:Role><str:Telephone>+44 1483 418058</str:Telephone><str:URI>http://sdmxsource.org</str:URI><str:Email>matt.nelson@metadatatechnology.com</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"ILO\"><com:Name xml:lang=\"en\">International Labour Organization</com:Name><com:Description
+      xml:lang=\"en\">The ILO was founded in 1919, in the wake of a destructive war,
+      to pursue a vision based on the premise that universal, lasting peace can be
+      established only if it is based on social justice. The ILO became the first
+      specialized agency of the UN in 1946.\n\nThe main aims of the ILO are to promote
+      rights at work, encourage decent employment opportunities, enhance social protection
+      and strengthen dialogue on work-related issues.</com:Description></str:Agency><str:Agency
+      id=\"IBGE\"><com:Name xml:lang=\"en\">The Brazilian Institute of Geography and
+      Statistics</com:Name><com:Name xml:lang=\"br\">Instituto Brasileiro de Geografia
+      e Estat\xEDstica</com:Name></str:Agency><str:Agency id=\"NG_NSB\"><com:Name
+      xml:lang=\"en\">Nigerian National Bureau of Statistics (NBS)</com:Name><com:Description
+      xml:lang=\"en\">The National Bureau of Statistics Nigeria as the mandate to
+      generate, on a continuous and sustainable basis, socio-economic statistics on
+      all facets of development in Nigeria.</com:Description><str:Contact><com:Name
+      xml:lang=\"en\">Lucky OGIDAN</com:Name><str:Department xml:lang=\"en\">Information
+      and Communication Technology Department</str:Department><str:Role xml:lang=\"en\">Web
+      Application Manager</str:Role><str:URI>http://www.nigerianstat.gov.ng</str:URI><str:Email>feedback@nigerianstat.gov.ng</str:Email><str:Email>laogidan@nigerianstat.gov.ng</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"GW_INE\"><com:Name xml:lang=\"en\">National Statistical Institute of Guinea-Bissau
+      - Instituto Nacional de Estat\xEDstica da Guin\xE9-Bissau (INE)</com:Name></str:Agency><str:Agency
+      id=\"BT_NSB\"><com:Name xml:lang=\"en\">Bhutan National Statistics Bureau (NSB)</com:Name></str:Agency><str:Agency
+      id=\"WB\"><com:Name xml:lang=\"en\">World Bank</com:Name><str:Contact><com:Name
+      xml:lang=\"en\">Demo Contact</com:Name><str:Department xml:lang=\"en\">IT</str:Department><str:Role
+      xml:lang=\"en\">IT Officer</str:Role><str:Telephone>+00 111 222 333</str:Telephone><str:Email>demo@democontact.com</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"IAEG\"><com:Name xml:lang=\"en\">Inter Agency Group</com:Name></str:Agency><str:Agency
+      id=\"BIS\"><com:Name xml:lang=\"en\">Bank for International Settlements</com:Name></str:Agency><str:Agency
+      id=\"ONS\"><com:Name xml:lang=\"en\">Office for National Statistics</com:Name><str:Contact><com:Name
+      xml:lang=\"en\">Demo Contact</com:Name><str:Department xml:lang=\"en\">Statistics</str:Department><str:Role
+      xml:lang=\"en\">Statistics Officer</str:Role><str:Telephone>+44 111 222 333</str:Telephone><str:URI>http://metadatatechnology.com</str:URI><str:Email>demo@democontact.com</str:Email></str:Contact></str:Agency><str:Agency
+      id=\"ECB\"><com:Name xml:lang=\"en\">European Central Bank</com:Name></str:Agency><str:Agency
+      id=\"EUROSTAT\"><com:Name xml:lang=\"en\">Eurostat</com:Name></str:Agency><str:Agency
+      id=\"MT\"><com:Name xml:lang=\"en\">Metadata Technology</com:Name><com:Description
+      xml:lang=\"en\">Metadata Technology</com:Description></str:Agency><str:Agency
+      id=\"GCCSTAT\"><com:Name xml:lang=\"en\">Statistical Centre for the Cooperation
+      Council for the Arab Countries of the Gulf</com:Name><com:Description xml:lang=\"en\">Statistical
+      Centre for the Cooperation Council for the Arab Countries of the Gulf</com:Description></str:Agency><str:Agency
+      id=\"AG\"><com:Name xml:lang=\"en\">test agency</com:Name></str:Agency></str:AgencyScheme></str:AgencySchemes></mes:Structures></mes:Structure>"
+    headers:
+      accept:
+      - application/xml
+      accept-encoding:
+      - gzip, deflate, zstd
+      action:
+      - REPLACE
+      connection:
+      - keep-alive
+      content-length:
+      - '10263'
+      content-type:
+      - application/xml
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: POST
+    uri: http://127.0.0.1:8081/ws/secure/sdmxapi/rest/
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52SQYvCMBCF7/6K0ktPmtS9aLHxIrsrrLBYF8SLxHSsgSaRTGrdf7+xqLW4J2FO
+        j/e9ycxkMj2rMjiBRWl0GsUDGgWghcmlLtLoZ/XeH0VT1psoQOQFJEsoJDr7O9cO7J4LCDyvMTmj
+        TMODc8eEkLquB/XbwNiCDCmNyXrxlYkDKN6XGh3XAsIbpcr/KA+QeDweEc193yNvgeszOhDm6txg
+        FtBUVgCSi6RKgk1XJKfhNiZX9JYkjHolxWPK6FuIheKVEHtdYsh6QXBf7SfwHOxFehDnM5bNFuvt
+        IvuYkAex61oBOrbnJUJrarSu7dvCkVvImT8L7dPY14rSpKlNS95tXToD7d8XyDwNL0OVcheSZgDy
+        PEELVTslXeZsJVxlYenPaTQCYS319KXYH36DtHeVAgAA
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: ''
+- request:
+    body: '<?xml version=''1.0'' encoding=''UTF-8''?>
+
+      <mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+      xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><mes:Header><mes:ID>SDMX_MSG</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2000-01-01T00:00:00</mes:Prepared><mes:Sender
+      id="sdmxlib"/></mes:Header><mes:Structures><str:Codelists><str:Codelist id="CL"
+      agencyID="AG" version="1.0.0"><com:Name xml:lang="en">c</com:Name><str:Code
+      id="A"><com:Name xml:lang="en">A</com:Name></str:Code><str:Code id="B"><com:Name
+      xml:lang="en">B</com:Name></str:Code></str:Codelist></str:Codelists></mes:Structures></mes:Structure>'
+    headers:
+      accept:
+      - application/xml
+      accept-encoding:
+      - gzip, deflate, zstd
+      action:
+      - REPLACE
+      connection:
+      - keep-alive
+      content-length:
+      - '726'
+      content-type:
+      - application/xml
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: POST
+    uri: http://127.0.0.1:8081/ws/secure/sdmxapi/rest/
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52SQYvCMBCF7/6K0ktPmtS9aLHxIrsrrLBYF8SLxHSsgSaRTGrdf7+xqLW4J2FO
+        j/e9ycxkMj2rMjiBRWl0GsUDGgWghcmlLtLoZ/XeH0VT1psoQOQFJEsoJDr7O9cO7J4LCDyvMTmj
+        TMODc8eEkLquB/XbwNiCDCmNyXrxlYkDKN6XGh3XAsIbpcr/KA+QeDweEc193yNvgeszOhDm6txg
+        FtBUVgCSi6RKgk1XJKfhNiZX9JYkjHolxWPK6FuIheKVEHtdYsh6QXBf7SfwHOxFehDnM5bNFuvt
+        IvuYkAex61oBOrbnJUJrarSu7dvCkVvImT8L7dPY14rSpKlNS95tXToD7d8XyDwNL0OVcheSZgDy
+        PEELVTslXeZsJVxlYenPaTQCYS319KXYH36DtHeVAgAA
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: ''
+- request:
+    body: '<?xml version=''1.0'' encoding=''UTF-8''?>
+
+      <mes:Structure xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/message"
+      xmlns:str="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/structure" xmlns:com="http://www.sdmx.org/resources/sdmxml/schemas/v3_0/common"><mes:Header><mes:ID>SDMX_MSG</mes:ID><mes:Test>false</mes:Test><mes:Prepared>2000-01-01T00:00:00</mes:Prepared><mes:Sender
+      id="sdmxlib"/></mes:Header><mes:Structures><str:Codelists><str:Codelist id="CL"
+      agencyID="AG" version="1.1.0"><com:Name xml:lang="en">c</com:Name><str:Code
+      id="A"><com:Name xml:lang="en">A</com:Name></str:Code><str:Code id="B"><com:Name
+      xml:lang="en">B</com:Name></str:Code><str:Code id="C"><com:Name xml:lang="en">C</com:Name></str:Code></str:Codelist></str:Codelists></mes:Structures></mes:Structure>'
+    headers:
+      accept:
+      - application/xml
+      accept-encoding:
+      - gzip, deflate, zstd
+      action:
+      - REPLACE
+      connection:
+      - keep-alive
+      content-length:
+      - '790'
+      content-type:
+      - application/xml
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: POST
+    uri: http://127.0.0.1:8081/ws/secure/sdmxapi/rest/
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52SQYvCMBCF7/6K0ktPmtS9aLHxIrsrrLBYF8SLxHSsgSaRTGrdf7+xqLW4J2FO
+        j/e9ycxkMj2rMjiBRWl0GsUDGgWghcmlLtLoZ/XeH0VT1psoQOQFJEsoJDr7O9cO7J4LCDyvMTmj
+        TMODc8eEkLquB/XbwNiCDCmNyXrxlYkDKN6XGh3XAsIbpcr/KA+QeDweEc193yNvgeszOhDm6txg
+        FtBUVgCSi6RKgk1XJKfhNiZX9JYkjHolxWPK6FuIheKVEHtdYsh6QXBf7SfwHOxFehDnM5bNFuvt
+        IvuYkAex61oBOrbnJUJrarSu7dvCkVvImT8L7dPY14rSpKlNS95tXToD7d8XyDwNL0OVcheSZgDy
+        PEELVTslXeZsJVxlYenPaTQCYS319KXYH36DtHeVAgAA
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/agencyscheme/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/attachmentconstraint/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52RwW7CMAyG7zxF1EtP1A3TJKjacmKncYEi7TZFIWojGgfFGenjL3RlUyVOO9ry
+        58/6XW4H07ObcqQtVinP8pQplPassa3SU/O2XKfbelEaRSRaVeycs45FBqkYSFdJ5/21AAghZOEl
+        s66FVZ5z+Ni/H2WnjFhqJC9QquRBmf4ZFQHgm80aUETXVfwBk3oG0dkMI+YU2S8nFcG9ZXqg0Upw
+        W31ymNDHJmnNf7ZEzFhM6gVj8xz2PwWLccXz+Gs+zsSpSBSNGnx9wgvagOywOzbsMFkKJrwXsjMK
+        vbQxHic0+hJ+qbsInpniI+b9+hv3N2JMwAEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - close
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      expires:
+      - '0'
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 400
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/categorisation/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/categoryscheme/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/codelist/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/8VUUW+bMBD+K8gv6R6CMd06sICK0KaLlE1TmkrTXioEl9Qa2Mg2Ifv3MxDSJmqk
+        rYu2F4Tv7rvv/H0nB9fbsrA2IBUTPBwR2xlZwDORM74ORw/L6dgbXUdBCYrea1lnupZgGQhXdKtY
+        iJ60rijGTdPYzaUt5Bq7jkPwt8/z++wJynTMuNIpzwANqLJ4DWUAmPi+h3lquKr0GWCOBwCVl9sO
+        IkGJWmagcBsqC6w6RoU37iPBBqbS9b6L0vItXdRw56FPJsq39DGwUnDUC/kJ0hxk/z+7iWaL2ynx
+        fP/yY4B3oS61BKWjVVoo6OPduct8lVClEvLIddyrMSFj92pJPPrepx+8733xvqS3DrhhtFgeogf+
+        g4uGI9xnFpAB2+xyXOhHVVdVwSBvC/DxtPsVUFFgpKGJyKFgSh8drVryEJkPbbWgRp5eJ8ZXomxr
+        7GxXaQ+QML6jyfzC7J/tvEMWU7dbDZKnxQJWIM1GQog6LZBlXOXZz9lNiOI71M2dzFvElJnyfdWw
+        0qhraZQ3FtAvZrlaI2mRmvVGYBzJAjxkni/xhxc4GN6O+6Hi05zxS048kJ6JftLTT07TT07Q45ce
+        ns9Rcn5HyT9zlPxfR8nfOXoW+mRnyWn65PcWCh89Gfj4STkMRL8Av99prJwGAAA=
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      etag:
+      - fe7bddd825590569
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 200
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/conceptscheme/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/contentconstraint/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/dataconsumerscheme/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/dataflow/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/dataproviderscheme/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:58 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/datastructure/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:59 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/hierarchicalcodelist/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:59 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/metadataflow/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:59 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/metadatastructure/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:59 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/organisationunitscheme/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:59 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/process/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:59 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/provisionagreement/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:59 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/reportingtaxonomy/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:59 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+- request:
+    body: ''
+    headers:
+      accept:
+      - application/vnd.sdmx.structure+xml;version=2.1
+      accept-encoding:
+      - gzip, deflate, zstd
+      connection:
+      - keep-alive
+      cookie:
+      - JSESSIONID=B6872723ACA77A494B571CE96FDABF66
+      host:
+      - 127.0.0.1:8081
+      user-agent:
+      - python-httpx2/2.16.0
+    method: GET
+    uri: http://127.0.0.1:8081/ws/public/sdmxapi/rest/structureset/AG/all/all
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/52QMW/CMBCFd36FlSUTORsWiJIwlakwtFTqVlnOKUSKbeRzSH5+jxRaRWLqeHfv
+        e+/0it1oO3HFQK13ZaoymQp0xteta8r047RfbtJdtSgsEukG85cQfBDMOMpHasvkHOMlBxiGIRvW
+        mQ8NrKRU8Hl4fTdntHrZOoraGUwelO2eUQyA2m434DRnXfQfcI+eQVTbccICku+DQYLbynZAUyrB
+        dfWl4I4+nIy3/3FhzHqXVAsh5j0cfgbBdfF7SspJwyom8hOOsTp68YbUd5HE3veuLuD3dHODZ3bc
+        9nxffQPnR0DipQEAAA==
+    headers:
+      cache-control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      connection:
+      - keep-alive
+      content-disposition:
+      - inline; filename="STRUCTURE.xml"
+      content-encoding:
+      - gzip
+      content-type:
+      - application/xml;charset=UTF-8
+      date:
+      - Thu, 26 Nov 2026 18:49:59 GMT
+      expires:
+      - '0'
+      keep-alive:
+      - timeout=20
+      pragma:
+      - no-cache
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      - Access-Control-Request-Method
+      - Access-Control-Request-Headers
+      - Accept,Accept-Language
+      x-content-type-options:
+      - nosniff
+      x-frame-options:
+      - DENY
+      x-xss-protection:
+      - '0'
+    status:
+      code: 404
+      message: ''
+version: 1
