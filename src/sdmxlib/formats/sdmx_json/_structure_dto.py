@@ -1498,10 +1498,9 @@ class ComponentValueSetJson(WireStruct, rename=_camel_rename):
 
 
 class CubeRegionJson(WireStruct, rename=_camel_rename):
-    #: `bool | None` (default None): the write side always sets it, so it is
-    #: always emitted; a plain `bool` default of True would let omit_defaults
-    #: drop it on inclusive regions, and read tolerance wants it optional
-    #: (ingest defaults absent → True).
+    #: As `KeyValueJson.include`: absent is true, and only false is written,
+    #: since writers state nothing at its schema default (#503). A consumer
+    #: mapping 2.0 to 1.0's ``isIncluded`` applies that default (GH-412).
     include: bool | None = None
     key_values: list[KeyValueJson] = msgspec.field(default_factory=list)
     components: list[ComponentValueSetJson] = msgspec.field(default_factory=list)
