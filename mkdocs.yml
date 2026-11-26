@@ -102,6 +102,7 @@ nav:
       - REST Facade Kit: cookbook/rest_facade.md
       - Reference Metadata: cookbook/reference_metadata.md
       - Serialization: cookbook/serialization.md
+      - Migrating to SDMX 3.0 and FMR: cookbook/migration.md
   - API Reference: api.md
   - Edition Format: edition.md
   - Design:

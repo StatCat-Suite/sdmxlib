@@ -12,25 +12,33 @@ import json
 import logging
 import warnings
 from collections.abc import Generator
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
+from unittest.mock import patch
 
 import attrs
+import httpx2
 import polars as pl
 
 import sdmxlib as sl
+from sdmxlib.api.client import SdmxClient
 from sdmxlib.edition import Producer, copy_edition, seal
 from sdmxlib.local.data_store import DuckDBDataStore
+from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.binding import DataflowBinding
 from sdmxlib.model.ref import Ref
 from tests.docs.pages import EXECUTED, SETUPS, base
-from tests.docs.pages._offline import in_a_directory_containing, serving
+from tests.docs.pages._offline import _message, in_a_directory_containing, serving
 from tests.support.bundles import make_bundle, publish
 from tests.support.factories import code_urn, concept_ref
 from tests.support.narrow import present
+from tests.support.repo import ROOT
+
+#: The 2.1 fixtures the migration page copies from.
+_FIXTURES_21 = ROOT / "tests" / "fixtures" / "sdmx_ml21"
 
 #: Any fixed instant — bindings carry timestamps and none of the pages read them.
 _STAMP = datetime(2026, 1, 1, tzinfo=UTC)
@@ -1624,3 +1632,80 @@ def _bundle_page() -> Generator[dict[str, Any]]:
 
 SETUPS["edition.md"] = _bundle_page
 EXECUTED.add("edition.md")
+
+
+def _not_found(url: str) -> httpx2.HTTPStatusError:
+    """SDMX-REST's "no results", as httpx2 raises it."""
+    request = httpx2.Request("GET", url)
+    message = f"404 for {url}"
+    return httpx2.HTTPStatusError(message, request=request, response=httpx2.Response(404, request=request))
+
+
+class _Registries:
+    """A .Stat NSI and an FMR, as far as the migration page talks to them.
+
+    The NSI host serves one resource, `codelist`, whose body is the 2.1
+    `complete.xml` fixture, and has none of the rest (404). The FMR host
+    serves what has been submitted to it, and answers each submission as FMR
+    does: a `RegistryInterface` with a `Success` per artefact.
+    """
+
+    def __init__(self) -> None:
+        self.held: dict[str, MaintainableArtefact] = {}
+
+    def download_structures(self, url: str, *, fmt: object, to: Path | None = None) -> bytes | None:
+        if "nsi.example.org" in url and "/codelist/" in url:
+            body = (_FIXTURES_21 / "complete.xml").read_bytes()
+        elif "fmr.example.org" in url and self.held:
+            resource = url.split("/sdmxapi/rest/", 1)[1].split("/", 1)[0]
+            matching = [a for a in self.held.values() if type(a).__name__.lower() == resource]
+            if not matching:
+                raise _not_found(url)
+            body = sl.to_xml(_message(matching), version="3.0", validate=False)
+        else:
+            raise _not_found(url)
+        if to is None:
+            return body
+        to.write_bytes(body)
+        return None
+
+    def post_structures(self, url: str, body: bytes, *, action: str) -> httpx2.Response:
+        msg = sl.parse(body)
+        assert isinstance(msg, sl.StructureMessage)
+        results = []
+        for artefact in msg.all_artefacts():
+            urn = str(sl.artefact_urn(artefact))
+            self.held[urn] = artefact
+            results.append(
+                f"<reg:SubmissionResult><reg:SubmittedStructure><reg:MaintainableObject><URN>{urn}</URN>"
+                '</reg:MaintainableObject></reg:SubmittedStructure><reg:StatusMessage status="Success"/>'
+                "</reg:SubmissionResult>"
+            )
+        report = (
+            '<mes:RegistryInterface xmlns:mes="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message" '
+            'xmlns:reg="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/registry">'
+            f"<mes:SubmitStructureResponse>{''.join(results)}</mes:SubmitStructureResponse></mes:RegistryInterface>"
+        )
+        return httpx2.Response(200, content=report.encode())
+
+    def get_artefact(
+        self, resource: str, agency: str, id: str, version: str = "latest", **_: object
+    ) -> sl.StructureMessage:
+        found = [a for urn, a in self.held.items() if urn.endswith(f"={agency}:{id}({version})")]
+        return _message(found)
+
+
+@contextmanager
+def _migration() -> Generator[dict[str, Any]]:
+    """The migration page copies a .Stat NSI and loads an FMR, both faked by `_Registries`."""
+    registries = _Registries()
+    with ExitStack() as patches, in_a_directory_containing({}):
+        for name in ("download_structures", "post_structures"):
+            patches.enter_context(patch.object(SdmxClient, name, getattr(registries, name)))
+        for name in ("get_artefact", "get_artefact_if_changed"):
+            patches.enter_context(patch.object(SdmxClient, name, registries.get_artefact))
+        yield base()
+
+
+SETUPS["cookbook/migration.md"] = _migration
+EXECUTED.add("cookbook/migration.md")

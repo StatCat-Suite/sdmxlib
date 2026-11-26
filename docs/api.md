@@ -26,6 +26,10 @@ The entry point for connecting to an SDMX REST endpoint over HTTP.
 
 ---
 
+::: sdmxlib.api.structure_download.read_all_structures
+
+---
+
 ::: sdmxlib.formats.structure_format.StructureFormat
 
 ---
