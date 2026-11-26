@@ -45,7 +45,7 @@ def bind[T](obj: T, resolver: Resolver) -> T:
 
 
 #: `attrs.evolve` over a field map built at runtime, which its overloads cannot
-#: see — the spelling `version_rewrite` uses for the same walk.
+#: see — the spelling `rewrite` uses for the same walk.
 _evolve: Callable[..., object] = attrs.evolve
 
 

@@ -31,15 +31,7 @@ from sdmxlib.model.binding import DataflowBinding, DriftError, DriftIssue, _vali
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.hierarchy import Hierarchy, _applicable_hierarchies, _unique_hierarchy
 from sdmxlib.model.ref import Ref, SupportsUrn, artefact_urn, target_urn
-from sdmxlib.model.urn import SdmxUrn
-from sdmxlib.model.validation import (
-    ValidationError,
-    ValidationIssue,
-    _collect_refs,
-    metadata_sets_advisories,
-    partial_scheme_advisories,
-)
-from sdmxlib.model.version_rewrite import (
+from sdmxlib.model.rewrite import (
     RewrittenVersion,
     VersionRewrite,
     check_ingestable,
@@ -48,6 +40,14 @@ from sdmxlib.model.version_rewrite import (
     names,
     original_urn,
     rewrite_versions,
+)
+from sdmxlib.model.urn import SdmxUrn
+from sdmxlib.model.validation import (
+    ValidationError,
+    ValidationIssue,
+    _collect_refs,
+    metadata_sets_advisories,
+    partial_scheme_advisories,
 )
 
 

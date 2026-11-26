@@ -27,7 +27,7 @@ def _registered() -> list[type]:
 
 
 #: `attrs.evolve` for an artefact whose class the checker cannot see — the
-#: spelling `model.version_rewrite` uses: it rebuilds, running every rule.
+#: spelling `model.rewrite` uses: it rebuilds, running every rule.
 _rebuild: Callable[..., object] = attrs.evolve
 
 

@@ -56,7 +56,13 @@ hierarchical roll-ups.
   `isinstance`. `ref` returns a Ref bound to the registry's own resolver.
   `applicable_hierarchies`, `unique_hierarchy`, `check_binding_drift` and
   `validate_binding` answer graph and drift questions. `add_all` can rewrite
-  SDMX 2.1 versions (`version_rewrite.py`). A `MetadataSet` added beside its metadataflow and MSD is checked against them (IM §7.4.2.1,
+  SDMX 2.1 versions (`rewrite.py`). `rewrite(msg, mapping)` (`rewrite.py`,
+  `sl.rewrite`) returns a copy of a `StructureMessage` with chosen
+  artefacts' URNs changed (`UrnMap`, old → new) and every `Ref`, item
+  reference and `Link.urn` following, bound to the copy; it refuses, in one
+  `ValidationError`, an item URN, a class change, two keys to one URN, a
+  collision with a held artefact, and an inexact reference to a renamed
+  artefact (GH-406). A `MetadataSet` added beside its metadataflow and MSD is checked against them (IM §7.4.2.1,
   GH-29): one `ImRuleWarning` per call names targets outside the flow's, attributes
   the MSD does not define or allow that often, and values their text format does not
   allow (`validation.metadata_sets_advisories`).

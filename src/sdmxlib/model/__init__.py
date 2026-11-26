@@ -134,6 +134,7 @@ from sdmxlib.model.period import period_bounds, period_range
 from sdmxlib.model.in_memory_registry import InMemoryRegistry
 from sdmxlib.model.registry import RegistryReader, artefact_urn
 from sdmxlib.model.representation import DataType, Facet, Representation, SentinelValue
+from sdmxlib.model.rewrite import UrnMap, rewrite
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.model.version import version_key
 
@@ -268,6 +269,7 @@ __all__ = [
     "TimeRange",
     "ToValueType",
     "UnresolvedRef",
+    "UrnMap",
     "ValidationError",
     "ValidationIssue",
     "ValueItem",
@@ -278,6 +280,7 @@ __all__ = [
     "normalize_tag",
     "period_bounds",
     "period_range",
+    "rewrite",
     "tag_alias",
     "to_dict",
     "validate",

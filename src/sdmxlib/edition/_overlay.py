@@ -559,7 +559,7 @@ class _Plan:
 
 
 #: `attrs.evolve` over a field map built at runtime, which its overloads cannot
-#: see: the spelling `_rebind` and `version_rewrite` use for the same walk.
+#: see: the spelling `_rebind` and `rewrite` use for the same walk.
 _evolve: Callable[..., object] = attrs.evolve
 
 

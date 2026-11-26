@@ -572,11 +572,23 @@ Conforming editions of any shape, deterministic from a seed, for tests and stres
 
 ---
 
-::: sdmxlib.model.version_rewrite.RewrittenVersion
+::: sdmxlib.model.rewrite.RewrittenVersion
 
 ---
 
-::: sdmxlib.model.version_rewrite.VersionRewrite
+::: sdmxlib.model.rewrite.VersionRewrite
+
+---
+
+::: sdmxlib.model.rewrite.rewrite
+
+---
+
+::: sdmxlib.model.rewrite.UrnMap
+
+---
+
+::: sdmxlib.model.version.version_key
 
 ---
 
