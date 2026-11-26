@@ -604,6 +604,22 @@ Conforming editions of any shape, deterministic from a seed, for tests and stres
 
 ---
 
+::: sdmxlib.model.base.AnnotableArtefact
+
+---
+
+::: sdmxlib.model.base.IdentifiableArtefact
+
+---
+
+::: sdmxlib.model.base.NameableArtefact
+
+---
+
+::: sdmxlib.model.organisation.OrganisationScheme
+
+---
+
 ::: sdmxlib.model.rewrite.UrnMap
 
 ---

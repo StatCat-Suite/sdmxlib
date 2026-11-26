@@ -13,7 +13,7 @@ from sdmxlib.model._items import any_item_ref
 from sdmxlib.model._refshape import unordered
 from sdmxlib.model._rules import attachment_stated, id_type, maintained_by, named, some_measures, version_type
 from sdmxlib.model.annotations import Annotations
-from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.base import AnnotableArtefact, IdentifiableArtefact, MaintainableArtefact
 from sdmxlib.model.codelist import Code, Codelist, CodelistLike, EnumerationLike
 from sdmxlib.model.collections import ItemList, to_itemlist, to_itemlist_opt
 from sdmxlib.model.concept import Concept, ConceptScheme
@@ -319,7 +319,7 @@ def _to_concept_scheme_ref(
 
 
 @frozen(unsafe_hash=False)
-class Dimension(ConceptIdentityMixin, RepresentationMixin):
+class Dimension(IdentifiableArtefact, ConceptIdentityMixin, RepresentationMixin):
     """An identifying component of a DataStructure."""
 
     #: See `Code.sdmx_package` — the item's own URN pair, not its container's.
@@ -367,7 +367,7 @@ class Dimension(ConceptIdentityMixin, RepresentationMixin):
 
 
 @frozen(unsafe_hash=False)
-class TimeDimension(ConceptIdentityMixin):
+class TimeDimension(IdentifiableArtefact, ConceptIdentityMixin):
     """The time dimension of a DataStructure (always id=TIME_PERIOD)."""
 
     #: See `Code.sdmx_package` — the item's own URN pair, not its container's.
@@ -401,7 +401,7 @@ REPORTING_YEAR_START_DAY = "REPORTING_YEAR_START_DAY"
 
 
 @frozen(unsafe_hash=False)
-class Attribute(ConceptIdentityMixin, RepresentationMixin):
+class Attribute(IdentifiableArtefact, ConceptIdentityMixin, RepresentationMixin):
     """A descriptive component attached to an observation, series, or dataset."""
 
     #: See `Code.sdmx_package` — the item's own URN pair, not its container's.
@@ -480,7 +480,7 @@ class Attribute(ConceptIdentityMixin, RepresentationMixin):
 
 
 @frozen(unsafe_hash=False)
-class Measure(ConceptIdentityMixin, RepresentationMixin):
+class Measure(IdentifiableArtefact, ConceptIdentityMixin, RepresentationMixin):
     """An observed value component (PrimaryMeasure in v2.1, Measure in v3.0).
 
     In SDMX 2.1, a DSD has exactly one measure (``OBS_VALUE``). In SDMX 3.0+,
@@ -518,7 +518,7 @@ class Measure(ConceptIdentityMixin, RepresentationMixin):
 
 
 @frozen(unsafe_hash=False)
-class MeasureDimension(ConceptIdentityMixin):
+class MeasureDimension(IdentifiableArtefact, ConceptIdentityMixin):
     """The measure dimension in an SDMX 2.1 cross-sectional DSD.
 
     Acts as a regular dimension whose values name the measures present in the
@@ -599,7 +599,7 @@ class MeasureDimension(ConceptIdentityMixin):
 
 
 @frozen(unsafe_hash=False)
-class Group(ParsesUrn):
+class Group(IdentifiableArtefact, ParsesUrn):
     """A dimension grouping (v2.1). None for v3.0 sources."""
 
     #: See `Code.sdmx_package` — the item's own URN pair, not its container's.
@@ -650,7 +650,7 @@ class ComponentRole(Enum):
 
 
 @frozen(unsafe_hash=False)
-class MetadataAttributeUsage:
+class MetadataAttributeUsage(AnnotableArtefact):
     """A metadata attribute a DataStructure uses, and what it attaches to.
 
     SDMX 3.0 lets a DSD report reference metadata alongside data: it names an

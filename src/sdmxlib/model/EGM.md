@@ -33,13 +33,15 @@ hierarchical roll-ups.
 - `to_ref`, `to_optional_ref`, `to_refs` and `refuse_urn_text` (`ref.py`):
   attrs converters and validators that turn URNs into Refs and refuse raw URN
   text. `urn_of`, `artefact_urn`, `short_urn` and `target_urn` are URN helpers.
-- `MaintainableArtefact` (`base.py`): base for top-level artefacts. It
-  annotates the `sdmx_package`, `sdmx_class` and `msg_field` ClassVars, and
-  `urn_for(...)` builds its typed URN. It declares every maintainable's
-  fields (`id`, `maintainer`, `version`, `name`, `description`,
-  `annotations`, `uri` and the external-reference fields) as read-only
-  properties each attrs subclass overrides, so code generic over artefacts
-  reads them without narrowing (GH-403).
+- `AnnotableArtefact`, `IdentifiableArtefact`, `NameableArtefact` and
+  `MaintainableArtefact` (`base.py`): the IM's abstract classes, each a
+  `__slots__ = ()` base declaring its fields as read-only properties the attrs
+  subclasses override (GH-403). Annotable: `annotations`. Identifiable: + `id`,
+  `uri`; the 13 components. Nameable: + `name`, `description`; the 11 items.
+  Maintainable: + `maintainer`, `version` and the external-reference fields;
+  the 30 artefacts, with the `sdmx_package`, `sdmx_class` and `msg_field`
+  ClassVars and `urn_for(...)`. `OrganisationScheme` (`organisation.py`) is
+  the base of the five organisation schemes.
 - `ItemList[T: SupportsId]` and `ArtefactList[T: Maintainable]`
   (`collections.py`): sequences. `ItemList` is indexed by item id.
   `ArtefactList` is indexed by int, slice, bare id, `"AG:ID"`, `"AG:ID(ver)"`,
@@ -151,6 +153,10 @@ hierarchical roll-ups.
   3.x) accepts a version, and which versions a late-bound reference takes.
 
 ## Invariants
+
+- No model class's instances carry a `__dict__`: every base declares empty
+  slots, so a 579,951-code codelist holds slotted codes only
+  (`tests/unit/test_im_bases.py`).
 
 - Every language tag the model holds is in the form `normalize_tag` returns:
   lowercase and RFC 5646 well-formed (GH-280). `InternationalString`,

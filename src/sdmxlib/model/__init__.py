@@ -11,7 +11,7 @@ from sdmxlib.model.validation import (
     validate,
     validate_references,
 )
-from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.base import AnnotableArtefact, IdentifiableArtefact, MaintainableArtefact, NameableArtefact
 from sdmxlib.model.category import Categorisation, Category, CategoryScheme
 from sdmxlib.model.constraint import (
     AttachmentConstraint,
@@ -124,6 +124,7 @@ from sdmxlib.model.organisation import (
     DataProviderScheme,
     MetadataProvider,
     MetadataProviderScheme,
+    OrganisationScheme,
     OrganisationUnit,
     OrganisationUnitScheme,
 )
@@ -144,6 +145,7 @@ __all__ = [
     "Agency",
     "AgencyScheme",
     "AmbiguousHierarchyError",
+    "AnnotableArtefact",
     "Annotation",
     "AnnotationURL",
     "Annotations",
@@ -206,6 +208,7 @@ __all__ = [
     "Hierarchy",
     "HierarchyAssociation",
     "ISOConceptReference",
+    "IdentifiableArtefact",
     "InMemoryRegistry",
     "InclusionMode",
     "InternationalString",
@@ -237,6 +240,8 @@ __all__ = [
     "MetadataStructure",
     "Metadataflow",
     "MissingTagError",
+    "NameableArtefact",
+    "OrganisationScheme",
     "OrganisationSchemeMap",
     "OrganisationUnit",
     "OrganisationUnitScheme",

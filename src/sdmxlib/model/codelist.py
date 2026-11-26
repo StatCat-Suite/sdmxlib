@@ -15,7 +15,7 @@ from sdmxlib.model._invariants import enforce
 from sdmxlib.model._items import item_ref
 from sdmxlib.model._rules import id_type, maintained_by, named, ncname_id_type, version_type
 from sdmxlib.model.annotations import Annotations
-from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.base import MaintainableArtefact, NameableArtefact
 from sdmxlib.model.collections import ItemList, to_itemlist
 from sdmxlib.model.istring import InternationalString, normalize_tag
 from sdmxlib.model.link import Link, to_links
@@ -25,7 +25,7 @@ from sdmxlib.model.urn import ParsesUrn
 
 
 @frozen(unsafe_hash=False)
-class Code(ParsesUrn):
+class Code(NameableArtefact, ParsesUrn):
     """A single code within a Codelist."""
 
     #: What the SDMX-ML schema's ``fixed=`` supplies when a producer omits

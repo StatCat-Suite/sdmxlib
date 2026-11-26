@@ -10,7 +10,7 @@ from sdmxlib.model._invariants import enforce
 from sdmxlib.model._items import item_ref
 from sdmxlib.model._rules import id_type, maintained_by, named, version_type
 from sdmxlib.model.annotations import Annotation, Annotations
-from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.base import MaintainableArtefact, NameableArtefact
 from sdmxlib.model.collections import ItemList
 from sdmxlib.model.istring import InternationalString
 from sdmxlib.model.istring import to_istring as _to_istring
@@ -42,7 +42,7 @@ class Contact:
 
 
 @frozen(unsafe_hash=False)
-class Agency(ParsesUrn):
+class Agency(NameableArtefact, ParsesUrn):
     """An organisation that maintains SDMX artefacts."""
 
     #: See `Code.sdmx_package` — the item's own URN pair, not its container's.
@@ -90,7 +90,7 @@ def _to_item_list_unit(v: ItemList[OrganisationUnit] | list[OrganisationUnit]) -
 
 
 @frozen(unsafe_hash=False)
-class DataProvider(ParsesUrn):
+class DataProvider(NameableArtefact, ParsesUrn):
     """An organisation that provides data under a ProvisionAgreement."""
 
     #: See `Code.sdmx_package` — the item's own URN pair, not its container's.
@@ -144,7 +144,7 @@ class DataProvider(ParsesUrn):
 
 
 @frozen(unsafe_hash=False)
-class MetadataProvider(ParsesUrn):
+class MetadataProvider(NameableArtefact, ParsesUrn):
     """An organisation that provides reference metadata under an MPA.
 
     The metadata twin of `DataProvider`, and identical in shape: both are
@@ -206,7 +206,7 @@ class MetadataProvider(ParsesUrn):
 
 
 @frozen(unsafe_hash=False)
-class DataConsumer(ParsesUrn):
+class DataConsumer(NameableArtefact, ParsesUrn):
     """An organisation that consumes data: the receiving counterpart of `DataProvider`.
 
     Identical in shape to `DataProvider`, as both are `Organisation` in the IM.
@@ -259,7 +259,7 @@ class DataConsumer(ParsesUrn):
 
 
 @frozen(unsafe_hash=False)
-class OrganisationUnit(ParsesUrn):
+class OrganisationUnit(NameableArtefact, ParsesUrn):
     """A unit within an organisation, such as a department or division.
 
     Hierarchical within its scheme: `parent_id` names another unit of the same
@@ -285,8 +285,22 @@ class OrganisationUnit(ParsesUrn):
     links: tuple[Link, ...] = field(factory=tuple, converter=to_links)
 
 
+class OrganisationScheme:
+    """The IM's ``OrganisationScheme``: the agency, data provider, metadata provider, data consumer and unit schemes.
+
+    A marker each of the five takes beside `MaintainableArtefact`, so
+    ``isinstance(artefact, OrganisationScheme)`` names them. It is no
+    maintainable itself: a walk of `MaintainableArtefact`'s subclasses finds
+    the five concrete schemes and nothing abstract. SDMX-ML 3.x writes none of
+    them with a version (`OrganisationSchemeBaseType` prohibits ``@version``),
+    so code that versions artefacts leaves every `OrganisationScheme` out.
+    """
+
+    __slots__ = ()
+
+
 @frozen(unsafe_hash=False)
-class AgencyScheme(MaintainableArtefact):
+class AgencyScheme(OrganisationScheme, MaintainableArtefact):
     """Maintainable container for Agency items."""
 
     sdmx_package: ClassVar[str] = "base"
@@ -361,7 +375,7 @@ class AgencyScheme(MaintainableArtefact):
 
 
 @frozen(unsafe_hash=False)
-class DataProviderScheme(MaintainableArtefact):
+class DataProviderScheme(OrganisationScheme, MaintainableArtefact):
     """Maintainable container for DataProvider items."""
 
     sdmx_package: ClassVar[str] = "base"
@@ -436,7 +450,7 @@ class DataProviderScheme(MaintainableArtefact):
 
 
 @frozen(unsafe_hash=False)
-class MetadataProviderScheme(MaintainableArtefact):
+class MetadataProviderScheme(OrganisationScheme, MaintainableArtefact):
     """Maintainable container for MetadataProvider items.
 
     Mirrors `DataProviderScheme`. Until this existed,
@@ -517,7 +531,7 @@ class MetadataProviderScheme(MaintainableArtefact):
 
 
 @frozen(unsafe_hash=False)
-class DataConsumerScheme(MaintainableArtefact):
+class DataConsumerScheme(OrganisationScheme, MaintainableArtefact):
     """Maintainable container for DataConsumer items. Its id is fixed to ``DATA_CONSUMERS``."""
 
     sdmx_package: ClassVar[str] = "base"
@@ -587,7 +601,7 @@ class DataConsumerScheme(MaintainableArtefact):
 
 
 @frozen(unsafe_hash=False)
-class OrganisationUnitScheme(MaintainableArtefact):
+class OrganisationUnitScheme(OrganisationScheme, MaintainableArtefact):
     """Maintainable container for OrganisationUnit items, hierarchical through `OrganisationUnit.parent_id`."""
 
     sdmx_package: ClassVar[str] = "base"

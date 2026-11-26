@@ -12,7 +12,7 @@ from sdmxlib.model._refshape import derived_view
 from sdmxlib.model._rules import id_type, maintained_by, named, ncname_id_type, version_type
 from sdmxlib.model._tree import PathIndex, PathNavigation
 from sdmxlib.model.annotations import Annotations
-from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.base import MaintainableArtefact, NameableArtefact
 from sdmxlib.model.collections import ItemList, to_itemlist
 from sdmxlib.model.istring import InternationalString
 from sdmxlib.model.link import Link, to_links
@@ -22,7 +22,7 @@ from sdmxlib.model.urn import ParsesUrn
 
 
 @frozen(unsafe_hash=False)
-class Category(ParsesUrn):
+class Category(NameableArtefact, ParsesUrn):
     """A node in a classification hierarchy."""
 
     #: See `Code.sdmx_package` — the item's own URN pair, not its container's.

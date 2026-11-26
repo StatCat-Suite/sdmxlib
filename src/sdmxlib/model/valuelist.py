@@ -8,7 +8,7 @@ from attrs import field, frozen
 from sdmxlib._time import as_utc
 from sdmxlib.model._rules import id_type, maintained_by, named, version_type
 from sdmxlib.model.annotations import Annotations
-from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.base import AnnotableArtefact, MaintainableArtefact
 from sdmxlib.model.collections import ItemList, to_itemlist
 from sdmxlib.model.istring import InternationalString, normalize_tag
 from sdmxlib.model.link import Link, to_links
@@ -16,7 +16,7 @@ from sdmxlib.model.organisation import Agency, _to_agency, _to_annotations, _to_
 
 
 @frozen(unsafe_hash=False)
-class ValueItem:
+class ValueItem(AnnotableArtefact):
     """One value of a `ValueList`: the value, optionally named and described.
 
     Not identifiable, as a `Code` is: SDMX gives a value item no URN and no

@@ -47,7 +47,7 @@ from sdmxlib._time import as_utc
 from sdmxlib.model._invariants import enforce
 from sdmxlib.model._rules import id_type, maintained_by, named, version_type
 from sdmxlib.model.annotations import Annotations
-from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.base import AnnotableArtefact, IdentifiableArtefact, MaintainableArtefact
 from sdmxlib.model.dataflow import Dataflow
 from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.model.istring import InternationalString
@@ -59,7 +59,7 @@ from sdmxlib.model.urn import ParsesUrn, SdmxUrn
 
 
 @frozen(unsafe_hash=False)
-class ItemMap:
+class ItemMap(AnnotableArtefact):
     """Single item-level mapping: source item id → target item id.
 
     Used by `ConceptSchemeMap`, `CategorySchemeMap`. Matches the SDMX
@@ -123,7 +123,7 @@ def _to_source_values(values: Iterable[SourceValue | str]) -> tuple[SourceValue,
 
 
 @frozen(unsafe_hash=False)
-class RepresentationMapping:
+class RepresentationMapping(AnnotableArtefact):
     """One mapping of a `RepresentationMap`: source values → target values.
 
     SDMX 3.x's ``RepresentationMapping`` (``ValueMappingType``). It is N:M:
@@ -389,7 +389,7 @@ BUILT_VALUE_MAP_TYPE = "sdmxlib:value-map"
 
 
 @frozen(unsafe_hash=False)
-class ComponentMap:
+class ComponentMap(AnnotableArtefact):
     """Single component-level mapping inside a StructureMap.
 
     SDMX 3.x lets one map several source components to several target ones;
@@ -451,7 +451,7 @@ def _to_resolve_period(value: ResolvePeriod | str | None) -> ResolvePeriod | Non
 
 
 @frozen(unsafe_hash=False)
-class EpochMap(ParsesUrn):
+class EpochMap(IdentifiableArtefact, ParsesUrn):
     """Maps an epoch count to a time period — SDMX 3.x's ``EpochMap``.
 
     The source components hold a number of `epoch_period`s since
@@ -480,7 +480,7 @@ class EpochMap(ParsesUrn):
 
 
 @frozen(unsafe_hash=False)
-class DatePatternMap(ParsesUrn):
+class DatePatternMap(IdentifiableArtefact, ParsesUrn):
     """Maps a formatted date to a time period — SDMX 3.x's ``DatePatternMap``.
 
     The source components hold dates written in `source_pattern` for
@@ -506,7 +506,7 @@ class DatePatternMap(ParsesUrn):
 
 
 @frozen(unsafe_hash=False)
-class FrequencyFormatMapping(ParsesUrn):
+class FrequencyFormatMapping(IdentifiableArtefact, ParsesUrn):
     """How a frequency's periods are written — SDMX 3.x's ``FrequencyFormatMapping``.
 
     A date map's `mapped_frequencies` name these by id.
@@ -525,7 +525,7 @@ class FrequencyFormatMapping(ParsesUrn):
 
 
 @frozen(unsafe_hash=False)
-class FixedValueMap:
+class FixedValueMap(AnnotableArtefact):
     """A fixed value for one source or target component — SDMX 3.x's ``FixedValueMap``.
 
     The schema's choice of ``Source`` or ``Target``, so exactly one of
