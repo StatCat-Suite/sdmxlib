@@ -232,3 +232,32 @@ def test_question_is_a_value():
     assert one == two
     assert attrs.evolve(one[0], answer="draft") != one[0]
     assert isinstance(one[0], Question)
+
+
+# ── Annotation references ──────────────────────────────────────────────────
+
+
+def _linked_to(msg: sl.StructureMessage, title: str) -> sl.StructureMessage:
+    """Each DSD carries .Stat's link to an MSD: a `METADATA` annotation titled with its URN."""
+    note = sl.Annotation(type="METADATA", title=title)
+    return attrs.evolve(msg, data_structures=[attrs.evolve(d, annotations=[note]) for d in msg.data_structures])
+
+
+_MSD = sl.MetadataStructure.urn_for(agency="TEST", id="MSD_GONE", version="1.2")
+
+
+def test_an_artefact_only_an_annotation_names_is_asked_about():
+    msg = _linked_to(_read("complete.xml"), str(_MSD))
+    plain = sl.migration.plan(msg, target=_TARGET)
+    named = sl.migration.plan(msg, target=_TARGET, annotation_refs={"METADATA"})
+    assert "version.external" not in _rules(plain)
+    (question,) = [q for q in named.questions if q.rule == "version.external"]
+    assert question.urn == str(_MSD)
+
+
+def test_the_annotation_follows_the_answer():
+    msg = _linked_to(_read("complete.xml"), str(_MSD))
+    plan = sl.migration.plan(msg, target=_TARGET, policy={"version.non-final": "draft"}, annotation_refs={"METADATA"})
+    migrated = plan.apply({f"version.external@{_MSD}": "final"})
+    titles = {a.title for d in migrated.data_structures for a in d.annotations}
+    assert titles == {str(attrs.evolve(_MSD, version="1.2.0"))}

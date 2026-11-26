@@ -59,7 +59,9 @@ hierarchical roll-ups.
   SDMX 2.1 versions (`rewrite.py`). `rewrite(msg, mapping)` (`rewrite.py`,
   `sl.rewrite`) returns a copy of a `StructureMessage` with chosen
   artefacts' URNs changed (`UrnMap`, old → new) and every `Ref`, item
-  reference and `Link.urn` following, bound to the copy; it refuses, in one
+  reference and `Link.urn` following, bound to the copy. With
+  `annotation_refs`, the `title` of an annotation of those types follows too
+  when it is a URN (`annotation_urns` finds them); it refuses, in one
   `ValidationError`, an item URN, a class change, two keys to one URN, a
   collision with a held artefact, and an inexact reference to a renamed
   artefact (GH-406). A `MetadataSet` added beside its metadataflow and MSD is checked against them (IM §7.4.2.1,
