@@ -5,9 +5,11 @@ from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, S
 import attrs
 from attrs import field, frozen
 
-from sdmxlib.migration import _fmr, _fmr_refusals, _structure, _versions
-from sdmxlib.migration._types import Blocked, Change, Edit, Move, Omit, Question, SetField, Target, Transform
+from sdmxlib.migration import _agencies, _fmr, _fmr_refusals, _structure, _versions
+from sdmxlib.migration._types import Add, Blocked, Change, Edit, Move, Omit, Question, SetField, Target, Transform
+from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.collections import ArtefactList
+from sdmxlib.model.istring import InternationalString, to_istring
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.ref import SupportsUrn, artefact_urn
 from sdmxlib.model.rewrite import rewrite
@@ -15,13 +17,23 @@ from sdmxlib.model.validation import check_serialisable
 
 type _Finding = Change | Question | Blocked
 
-#: The rules a plan runs, in order. Each yields findings for one message,
-#: given the target and the annotation types whose titles are references.
-_RULES: tuple[Callable[[StructureMessage, Target, frozenset[str]], Iterator[_Finding]], ...] = (
-    lambda msg, _, annotation_refs: _versions.findings(msg, annotation_refs=annotation_refs),
-    lambda msg, target, _: _structure.findings(msg, target),
-    lambda msg, target, _: _fmr.findings(msg, target),
-    lambda msg, target, _: _fmr_refusals.findings(msg, target),
+
+@frozen
+class _Inputs:
+    """What a plan's rules read beside the message."""
+
+    target: Target
+    annotation_refs: frozenset[str]
+    agency_names: Mapping[str, InternationalString]
+
+
+#: The rules a plan runs, in order. Each yields findings for one message.
+_RULES: tuple[Callable[[StructureMessage, _Inputs], Iterator[_Finding]], ...] = (
+    lambda msg, given: _versions.findings(msg, annotation_refs=given.annotation_refs),
+    lambda msg, given: _structure.findings(msg, given.target),
+    lambda msg, given: _fmr.findings(msg, given.target),
+    lambda msg, given: _fmr_refusals.findings(msg, given.target),
+    lambda msg, given: _agencies.findings(msg, given.agency_names),
 )
 
 #: The transform each `Transform` edit names, from every rule module that has one.
@@ -60,7 +72,7 @@ class Plan:
         """The migrated message: the changes, plus each question's chosen option.
 
         An answer overrides the policy's for its question. Edits are made in
-        one order: leave out, set fields, run transforms, then move identities with
+        one order: leave out, add, set fields, run transforms, then move identities with
         `sl.rewrite`, so every reference follows. The result is checked as
         writable in the target format.
 
@@ -82,7 +94,7 @@ class Plan:
         edits = [edit for change in self.changes for edit in change.edits]
         edits.extend(self._chosen(answers or {}, partial=partial))
         omitted = {str(edit.urn) for edit in edits if isinstance(edit, Omit)}
-        kept = _without(self._msg, omitted)
+        kept = _with_added(_without(self._msg, omitted), [edit.artefact for edit in edits if isinstance(edit, Add)])
         fields: dict[str, dict[str, object]] = {}
         for edit in edits:
             if isinstance(edit, SetField) and str(edit.urn) not in omitted:
@@ -122,6 +134,7 @@ def plan(
     target: Target,
     policy: Mapping[str, str] | None = None,
     annotation_refs: Collection[str] = (),
+    agency_names: Mapping[str, Mapping[str, str] | InternationalString] | None = None,
 ) -> Plan:
     """Find what moving *msg* to *target* takes. Changes nothing.
 
@@ -136,6 +149,11 @@ def plan(
             title follows a move like any reference, and an artefact only it
             names is asked about by ``version.external``. Annotation text is
             opaque in the IM, so none is a reference unless named here.
+        agency_names: A name for each sub-agency the message's maintainers
+            need declared, such as ``{"CA1.QOL": {"en": "Quality of Life"}}``,
+            and for each agency scheme the message lacks, under
+            ``"CA1:AGENCIES"``. The IM requires both names, so a sub-agency
+            with none is blocked (`migration._agencies`).
 
     Returns:
         The plan: its changes, questions and blocked items.
@@ -146,7 +164,9 @@ def plan(
             message is fine, so one policy serves every message of a registry.
     """
     types = frozenset(annotation_refs)
-    found = _without_omitted([finding for rule in _RULES for finding in rule(msg, target, types)])
+    names = {key: to_istring(value) for key, value in (agency_names or {}).items()}
+    given = _Inputs(target=target, annotation_refs=types, agency_names=names)
+    found = _without_omitted([finding for rule in _RULES for finding in rule(msg, given)])
     questions = tuple(_answered(_of(found, Question), policy or {}))
     return Plan(
         target=target,
@@ -204,6 +224,30 @@ def _without(msg: StructureMessage, omitted: set[str]) -> StructureMessage:
         if isinstance(value := getattr(msg, attribute.name), ArtefactList)
     }
     return attrs.evolve(msg, header=msg.header, **kept)
+
+
+def _with_added(msg: StructureMessage, added: Sequence[MaintainableArtefact]) -> StructureMessage:
+    """*msg* with each added artefact in its slot, replacing one with its URN."""
+    if not added:
+        return msg
+    replacing = {str(artefact.urn) for artefact in added}
+    # Each added artefact in a message of its own, which puts it in its slot
+    # by its class (`StructureMessage.containing`); merged slot by slot.
+    singles = [StructureMessage.containing(artefact) for artefact in added]
+    lists = {
+        attribute.name: [
+            *(a for a in value if str(artefact_urn(a)) not in replacing),
+            *(
+                a
+                for single in singles
+                if isinstance(extra := getattr(single, attribute.name), ArtefactList)
+                for a in extra
+            ),
+        ]
+        for attribute in attrs.fields(StructureMessage)
+        if isinstance(value := getattr(msg, attribute.name), ArtefactList)
+    }
+    return attrs.evolve(msg, header=msg.header, **lists)
 
 
 def _with_transforms(msg: StructureMessage, transforms: Mapping[str, Sequence[str]]) -> StructureMessage:

@@ -18,12 +18,27 @@ The rules are listed in `migration._versions` (versions),
 and the 3.0 constructs it refuses, for `Target.fmr("12.5.0")`).
 """
 
+from sdmxlib.migration._conflicts import Conflict, conflicts
 from sdmxlib.migration._plan import Plan, plan
-from sdmxlib.migration._types import Blocked, Change, Edit, Move, Omit, Option, Question, SetField, Target, Transform
+from sdmxlib.migration._types import (
+    Add,
+    Blocked,
+    Change,
+    Edit,
+    Move,
+    Omit,
+    Option,
+    Question,
+    SetField,
+    Target,
+    Transform,
+)
 
 __all__ = [
+    "Add",
     "Blocked",
     "Change",
+    "Conflict",
     "Edit",
     "Move",
     "Omit",
@@ -33,5 +48,6 @@ __all__ = [
     "SetField",
     "Target",
     "Transform",
+    "conflicts",
     "plan",
 ]
