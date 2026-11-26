@@ -4,13 +4,14 @@ A finding is one of three kinds. A `Change` is made with no input, a
 `Question` needs a person to pick one of its `Option`s, and a `Blocked` item
 cannot be migrated. A `Change` and each `Option` carry the `Edit`s that
 `Plan.apply` makes: move an artefact to a new URN, set one of its fields,
-rebuild it with a rule's transform, or leave it out.
+rebuild it with a rule's transform, add one, or leave it out.
 """
 
 from typing import Self
 
 from attrs import field, frozen
 
+from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.model.validation import Deviation
 
@@ -98,7 +99,19 @@ class Transform:
     name: str
 
 
-type Edit = Move | SetField | Omit | Transform
+@frozen
+class Add:
+    """Put `artefact` in the result, replacing one with its URN if the message holds it."""
+
+    artefact: MaintainableArtefact = field(eq=False)
+
+    @property
+    def urn(self) -> SdmxUrn[object]:
+        """The added artefact's URN."""
+        return SdmxUrn.parse(str(self.artefact.urn))
+
+
+type Edit = Move | SetField | Omit | Transform | Add
 
 
 @frozen
