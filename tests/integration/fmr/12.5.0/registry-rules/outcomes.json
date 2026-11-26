@@ -33,5 +33,12 @@
     "accepted": [],
     "refusal": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_V(1.1.0): Version is lower then the expected version of 2.0.0",
     "status": 400
+  },
+  "codelist-non-ncname-parents": {
+    "accepted": [
+      "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_P(1.0.0)"
+    ],
+    "refusal": null,
+    "status": 200
   }
 }

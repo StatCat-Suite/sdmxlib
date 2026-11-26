@@ -5,7 +5,7 @@ from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
 import attrs
 from attrs import field, frozen
 
-from sdmxlib.migration import _structure, _versions
+from sdmxlib.migration import _fmr, _structure, _versions
 from sdmxlib.migration._types import Blocked, Change, Edit, Move, Omit, Question, SetField, Target
 from sdmxlib.model.collections import ArtefactList
 from sdmxlib.model.message import StructureMessage
@@ -20,6 +20,7 @@ type _Finding = Change | Question | Blocked
 _RULES: tuple[Callable[[StructureMessage, Target, frozenset[str]], Iterator[_Finding]], ...] = (
     lambda msg, _, annotation_refs: _versions.findings(msg, annotation_refs=annotation_refs),
     lambda msg, target, _: _structure.findings(msg, target),
+    lambda msg, target, _: _fmr.findings(msg, target),
 )
 
 #: `attrs.evolve` for an artefact whose class the checker cannot see here.
@@ -164,7 +165,7 @@ def _of[F: (Change, Question, Blocked)](found: Iterable[_Finding], kind: type[F]
 
 
 #: Every rule that asks, and the options its questions take.
-QUESTIONS: dict[str, tuple[str, ...]] = {**_versions.QUESTIONS, **_structure.QUESTIONS}
+QUESTIONS: dict[str, tuple[str, ...]] = {**_versions.QUESTIONS, **_structure.QUESTIONS, **_fmr.QUESTIONS}
 
 
 def _answered(questions: Iterable[Question], policy: Mapping[str, str]) -> Iterator[Question]:

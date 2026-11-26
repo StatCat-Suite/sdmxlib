@@ -7,8 +7,8 @@ to SDMX 3.x (GH-399). `plan` finds what the move takes and changes nothing.
 `Plan.apply` makes the changes and the options a person chose, and returns
 the migrated message. The rules are the version rules (`_versions.py`) and
 the structure rules (`_structure.py`), which read what the target format
-cannot carry from `formats.gaps`; registry targets such as FMR come next, as
-GH-399 records.
+cannot carry from `formats.gaps`, and, for an FMR target, the FMR rules
+(`_fmr.py`), which state what FMR 12.5.0 was recorded doing beyond the XSD.
 
 ## Interface
 
@@ -22,8 +22,11 @@ GH-399 records.
   answered. `Plan.apply(answers=None, *, partial=False)` returns the migrated
   message; `answers` maps a question key to an option id and overrides the
   policy.
-- `Target(version, allow=frozenset())` (`_types.py`): `version` is `"3.0"`,
-  `"3.1"` or `"json"`; `allow` holds the `Deviation`s the result may carry.
+- `Target(version, allow=frozenset(), registry=None)` (`_types.py`):
+  `version` is `"3.0"`, `"3.1"` or `"json"`; `allow` holds the `Deviation`s
+  the result may carry; `registry` names the registry whose rules the plan
+  adds. `Target.fmr(release)` is SDMX-ML 3.0 with `non-ncname-parent` and
+  FMR's rules, for a release in `FMR_RELEASES` (`"12.5.0"`).
 - `Change`, `Question`, `Option` and `Blocked` (`_types.py`): the findings.
   A `Question.key` is `"<rule>@<urn>"`.
 - `Move`, `SetField`, `Omit` and their union `Edit` (`_types.py`): what a
@@ -37,6 +40,9 @@ GH-399 records.
   `format.converted`, `metadataflow.targets`, `msd.target-layer` (changes);
   `format.loss` (question); `metadataflow.targets` when no target can be
   derived, and `structure.measure-dimension` (blocked).
+- The FMR rules (`_fmr.py`), for an FMR target: `fmr.actual-constraint` and
+  `fmr.next-major` (questions; the next major blocked when the message holds
+  it), `fmr.related-dimensions` and `fmr.monolingual` (changes, no edit).
 - `QUESTIONS` (`_plan.py`): every rule that asks, and its option ids.
 
 ## Invariants
@@ -46,7 +52,9 @@ GH-399 records.
 - A question key is the rule id and the artefact's URN, so the same message
   planned twice asks the same keys, and an answer recorded once applies again.
 - `apply` makes its edits in one order: omit, set fields, then move
-  identities with `sl.rewrite`, so every reference, item reference and
+  identities with `sl.rewrite`. A chosen option's move overrides a change's
+  for the same artefact, so `fmr.next-major`'s `2.0.0` wins over the version
+  rule's `1.1.0`. Through `sl.rewrite`, every reference, item reference and
   `Link.urn` follows a move. It ends with `check_serialisable` for
   `target.version` and `target.allow`.
 - `apply` refuses an answer to a question the plan does not hold, an option a
@@ -73,6 +81,9 @@ GH-399 records.
 
 ## Verification
 
+- `tests/integration/test_fmr_target.py`: the FMR rules' predictions held
+  against FMR 12.5.0's recorded answers to the same messages
+  (`tests/integration/fmr/12.5.0/registry-rules/`).
 - `tests/unit/test_migration_versions.py` and
   `tests/unit/test_migration_structure.py`: the plan of `sdmx_ml21` fixtures,
   apply's refusals, and for each rule module one message that fires every

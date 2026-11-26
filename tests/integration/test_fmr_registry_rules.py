@@ -83,3 +83,9 @@ def test_a_monolingual_metadata_attribute_comes_back_with_no_text_format():
     assert served.representation is None
     assert (sent.min_occurs, sent.max_occurs) == (0, 1)
     assert (served.min_occurs, served.max_occurs) == (1, None)
+
+
+def test_a_non_ncname_parent_is_accepted_and_served():
+    assert _outcome("codelist-non-ncname-parents")["refusal"] is None
+    served = _message("back/AG-ml30.xml").codelists["AG:CL_P"]
+    assert {code.id: code.parent_id for code in served.codes} == {"_T": None, "1": "_T", "2": "1"}
