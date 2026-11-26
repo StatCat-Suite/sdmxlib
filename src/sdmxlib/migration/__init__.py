@@ -12,7 +12,8 @@ result is writable in the target format.
         print(question.key, [option.id for option in question.options])
     migrated = plan.apply({"version.external@urn:...": "final"})
 
-The rules so far are the version rules, listed in `migration._versions`.
+The rules are listed in `migration._versions` (versions) and
+`migration._structure` (what the target format cannot carry).
 """
 
 from sdmxlib.migration._plan import Plan, plan

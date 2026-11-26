@@ -52,6 +52,14 @@ _LEGACY = re.compile(r"^(0|[1-9]\d*)(\.(0|[1-9]\d*))?$")
 
 type Finding = Change | Question | Blocked
 
+#: Each rule here that asks, and the option ids its questions take, so a
+#: policy can be checked before any message is planned.
+QUESTIONS: dict[str, tuple[str, ...]] = {
+    "version.non-final": ("draft", "final", "omit"),
+    "version.semantic-non-final": ("draft", "final", "omit"),
+    "version.external": ("final", "draft", "leave"),
+}
+
 
 def findings(msg: StructureMessage, *, annotation_refs: frozenset[str] = frozenset()) -> Iterator[Finding]:
     """Every version finding for *msg*, held artefacts first, then the ones it only references.

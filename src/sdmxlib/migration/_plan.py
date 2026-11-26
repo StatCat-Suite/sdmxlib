@@ -5,7 +5,7 @@ from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
 import attrs
 from attrs import field, frozen
 
-from sdmxlib.migration import _versions
+from sdmxlib.migration import _structure, _versions
 from sdmxlib.migration._types import Blocked, Change, Edit, Move, Omit, Question, SetField, Target
 from sdmxlib.model.collections import ArtefactList
 from sdmxlib.model.message import StructureMessage
@@ -16,9 +16,10 @@ from sdmxlib.model.validation import check_serialisable
 type _Finding = Change | Question | Blocked
 
 #: The rules a plan runs, in order. Each yields findings for one message,
-#: given the annotation types whose titles are references.
-_RULES: tuple[Callable[[StructureMessage, frozenset[str]], Iterator[_Finding]], ...] = (
-    lambda msg, annotation_refs: _versions.findings(msg, annotation_refs=annotation_refs),
+#: given the target and the annotation types whose titles are references.
+_RULES: tuple[Callable[[StructureMessage, Target, frozenset[str]], Iterator[_Finding]], ...] = (
+    lambda msg, _, annotation_refs: _versions.findings(msg, annotation_refs=annotation_refs),
+    lambda msg, target, _: _structure.findings(msg, target),
 )
 
 #: `attrs.evolve` for an artefact whose class the checker cannot see here.
@@ -131,11 +132,12 @@ def plan(
         The plan: its changes, questions and blocked items.
 
     Raises:
-        ValueError: If the policy names a rule that asked nothing, or an option
-            that rule's questions do not take.
+        ValueError: If the policy names a rule no rule asks, or an option that
+            rule's questions do not take. A rule that asks nothing of this
+            message is fine, so one policy serves every message of a registry.
     """
     types = frozenset(annotation_refs)
-    found = [finding for rule in _RULES for finding in rule(msg, types)]
+    found = _without_omitted([finding for rule in _RULES for finding in rule(msg, target, types)])
     questions = tuple(_answered(_of(found, Question), policy or {}))
     return Plan(
         target=target,
@@ -147,24 +149,36 @@ def plan(
     )
 
 
+def _without_omitted(found: list[_Finding]) -> list[_Finding]:
+    """*found* less the findings about an artefact a `Change` leaves out, which nothing else then needs."""
+    omitted = {str(edit.urn) for f in found if isinstance(f, Change) for edit in f.edits if isinstance(edit, Omit)}
+    return [
+        f
+        for f in found
+        if f.urn not in omitted or (isinstance(f, Change) and any(isinstance(e, Omit) for e in f.edits))
+    ]
+
+
 def _of[F: (Change, Question, Blocked)](found: Iterable[_Finding], kind: type[F]) -> Iterator[F]:
     return (finding for finding in found if isinstance(finding, kind))
 
 
+#: Every rule that asks, and the options its questions take.
+QUESTIONS: dict[str, tuple[str, ...]] = {**_versions.QUESTIONS, **_structure.QUESTIONS}
+
+
 def _answered(questions: Iterable[Question], policy: Mapping[str, str]) -> Iterator[Question]:
-    asked = list(questions)
-    rules = {question.rule for question in asked}
-    unknown = sorted(set(policy) - rules)
-    if unknown:
-        msg = f"policy for rules that asked nothing: {unknown}; the plan asked {sorted(rules)}"
-        raise ValueError(msg)
-    for question in asked:
+    for rule, choice in policy.items():
+        options = QUESTIONS.get(rule)
+        if options is None:
+            msg = f"policy for {rule!r}, which no rule asks; the rules that ask are {sorted(QUESTIONS)}"
+            raise ValueError(msg)
+        if choice not in options:
+            msg = f"policy for {rule!r}: no option {choice!r}; it takes {list(options)}"
+            raise ValueError(msg)
+    for question in questions:
         choice = policy.get(question.rule)
-        if choice is None:
-            yield question
-            continue
-        question.option(choice)
-        yield attrs.evolve(question, answer=choice)
+        yield question if choice is None else attrs.evolve(question, answer=choice)
 
 
 def _without(msg: StructureMessage, omitted: set[str]) -> StructureMessage:
