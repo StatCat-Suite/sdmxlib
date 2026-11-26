@@ -88,3 +88,36 @@ def test_a_suffix_that_contradicts_the_format_is_refused(tmp_path: Path) -> None
 def test_the_query_url_spells_all_and_latest_for_each_api(api: str, args: tuple[str, ...], url: str) -> None:
     with SdmxClient("https://x.test/s", api=api) as client:
         assert client.structure_query_url(*args) == url
+
+
+def _copy(directory: Path, files: dict[str, bytes], statuses: dict[str, str]) -> Path:
+    import json
+
+    for name, body in files.items():
+        (directory / name).write_bytes(body)
+    records = [{"resource": n.split(".")[0], "url": "u", "status": statuses[n], "path": n} for n in statuses]
+    (directory / "downloads.json").write_text(json.dumps(records))
+    return directory
+
+
+def test_a_copy_reads_back_as_one_message(tmp_path: Path) -> None:
+    concepts = sl.StructureMessage(
+        concept_schemes=[sl.ConceptScheme(id="CS", maintainer="AG", version="1.0.0", name={"en": "c"})]
+    )
+    copy = _copy(
+        tmp_path,
+        {"codelist.xml": ml21_writer.write(_MSG), "conceptscheme.xml": ml21_writer.write(concepts)},
+        {"codelist.xml": "written", "conceptscheme.xml": "written", "process.xml": "none-held"},
+    )
+    read = sl.read_all_structures(copy)
+    assert [c.id for c in read.codelists] == ["CL"]
+    assert [c.id for c in read.concept_schemes] == ["CS"]
+
+
+def test_an_artefact_in_two_files_is_refused(tmp_path: Path) -> None:
+    body = ml21_writer.write(_MSG)
+    copy = _copy(tmp_path, {"a.xml": body, "b.xml": body}, {"a.xml": "written", "b.xml": "written"})
+    with pytest.raises(
+        ValueError, match=r"1 artefact\(s\) in more than one file of the copy: .*CL\(1\.0\.0\) \(a\.xml and b\.xml\)"
+    ):
+        sl.read_all_structures(copy)
