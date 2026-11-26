@@ -346,7 +346,7 @@ RULES: tuple[Rule[Kind], ...] = (
 _LINK = "an annotation's URL served as a link with no rel, which the schema requires"
 _UNIT_VERSION = "an organisation unit scheme with @version, which 3.0 prohibits on every organisation scheme (#469)"
 
-#: Every FMR 12.4.2 response that fails its schema -- the XSD for SDMX-ML, the
+#: Every FMR response that fails its schema, the same set in 12.4.2 and 12.5.0 -- the XSD for SDMX-ML, the
 #: vendored JSON schema for SDMX-JSON -- by ``case/agency-format``, and why.
 #: Exact both ways: a response newly invalid, or newly valid, fails the test.
 _INVALID_12_4_2: dict[str, str] = {
