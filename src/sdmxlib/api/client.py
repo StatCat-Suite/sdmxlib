@@ -420,11 +420,6 @@ class SdmxClient:
         """
         return "3.0" if self._v3 else "2.1"
 
-    @property
-    def _parse_version(self) -> str:
-        """Format version string passed to the parser."""
-        return "3.0" if self._v3 else "2.1"
-
     # ── HTTP methods ──────────────────────────────────────────────────────────
 
     def get_artefact(
@@ -522,8 +517,10 @@ class SdmxClient:
             return NOT_MODIFIED
         _raise_for_status(response, url=url)
         # Not strict: one refused artefact must not cost the rest of a
-        # registry's document (#419). The refusals ride on the message.
-        msg = parse(response.content, version=self._parse_version, strict=False)
+        # registry's document (#419). The refusals ride on the message. The
+        # version is read from the document: FMR 12.5.0 answers a 2.1 path with
+        # SDMX-ML 3.0 for some artefacts, which a 2.1 hint read as empty.
+        msg = parse(response.content, strict=False)
         if not isinstance(msg, StructureMessage):
             err = f"Expected StructureMessage from structure endpoint, got {type(msg).__name__}"
             raise TypeError(err)
@@ -546,8 +543,10 @@ class SdmxClient:
             response = self._client.get(url, params=params)
         _raise_for_status(response, url=url)
         # Not strict: one refused artefact must not cost the rest of a
-        # registry's document (#419). The refusals ride on the message.
-        msg = parse(response.content, version=self._parse_version, strict=False)
+        # registry's document (#419). The refusals ride on the message. The
+        # version is read from the document: FMR 12.5.0 answers a 2.1 path with
+        # SDMX-ML 3.0 for some artefacts, which a 2.1 hint read as empty.
+        msg = parse(response.content, strict=False)
         if not isinstance(msg, StructureMessage):
             err = f"Expected StructureMessage from structure endpoint, got {type(msg).__name__}"
             raise TypeError(err)

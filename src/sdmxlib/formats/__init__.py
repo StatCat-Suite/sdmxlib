@@ -214,6 +214,8 @@ def parse(
 def _dispatch(data: bytes, *, version: str | None) -> StructureMessage | MetadataMessage:
     """Detect format and message kind, then hand off to the matching reader."""
     detected = version or _detect_version(data)
+    if version in _ML_VERSIONS:
+        _refuse_other_ml_version(data, version)
     _refuse_error_message(data, detected)
     kind = _detect_message_kind(data, detected)
     if kind == "data":
@@ -468,6 +470,26 @@ def _xml_root(data: bytes) -> etree.QName | None:
     except etree.XMLSyntaxError, ValueError:
         return None
     return None
+
+
+#: The SDMX-ML versions a hint can name, which the document's namespace also says.
+_ML_VERSIONS = frozenset({"2.1", "3.0", "3.1"})
+
+
+def _refuse_other_ml_version(data: bytes, version: str) -> None:
+    """Refuse an SDMX-ML document whose namespace names another version than the hint.
+
+    A reader keys on its own namespace, so a 2.1 reader over a 3.0 document
+    found nothing and returned an empty message with nothing refused. A
+    document whose version cannot be read here is left to the reader.
+    """
+    root = _xml_root(data)
+    if root is None or root.namespace not in _MESSAGE_NS_VERSION:
+        return
+    found = _MESSAGE_NS_VERSION[root.namespace]
+    if found != version:
+        msg = f"the document is SDMX-ML {found}, and version={version!r} was asked for; omit version= to detect it"
+        raise SdmxParseError(msg)
 
 
 def _detect_version(data: bytes) -> str:
