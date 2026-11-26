@@ -18,6 +18,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 from unittest.mock import patch
+from urllib.parse import urlsplit
 
 import attrs
 import httpx2
@@ -1654,9 +1655,10 @@ class _Registries:
         self.held: dict[str, MaintainableArtefact] = {}
 
     def download_structures(self, url: str, *, fmt: object, to: Path | None = None) -> bytes | None:
-        if "nsi.example.org" in url and "/codelist/" in url:
+        host, path = urlsplit(url).hostname, urlsplit(url).path
+        if host == "nsi.example.org" and "/codelist/" in path:
             body = (_FIXTURES_21 / "complete.xml").read_bytes()
-        elif "fmr.example.org" in url and self.held:
+        elif host == "fmr.example.org" and self.held:
             resource = url.split("/sdmxapi/rest/", 1)[1].split("/", 1)[0]
             matching = [a for a in self.held.values() if type(a).__name__.lower() == resource]
             if not matching:
