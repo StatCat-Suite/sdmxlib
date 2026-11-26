@@ -55,6 +55,10 @@ through `RestRegistry.query` (structures) and `RestRegistry.obs`
   asks for every resource in `resources.py`, writes `<resource><suffix>`,
   and records a `StructureDownload` per resource (`written` with size and
   SHA-256, `none-held` for a 404, `refused` otherwise) in `downloads.json`.
+- `read_all_structures(directory)` (`structure_download.py`, `sl.read_all_structures`):
+  such a copy read back as one `StructureMessage`, each written file parsed
+  not strict and merged, keeping every read's refusals, losses and
+  assumptions; an artefact in two files raises `ValueError`.
 - `RESOURCES_21`, `RESOURCES_30` and `resources(api)` (`resources.py`): every
   structure resource each SDMX-REST API names; the registry sweep reads them.
 - `SubmissionReport`, `SubmissionResult`, `SubmissionNotHeldError`,

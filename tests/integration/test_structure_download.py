@@ -87,6 +87,8 @@ def test_a_whole_registry_copy_records_each_resource(tmp_path: Path):
     manifest = json.loads((tmp_path / "downloads.json").read_text())
     assert [entry["status"] for entry in manifest] == [record.status for record in records]
     assert sorted(path.name for path in tmp_path.iterdir()) == ["codelist.xml", "downloads.json"]
+    copy = sl.read_all_structures(tmp_path)
+    assert sorted(c.version for c in copy.codelists) == ["1.0.0", "1.1.0"]
 
 
 @pytest.mark.vcr

@@ -13,7 +13,12 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal
 
+import attrs
 from attrs import asdict, frozen
+
+from sdmxlib.formats import parse
+from sdmxlib.model.collections import ArtefactList
+from sdmxlib.model.message import StructureMessage
 
 type DownloadStatus = Literal["written", "none-held", "refused"]
 
@@ -69,3 +74,54 @@ def write_manifest(directory: Path, downloads: Sequence[StructureDownload]) -> P
     target = directory / MANIFEST
     target.write_text(json.dumps(records, indent=2) + "\n")
     return target
+
+
+def read_all_structures(directory: Path | str) -> StructureMessage:
+    """A copy written by `RestRegistry.download_all_structures`, read back as one message.
+
+    Reads each file ``downloads.json`` records as written, and merges them,
+    keeping what each read refused, lost and assumed. Not strict, as a
+    registry's own document is read: one artefact the reader refuses does not
+    cost the rest of the copy (`StructureMessage.refused` names it).
+
+    Raises:
+        FileNotFoundError: If the directory has no ``downloads.json``.
+        ValueError: If two files hold an artefact with the same URN.
+    """
+    root = Path(directory)
+    records = json.loads((root / MANIFEST).read_text())
+    read: list[tuple[str, StructureMessage]] = []
+    for record in records:
+        if record["status"] != "written":
+            continue
+        message = parse((root / record["path"]).read_bytes(), strict=False)
+        if isinstance(message, StructureMessage):
+            read.append((record["path"], message))
+    seen: dict[str, str] = {}
+    duplicates: list[str] = []
+    for path, message in read:
+        for artefact in message.all_artefacts():
+            urn = str(artefact.urn)
+            if urn in seen:
+                duplicates.append(f"{urn} ({seen[urn]} and {path})")
+            seen.setdefault(urn, path)
+    if duplicates:
+        msg = f"{len(duplicates)} artefact(s) in more than one file of the copy: {', '.join(duplicates[:3])}"
+        raise ValueError(msg)
+    messages = [message for _, message in read]
+    merged = StructureMessage(
+        refused=tuple(r for message in messages for r in message.refused),
+        lost=tuple(gap for message in messages for gap in message.lost),
+        assumed=tuple(a for message in messages for a in message.assumed),
+    )
+    lists = {
+        attribute.name: [
+            a
+            for message in messages
+            if isinstance(held := getattr(message, attribute.name), ArtefactList)
+            for a in held
+        ]
+        for attribute in attrs.fields(StructureMessage)
+        if isinstance(getattr(merged, attribute.name), ArtefactList)
+    }
+    return attrs.evolve(merged, header=None, **lists)

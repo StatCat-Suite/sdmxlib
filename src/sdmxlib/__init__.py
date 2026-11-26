@@ -11,7 +11,7 @@ from sdmxlib.formats.data_format import DataFormat
 from sdmxlib.formats.gaps import DroppedArtefact, Gap, dropped, unrepresentable
 from sdmxlib.api.client import ResponseTooLargeError
 from sdmxlib.api.registry import BearerToken, FmrRegistry, Resolve, RestRegistry
-from sdmxlib.api.structure_download import StructureDownload
+from sdmxlib.api.structure_download import StructureDownload, read_all_structures
 from sdmxlib.api.submit import SubmissionNotHeldError, SubmissionReport, SubmissionResult
 from sdmxlib.formats.structure_format import StructureFormat
 from sdmxlib.data_store import DataStore, WriteSource
@@ -489,6 +489,7 @@ __all__ = [
     "period_range",
     "q",
     "read",
+    "read_all_structures",
     "rewrite",
     "schema",
     "serialize",
