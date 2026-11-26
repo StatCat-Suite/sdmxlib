@@ -13,7 +13,7 @@ import attrs
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.migration import Plan, Target
+from sdmxlib.migration import Plan, Target, _fmr
 from sdmxlib.migration._plan import QUESTIONS
 from tests.support.fmr_oracle import recordings
 
@@ -141,4 +141,5 @@ def test_every_fmr_rule_fires_on_the_recordings():
     plan = _plan("base.xml", "actual.xml", "codelist-1.0.0.xml", "codelist-1.1.0-removes.xml")
     fired = {f.rule for f in (*plan.changes, *plan.questions, *plan.blocked) if f.rule.startswith("fmr.")}
     assert fired == {"fmr.actual-constraint", "fmr.next-major", "fmr.related-dimensions", "fmr.monolingual"}
-    assert {rule for rule in QUESTIONS if rule.startswith("fmr.")} == {"fmr.actual-constraint", "fmr.next-major"}
+    assert set(_fmr.QUESTIONS) == {"fmr.actual-constraint", "fmr.next-major"}
+    assert set(_fmr.QUESTIONS) <= set(QUESTIONS)

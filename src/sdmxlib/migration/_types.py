@@ -3,8 +3,8 @@
 A finding is one of three kinds. A `Change` is made with no input, a
 `Question` needs a person to pick one of its `Option`s, and a `Blocked` item
 cannot be migrated. A `Change` and each `Option` carry the `Edit`s that
-`Plan.apply` makes: move an artefact to a new URN, set one of its fields, or
-leave it out.
+`Plan.apply` makes: move an artefact to a new URN, set one of its fields,
+rebuild it with a rule's transform, or leave it out.
 """
 
 from typing import Self
@@ -86,7 +86,19 @@ class Omit:
     urn: SdmxUrn[object]
 
 
-type Edit = Move | SetField | Omit
+@frozen
+class Transform:
+    """Rebuild the artefact at `urn` with the transform a rule registers under `name`.
+
+    For an edit no field-level change expresses, such as taking a construct
+    out of an artefact's SDMX-ML 3.0 form (`migration._fmr_refusals`).
+    """
+
+    urn: SdmxUrn[object]
+    name: str
+
+
+type Edit = Move | SetField | Omit | Transform
 
 
 @frozen

@@ -1,15 +1,15 @@
 """`plan` a migration, then `Plan.apply` the answers to it (GH-399)."""
 
-from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, Sequence
 
 import attrs
 from attrs import field, frozen
 
-from sdmxlib.migration import _fmr, _structure, _versions
-from sdmxlib.migration._types import Blocked, Change, Edit, Move, Omit, Question, SetField, Target
+from sdmxlib.migration import _fmr, _fmr_refusals, _structure, _versions
+from sdmxlib.migration._types import Blocked, Change, Edit, Move, Omit, Question, SetField, Target, Transform
 from sdmxlib.model.collections import ArtefactList
 from sdmxlib.model.message import StructureMessage
-from sdmxlib.model.ref import artefact_urn
+from sdmxlib.model.ref import SupportsUrn, artefact_urn
 from sdmxlib.model.rewrite import rewrite
 from sdmxlib.model.validation import check_serialisable
 
@@ -21,7 +21,11 @@ _RULES: tuple[Callable[[StructureMessage, Target, frozenset[str]], Iterator[_Fin
     lambda msg, _, annotation_refs: _versions.findings(msg, annotation_refs=annotation_refs),
     lambda msg, target, _: _structure.findings(msg, target),
     lambda msg, target, _: _fmr.findings(msg, target),
+    lambda msg, target, _: _fmr_refusals.findings(msg, target),
 )
+
+#: The transform each `Transform` edit names, from every rule module that has one.
+TRANSFORMS: Mapping[str, Callable[[SupportsUrn], SupportsUrn]] = {**_fmr_refusals.TRANSFORMS}
 
 #: `attrs.evolve` for an artefact whose class the checker cannot see here.
 _evolve: Callable[..., object] = attrs.evolve
@@ -56,7 +60,7 @@ class Plan:
         """The migrated message: the changes, plus each question's chosen option.
 
         An answer overrides the policy's for its question. Edits are made in
-        one order: leave out, set fields, then move identities with
+        one order: leave out, set fields, run transforms, then move identities with
         `sl.rewrite`, so every reference follows. The result is checked as
         writable in the target format.
 
@@ -83,7 +87,11 @@ class Plan:
         for edit in edits:
             if isinstance(edit, SetField) and str(edit.urn) not in omitted:
                 fields.setdefault(str(edit.urn), {})[edit.name] = edit.value
-        updated = _with_fields(kept, fields)
+        transforms: dict[str, list[str]] = {}
+        for edit in edits:
+            if isinstance(edit, Transform) and str(edit.urn) not in omitted:
+                transforms.setdefault(str(edit.urn), []).append(edit.name)
+        updated = _with_transforms(_with_fields(kept, fields), transforms)
         moves = {edit.old: edit.new for edit in edits if isinstance(edit, Move) and str(edit.old) not in omitted}
         migrated = rewrite(updated, moves, annotation_refs=self.annotation_refs)
         check_serialisable(migrated, version=self.target.version, allow=self.target.allow)
@@ -165,7 +173,12 @@ def _of[F: (Change, Question, Blocked)](found: Iterable[_Finding], kind: type[F]
 
 
 #: Every rule that asks, and the options its questions take.
-QUESTIONS: dict[str, tuple[str, ...]] = {**_versions.QUESTIONS, **_structure.QUESTIONS, **_fmr.QUESTIONS}
+QUESTIONS: dict[str, tuple[str, ...]] = {
+    **_versions.QUESTIONS,
+    **_structure.QUESTIONS,
+    **_fmr.QUESTIONS,
+    **_fmr_refusals.QUESTIONS,
+}
 
 
 def _answered(questions: Iterable[Question], policy: Mapping[str, str]) -> Iterator[Question]:
@@ -191,6 +204,26 @@ def _without(msg: StructureMessage, omitted: set[str]) -> StructureMessage:
         if isinstance(value := getattr(msg, attribute.name), ArtefactList)
     }
     return attrs.evolve(msg, header=msg.header, **kept)
+
+
+def _with_transforms(msg: StructureMessage, transforms: Mapping[str, Sequence[str]]) -> StructureMessage:
+    """*msg* with each listed artefact rebuilt by its transforms, in the order listed."""
+    if not transforms:
+        return msg
+
+    def rebuilt[A](artefact: A, urn: str) -> A:
+        new: object = artefact
+        for name in transforms.get(urn, ()):
+            if isinstance(new, SupportsUrn):
+                new = TRANSFORMS[name](new)
+        return new if isinstance(new, type(artefact)) else artefact
+
+    lists = {
+        attribute.name: [rebuilt(artefact, str(artefact_urn(artefact))) for artefact in value]
+        for attribute in attrs.fields(StructureMessage)
+        if isinstance(value := getattr(msg, attribute.name), ArtefactList)
+    }
+    return attrs.evolve(msg, header=msg.header, **lists)
 
 
 def _with_fields(msg: StructureMessage, fields: Mapping[str, Mapping[str, object]]) -> StructureMessage:

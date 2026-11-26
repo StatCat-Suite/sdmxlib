@@ -14,11 +14,12 @@ result is writable in the target format.
 
 The rules are listed in `migration._versions` (versions),
 `migration._structure` (what the target format cannot carry) and
-`migration._fmr` (what FMR does beyond the XSD, for `Target.fmr("12.5.0")`).
+`migration._fmr` and `migration._fmr_refusals` (what FMR does beyond the XSD,
+and the 3.0 constructs it refuses, for `Target.fmr("12.5.0")`).
 """
 
 from sdmxlib.migration._plan import Plan, plan
-from sdmxlib.migration._types import Blocked, Change, Edit, Move, Omit, Option, Question, SetField, Target
+from sdmxlib.migration._types import Blocked, Change, Edit, Move, Omit, Option, Question, SetField, Target, Transform
 
 __all__ = [
     "Blocked",
@@ -31,5 +32,6 @@ __all__ = [
     "Question",
     "SetField",
     "Target",
+    "Transform",
     "plan",
 ]

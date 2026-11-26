@@ -6,7 +6,7 @@ import attrs
 import pytest
 
 import sdmxlib as sl
-from sdmxlib.migration import Plan, Question, Target
+from sdmxlib.migration import Plan, Question, Target, _fmr_refusals
 from sdmxlib.model.validation import _collect_refs
 from tests.support import repo
 from tests.support.roundtrip import structure_schema
@@ -162,7 +162,8 @@ def test_every_question_a_rule_asks_is_declared_with_its_options():
     plan = sl.migration.plan(_every_rule(), target=_TARGET)
     asked = {q.rule: tuple(o.id for o in q.options) for q in plan.questions}
     assert asked == {rule: QUESTIONS[rule] for rule in asked}
-    assert set(QUESTIONS) - set(asked) == {"format.loss", "fmr.actual-constraint", "fmr.next-major"}
+    unasked = {"format.loss", "fmr.actual-constraint", "fmr.next-major", *_fmr_refusals.QUESTIONS}
+    assert set(QUESTIONS) - set(asked) == unasked
 
 
 def test_a_policy_option_the_rule_lacks_is_refused():
