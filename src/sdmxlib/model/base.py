@@ -1,4 +1,4 @@
-"""MaintainableArtefact mixin — provides the .urn_for() classmethod."""
+"""The IM's abstract bases: annotable, identifiable, nameable and maintainable artefacts."""
 
 from typing import TYPE_CHECKING, ClassVar, Self
 
@@ -13,7 +13,80 @@ if TYPE_CHECKING:
     from sdmxlib.model.organisation import Agency
 
 
-class MaintainableArtefact(ParsesUrn):
+# The IM's abstract classes, as read-only properties the attrs subclasses
+# override with their own slotted fields (GH-403). Annotations alone (the PEP
+# 526 "abstract attribute" idiom used before) declare an attribute nothing in
+# the class sets, which pyrefly's `uninitialized-instance-variable` refuses —
+# and a protocol base, the other way to state them, puts `typing`'s protocol
+# metaclass on every model class and made an `isinstance` that misses five
+# times slower (20 ns to 101 ns, measured). The bodies never run: an attrs
+# subclass's field replaces each. Each base declares no slots of its own
+# (`__slots__ = ()`), so an item built from it holds no `__dict__`; the
+# 579,951-code census codelist is the reason that matters.
+
+
+class AnnotableArtefact:
+    """The IM's ``AnnotableArtefact``: anything that carries annotations."""
+
+    __slots__ = ()
+
+    @property
+    def annotations(self) -> Annotations:
+        """The annotations; empty when there are none."""
+        raise NotImplementedError
+
+
+class IdentifiableArtefact(AnnotableArtefact):
+    """The IM's ``IdentifiableArtefact``: an annotable artefact with an id and a URN.
+
+    Its URN is built from its maintainable's, so a free-standing item or
+    component knows its id and not its URN; `MaintainableArtefact.urn` and
+    the schemes' ``ref_to`` give it.
+    """
+
+    __slots__ = ()
+
+    @property
+    def id(self) -> str:
+        """The id, unique where it is defined: in its scheme, structure or agency."""
+        raise NotImplementedError
+
+    # ``@uri`` on ``IdentifiableType``: "a URI that contains a link to a
+    # resource with additional information about the object, such as a web
+    # page. This uri is not a SDMX message."
+    #
+    # So it is a *pointer*, not an identifier — the URN is the identity, and
+    # two artefacts may share a uri or carry none. The ECB's DSD links to its
+    # statistics vocabulary, and nothing was reading or writing it, so every
+    # round-trip dropped it (#238). Optional in all three SDMX-ML versions;
+    # ``prohibited`` in exactly one place, ``GroupDimensionBaseType``, which
+    # sdmxlib never emits an id on.
+    @property
+    def uri(self) -> str | None:
+        """``@uri``: a link to more about the artefact, not its identity."""
+        raise NotImplementedError
+
+
+class NameableArtefact(IdentifiableArtefact):
+    """The IM's ``NameableArtefact``: an identifiable artefact with a name and a description."""
+
+    __slots__ = ()
+
+    # The XSD's ``<com:Name>`` carries no ``minOccurs``, so a name is
+    # required. Declared here so the rules can check it generically;
+    # `_check_name` enforces it on maintainables.
+    @property
+    def name(self) -> InternationalString:
+        """The name, in each language it has."""
+        raise NotImplementedError
+
+    @property
+    def description(self) -> InternationalString:
+        """The description, in each language it has; empty when there is none."""
+        raise NotImplementedError
+
+
+class MaintainableArtefact(NameableArtefact, ParsesUrn):
     """Mixin for top-level SDMX artefacts that have a globally unique URN.
 
     Subclasses must declare ``sdmx_package`` and ``sdmx_class`` as
@@ -31,6 +104,8 @@ class MaintainableArtefact(ParsesUrn):
         DataStructure.urn_for(agency="ESTAT", id="CPI", version="2.0")
     """
 
+    __slots__ = ()
+
     sdmx_package: ClassVar[str]
     sdmx_class: ClassVar[str]
     msg_field: ClassVar[str]
@@ -44,21 +119,7 @@ class MaintainableArtefact(ParsesUrn):
         super().__init_subclass__()
         MaintainableArtefact._subclasses_defined += 1
 
-    # Every maintainable's fields, as read-only properties the attrs subclasses
-    # override with their own slotted fields. Annotations alone (the PEP 526
-    # "abstract attribute" idiom used before) declare an attribute nothing in
-    # the class sets, which pyrefly's `uninitialized-instance-variable` refuses
-    # — and a protocol base, the other way to state them, puts `typing`'s
-    # protocol metaclass on every artefact class and made an `isinstance` that
-    # misses five times slower (20 ns to 101 ns, measured). The bodies never
-    # run: an attrs subclass's field replaces each. Slots cannot be inherited
-    # through a non-slotted parent, so the fields themselves stay declared on
-    # each subclass.
-    @property
-    def id(self) -> str:
-        """The artefact's id, unique for its agency and version."""
-        raise NotImplementedError
-
+    # Every maintainable's own fields, beside what `NameableArtefact` declares.
     # Read type is strict ``Agency``: every concrete subclass declares
     # ``maintainer: Agency = field(converter=_to_agency)``, so the ``str``
     # convenience input is absorbed by the converter and reads are always
@@ -72,44 +133,6 @@ class MaintainableArtefact(ParsesUrn):
     @property
     def version(self) -> str:
         """The artefact's version."""
-        raise NotImplementedError
-
-    # SDMX types every maintainable as a ``NameableArtefact``, and the XSD's
-    # ``<com:Name>`` carries no ``minOccurs`` — so a name is required, not
-    # decorative. Declared here (rather than only on each subclass) so
-    # the rules can check it generically; `_check_name` enforces it.
-    @property
-    def name(self) -> InternationalString:
-        """The artefact's name, in each language it has."""
-        raise NotImplementedError
-
-    # ``NameableArtefact`` in the IM: optional, so an artefact with none holds
-    # an empty `InternationalString`.
-    @property
-    def description(self) -> InternationalString:
-        """The artefact's description, in each language it has; empty when it has none."""
-        raise NotImplementedError
-
-    # ``AnnotableArtefact`` in the IM, which every maintainable descends from.
-    @property
-    def annotations(self) -> Annotations:
-        """The artefact's annotations; empty when it has none."""
-        raise NotImplementedError
-
-    # ``@uri`` on ``IdentifiableType``: "a URI that contains a link to a
-    # resource with additional information about the object, such as a web
-    # page. This uri is not a SDMX message."
-    #
-    # So it is a *pointer*, not an identifier — the URN is the identity, and
-    # two artefacts may share a uri or carry none. Declared on
-    # `IdentifiableType`, which is why every item and component carries it too,
-    # not just maintainables: the ECB's DSD links to its statistics vocabulary,
-    # and nothing was reading or writing it, so every round-trip dropped it
-    # (#238). Optional in all three SDMX-ML versions; ``prohibited`` in exactly
-    # one place, ``GroupDimensionBaseType``, which sdmxlib never emits an id on.
-    @property
-    def uri(self) -> str | None:
-        """``@uri``: a link to more about the artefact, not its identity."""
         raise NotImplementedError
 
     # ``@isExternalReference`` on ``MaintainableType``: this is a stub, and the

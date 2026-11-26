@@ -24,7 +24,7 @@ from attrs import evolve, field, frozen
 from sdmxlib._time import as_utc
 from sdmxlib.model._rules import id_type, maintained_by, named, version_type
 from sdmxlib.model.annotations import Annotations
-from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.base import AnnotableArtefact, MaintainableArtefact
 from sdmxlib.model.collections import ItemList, to_itemlist
 from sdmxlib.model.istring import InternationalString
 from sdmxlib.model.link import Link, to_links
@@ -52,7 +52,7 @@ def _to_value(
 
 
 @frozen(unsafe_hash=False)
-class ReportedAttribute:
+class ReportedAttribute(AnnotableArtefact):
     """One populated metadata attribute within a MetadataSet.
 
     The id field references a MetadataAttribute in the MSD. Either the

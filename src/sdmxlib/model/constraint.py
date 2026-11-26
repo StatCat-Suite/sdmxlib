@@ -12,7 +12,7 @@ from sdmxlib._time import as_utc
 from sdmxlib.model._invariants import enforce
 from sdmxlib.model._rules import id_type, maintained_by, named, version_type
 from sdmxlib.model.annotations import Annotations
-from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.base import AnnotableArtefact, MaintainableArtefact
 from sdmxlib.model.codelist import CascadeSelection
 from sdmxlib.model.errors import ValidationError, ValidationIssue
 from sdmxlib.model.istring import InternationalString, normalize_tag
@@ -211,7 +211,7 @@ class ComponentValueSet:
 
 
 @frozen(unsafe_hash=False)
-class DataKey:
+class DataKey(AnnotableArtefact):
     """A single full or partial data key: one value per dimension.
 
     Differs from ``KeyValue`` (sets of allowed values per dimension):
@@ -249,7 +249,7 @@ class DataKeySet:
 
 
 @frozen(unsafe_hash=False)
-class CubeRegion:
+class CubeRegion(AnnotableArtefact):
     """A region in the hypercube: per-dimension selections, and per-component ones."""
 
     include: bool = True
@@ -629,7 +629,7 @@ _AVAILABILITY_TARGETS = frozenset({"data_structures", "dataflows", "provision_ag
 
 
 @frozen(unsafe_hash=False)
-class AvailabilityConstraint:
+class AvailabilityConstraint(AnnotableArtefact):
     """SDMX 3.1's statement of what data exists for one structure, flow or agreement.
 
     3.1 split Actual content out of `DataConstraint` into this. It is not a

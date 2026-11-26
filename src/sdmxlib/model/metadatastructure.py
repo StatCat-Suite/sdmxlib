@@ -13,7 +13,7 @@ from sdmxlib.model._refshape import derived_view
 from sdmxlib.model._rules import id_type, maintained_by, named, version_type
 from sdmxlib.model._tree import PathIndex, PathNavigation
 from sdmxlib.model.annotations import Annotations
-from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.base import AnnotableArtefact, IdentifiableArtefact, MaintainableArtefact
 from sdmxlib.model.codelist import Codelist
 from sdmxlib.model.collections import ItemList, to_itemlist
 from sdmxlib.model.concept import Concept
@@ -46,7 +46,7 @@ _TARGET_TEXT_TYPE: dict[str, str] = {
 
 
 @frozen(unsafe_hash=False)
-class TargetObject:
+class TargetObject(AnnotableArtefact):
     """One kind of thing a 2.1 `MetadataTarget` lets a report describe.
 
     SDMX-ML 2.1's ``TargetObject``: one of five elements, and a metadata
@@ -102,7 +102,7 @@ def _to_target_objects(value: Iterable[TargetObject]) -> tuple[TargetObject, ...
 
 
 @frozen(unsafe_hash=False)
-class MetadataTarget(ParsesUrn):
+class MetadataTarget(IdentifiableArtefact, ParsesUrn):
     """What a 2.1 metadata structure declares its reports may describe.
 
     SDMX-ML 2.1 puts this question in the *structure*: an MSD names one or
@@ -139,7 +139,7 @@ class MetadataTarget(ParsesUrn):
 
 
 @frozen(unsafe_hash=False)
-class ReportStructure(ParsesUrn):
+class ReportStructure(IdentifiableArtefact, ParsesUrn):
     """A 2.1 grouping of metadata attributes against a set of targets.
 
     Holds *ids* rather than the attributes themselves, so the attributes stay
@@ -219,7 +219,7 @@ def to_codelist_representation(
 
 
 @frozen(unsafe_hash=False)
-class MetadataAttribute(ConceptIdentityMixin, RepresentationMixin):
+class MetadataAttribute(IdentifiableArtefact, ConceptIdentityMixin, RepresentationMixin):
     """A structural component of a MetadataStructure.
 
     Defines one slot in the metadata schema — what can be reported, with

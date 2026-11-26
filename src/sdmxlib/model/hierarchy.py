@@ -16,7 +16,7 @@ from sdmxlib.model._refshape import derived_view
 from sdmxlib.model._rules import id_type, maintained_by, named, version_type
 from sdmxlib.model._tree import PathIndex, PathNavigation
 from sdmxlib.model.annotations import Annotations
-from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.base import IdentifiableArtefact, MaintainableArtefact, NameableArtefact
 from sdmxlib.model.codelist import Code
 from sdmxlib.model.collections import ItemList
 from sdmxlib.model.dataflow import Dataflow
@@ -55,7 +55,7 @@ class AmbiguousHierarchyError(ValueError):
 
 
 @frozen(unsafe_hash=False)
-class Level(ParsesUrn):
+class Level(NameableArtefact, ParsesUrn):
     """A named level in a Hierarchy (SDMX 3.1).
 
     Hierarchies that declare levels allow each ``HierarchicalCode`` node
@@ -116,7 +116,7 @@ def _to_tree(v: ItemList[HierarchicalCode] | list[HierarchicalCode]) -> ItemList
 
 
 @frozen(unsafe_hash=False)
-class HierarchicalCode(ParsesUrn):
+class HierarchicalCode(IdentifiableArtefact, ParsesUrn):
     """A node in a Hierarchy tree, referencing a code from a Codelist.
 
     Provides tree navigation via ``children``; the parent `Hierarchy` looks a
