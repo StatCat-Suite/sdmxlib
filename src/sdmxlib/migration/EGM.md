@@ -5,9 +5,10 @@
 `sdmxlib.migration` moves a `StructureMessage` read from an SDMX 2.1 registry
 to SDMX 3.x (GH-399). `plan` finds what the move takes and changes nothing.
 `Plan.apply` makes the changes and the options a person chose, and returns
-the migrated message. The rules so far are the version rules
-(`_versions.py`); the remodel rules, constraints and registry targets such as
-FMR come next, as GH-399 records.
+the migrated message. The rules are the version rules (`_versions.py`) and
+the structure rules (`_structure.py`), which read what the target format
+cannot carry from `formats.gaps`; registry targets such as FMR come next, as
+GH-399 records.
 
 ## Interface
 
@@ -32,6 +33,11 @@ FMR come next, as GH-399 records.
   `version.semantic-non-final`, `version.external` (questions);
   `version.2.1-only`, `version.unit-scheme` (blocked). The module docstring
   states each.
+- The structure rules (`_structure.py`): `format.dropped`,
+  `format.converted`, `metadataflow.targets`, `msd.target-layer` (changes);
+  `format.loss` (question); `metadataflow.targets` when no target can be
+  derived, and `structure.measure-dimension` (blocked).
+- `QUESTIONS` (`_plan.py`): every rule that asks, and its option ids.
 
 ## Invariants
 
@@ -45,8 +51,15 @@ FMR come next, as GH-399 records.
   `target.version` and `target.allow`.
 - `apply` refuses an answer to a question the plan does not hold, an option a
   question does not take, and an open question unless `partial=True`; `plan`
-  refuses a policy for a rule that asked nothing, and an option the rule does
-  not take. Each refusal is a `ValueError` naming the key or rule.
+  refuses a policy for a rule no rule asks (`QUESTIONS`), and an option the
+  rule does not take. A rule that asks nothing of one message is not refused,
+  so one policy serves a whole registry.
+- A finding about an artefact a `Change` leaves out is dropped from the plan:
+  a `StructureSet` asks no version question.
+- The structure rules state nothing the writer would not do: they read
+  `formats.gaps.dropped`, `formats.gaps.unrepresentable` and
+  `Metadataflow.with_derived_targets`, and each gap is covered by exactly one
+  rule. Each refusal is a `ValueError` naming the key or rule.
 - Organisation schemes are never versioned: every format fixes four of them
   at `1.0`, and 3.x prohibits a version on all five.
 - An annotation is a reference only when its type is in `annotation_refs`;
@@ -60,7 +73,8 @@ FMR come next, as GH-399 records.
 
 ## Verification
 
-- `tests/unit/test_migration_versions.py`: the plan of `sdmx_ml21` fixtures,
-  apply's refusals, and one message that fires every version rule a known
-  number of times.
+- `tests/unit/test_migration_versions.py` and
+  `tests/unit/test_migration_structure.py`: the plan of `sdmx_ml21` fixtures,
+  apply's refusals, and for each rule module one message that fires every
+  rule a known number of times.
 - Run: `just test` and `just check`.

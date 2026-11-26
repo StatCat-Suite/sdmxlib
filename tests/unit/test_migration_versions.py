@@ -17,6 +17,9 @@ pytestmark = pytest.mark.unit
 _FIXTURES = repo.ROOT / "tests" / "fixtures" / "sdmx_ml21"
 _TARGET = Target(version="3.0")
 
+#: Drafts for what is not final, and every loss accepted: the recommended answers.
+_POLICY = {"version.non-final": "draft", "format.loss": "accept"}
+
 
 def _read(name: str) -> sl.StructureMessage:
     msg = sl.read(_FIXTURES / name)
@@ -47,10 +50,19 @@ def _codelist(version: str, *, legacy_is_final: bool | None = None, agency: str 
 
 
 def test_the_plan_of_a_2_1_message():
-    """`complete.xml` holds 2 final artefacts and 9 that are not; its 2 agency schemes stay unversioned."""
+    """`complete.xml`: 2 final artefacts, 8 that are not, a StructureSet 3.x lacks, and a constraint's reference period.
+
+    The StructureSet is non-final too, and asks no version question: it is left out.
+    """
     plan = sl.migration.plan(_read("complete.xml"), target=_TARGET)
-    assert _rules(plan) == {"version.semantic": 2, "version.is-final-dropped": 2, "version.non-final": 9}
-    assert {q.recommended for q in plan.questions} == {"draft"}
+    assert _rules(plan) == {
+        "version.semantic": 2,
+        "version.is-final-dropped": 2,
+        "version.non-final": 8,
+        "format.dropped": 1,
+        "format.loss": 1,
+    }
+    assert {q.recommended for q in plan.questions} == {"draft", "accept"}
     assert plan.open == plan.questions
 
 
@@ -72,12 +84,12 @@ def test_question_keys_are_stable_across_plans():
 
 
 def test_applied_with_drafts_the_result_is_3_0_and_its_references_follow():
-    plan = sl.migration.plan(_read("complete.xml"), target=_TARGET, policy={"version.non-final": "draft"})
+    plan = sl.migration.plan(_read("complete.xml"), target=_TARGET, policy=_POLICY)
     assert plan.open == ()
     migrated = plan.apply()
 
     versions = collections.Counter(a.version for a in migrated.all_artefacts())
-    assert versions == {"1.0.0": 2, "1.0.0-draft": 9, "1.0": 2}
+    assert versions == {"1.0.0": 2, "1.0.0-draft": 8, "1.0": 2}
     assert {getattr(a, "legacy_is_final", None) for a in migrated.all_artefacts()} == {None}
     held = {str(sl.artefact_urn(a)) for a in migrated.all_artefacts()}
     assert [str(r.urn) for r in _refs(migrated) if r.urn.version == "1.0" and str(r.urn.owner()) not in held] == []
@@ -86,19 +98,19 @@ def test_applied_with_drafts_the_result_is_3_0_and_its_references_follow():
 
 
 def test_an_answer_overrides_the_policy_for_its_question():
-    plan = sl.migration.plan(_read("complete.xml"), target=_TARGET, policy={"version.non-final": "draft"})
+    plan = sl.migration.plan(_read("complete.xml"), target=_TARGET, policy=_POLICY)
     first = plan.questions[0]
     migrated = plan.apply({first.key: "final"})
     by_urn = {str(sl.artefact_urn(a)).rsplit("(", 1)[0]: a.version for a in migrated.all_artefacts()}
     assert by_urn[first.urn.rsplit("(", 1)[0]] == "1.0.0"
-    assert collections.Counter(by_urn.values())["1.0.0-draft"] == 8
+    assert collections.Counter(by_urn.values())["1.0.0-draft"] == 7
 
 
 def test_omit_leaves_the_artefact_out():
-    plan = sl.migration.plan(_read("complete.xml"), target=_TARGET, policy={"version.non-final": "draft"})
+    plan = sl.migration.plan(_read("complete.xml"), target=_TARGET, policy=_POLICY)
     dropped = next(q for q in plan.questions if "Codelist=" in q.urn)
     migrated = plan.apply({dropped.key: "omit"})
-    assert len(list(migrated.all_artefacts())) == 12
+    assert len(list(migrated.all_artefacts())) == 11
     assert dropped.urn.rsplit("(", 1)[0] not in {
         str(sl.artefact_urn(a)).rsplit("(", 1)[0] for a in migrated.all_artefacts()
     }
@@ -106,7 +118,7 @@ def test_omit_leaves_the_artefact_out():
 
 def test_partial_leaves_open_questions_at_their_2_1_version():
     migrated = sl.migration.plan(_read("complete.xml"), target=_TARGET).apply(partial=True)
-    assert collections.Counter(a.version for a in migrated.all_artefacts()) == {"1.0.0": 2, "1.0": 11}
+    assert collections.Counter(a.version for a in migrated.all_artefacts()) == {"1.0.0": 2, "1.0": 10}
 
 
 # ── Refusals ───────────────────────────────────────────────────────────────
@@ -132,13 +144,29 @@ def test_an_option_the_question_lacks_is_refused():
         plan.apply({plan.questions[0].key: "maybe"}, partial=True)
 
 
-def test_a_policy_for_a_rule_that_asked_nothing_is_refused():
-    with pytest.raises(ValueError, match=r"policy for rules that asked nothing: \['version.external'\]"):
-        sl.migration.plan(_read("complete.xml"), target=_TARGET, policy={"version.external": "final"})
+def test_a_policy_for_a_rule_no_rule_asks_is_refused():
+    with pytest.raises(ValueError, match=r"policy for 'version.nonfinal', which no rule asks; the rules that ask are"):
+        sl.migration.plan(_read("complete.xml"), target=_TARGET, policy={"version.nonfinal": "draft"})
+
+
+def test_one_policy_serves_a_message_that_asks_only_some_of_its_rules():
+    """`complete.xml` asks no `version.external` question; a registry-wide policy still applies."""
+    plan = sl.migration.plan(_read("complete.xml"), target=_TARGET, policy={**_POLICY, "version.external": "final"})
+    assert plan.open == ()
+
+
+def test_every_question_a_rule_asks_is_declared_with_its_options():
+    """The declared options are the ones the questions carry, so the policy check reads the truth."""
+    from sdmxlib.migration._plan import QUESTIONS
+
+    plan = sl.migration.plan(_every_rule(), target=_TARGET)
+    asked = {q.rule: tuple(o.id for o in q.options) for q in plan.questions}
+    assert asked == {rule: QUESTIONS[rule] for rule in asked}
+    assert set(QUESTIONS) - set(asked) == {"format.loss"}
 
 
 def test_a_policy_option_the_rule_lacks_is_refused():
-    with pytest.raises(ValueError, match="no option 'leave'"):
+    with pytest.raises(ValueError, match=r"policy for 'version.non-final': no option 'leave'"):
         sl.migration.plan(_read("complete.xml"), target=_TARGET, policy={"version.non-final": "leave"})
 
 
@@ -159,9 +187,7 @@ def test_an_artefact_referenced_and_not_held_is_asked_about_with_no_recommendati
 
 @pytest.mark.parametrize(("choice", "version"), [("final", "1.0.0"), ("draft", "1.0.0-draft"), ("leave", "1.0")])
 def test_the_external_answer_decides_what_references_name(choice: str, version: str):
-    plan = sl.migration.plan(
-        _read("with_metadata_structure.xml"), target=_TARGET, policy={"version.non-final": "draft"}
-    )
+    plan = sl.migration.plan(_read("with_metadata_structure.xml"), target=_TARGET, policy=_POLICY)
     (external,) = [q for q in plan.questions if q.rule == "version.external"]
     migrated = plan.apply({external.key: choice})
     named = {
@@ -257,7 +283,7 @@ def test_an_artefact_only_an_annotation_names_is_asked_about():
 
 def test_the_annotation_follows_the_answer():
     msg = _linked_to(_read("complete.xml"), str(_MSD))
-    plan = sl.migration.plan(msg, target=_TARGET, policy={"version.non-final": "draft"}, annotation_refs={"METADATA"})
+    plan = sl.migration.plan(msg, target=_TARGET, policy=_POLICY, annotation_refs={"METADATA"})
     migrated = plan.apply({f"version.external@{_MSD}": "final"})
     titles = {a.title for d in migrated.data_structures for a in d.annotations}
     assert titles == {str(attrs.evolve(_MSD, version="1.2.0"))}

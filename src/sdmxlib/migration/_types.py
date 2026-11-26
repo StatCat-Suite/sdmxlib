@@ -52,7 +52,7 @@ class SetField:
 
     urn: SdmxUrn[object]
     name: str
-    value: str | bool | None
+    value: str | bool | tuple[str, ...] | None
 
 
 @frozen
