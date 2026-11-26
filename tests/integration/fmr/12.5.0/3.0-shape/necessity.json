@@ -1,0 +1,32 @@
+[
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/DataConstraints/DataConstraint/ConstraintAttachment/QueryableDataSource",
+    "status": 400,
+    "xpath": "//*[local-name()='DataConstraint'][not(*[local-name()='CubeRegion' or local-name()='DataKeySet'])]"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/Codelists/Codelist/GeoFeatureSetCode",
+    "status": 400,
+    "xpath": "//*[local-name()='Codelist']/*[local-name()='GeoFeatureSetCode']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/Codelists/Codelist/GeoGridCode",
+    "status": 400,
+    "xpath": "//*[local-name()='Codelist']/*[local-name()='GeoGridCode']"
+  },
+  {
+    "accepted": [],
+    "refusal": "Unexpected XML element : Structure/Structures/DataStructures/DataStructure/DataStructureComponents/DimensionList/Dimension/LocalRepresentation/TextFormat/SentinelValue",
+    "status": 400,
+    "xpath": "//*[local-name()='SentinelValue']"
+  },
+  {
+    "accepted": [],
+    "refusal": "No support for reading structure 'CategorySchemeMaps' in version '3.0'",
+    "status": 501,
+    "xpath": "//*[local-name()='CategorySchemeMaps']"
+  }
+]

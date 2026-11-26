@@ -89,9 +89,23 @@ class Fmr:
             if not served:
                 return
             for response in served:
-                self.submit(response.content, "DELETE")
+                self.submit(_deletable(response.content), "DELETE")
         msg = f"could not empty FMR of {agencies}"
         raise RuntimeError(msg)
+
+
+def _deletable(served: bytes) -> bytes:
+    """FMR's own 3.0 document, less the `ConceptRole`s its 3.0 reader cannot read back.
+
+    The ledger's ConceptRole adjustment: FMR's 3.0 reader loses its place
+    after a `ConceptRole` and refuses the component's next element, and FMR
+    serves the roles a 2.1 document gave it. A DELETE needs only each
+    artefact's identity, so the roles can go.
+    """
+    tree = etree.fromstring(served)
+    for role in tree.xpath("//*[local-name()='ConceptRole']"):
+        role.getparent().remove(role)
+    return etree.tostring(tree)
 
 
 def outcome(response: httpx2.Response) -> dict[str, object]:
@@ -128,17 +142,18 @@ def _dump(path: Path, value: object) -> None:
 
 def record_case(fmr: Fmr, out: Path, version: Version, document: Document, setup: bytes, agencies: list[str]) -> None:
     """One document: necessity of each adjustment, then the accepted submission and what FMR serves."""
+    release = fmr.version()
     necessity = []
-    for adjustment in documents.adjustments(version, document):
+    for adjustment in documents.adjustments(version, document, release):
         fmr.wipe(agencies)
         fmr.submit(setup).raise_for_status()
-        result = outcome(fmr.submit(documents.adjusted(version, document, without=adjustment)))
+        result = outcome(fmr.submit(documents.adjusted(version, document, release, without=adjustment)))
         necessity.append({"xpath": adjustment.xpath, **result})
     _dump(out / "necessity.json", necessity)
 
     fmr.wipe(agencies)
     fmr.submit(setup).raise_for_status()
-    sent = documents.adjusted(version, document)
+    sent = documents.adjusted(version, document, release)
     result = outcome(fmr.submit(sent))
     _write(out / "sent.xml", sent)
     _dump(out / "accepted.json", result)
@@ -174,7 +189,7 @@ def record(url: str, auth: tuple[str, str]) -> Path:
     fmr.submit(setup).raise_for_status()
     ml31 = outcome(fmr.submit(ml31_writer.write(maximal.message())))
     # Fetched with something to serve, so a refusal is about 3.1 and not an empty result.
-    fmr.submit(documents.adjusted("3.0", "shape")).raise_for_status()
+    fmr.submit(documents.adjusted("3.0", "shape", fmr.version())).raise_for_status()
     served = fmr.fetch("AG", _ML31)
     assert fmr.fetch("AG", FORMATS["ml30"][0]).status_code == httpx2.codes.OK
     _dump(

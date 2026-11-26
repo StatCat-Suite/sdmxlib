@@ -1,0 +1,16 @@
+{
+  "accepted": [
+    "urn:sdmx:org.sdmx.infomodel.base.OrganisationUnitScheme=AG:UNITS_21(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=AG:CAT_S(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.categoryscheme.CategoryScheme=AG:CAT_T(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_OTHER(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_SHAPES(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=AG:CS_SHAPES(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD_SHAPES(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF_SHAPES(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF_SHAPES_2(1.0)",
+    "urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=AG:DC_SHAPES(1.0)"
+  ],
+  "refusal": null,
+  "status": 200
+}

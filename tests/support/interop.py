@@ -134,6 +134,13 @@ class Rule[K: str]:
     where: re.Pattern[str] = field(converter=_pattern)
     kind: K
     reason: str
+    #: The oracle versions it holds for, such as FMR releases; None for every
+    #: version recorded (GH-407).
+    versions: frozenset[str] | None = None
+
+    def holds(self, version: str) -> bool:
+        """Whether this rule applies to recordings made against oracle `version`."""
+        return self.versions is None or version in self.versions
 
     def matches(self, case: str, fmt: str, entry: str) -> bool:
         """Whether this rule covers `entry` in `case`, served as `fmt`."""

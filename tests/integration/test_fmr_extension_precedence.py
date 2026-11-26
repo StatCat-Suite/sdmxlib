@@ -16,11 +16,11 @@ from sdmxlib.formats import parse, serialize
 from sdmxlib.model.codelist import Code, Codelist, CodelistExtension
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.ref import Ref
-from tests.support.fmr_oracle import RECORDINGS
+from tests.support.fmr_oracle import recordings
 
 pytestmark = pytest.mark.integration
 
-_CASE = RECORDINGS / "extension-precedence"
+_CASE = recordings("12.4.2") / "extension-precedence"
 
 
 def _codelist(cl_id: str, name: str, codes: list[Code], extends: tuple[Codelist, ...] = ()) -> Codelist:

@@ -2,8 +2,8 @@
 
 Two per version: the maximal fixture, written by the version's writer (which
 drops what the version cannot hold, as the element censuses do), and the
-version's shape. SDMX-ML 3.1 is not among them: FMR 12.4.2 reads no 3.1, and
-the recorder records that instead.
+version's shape. SDMX-ML 3.1 is not among them: FMR 12.4.2 and 12.5.0 read no
+3.1, and the recorder records that instead.
 """
 
 import re
@@ -34,9 +34,9 @@ def written(version: Version, document: Document) -> bytes:
     return _WRITERS[version](_FIXTURES[version, document]())
 
 
-def adjustments(version: Version, document: Document) -> tuple[Adjustment, ...]:
-    """The ledger's adjustments to one document, in ledger order."""
-    return tuple(a for a in ADJUSTMENTS if (a.version, a.document) == (version, document))
+def adjustments(version: Version, document: Document, fmr: str) -> tuple[Adjustment, ...]:
+    """The ledger's adjustments to one document sent to FMR `fmr`, in ledger order."""
+    return tuple(a for a in ADJUSTMENTS if (a.version, a.document) == (version, document) and a.holds(fmr))
 
 
 def apply(root: etree._Element, xpath: str) -> int:
@@ -56,10 +56,10 @@ def apply(root: etree._Element, xpath: str) -> int:
     return len(hits)
 
 
-def adjusted(version: Version, document: Document, *, without: Adjustment | None = None) -> bytes:
-    """The document FMR is sent: written, then every adjustment but `without` applied."""
+def adjusted(version: Version, document: Document, fmr: str, *, without: Adjustment | None = None) -> bytes:
+    """The document FMR `fmr` is sent: written, then every adjustment but `without` applied."""
     root = etree.fromstring(written(version, document))
-    for adjustment in adjustments(version, document):
+    for adjustment in adjustments(version, document, fmr):
         if adjustment is not without:
             apply(root, adjustment.xpath)
     return etree.tostring(root, xml_declaration=True, encoding="UTF-8")
