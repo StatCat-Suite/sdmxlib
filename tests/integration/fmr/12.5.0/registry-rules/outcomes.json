@@ -1,0 +1,37 @@
+{
+  "actual": {
+    "accepted": [],
+    "refusal": "urn:sdmx:org.sdmx.infomodel.registry.DataConstraint=AG:CC_ACTUAL(1.0.0): Submission of DataConstraints with Role specified as 'Actual' is not supported",
+    "status": 400
+  },
+  "base": {
+    "accepted": [
+      "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL(1.0.0)",
+      "urn:sdmx:org.sdmx.infomodel.conceptscheme.ConceptScheme=AG:CS(1.0.0)",
+      "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=AG:DSD(1.0.0)",
+      "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=AG:DF(1.0.0)",
+      "urn:sdmx:org.sdmx.infomodel.metadatastructure.MetadataStructure=AG:MSD(1.0.0)"
+    ],
+    "refusal": null,
+    "status": 200
+  },
+  "codelist-1.0.0": {
+    "accepted": [
+      "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_V(1.0.0)"
+    ],
+    "refusal": null,
+    "status": 200
+  },
+  "codelist-1.1.0-adds": {
+    "accepted": [
+      "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_V(1.1.0)"
+    ],
+    "refusal": null,
+    "status": 200
+  },
+  "codelist-1.1.0-removes": {
+    "accepted": [],
+    "refusal": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_V(1.1.0): Version is lower then the expected version of 2.0.0",
+    "status": 400
+  }
+}
