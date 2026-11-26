@@ -16,7 +16,7 @@ from sdmxlib.model.datastructure import DataStructure
 from sdmxlib.model.in_memory_registry import InMemoryRegistry
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.ref import Ref
-from sdmxlib.model.version_rewrite import RewrittenVersion, strip_leading_zeros
+from sdmxlib.model.rewrite import RewrittenVersion, strip_leading_zeros
 from tests.support.narrow import present
 
 pytestmark = pytest.mark.unit

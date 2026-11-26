@@ -7,9 +7,9 @@ registry refuses them. `add_all` takes a rewrite to ingest them anyway:
     reg.add_all(msg.all_artefacts(), rewrite_version={"1.2.3.4": "1.2.4"})
 
 It returns one `RewrittenVersion` per artefact whose version changed. See
-`sdmxlib.model.version_rewrite` for the rules.
+`sdmxlib.model.rewrite` for the rules.
 """
 
-from sdmxlib.model.version_rewrite import RewrittenVersion, VersionRewrite, strip_leading_zeros
+from sdmxlib.model.rewrite import RewrittenVersion, VersionRewrite, strip_leading_zeros
 
 __all__ = ["RewrittenVersion", "VersionRewrite", "strip_leading_zeros"]

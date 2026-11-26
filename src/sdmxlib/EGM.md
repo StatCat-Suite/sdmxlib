@@ -68,7 +68,7 @@ the subpackages share.
   (`testing.py`): build a seeded synthetic edition that passes `check_edition`,
   or take a `Shape` from an existing edition.
 - `RewrittenVersion`, `VersionRewrite` and `strip_leading_zeros`
-  (`versions.py`): re-exported from `model.version_rewrite` for
+  (`versions.py`): re-exported from `model.rewrite` for
   `add_all(rewrite_version=...)`.
 - Subpackages:
   - [`model/`](./model/EGM.md): the frozen attrs SDMX information model,

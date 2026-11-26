@@ -111,7 +111,7 @@ def _maximal_instances() -> list[tuple[attrs.AttrsInstance, str, object]]:
 
 #: `attrs.evolve` over a field named at runtime, with a value of the wrong type
 #: on purpose — what the checker refuses at a direct call, left to the runtime
-#: (the spelling `model.version_rewrite` uses for its own runtime field map).
+#: (the spelling `model.rewrite` uses for its own runtime field map).
 _evolve: Callable[..., object] = attrs.evolve
 
 

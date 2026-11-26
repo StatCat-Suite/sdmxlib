@@ -77,15 +77,7 @@ from sdmxlib.model.metadatastructure import MetadataStructure
 from sdmxlib.model.ref import Ref, SupportsUrn, UnresolvedRef, target_urn, urn_of
 from sdmxlib.model.registry import artefact_urn
 from sdmxlib.model.representation import Facet
-from sdmxlib.model.urn import SdmxUrn
-from sdmxlib.model.validation import (
-    SdmxConformanceError,
-    ValidationError,
-    ValidationIssue,
-    metadata_sets_advisories,
-    partial_scheme_advisories,
-)
-from sdmxlib.model.version_rewrite import (
+from sdmxlib.model.rewrite import (
     RewrittenVersion,
     VersionRewrite,
     check_ingestable,
@@ -94,6 +86,14 @@ from sdmxlib.model.version_rewrite import (
     names,
     original_urn,
     rewrite_versions,
+)
+from sdmxlib.model.urn import SdmxUrn
+from sdmxlib.model.validation import (
+    SdmxConformanceError,
+    ValidationError,
+    ValidationIssue,
+    metadata_sets_advisories,
+    partial_scheme_advisories,
 )
 from sdmxlib.query import accessors as query_accessors
 from sdmxlib.query._expr import Cols, RowKind
