@@ -115,6 +115,10 @@ hierarchical roll-ups.
   shared by `CategoryScheme`, `Hierarchy` and `MetadataStructure`.
 - `ApiVersion` (`rest_api.py`): the SDMX-REST generation (`"2.1"` or `"3.0"`), which changes
   `DataStructure.key_slot_ids`.
+- `check_serialisable(msg, *, version=None, allow=frozenset())`
+  (`validation.py`): what a message and a target format require before
+  writing. `allow` takes `Deviation` names (`DEVIATIONS`), each skipping one
+  check; an unknown name raises `ValueError` (GH-398).
 - `validate` and `validate_references` (`validation.py`), `to_dict` and
   `from_dict` (`convert.py`), and `DataflowBinding`, `DriftIssue` and
   `DriftError` (`binding.py`). `validate_references` accepts a late-bound

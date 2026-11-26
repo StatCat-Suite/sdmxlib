@@ -22,8 +22,8 @@ Example:
 """
 
 import re
-from collections.abc import Callable, Iterable, Iterator, Sequence
-from typing import Any
+from collections.abc import Callable, Collection, Iterable, Iterator, Sequence
+from typing import Any, Final, Literal
 
 import attrs
 from attrs import frozen
@@ -3286,7 +3286,22 @@ def _check_required_content(msg: StructureMessage, version: str, issues: list[Va
             )
 
 
-def check_serialisable(msg: StructureMessage, *, version: str | None = None) -> None:
+#: A check a caller may skip by name, to write on purpose what the target
+#: schema forbids and the registries that exchange the format accept (GH-398).
+#:
+#: - ``"non-ncname-parent"``: a code whose parent id is not an NCName, written
+#:   as SDMX-ML 3.0.0's ``<str:Parent>``. The 3.0.0 XSD types the element
+#:   ``SingleNCNameIDType``, an erratum 3.1 fixes; .Stat NSI serves such
+#:   parents in 3.0.0 and FMR accepts and serves them.
+type Deviation = Literal["non-ncname-parent"]
+
+#: Every `Deviation`, to refuse a name the type does not have at run time.
+DEVIATIONS: Final[frozenset[Deviation]] = frozenset({"non-ncname-parent"})
+
+
+def check_serialisable(
+    msg: StructureMessage, *, version: str | None = None, allow: Collection[Deviation] = frozenset()
+) -> None:
     """Raise unless every artefact in *msg* can be written to an SDMX format.
 
     Distinct from what *every* format requires of an artefact alone, which is
@@ -3309,16 +3324,23 @@ def check_serialisable(msg: StructureMessage, *, version: str | None = None) -> 
             hold in one SDMX-ML version and not another — 2.1 is markedly
             narrower than 3.0, so a downgrade can fail where the artefact
             itself is perfectly valid.
+        allow: Deviations to permit (`Deviation`), each skipping exactly one
+            check. Every other check still runs.
 
     Raises:
         ValidationError: If any artefact cannot be represented on the wire.
+        ValueError: If *allow* names a deviation `DEVIATIONS` does not hold.
     """
+    unknown = sorted(set(allow) - DEVIATIONS)
+    if unknown:
+        err = f"unknown deviation(s) {unknown}; the known ones are {sorted(DEVIATIONS)}"
+        raise ValueError(err)
     issues: list[ValidationIssue] = []
     _check_duplicate_maintainables(msg, issues)
     for pa in msg.provision_agreements:
         _check_provision_agreement(pa, issues)
     if version is not None:
-        _check_message_version(msg, version, issues)
+        _check_message_version(msg, version, issues, allow=frozenset(allow))
     if issues:
         raise ValidationError(issues)
 
@@ -3525,8 +3547,10 @@ def _check_ref_classes(msg: StructureMessage, version: str, issues: list[Validat
                 )
 
 
-def _check_message_version(msg: StructureMessage, version: str, issues: list[ValidationIssue]) -> None:
-    """Constraints that hold in one SDMX-ML version and not another."""
+def _check_message_version(
+    msg: StructureMessage, version: str, issues: list[ValidationIssue], *, allow: frozenset[Deviation]
+) -> None:
+    """Constraints that hold in one SDMX-ML version and not another, less the deviations *allow* names."""
     _check_artefact_versions(msg, version, issues)
     _check_ref_classes(msg, version, issues)
     _check_ref_versions(msg, version, issues)
@@ -3551,7 +3575,7 @@ def _check_message_version(msg: StructureMessage, version: str, issues: list[Val
     _check_constraints_in(msg, version, issues)
     if version == "json":
         _check_links_in_json(msg.all_artefacts(), issues)
-    if version == "3.0":
+    if version == "3.0" and "non-ncname-parent" not in allow:
         for codelist in msg.codelists:
             _check_code_parents_in_30(codelist, issues)
     _check_extensions_in_21(msg, version, issues)
@@ -3817,7 +3841,8 @@ def _check_code_parents_in_30(codelist: Codelist, issues: list[ValidationIssue])
 
     Refused rather than dropped: losing `<Parent>` flattens the hierarchy, and
     3.1 carries it. One issue per codelist, since a registry's codelist can
-    hold thousands.
+    hold thousands. `check_serialisable(..., allow={"non-ncname-parent"})`
+    skips this check, to write what .Stat NSI and FMR exchange (GH-398).
     """
     bad = [code for code in codelist.codes if code.parent_id is not None and not _NCNAME_RE.match(code.parent_id)]
     if not bad:
@@ -3830,7 +3855,8 @@ def _check_code_parents_in_30(codelist: Codelist, issues: list[ValidationIssue])
             message=(
                 f"{len(bad)} code(s) have a parent SDMX-ML 3.0 cannot name: {shown}{more}. 3.0.0 types "
                 "<Parent> as an NCName id ([A-Za-z][A-Za-z0-9_-]*) though a code's own id may start with any "
-                "id character — a schema erratum fixed in 3.1. Write SDMX-ML 3.1 or 2.1 instead"
+                "id character — a schema erratum fixed in 3.1. Write SDMX-ML 3.1 or 2.1 instead, or pass "
+                "allow={'non-ncname-parent'} to write the parents as .Stat NSI and FMR exchange them"
             ),
         )
     )

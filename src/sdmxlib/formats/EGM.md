@@ -24,10 +24,13 @@ target format cannot carry.
   `lossless=True` it raises `LossyReadError` for a `StructureMessage` with
   `lost` or `assumed` entries, and for a `MetadataMessage` with `lost`
   entries.
-- `serialize(msg, *, version="2.1", pretty_print=False, validate=True)`
+- `serialize(msg, *, version="2.1", pretty_print=False, validate=True, allow=frozenset())`
   (`__init__.py`): writes bytes, picking the writer from the message type.
   For a `StructureMessage` it raises `ValueError` for an unknown version, then
-  runs `without_dropped(msg, version)`, then validates.
+  runs `without_dropped(msg, version)`, then validates. `allow` names
+  `Deviation`s `check_serialisable` skips, one check each:
+  `"non-ncname-parent"` writes SDMX-ML 3.0.0 code parents that are not
+  NCNames, as .Stat NSI and FMR exchange them (GH-398).
   `to_xml(msg, *, version="2.1", ...)` writes SDMX-ML, and always writes a
   `MetadataMessage` as 3.0. `to_json(msg, ...)` writes SDMX-JSON 2.0.
 - `frame_of(batch)` (`_arrow.py`): Arrow `RecordBatch` to a polars DataFrame,

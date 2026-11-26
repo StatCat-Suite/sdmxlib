@@ -20,6 +20,7 @@ Example:
     json_bytes = to_json(msg)
 """
 
+from collections.abc import Collection
 from io import BytesIO
 from pathlib import Path
 
@@ -62,6 +63,7 @@ from sdmxlib.model.validation import (
     SdmxParseError,
     ValidationError,
     check_metadata_serialisable,
+    Deviation,
     check_serialisable,
 )
 
@@ -245,6 +247,7 @@ def serialize(
     version: str = "2.1",
     pretty_print: bool = False,
     validate: bool = True,
+    allow: Collection[Deviation] = frozenset(),
 ) -> bytes:
     """Serialise a Structure or Metadata message to bytes.
 
@@ -281,6 +284,10 @@ def serialize(
         validate: Run `check_serialisable` first, raising ``ValidationError``
             (accumulated across all artefacts) before any bytes are produced.
             Default True; pass False to emit without checking.
+        allow: Deviations `check_serialisable` permits, each skipping one
+            check while the rest still run: ``{"non-ncname-parent"}`` writes
+            SDMX-ML 3.0.0 code parents that are not NCNames, as .Stat NSI and
+            FMR exchange them. Applies to a ``StructureMessage``.
     """
     if isinstance(msg, MetadataMessage):
         if validate:
@@ -312,7 +319,7 @@ def serialize(
         # What the message and the target format require, which `add` does
         # not ask: a DSD with no dimensions is valid SDMX-JSON and not
         # SDMX-ML, so it is storable and refused here for SDMX-ML (#419).
-        check_serialisable(msg, version=version)
+        check_serialisable(msg, version=version, allow=allow)
 
     # The writer's step after the drop, which happened above: through its
     # `write`, the drop would run again (#464).
@@ -325,15 +332,17 @@ def to_xml(
     version: str = "2.1",
     pretty_print: bool = False,
     validate: bool = True,
+    allow: Collection[Deviation] = frozenset(),
 ) -> bytes:
     """Serialise a Structure or Metadata message to SDMX-ML XML bytes.
 
     MetadataMessage requires ``version="3.0"`` (SDMX-ML 2.1 GenericMetadata
-    is intentionally not supported). See `serialize` for ``validate``.
+    is intentionally not supported). See `serialize` for ``validate`` and
+    ``allow``.
     """
     if isinstance(msg, MetadataMessage) and version != "3.0":
         version = "3.0"
-    return serialize(msg, version=version, pretty_print=pretty_print, validate=validate)
+    return serialize(msg, version=version, pretty_print=pretty_print, validate=validate, allow=allow)
 
 
 def to_json(msg: StructureMessage | MetadataMessage, *, pretty_print: bool = False, validate: bool = True) -> bytes:
