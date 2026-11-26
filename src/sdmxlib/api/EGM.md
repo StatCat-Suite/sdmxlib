@@ -46,6 +46,17 @@ through `RestRegistry.query` (structures) and `RestRegistry.obs`
   artefact alone in `submission_order` (or the message whole) to the
   submission URL, derived from a `/ws/public/` endpoint or given as
   `submit_url=`, and returns a `SubmissionReport`.
+- `RestRegistry.download_structures(resource, *, fmt, agency, id, version,
+  to)` and `download_all_structures(to, *, fmt, agency)` (`registry.py`,
+  GH-402): a structure resource's bytes as the registry sent them, every
+  version by default. `fmt` is a `StructureFormat`; an SDMX `Content-Type` is
+  held to it, and a generic one (`application/xml`) is checked by the body's
+  head (`structure_format.sniff`) before a byte is written. The whole copy
+  asks for every resource in `resources.py`, writes `<resource><suffix>`,
+  and records a `StructureDownload` per resource (`written` with size and
+  SHA-256, `none-held` for a 404, `refused` otherwise) in `downloads.json`.
+- `RESOURCES_21`, `RESOURCES_30` and `resources(api)` (`resources.py`): every
+  structure resource each SDMX-REST API names; the registry sweep reads them.
 - `SubmissionReport`, `SubmissionResult`, `SubmissionNotHeldError`,
   `submission_order`, `results_of` and `submit_url` (`submit.py`): a verdict per
   artefact (`accepted`, `unchanged` for a 200 with no result, `refused` with
@@ -122,6 +133,8 @@ through `RestRegistry.query` (structures) and `RestRegistry.obs`
 
 - Makes HTTP GETs through the single `httpx2.Client` that `SdmxClient` owns,
   and POSTs only from `FmrRegistry.submit`, which writes to the registry.
+  `download_structures` with `to`, and `download_all_structures`, write files;
+  a body refused for its format leaves none.
   The client carries default headers, a timeout (30 s by default) and the
   forwarded options.
 - `get_artefact_if_changed` sends conditional requests: a 304 means unchanged

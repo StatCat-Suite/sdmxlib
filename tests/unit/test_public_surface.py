@@ -378,9 +378,30 @@ def test_every_exception_a_public_docstring_raises_is_importable() -> None:
                 continue
             for raised in _raised(inspect.getdoc(member)):
                 short = raised.rsplit(".", 1)[-1]
-                if not hasattr(builtins, short) and short not in exported:
+                if not hasattr(builtins, short) and short not in exported and not _foreign_exception(raised):
                     missing.setdefault(short, []).append(where)
     assert missing == {}, f"raised but not importable from sdmxlib: {missing}"
+
+
+#: Libraries whose exceptions a docstring may name, qualified: baseline runtime
+#: dependencies, so the caller already has them to catch with.
+_FOREIGN_EXCEPTION_MODULES = frozenset({"httpx2", "duckdb", "polars", "pyarrow", "lxml.etree", "msgspec"})
+
+
+def _foreign_exception(raised: str) -> bool:
+    """Whether `raised` is ``<module>.<Name>`` for a baseline dependency that really defines it."""
+    module, _, name = raised.rpartition(".")
+    if module not in _FOREIGN_EXCEPTION_MODULES:
+        return False
+    found = getattr(importlib.import_module(module), name, None)
+    return isinstance(found, type) and issubclass(found, BaseException)
+
+
+def test_a_foreign_exception_counts_only_when_its_library_defines_it() -> None:
+    assert _foreign_exception("httpx2.HTTPStatusError")
+    assert not _foreign_exception("httpx2.NoSuchError")
+    assert not _foreign_exception("HTTPStatusError")
+    assert not _foreign_exception("requests.HTTPError")
 
 
 def test_the_raises_reader_sees_the_section() -> None:

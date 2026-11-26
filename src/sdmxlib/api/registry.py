@@ -8,13 +8,17 @@ from pathlib import Path
 from typing import Literal, Never, Self, Unpack, cast, overload
 
 import attrs
+import httpx2
+from lxml import etree
 
 from sdmxlib import migration
 from sdmxlib._read_errors import reading_csv
 from sdmxlib._singleflight import SingleFlight
 from sdmxlib.api.client import NOT_MODIFIED, HttpxAuthOption, HttpxOptions, HttpxTransportOptions, SdmxClient
 from sdmxlib.api.providers import ProviderInfo
+from sdmxlib.api.resources import resources
 from sdmxlib.api.session import Completeness, Session, completeness_of
+from sdmxlib.api.structure_download import DownloadStatus, StructureDownload, write_manifest, written
 from sdmxlib.api.submit import (
     SubmissionReport,
     SubmissionResult,
@@ -27,6 +31,7 @@ from sdmxlib.formats import serialize
 from sdmxlib.formats.data_format import DataFormat
 from sdmxlib.formats.gaps import dropped
 from sdmxlib.formats.sdmx_json.data import read_observations
+from sdmxlib.formats.structure_format import StructureFormat
 from sdmxlib.local._scan import resolve_flow, scan_csv_into, scan_frame_into
 from sdmxlib.local.data_store import DuckDBDataStore, column_types
 from sdmxlib.local.registry import LocalRegistry
@@ -150,7 +155,7 @@ def _references_for(*, resolve: Resolve) -> str:
     return ",".join(sorted(_to_references(t) for t in resolve))
 
 
-def _check_suffix(destination: Path, fmt: DataFormat) -> None:
+def _check_suffix(destination: Path, fmt: DataFormat | StructureFormat) -> None:
     """Refuse a destination whose extension contradicts the format.
 
     Not inference — the format has already been chosen. This catches the
@@ -167,6 +172,16 @@ def _check_suffix(destination: Path, fmt: DataFormat) -> None:
             f"from the path — rename the file or pass the matching format."
         )
         raise ValueError(msg)
+
+
+def _error_reason(response: httpx2.Response) -> str:
+    """The text of a registry's error message, or its status line."""
+    try:
+        root = etree.fromstring(response.content)
+    except etree.XMLSyntaxError:
+        return f"HTTP {response.status_code}: {response.text[:300]}"
+    texts = [t.text.strip() for t in root.iter("{*}Text") if t.text and t.text.strip()]
+    return texts[0] if texts else f"HTTP {response.status_code}"
 
 
 class RestRegistry:
@@ -1039,6 +1054,125 @@ class RestRegistry:
             msg = "download_data returned no body for an in-memory download"
             raise RuntimeError(msg)
         return body
+
+    @overload
+    def download_structures(
+        self,
+        resource: str,
+        *,
+        fmt: StructureFormat,
+        agency: str = "all",
+        id: str = "all",
+        version: str = "all",
+        to: None = None,
+    ) -> bytes: ...
+
+    @overload
+    def download_structures(
+        self,
+        resource: str,
+        *,
+        fmt: StructureFormat,
+        agency: str = "all",
+        id: str = "all",
+        version: str = "all",
+        to: Path | str,
+    ) -> Path: ...
+
+    def download_structures(
+        self,
+        resource: str,
+        *,
+        fmt: StructureFormat,
+        agency: str = "all",
+        id: str = "all",
+        version: str = "all",
+        to: Path | str | None = None,
+    ) -> bytes | Path:
+        """Fetch a structure resource exactly as the registry sends it.
+
+        `download`'s rules for structures: the format is asked for and never
+        inferred, the body's format is checked, and nothing parses it. The
+        version defaults to ``all``: a registry reads a bare query as
+        ``latest``, which misses every older version it holds.
+
+            reg.download_structures("codelist", fmt=sl.StructureFormat.SDMX_ML_2_1, to="codelist.xml")
+
+        Args:
+            resource: The REST resource, such as ``"codelist"``
+                (`sdmxlib.api.resources`).
+            fmt: The format to ask for, sent as ``Accept``.
+            agency: The maintainer, or ``"all"``.
+            id: The artefact id, or ``"all"``.
+            version: The version, ``"all"`` or ``"latest"``.
+            to: Destination file; the body is streamed there.
+
+        Returns:
+            The body, or the `Path` written.
+
+        Raises:
+            httpx2.HTTPStatusError: For a status other than 2xx; a 404 means
+                the registry holds none.
+            ValueError: If `to`'s extension contradicts `fmt`, or the body is
+                not the format asked for. No file is left behind.
+        """
+        url = self._client.structure_query_url(resource, agency, id, version)
+        destination = Path(to) if to is not None else None
+        if destination is not None:
+            _check_suffix(destination, fmt)
+        body = self._client.download_structures(url, fmt=fmt, to=destination)
+        if destination is not None:
+            return destination
+        if body is None:  # pragma: no cover - the client returns bytes without `to`
+            msg = "download_structures returned no body for an in-memory download"
+            raise RuntimeError(msg)
+        return body
+
+    def download_all_structures(
+        self, to: Path | str, *, fmt: StructureFormat, agency: str = "all"
+    ) -> tuple[StructureDownload, ...]:
+        """Copy every structure resource the registry's API names into a directory, byte for byte.
+
+        One query per resource (`sdmxlib.api.resources`), every version of
+        every artefact, each written as ``<resource><suffix>``. A 404 is
+        recorded as holding none and anything else that is not the format
+        asked for as refused, so one resource a registry does not serve does
+        not stop the copy. The records also go to ``downloads.json``.
+
+            for record in reg.download_all_structures("copy/", fmt=sl.StructureFormat.SDMX_ML_2_1):
+                print(record.resource, record.status)
+
+        Args:
+            to: The directory, created if absent.
+            fmt: The format to ask for.
+            agency: The maintainer, or ``"all"``.
+
+        Returns:
+            One `StructureDownload` per resource, in API order.
+        """
+        directory = Path(to)
+        directory.mkdir(parents=True, exist_ok=True)
+        records: list[StructureDownload] = []
+        for resource in resources(self._client.api):
+            url = self._client.structure_query_url(resource, agency)
+            path = directory / f"{resource}{fmt.suffix}"
+            try:
+                self._client.download_structures(url, fmt=fmt, to=path)
+            except httpx2.HTTPStatusError as error:
+                status = error.response.status_code
+                kind: DownloadStatus = "none-held" if status == httpx2.codes.NOT_FOUND else "refused"
+                reason = None if kind == "none-held" else _error_reason(error.response)
+                records.append(
+                    StructureDownload(resource=resource, url=url, status=kind, http_status=status, reason=reason)
+                )
+                continue
+            except ValueError as error:
+                path.unlink(missing_ok=True)
+                records.append(StructureDownload(resource=resource, url=url, status="refused", reason=str(error)))
+                continue
+            records.append(written(resource, url, path))
+        write_manifest(directory, records)
+        return tuple(records)
 
     def obs(self, flow: Dataflow | Ref[Dataflow] | SdmxUrn[Dataflow]) -> ObsQuery:
         """A lazy query over this dataflow's observations, served over HTTP.

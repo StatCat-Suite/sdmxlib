@@ -16,6 +16,7 @@ from sdmxlib.api._freshness import Freshness, read_freshness
 from sdmxlib.api.policy import RegistryUnavailable
 from sdmxlib.formats import parse
 from sdmxlib.formats.data_format import DataFormat
+from sdmxlib.formats.structure_format import StructureFormat, sniff
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.rest_api import ApiVersion
 
@@ -176,7 +177,7 @@ def _version_parts(version: str) -> tuple[int, ...]:
     return tuple(parts)
 
 
-def _check_content_type(response: httpx2.Response, fmt: DataFormat, *, url: str) -> None:
+def _check_content_type(response: httpx2.Response, fmt: DataFormat | StructureFormat, *, url: str) -> None:
     """Refuse a response that is not the format that was asked for.
 
     Without this the format argument is decorative — which is precisely the
@@ -214,6 +215,31 @@ def _check_content_type(response: httpx2.Response, fmt: DataFormat, *, url: str)
         f"whatever arrives. URL: {url}"
     )
     raise ValueError(msg)
+
+
+#: How much of a structure body `_check_structure_head` reads to sniff its format.
+_HEAD = 4096
+
+
+def _check_structure_head(response: httpx2.Response, head: bytes, fmt: StructureFormat, *, url: str) -> None:
+    """Refuse a structure body that is not the format asked for.
+
+    An SDMX ``Content-Type`` is held to `fmt` as `_check_content_type` holds a
+    data download. A generic one (``application/xml``, ``application/json``,
+    which FMR sends for every structure format) says nothing about the version,
+    so the body's first bytes are read instead (`structure_format.sniff`).
+    """
+    header = (response.headers.get("content-type") or "").partition(";")[0].strip().lower()
+    if "vnd.sdmx" in header:
+        _check_content_type(response, fmt, url=url)
+        return
+    found = sniff(head)
+    if found != fmt.sniffed:
+        msg = (
+            f"Asked for {fmt.media_type!r} but the body is {found or 'not SDMX'!s} "
+            f"under {response.headers.get('content-type')!r}: the provider ignored `Accept`. URL: {url}"
+        )
+        raise ValueError(msg)
 
 
 def _require_csv(response: httpx2.Response, *, accept: str, url: str) -> None:
@@ -382,6 +408,51 @@ class SdmxClient:
         self.close()
 
     # ── URL building ──────────────────────────────────────────────────────────
+
+    def structure_query_url(self, resource: str, agency: str = "all", id: str = "all", version: str = "all") -> str:
+        """The REST URL for `resource`'s artefacts, ``all`` meaning every agency, id or version.
+
+        On 3.0 ``all`` is spelled ``*`` and ``latest`` ``~``; on 2.1 both are
+        written as given.
+        """
+        if not self._v3:
+            return f"{self._endpoint}/{resource}/{agency}/{id}/{version}"
+        spelled = [{"all": "*", "latest": "~"}.get(part, part) for part in (agency, id, version)]
+        return f"{self._endpoint}/structure/{resource}/{'/'.join(spelled)}"
+
+    def download_structures(self, url: str, *, fmt: StructureFormat, to: Path | None = None) -> bytes | None:
+        """Fetch a structure query's body in `fmt`, unparsed; streamed to `to` when given.
+
+        The body's format is checked before a byte is written
+        (`_check_structure_head`), so a refused download leaves no file.
+
+        Returns:
+            The body, or None when it went to `to`.
+
+        Raises:
+            httpx2.HTTPStatusError: For a status other than 2xx; a 404 is
+                SDMX-REST's "no results".
+            ValueError: If the body is not the format asked for.
+        """
+        headers = {"Accept": fmt.media_type}
+        with self._reaching(url), self._client.stream("GET", url, headers=headers) as response:
+            if not response.is_success:
+                response.read()
+            _raise_for_status(response, url=url)
+            chunks = response.iter_bytes()
+            head = b""
+            for chunk in chunks:
+                head += chunk
+                if len(head) >= _HEAD:
+                    break
+            _check_structure_head(response, head, fmt, url=url)
+            if to is None:
+                return head + b"".join(chunks)
+            with to.open("wb") as handle:
+                handle.write(head)
+                for chunk in chunks:
+                    handle.write(chunk)
+        return None
 
     def _resource_url(
         self,
