@@ -41,7 +41,7 @@ rewrite for that reason.
 
 import functools
 import re
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
 from typing import TypeIs
 
 import attrs
@@ -49,9 +49,10 @@ from attrs import frozen
 
 from sdmxlib.model._items import owner_classes, scheme_urn_of
 from sdmxlib.model._rebind import bind
-from sdmxlib.model._refshape import can_reach_ref, link_fields, walk_fields
+from sdmxlib.model._refshape import annotation_fields, can_reach_ref, link_fields, walk_fields
 from sdmxlib.model._resolvers import MapResolver
-from sdmxlib.model.collections import ArtefactList, ItemList
+from sdmxlib.model.annotations import Annotation, Annotations
+from sdmxlib.model.collections import ArtefactList, ItemList, SupportsId
 from sdmxlib.model.errors import SdmxParseError
 from sdmxlib.model.link import Link
 from sdmxlib.model.message import StructureMessage
@@ -271,48 +272,65 @@ def _version_follower(apply: Callable[[str], str]) -> _Follow:
     return follow
 
 
-def _rebuild[O](obj: O, follow: _Follow, *, links: bool = False) -> O:
+def _rebuild[O](obj: O, follow: _Follow, *, links: bool = False, annotations: frozenset[str] = frozenset()) -> O:
     """*obj* with every reference's URN passed through *follow*, sharing what is unchanged.
 
     With *links*, a `Link` whose `urn` is a URN *follow* changes is rebuilt
     too. `rewrite_versions` leaves links alone: it runs at ingest, where
     reading every code's links of a 579,951-code codelist is a cost the
     version rewrite has never paid.
+
+    With *annotations*, an annotation of one of those types whose `title` is a
+    URN *follow* changes is rebuilt too: a creator's convention for a
+    reference, such as .Stat's ``METADATA`` (GH-399).
     """
-    value = _rewrite_value(obj, follow, links=links)
+    value = _rewrite_value(obj, follow, links=links, annotations=annotations)
     # `attrs.evolve` keeps the class, so this only narrows what is known.
     return value if isinstance(value, type(obj)) else obj
 
 
-def _rewrite_value(value: object, follow: _Follow, *, links: bool) -> object:
+def _rewrite_value(value: object, follow: _Follow, *, links: bool, annotations: frozenset[str]) -> object:
     if isinstance(value, Ref):
         urn = follow(value.urn)
         return value if urn == value.urn else Ref[object].unresolved(urn)
     if links and isinstance(value, Link):
         return _rewrite_link(value, follow)
-    if isinstance(value, ItemList):
-        items = [_rebuild(item, follow, links=links) for item in value]
-        changed = any(new is not old for new, old in zip(items, value, strict=True))
-        return ItemList(items) if changed else value
-    if isinstance(value, (list, tuple)):
-        elements = [_rewrite_value(element, follow, links=links) for element in value]
-        if not any(new is not old for new, old in zip(elements, value, strict=True)):
-            return value
-        return tuple(elements) if isinstance(value, tuple) else elements
+    if annotations and isinstance(value, Annotations):
+        return _rewrite_annotations(value, follow, annotations)
+    if isinstance(value, (ItemList, list, tuple)):
+        return _rewrite_sequence(value, follow, links=links, annotations=annotations)
     if not _is_attrs_instance(value):
         return value
     cls = type(value)
-    names = _fields(cls, links=links)
+    names = _fields(cls, links=links, annotations=bool(annotations))
     if not names:
         return value
     changes: dict[str, object] = {}
     aliases = {f.name: f.alias for f in attrs.fields(cls)}
     for name in names:
         old = getattr(value, name, None)
-        new = _rewrite_value(old, follow, links=links)
+        new = _rewrite_value(old, follow, links=links, annotations=annotations)
         if new is not old:
             changes[aliases[name]] = new
     return _evolve(value, **changes) if changes else value
+
+
+def _rewrite_sequence(
+    value: ItemList[SupportsId] | list[object] | tuple[object, ...],
+    follow: _Follow,
+    *,
+    links: bool,
+    annotations: frozenset[str],
+) -> object:
+    """An `ItemList`, list or tuple, rebuilt as its own type only if an element changed."""
+    if isinstance(value, ItemList):
+        items = [_rebuild(item, follow, links=links, annotations=annotations) for item in value]
+        changed = any(new is not old for new, old in zip(items, value, strict=True))
+        return ItemList(items) if changed else value
+    elements = [_rewrite_value(element, follow, links=links, annotations=annotations) for element in value]
+    if not any(new is not old for new, old in zip(elements, value, strict=True)):
+        return value
+    return tuple(elements) if isinstance(value, tuple) else elements
 
 
 def _rewrite_link(link: Link, follow: _Follow) -> Link:
@@ -327,13 +345,68 @@ def _rewrite_link(link: Link, follow: _Follow) -> Link:
     return link if new == urn else attrs.evolve(link, urn=str(new))
 
 
+def _rewrite_annotations(held: Annotations, follow: _Follow, types: frozenset[str]) -> Annotations:
+    """*held* with each annotation of one of *types* whose `title` is a URN followed; *held* itself if none moves."""
+    rebuilt = [_rewrite_annotation(annotation, follow, types) for annotation in held]
+    if all(new is old for new, old in zip(rebuilt, held, strict=True)):
+        return held
+    return Annotations(rebuilt)
+
+
+def _rewrite_annotation(annotation: Annotation, follow: _Follow, types: frozenset[str]) -> Annotation:
+    urn = annotation_urn(annotation, types)
+    if urn is None:
+        return annotation
+    new = follow(urn)
+    return annotation if new == urn else attrs.evolve(annotation, title=str(new))
+
+
+def annotation_urn(annotation: Annotation, types: Collection[str]) -> SdmxUrn[object] | None:
+    """The URN an annotation of one of *types* carries in its `title`, or None.
+
+    None for an annotation of another type, one with no title, and one whose
+    title is not an SDMX URN.
+    """
+    if annotation.type not in types or annotation.title is None:
+        return None
+    try:
+        return SdmxUrn.parse(annotation.title)
+    except SdmxParseError:
+        return None
+
+
+def annotation_urns(value: object, types: Collection[str]) -> Iterator[SdmxUrn[object]]:
+    """Every URN that an annotation of one of *types* carries, anywhere in *value*.
+
+    The walk stops at a `Ref`: the annotations of an artefact a reference
+    names are that artefact's to report.
+    """
+    if not types or isinstance(value, Ref):
+        return
+    if isinstance(value, Annotations):
+        for annotation in value:
+            urn = annotation_urn(annotation, types)
+            if urn is not None:
+                yield urn
+        return
+    if isinstance(value, (ItemList, list, tuple)):
+        for element in value:
+            yield from annotation_urns(element, types)
+        return
+    if not _is_attrs_instance(value):
+        return
+    for name in annotation_fields(type(value)):
+        yield from annotation_urns(getattr(value, name, None), types)
+
+
 @functools.cache
-def _fields(cls: type, *, links: bool) -> tuple[str, ...]:
-    """The fields a rewrite reads on *cls*: those that can reach a `Ref`, and with *links* a `Link`."""
-    refs = walk_fields(cls) if can_reach_ref(cls) else ()
-    if not links:
-        return refs
-    return (*refs, *(name for name in link_fields(cls) if name not in refs))
+def _fields(cls: type, *, links: bool, annotations: bool = False) -> tuple[str, ...]:
+    """The fields a rewrite reads on *cls*: those reaching a `Ref`, and a `Link` or `Annotations` when asked."""
+    names = list(walk_fields(cls) if can_reach_ref(cls) else ())
+    for extra, wanted in ((link_fields, links), (annotation_fields, annotations)):
+        if wanted:
+            names.extend(name for name in extra(cls) if name not in names)
+    return tuple(names)
 
 
 # ── Identity rewrite (GH-406) ──────────────────────────────────────────────
@@ -342,14 +415,17 @@ def _fields(cls: type, *, links: bool) -> tuple[str, ...]:
 type UrnMap = Mapping[SdmxUrn[object], SdmxUrn[object]]
 
 
-def rewrite(msg: StructureMessage, mapping: UrnMap) -> StructureMessage:
+def rewrite(msg: StructureMessage, mapping: UrnMap, *, annotation_refs: Collection[str] = ()) -> StructureMessage:
     """*msg* with artefacts' identities changed, and every reference to them following.
 
     Each key is a maintainable's URN and its value the URN it should have: a
     new version, id or agency, of the same class. An artefact of *msg* whose
     URN is a key takes the value's id, version and maintainer, and every
     reference to it, or to an item or component inside it (`SdmxUrn.owner`),
-    is changed to match. So is a `Link` whose `urn` names one. A key *msg*
+    is changed to match. So is a `Link` whose `urn` names one, and the `title`
+    of an annotation whose type is in *annotation_refs*, when it is a URN
+    naming one: annotation text is opaque in the IM, so which annotations
+    hold references is the creator's convention (.Stat's ``METADATA``). A key *msg*
     does not hold still redirects the references to it, for artefacts held
     elsewhere that a migration re-versions too.
 
@@ -359,6 +435,7 @@ def rewrite(msg: StructureMessage, mapping: UrnMap) -> StructureMessage:
     Args:
         msg: The message to rewrite.
         mapping: Old maintainable URN to new, each with an exact version.
+        annotation_refs: Annotation types whose `title` is a reference.
 
     Returns:
         The rewritten message; *msg* itself when the mapping changes nothing.
@@ -381,12 +458,13 @@ def rewrite(msg: StructureMessage, mapping: UrnMap) -> StructureMessage:
         return msg
     _check_inexact_refs(msg, table)
     follow = _identity_follower(table)
+    types = frozenset(annotation_refs)
 
     index: dict[str, object] = {}
     resolver = MapResolver(index)
 
     def moved[A: SupportsUrn](artefact: A) -> A:
-        new = _rebuild(artefact, follow, links=True)
+        new = _rebuild(artefact, follow, links=True, annotations=types)
         target = table.get(str(artefact_urn(artefact)))
         if target is not None:
             changed = _evolve(new, id=target.id, version=target.version, maintainer=target.agency)
@@ -402,7 +480,8 @@ def rewrite(msg: StructureMessage, mapping: UrnMap) -> StructureMessage:
     }
     # Not artefacts: no identity to move or index, though their references follow.
     availability = tuple(
-        bind(_rebuild(constraint, follow, links=True), resolver) for constraint in msg.availability_constraints
+        bind(_rebuild(constraint, follow, links=True, annotations=types), resolver)
+        for constraint in msg.availability_constraints
     )
     # `header` named, so the artefact lists unpacked need not suit it.
     return attrs.evolve(msg, availability_constraints=availability, header=msg.header, **lists)

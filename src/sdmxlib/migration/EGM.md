@@ -11,8 +11,11 @@ FMR come next, as GH-399 records.
 
 ## Interface
 
-- `plan(msg, *, target, policy=None)` (`_plan.py`): returns a `Plan`. `policy`
-  maps a rule id to an option id and answers every question of that rule.
+- `plan(msg, *, target, policy=None, annotation_refs=())` (`_plan.py`):
+  returns a `Plan`. `policy` maps a rule id to an option id and answers every
+  question of that rule. `annotation_refs` names annotation types whose
+  `title` is a reference (.Stat's `METADATA`): such a title follows moves, and
+  an artefact only it names gets a `version.external` question.
 - `Plan` (`_plan.py`): `target`, `changes`, `questions` (policy answers set
   on `Question.answer`), `blocked`, and `open`, the questions no policy
   answered. `Plan.apply(answers=None, *, partial=False)` returns the migrated
@@ -46,6 +49,8 @@ FMR come next, as GH-399 records.
   not take. Each refusal is a `ValueError` naming the key or rule.
 - Organisation schemes are never versioned: every format fixes four of them
   at `1.0`, and 3.x prohibits a version on all five.
+- An annotation is a reference only when its type is in `annotation_refs`;
+  annotation text is otherwise opaque, as in the IM.
 - `version.external` recommends no option: the plan cannot see the 2.1
   `isFinal` of an artefact the message does not hold.
 

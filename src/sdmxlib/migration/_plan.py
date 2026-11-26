@@ -1,6 +1,6 @@
 """`plan` a migration, then `Plan.apply` the answers to it (GH-399)."""
 
-from collections.abc import Callable, Iterable, Iterator, Mapping
+from collections.abc import Callable, Collection, Iterable, Iterator, Mapping
 
 import attrs
 from attrs import field, frozen
@@ -15,8 +15,11 @@ from sdmxlib.model.validation import check_serialisable
 
 type _Finding = Change | Question | Blocked
 
-#: The rules a plan runs, in order. Each yields findings for one message.
-_RULES: tuple[Callable[[StructureMessage], Iterator[_Finding]], ...] = (_versions.findings,)
+#: The rules a plan runs, in order. Each yields findings for one message,
+#: given the annotation types whose titles are references.
+_RULES: tuple[Callable[[StructureMessage, frozenset[str]], Iterator[_Finding]], ...] = (
+    lambda msg, annotation_refs: _versions.findings(msg, annotation_refs=annotation_refs),
+)
 
 #: `attrs.evolve` for an artefact whose class the checker cannot see here.
 _evolve: Callable[..., object] = attrs.evolve
@@ -31,12 +34,15 @@ class Plan:
         changes: What `apply` makes with no input.
         questions: What needs a person, policy answers included.
         blocked: What cannot be migrated, and why.
+        annotation_refs: The annotation types whose titles the plan treats as
+            references.
     """
 
     target: Target
     changes: tuple[Change, ...]
     questions: tuple[Question, ...]
     blocked: tuple[Blocked, ...]
+    annotation_refs: frozenset[str] = field(converter=frozenset)
     _msg: StructureMessage = field(alias="msg", repr=False)
 
     @property
@@ -77,7 +83,7 @@ class Plan:
                 fields.setdefault(str(edit.urn), {})[edit.name] = edit.value
         updated = _with_fields(kept, fields)
         moves = {edit.old: edit.new for edit in edits if isinstance(edit, Move) and str(edit.old) not in omitted}
-        migrated = rewrite(updated, moves)
+        migrated = rewrite(updated, moves, annotation_refs=self.annotation_refs)
         check_serialisable(migrated, version=self.target.version, allow=self.target.allow)
         return migrated
 
@@ -100,7 +106,13 @@ class Plan:
             raise ValueError(msg)
 
 
-def plan(msg: StructureMessage, *, target: Target, policy: Mapping[str, str] | None = None) -> Plan:
+def plan(
+    msg: StructureMessage,
+    *,
+    target: Target,
+    policy: Mapping[str, str] | None = None,
+    annotation_refs: Collection[str] = (),
+) -> Plan:
     """Find what moving *msg* to *target* takes. Changes nothing.
 
     Args:
@@ -109,6 +121,11 @@ def plan(msg: StructureMessage, *, target: Target, policy: Mapping[str, str] | N
         policy: Rule to option id, answering every question of that rule,
             such as ``{"version.non-final": "draft"}``. An answer passed to
             `Plan.apply` overrides it for one question.
+        annotation_refs: Annotation types whose `title` is a reference, such
+            as ``{"METADATA"}``, .Stat's link from a DSD to its MSD. Such a
+            title follows a move like any reference, and an artefact only it
+            names is asked about by ``version.external``. Annotation text is
+            opaque in the IM, so none is a reference unless named here.
 
     Returns:
         The plan: its changes, questions and blocked items.
@@ -117,13 +134,15 @@ def plan(msg: StructureMessage, *, target: Target, policy: Mapping[str, str] | N
         ValueError: If the policy names a rule that asked nothing, or an option
             that rule's questions do not take.
     """
-    found = [finding for rule in _RULES for finding in rule(msg)]
+    types = frozenset(annotation_refs)
+    found = [finding for rule in _RULES for finding in rule(msg, types)]
     questions = tuple(_answered(_of(found, Question), policy or {}))
     return Plan(
         target=target,
         changes=tuple(_of(found, Change)),
         questions=questions,
         blocked=tuple(_of(found, Blocked)),
+        annotation_refs=types,
         msg=msg,
     )
 

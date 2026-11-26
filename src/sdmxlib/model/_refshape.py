@@ -52,6 +52,7 @@ from typing import Final, TypeGuard, Union, get_args, get_origin
 
 import attrs
 
+from sdmxlib.model.annotations import Annotations
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.collections import ArtefactList, ItemList, SdmxItem
 from sdmxlib.model.link import Link
@@ -222,25 +223,43 @@ def link_fields(cls: type) -> tuple[str, ...]:
     write checks walk for links, but over every code of a codelist, so the
     shape is read once per class here rather than per object there.
     """
+    return _fields_reaching(cls, Link)
+
+
+@functools.cache
+def annotation_fields(cls: type) -> tuple[str, ...]:
+    """Field names an `Annotations`-hunting walk needs to read on *cls*.
+
+    `link_fields` for `Annotations`: `sl.rewrite` reads annotations only when
+    the caller names annotation types whose titles are references (GH-399).
+    """
+    return _fields_reaching(cls, Annotations)
+
+
+def _fields_reaching(cls: type, target: type) -> tuple[str, ...]:
+    """Fields of *cls* whose declared type mentions *target*, an attrs class reaching it, or anything unreadable."""
     if not attrs.has(cls):
         return ()
     return tuple(
         f.name
         for f in attrs.fields(cls)
         if not f.metadata.get(DERIVED_VIEW)
-        and any(c is None or c is Link or (attrs.has(c) and _reaches_link(c, frozenset())) for c in _classes_in(f.type))
+        and any(
+            c is None or c is target or (attrs.has(c) and _reaches_class(c, target, frozenset()))
+            for c in _classes_in(f.type)
+        )
     )
 
 
-def _reaches_link(cls: type, seen: frozenset[type]) -> bool:
-    """`_reaches` for `Link`: whether a walk from *cls* could arrive at one."""
-    if cls is Link:
+def _reaches_class(cls: type, target: type, seen: frozenset[type]) -> bool:
+    """Whether a walk from *cls* could arrive at a *target*."""
+    if cls is target:
         return True
     if cls in seen or not attrs.has(cls):
         return False
     seen = seen | {cls}
     return any(
-        mentioned is None or (attrs.has(mentioned) and _reaches_link(mentioned, seen))
+        mentioned is None or mentioned is target or (attrs.has(mentioned) and _reaches_class(mentioned, target, seen))
         for f in attrs.fields(cls)
         for mentioned in _classes_in(f.type)
     )

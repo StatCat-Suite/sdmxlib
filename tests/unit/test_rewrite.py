@@ -231,3 +231,50 @@ def test_the_rewritten_message_writes_as_3_0_and_reads_back_the_same():
         str(_urn(a)) for a in migrated.all_artefacts()
     )
     assert sorted(str(ref.urn) for _, ref in _refs(read_back)) == sorted(str(ref.urn) for _, ref in _refs(migrated))
+
+
+# ── Annotation references ──────────────────────────────────────────────────
+
+
+def _annotated(msg: sl.StructureMessage, title: str, *, kind: str = "METADATA") -> sl.StructureMessage:
+    """The dataflow carries one annotation, and its first codelist's first code another, both titled *title*."""
+    note = sl.Annotation(type=kind, title=title)
+    (dataflow,) = msg.dataflows
+    first, *rest = msg.codelists
+    code, *codes = first.codes
+    codelist = attrs.evolve(first, codes=[attrs.evolve(code, annotations=[note]), *codes])
+    return attrs.evolve(msg, dataflows=[attrs.evolve(dataflow, annotations=[note])], codelists=[codelist, *rest])
+
+
+def _titles(msg: sl.StructureMessage) -> list[str | None]:
+    return [
+        *(a.title for a in msg.dataflows[0].annotations),
+        *(a.title for a in msg.codelists[0].codes[0].annotations),
+    ]
+
+
+def test_an_annotation_of_a_named_type_follows_on_artefacts_and_items():
+    msg = _message()
+    old = _urn(msg.data_structures[0])
+    new = attrs.evolve(old, version="1.0.0")
+    migrated = sl.rewrite(_annotated(msg, str(old)), {old: new}, annotation_refs={"METADATA"})
+    assert _titles(migrated) == [str(new), str(new)]
+
+
+def test_an_annotation_is_opaque_unless_its_type_is_named():
+    """Discrimination: the same message and mapping, with the type not named or named differently."""
+    msg = _message()
+    old = _urn(msg.data_structures[0])
+    new = attrs.evolve(old, version="1.0.0")
+    assert _titles(sl.rewrite(_annotated(msg, str(old)), {old: new})) == [str(old), str(old)]
+    named_other = sl.rewrite(_annotated(msg, str(old), kind="NOTE"), {old: new}, annotation_refs={"METADATA"})
+    assert _titles(named_other) == [str(old), str(old)]
+
+
+def test_an_annotation_title_that_is_not_a_urn_is_left_alone():
+    msg = _message()
+    old = _urn(msg.data_structures[0])
+    migrated = sl.rewrite(
+        _annotated(msg, "see the DSD"), {old: attrs.evolve(old, version="1.0.0")}, annotation_refs={"METADATA"}
+    )
+    assert _titles(migrated) == ["see the DSD", "see the DSD"]
