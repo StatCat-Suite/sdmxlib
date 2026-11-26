@@ -7,6 +7,8 @@ cannot be migrated. A `Change` and each `Option` carry the `Edit`s that
 leave it out.
 """
 
+from typing import Self
+
 from attrs import field, frozen
 
 from sdmxlib.model.urn import SdmxUrn
@@ -15,6 +17,10 @@ from sdmxlib.model.validation import Deviation
 #: The SDMX versions a migration can target: the 3.x ones, read as
 #: `formats.gaps.TARGETS` spells them.
 _VERSIONS = frozenset({"3.0", "3.1", "json"})
+
+#: The FMR releases `Target.fmr` can name: the ones whose registry rules
+#: `bench/fmr/registry_rules.py` recorded.
+FMR_RELEASES: tuple[str, ...] = ("12.5.0",)
 
 
 @frozen
@@ -26,16 +32,34 @@ class Target:
             ``"3.1"`` or ``"json"`` (SDMX-JSON 2.0).
         allow: The `Deviation`s the result may carry, passed to
             `check_serialisable` when the plan is applied.
+        registry: The registry the result is loaded into, such as
+            ``"fmr-12.5.0"``, whose own rules the plan adds; None for none.
     """
 
     version: str
     allow: frozenset[Deviation] = field(default=frozenset(), converter=frozenset)
+    registry: str | None = None
 
     def __attrs_post_init__(self) -> None:
         """Refuse a version no migration targets."""
         if self.version not in _VERSIONS:
             msg = f"a migration targets one of {sorted(_VERSIONS)}, not {self.version!r}"
             raise ValueError(msg)
+
+    @classmethod
+    def fmr(cls, release: str) -> Self:
+        """The target for loading into Fusion Metadata Registry `release`.
+
+        SDMX-ML 3.0, with the non-NCName code parents FMR accepts, and the
+        rules FMR enforces beyond the XSD (`migration._fmr`).
+
+        Raises:
+            ValueError: If `release` is not one whose rules were recorded.
+        """
+        if release not in FMR_RELEASES:
+            msg = f"no recorded FMR rules for {release!r}; the releases recorded are {list(FMR_RELEASES)}"
+            raise ValueError(msg)
+        return cls(version="3.0", allow=frozenset({"non-ncname-parent"}), registry=f"fmr-{release}")
 
 
 @frozen

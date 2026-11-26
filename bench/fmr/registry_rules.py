@@ -9,7 +9,9 @@ migration's FMR rules rest on what FMR did rather than on a note:
 - a later final version that removes codes from the one before is refused,
   and one that only adds codes is accepted;
 - an attribute's related dimensions come back in the DSD's order;
-- a metadata attribute's ``isMultiLingual="false"`` comes back true.
+- a metadata attribute's ``isMultiLingual="false"`` comes back true;
+- a code whose parent is not an NCName (``1``, ``_T``) is accepted in
+  SDMX-ML 3.0.0, which the XSD forbids, and served back with its parent.
 
 Writes ``<version>/registry-rules/`` beside the oracle's recordings: each
 document sent, FMR's outcome for it, and what FMR then serves.
@@ -116,6 +118,18 @@ def _codelist(version: str, codes: str) -> StructureMessage:
     )
 
 
+def _parented() -> StructureMessage:
+    """Codes whose parents are not NCNames, `1` and SDMX's `_T`, which the 3.0.0 XSD cannot name (GH-398)."""
+    codes = [
+        Code(id="_T", name={"en": "total"}),
+        Code(id="1", name={"en": "one"}, parent_id="_T"),
+        Code(id="2", name={"en": "two"}, parent_id="1"),
+    ]
+    return StructureMessage(
+        codelists=[Codelist(id="CL_P", maintainer=_AGENCY, version="1.0.0", name={"en": "parents"}, codes=codes)]
+    )
+
+
 def steps() -> list[tuple[str, bytes]]:
     """Each step's name and the document it submits, in order."""
     base = _base()
@@ -125,6 +139,7 @@ def steps() -> list[tuple[str, bytes]]:
         ("codelist-1.0.0", to_xml(_codelist("1.0.0", "AB"), version="3.0")),
         ("codelist-1.1.0-removes", to_xml(_codelist("1.1.0", "A"), version="3.0")),
         ("codelist-1.1.0-adds", to_xml(_codelist("1.1.0", "ABC"), version="3.0")),
+        ("codelist-non-ncname-parents", to_xml(_parented(), version="3.0", allow={"non-ncname-parent"})),
     ]
 
 
