@@ -592,6 +592,10 @@ Conforming editions of any shape, deterministic from a seed, for tests and stres
 
 ---
 
+::: sdmxlib.model.diff.diff
+
+---
+
 ::: sdmxlib.model.rewrite.UrnMap
 
 ---

@@ -10,6 +10,7 @@ from attrs import evolve, field, frozen
 from sdmxlib._time import as_utc
 from sdmxlib.model._invariants import enforce
 from sdmxlib.model._items import any_item_ref
+from sdmxlib.model._refshape import unordered
 from sdmxlib.model._rules import attachment_stated, id_type, maintained_by, named, some_measures, version_type
 from sdmxlib.model.annotations import Annotations
 from sdmxlib.model.base import MaintainableArtefact
@@ -423,7 +424,7 @@ class Attribute(ConceptIdentityMixin, RepresentationMixin):
     #: no form anywhere, and no level is safe to assume for it (#421, #508).
     #: Keyword-only, since the fields before it have defaults.
     attachment: AttachmentLevel = field(kw_only=True, validator=attachment_stated)
-    related_dimensions: list[str] | None = None
+    related_dimensions: list[str] | None = field(default=None, metadata=unordered())
     #: 3.0's `<str:Dimension optional="true">` inside AttributeRelationship:
     #: the related dimensions a value may be reported without (#422). Always
     #: a subset of `related_dimensions`; 2.1 has no such flag.
@@ -670,7 +671,7 @@ class MetadataAttributeUsage:
 
     id: str
     attachment: AttachmentLevel = field(validator=attachment_stated)
-    related_dimensions: list[str] | None = None
+    related_dimensions: list[str] | None = field(default=None, metadata=unordered())
     optional_dimensions: frozenset[str] = field(factory=frozenset, converter=frozenset)
     related_group: str | None = None
     annotations: Annotations = field(factory=Annotations, converter=_to_annotations)

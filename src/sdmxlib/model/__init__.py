@@ -135,6 +135,7 @@ from sdmxlib.model.in_memory_registry import InMemoryRegistry
 from sdmxlib.model.registry import RegistryReader, SupportsGet, artefact_urn
 from sdmxlib.model.representation import DataType, Facet, Representation, SentinelValue
 from sdmxlib.model.rewrite import UrnMap, rewrite
+from sdmxlib.model.diff import diff
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.model.version import version_key
 
@@ -276,6 +277,7 @@ __all__ = [
     "ValueItem",
     "ValueList",
     "artefact_urn",
+    "diff",
     "from_dict",
     "item",
     "normalize_tag",

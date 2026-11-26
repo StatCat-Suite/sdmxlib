@@ -17,6 +17,7 @@ import pytest
 
 from sdmxlib.formats import parse, serialize
 from sdmxlib.model.codelist import Code, Codelist
+from sdmxlib.model.diff import diff
 from sdmxlib.model.istring import InternationalString
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.ref import Ref
@@ -32,14 +33,12 @@ from tests.support.repo import ROOT
 _analyse = pytest.importorskip("bench.sweep.analyse")
 _capacity = pytest.importorskip("bench.sweep.capacity")
 _census = pytest.importorskip("bench.sweep.census")
-_modeldiff = pytest.importorskip("bench.sweep.modeldiff")
 _split = pytest.importorskip("bench.sweep.split")
 DocumentReport, Tally, Totals = _analyse.DocumentReport, _analyse.Tally, _analyse.Totals
 analyse_chunk, issue_key = _analyse.analyse_chunk, _analyse.issue_key
 rule_key, xsd_key = _analyse.rule_key, _analyse.xsd_key
 estimate, measure = _capacity.estimate, _capacity.measure
 census, gained, lost = _census.census, _census.gained, _census.lost
-diff = _modeldiff.diff
 chunks, ensure_chunks = _split.chunks, _split.ensure_chunks
 
 pytestmark = pytest.mark.unit

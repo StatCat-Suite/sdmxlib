@@ -1,31 +1,38 @@
-"""Where two model objects for the same artefact disagree, as field paths.
+"""`sl.diff`: where two model objects for the same artefact disagree, as field paths (GH-401).
 
-Used twice: an artefact against itself after a store round trip (what the
-DuckDB store loses), and the 2.1 reading of an artefact against its 3.0
-reading (what the projection costs, and what each reader disagrees on).
+The result maps each *normalised* path to its first example,
+``"before → after"``. A path names fields, never an index or an id —
+``DataStructure.dimensions[].codelist``, not ``dimensions[3]`` or
+``dimensions[FREQ]`` — so the same disagreement in many items is one entry,
+and paths from many artefacts can be counted.
 
-The result is a set of *normalised* paths — `DataStructure.dimensions[].
-codelist`, never `dimensions[3]` or `dimensions[FREQ]` — because the summary
-counts artefacts per path, and a path that names an index or an id would make
-every artefact its own row.
+What "the same" means:
 
-Two rules decide what "the same" means, and both are about not recursing into
-the graph:
+- **A `Ref` is equal when its URN is**, and the walk does not follow it:
+  whether one side was resolved is a registry's state, not the artefact's.
+- **Private attrs fields are skipped** (``_flat``, ``_codes``,
+  ``_str_cache``): derived state the class maintains itself.
+- **An `ItemList` is compared by id**: items only one side holds are
+  reported as ``path[] (only left)`` / ``(only right)``, and items both hold
+  are walked.
+- **A sequence is compared in order**, reported as ``path (length)`` when the
+  lengths differ, except a field marked `unordered` (an attribute's related
+  dimensions), compared as a set and reported as ``path (set)``.
+- **An `InternationalString`** differs by its languages
+  (``path (languages)``) or by a text (``path (text)``).
+- **Values of different types** are reported as ``path (type)``.
 
-- A `Ref` is equal when its URN is. Whether one side happened to be resolved
-  is the registry's state, not the artefact's.
-- Private attrs fields (`_flat`, `_codes`, `_str_cache`) are derived state the
-  class maintains itself (CLAUDE.md, the public/private barrier, rule 1), so
-  they are skipped; comparing them would compare caches.
+Used to check a migration (the 2.1 source against the 3.0 result, the result
+against what a registry then serves), the store's round trip, and the
+interoperability oracles.
 """
 
-from __future__ import annotations
-
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from typing import TypeIs
 
 import attrs
 
+from sdmxlib.model._refshape import UNORDERED
 from sdmxlib.model.collections import ItemList, SupportsId
 from sdmxlib.model.istring import InternationalString
 from sdmxlib.model.ref import Ref
@@ -52,7 +59,19 @@ class Differences:
 
 
 def diff(left: object, right: object) -> dict[str, str]:
-    """Path → example, for every field where `left` and `right` disagree."""
+    """Every field where *left* and *right* disagree, as normalised path → first example.
+
+    Args:
+        left: A model object, typically one artefact as read from one source.
+        right: The object to compare it with, of the same type.
+
+    Returns:
+        Path → ``"left → right"`` for each disagreement; empty when they
+        agree. The module docstring states what counts as agreeing.
+
+    Example:
+        sl.diff(codelist_21, codelist_30)   # {"Codelist.codes[].name (text)": "'a' → 'b'"}
+    """
     out = Differences()
     _walk(left, right, type(left).__name__, out, set())
     return out.paths
@@ -101,9 +120,7 @@ def _is_attrs_instance(value: object) -> TypeIs[attrs.AttrsInstance]:
 
 def _walk_container(left: object, right: object, path: str, out: Differences, seen: set[tuple[int, int]]) -> None:
     if _is_attrs_instance(left):
-        for field in attrs.fields(type(left)):
-            if not field.name.startswith("_"):
-                _walk(getattr(left, field.name), getattr(right, field.name), f"{path}.{field.name}", out, seen)
+        _walk_fields(left, right, path, out, seen)
     elif isinstance(left, ItemList) and isinstance(right, ItemList):
         _walk_keyed(_by_id(left), _by_id(right), path, out, seen)
     elif isinstance(left, Mapping) and isinstance(right, Mapping):
@@ -116,6 +133,29 @@ def _walk_container(left: object, right: object, path: str, out: Differences, se
             _walk(a, b, f"{path}[]", out, seen)
     elif left != right:
         out.note(path, left, right)
+
+
+def _walk_fields(
+    left: attrs.AttrsInstance, right: object, path: str, out: Differences, seen: set[tuple[int, int]]
+) -> None:
+    """Each public field of an attrs object; a field marked `unordered` compared as a set."""
+    for field in attrs.fields(type(left)):
+        if field.name.startswith("_"):
+            continue
+        a, b, where = getattr(left, field.name), getattr(right, field.name), f"{path}.{field.name}"
+        if not field.metadata.get(UNORDERED):
+            _walk(a, b, where, out, seen)
+        elif _members(a) != _members(b):
+            out.note(f"{where} (set)", sorted(map(str, _members(a))), sorted(map(str, _members(b))))
+
+
+def _members(value: object) -> frozenset[object]:
+    """The members of an unordered field's value: empty for None."""
+    if value is None:
+        return frozenset()
+    if isinstance(value, Iterable) and not isinstance(value, str | bytes):
+        return frozenset(value)
+    return frozenset({value})
 
 
 def _by_id(items: ItemList[SupportsId]) -> dict[object, object]:
@@ -131,7 +171,9 @@ def _walk_keyed(
         out.note(f"{path}[] (only left)", sorted(map(str, only_left))[:3], len(only_left))
     if only_right:
         out.note(f"{path}[] (only right)", sorted(map(str, only_right))[:3], len(only_right))
-    for key in left.keys() & right.keys():
+    # In the left side's order, not a set's: the first example kept for a path
+    # must not depend on the hash seed.
+    for key in [key for key in left if key in right]:
         _walk(left[key], right[key], f"{path}[]", out, seen)
 
 
