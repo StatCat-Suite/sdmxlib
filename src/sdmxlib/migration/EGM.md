@@ -43,6 +43,14 @@ cannot carry from `formats.gaps`, and, for an FMR target, the FMR rules
 - The FMR rules (`_fmr.py`), for an FMR target: `fmr.actual-constraint` and
   `fmr.next-major` (questions; the next major blocked when the message holds
   it), `fmr.related-dimensions` and `fmr.monolingual` (changes, no edit).
+- The FMR refusals (`_fmr_refusals.py`), for an FMR target: one question per
+  artefact and SDMX-ML 3.0 construct FMR 12.5.0 refuses (concept roles,
+  sentinel values, links in components, partial codelists, empty
+  constraints, duplicate component maps and 13 more), each `strip` (where the
+  artefact survives), `omit` or `keep`. A construct is found and stripped by
+  the XPath the FMR oracle's ledger recorded its refusal under.
+- `Transform(urn, name)` (`_types.py`): an edit that rebuilds an artefact with
+  a rule's transform (`_plan.TRANSFORMS`).
 - `QUESTIONS` (`_plan.py`): every rule that asks, and its option ids.
 
 ## Invariants
@@ -51,7 +59,7 @@ cannot carry from `formats.gaps`, and, for an FMR target, the FMR rules
   planned message unchanged and returns a new one.
 - A question key is the rule id and the artefact's URN, so the same message
   planned twice asks the same keys, and an answer recorded once applies again.
-- `apply` makes its edits in one order: omit, set fields, then move
+- `apply` makes its edits in one order: omit, set fields, run transforms, then move
   identities with `sl.rewrite`. A chosen option's move overrides a change's
   for the same artefact, so `fmr.next-major`'s `2.0.0` wins over the version
   rule's `1.1.0`. Through `sl.rewrite`, every reference, item reference and
@@ -81,6 +89,9 @@ cannot carry from `formats.gaps`, and, for an FMR target, the FMR rules
 
 ## Verification
 
+- `tests/integration/test_fmr_refusals.py`: the refusal table equal to the
+  ledger's 3.0 adjustments for 12.5.0, each fixture matching exactly its
+  ledger adjustments, and nothing the ledger removed left once stripped.
 - `tests/integration/test_fmr_target.py`: the FMR rules' predictions held
   against FMR 12.5.0's recorded answers to the same messages
   (`tests/integration/fmr/12.5.0/registry-rules/`).

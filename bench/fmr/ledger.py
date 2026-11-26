@@ -243,7 +243,7 @@ ADJUSTMENTS: tuple[Adjustment, ...] = (
             document,
             _el(section),
             "fmr-gap",
-            f"FMR 12.4.2 has no SDMX-ML 3.0 reader for {section} (HTTP 501)",
+            f"FMR 12.4.2 and 12.5.0 have no SDMX-ML 3.0 reader for {section} (HTTP 501)",
         )
         for document, section in (
             ("shape", "CategorySchemeMaps"),
