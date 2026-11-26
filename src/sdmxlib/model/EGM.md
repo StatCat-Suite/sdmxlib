@@ -18,7 +18,9 @@ hierarchical roll-ups.
 ## Interface
 
 - `SdmxUrn[T]` (`urn.py`): generic typed SDMX URN. `ParsesUrn` gives a class a
-  `parse_urn` classmethod that returns its own URN type.
+  `parse_urn` classmethod that returns its own URN type. `SdmxUrn.owner()`
+  gives the URN of the maintainable holding an item or component, and a
+  maintainable URN unchanged (GH-404), through `_items.owner_urn`.
 - `Ref[T]` (`ref.py`): frozen reference that always carries a URN. Build it
   with `Ref.to`, `Ref.of`, `Ref.unresolved` or `Ref(urn)`, and call it to
   unwrap the target. On access it asks its bound resolver first, then the
@@ -33,7 +35,11 @@ hierarchical roll-ups.
   text. `urn_of`, `artefact_urn`, `short_urn` and `target_urn` are URN helpers.
 - `MaintainableArtefact` (`base.py`): base for top-level artefacts. It
   annotates the `sdmx_package`, `sdmx_class` and `msg_field` ClassVars, and
-  `urn_for(...)` builds its typed URN.
+  `urn_for(...)` builds its typed URN. It declares every maintainable's
+  fields (`id`, `maintainer`, `version`, `name`, `description`,
+  `annotations`, `uri` and the external-reference fields) as read-only
+  properties each attrs subclass overrides, so code generic over artefacts
+  reads them without narrowing (GH-403).
 - `ItemList[T: SupportsId]` and `ArtefactList[T: Maintainable]`
   (`collections.py`): sequences. `ItemList` is indexed by item id.
   `ArtefactList` is indexed by int, slice, bare id, `"AG:ID"`, `"AG:ID(ver)"`,
@@ -109,6 +115,10 @@ hierarchical roll-ups.
   shared by `CategoryScheme`, `Hierarchy` and `MetadataStructure`.
 - `ApiVersion` (`rest_api.py`): the SDMX-REST generation (`"2.1"` or `"3.0"`), which changes
   `DataStructure.key_slot_ids`.
+- `check_serialisable(msg, *, version=None, allow=frozenset())`
+  (`validation.py`): what a message and a target format require before
+  writing. `allow` takes `Deviation` names (`DEVIATIONS`), each skipping one
+  check; an unknown name raises `ValueError` (GH-398).
 - `validate` and `validate_references` (`validation.py`), `to_dict` and
   `from_dict` (`convert.py`), and `DataflowBinding`, `DriftIssue` and
   `DriftError` (`binding.py`). `validate_references` accepts a late-bound
@@ -123,7 +133,7 @@ hierarchical roll-ups.
   metadata structure nests an attribute or lacks one its usages name
   (SDMX-ML 3.x's documentation, GH-299). `sdmxlib._facets` checks a
   value against a text format.
-- `sort_key`, `compliance`, `unwritable`, `is_final`, `unreferenceable` and
+- `version_key`, `compliance`, `unwritable`, `is_final`, `unreferenceable` and
   `late_binds` (`version.py`): version ordering, which SDMX grammar (2.1 or
   3.x) accepts a version, and which versions a late-bound reference takes.
 

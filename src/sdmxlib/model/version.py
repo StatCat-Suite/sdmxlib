@@ -69,8 +69,12 @@ _RELEASE = "~"
 _UNPARSED = "!"
 
 
-def sort_key(version: str) -> str:
+def version_key(version: str) -> str:
     """A text key ordering `version` the way SDMX means it.
+
+    Public as `sl.version_key`: sort a registry's versions with it, for
+    example to load them into a registry that judges each version against the
+    one before it, as FMR does.
 
     Text rather than a tuple because it is stored in a column and compared by
     the database: DuckDB orders and indexes it without any per-row work, which
@@ -97,7 +101,7 @@ def sort_key(version: str) -> str:
         A key to sort by. Opaque — compare it, do not parse it back.
 
     Example:
-        sorted(["1.10", "1.9"], key=sort_key)   # ["1.9", "1.10"]
+        sorted(["1.10", "1.9"], key=version_key)   # ["1.9", "1.10"]
     """
     matched = _VERSION.match(version.strip())
     if matched is None:

@@ -332,7 +332,7 @@ CREATE TABLE IF NOT EXISTS artefact (
     -- version" returns the wrong artefact. Immutable within an artefact
     -- version, so a bake rather than a runtime cost — the same call
     -- `docs/design/caching.md` makes for `code.depth`.
-    -- The default is `sort_key('1.0')`, matching `version`'s own default.
+    -- The default is `version_key('1.0')`, matching `version`'s own default.
     -- Written out rather than computed because this is DDL; a test asserts
     -- the two agree, so a change to the key format cannot leave a stale
     -- literal that silently mis-sorts every row inserted without one.

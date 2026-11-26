@@ -71,8 +71,7 @@ from sdmxlib.model.registry import artefact_urn
 from sdmxlib.model.representation import Facet
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.model.valuelist import ValueList
-from sdmxlib.model.version import is_final
-from sdmxlib.model.version import sort_key as version_sort_key
+from sdmxlib.model.version import is_final, version_key
 from sdmxlib.storage._kinds import CLASS_TO_NAME as _CLASS_TO_NAME
 from sdmxlib.storage.resolve import level_urn, part_owner
 from sdmxlib.storage.schema import ENUMERATION_FORMAT_COLUMN_NAMES, FACET_COLUMN_NAMES, TO_TEXT_FORMAT_COLUMN_NAMES
@@ -228,7 +227,7 @@ def _put_spine(
             # Baked here rather than computed per query: ordering `version` as
             # text puts 1.9 after 1.10 (#311), and the input cannot change
             # while the artefact version does not.
-            version_sort_key(artefact.version),
+            version_key(artefact.version),
             # Baked for the same reason: derived from the version (#420).
             is_final(artefact.version),
             getattr(artefact, "legacy_is_final", None),

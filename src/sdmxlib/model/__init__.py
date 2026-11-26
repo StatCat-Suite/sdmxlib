@@ -135,6 +135,7 @@ from sdmxlib.model.in_memory_registry import InMemoryRegistry
 from sdmxlib.model.registry import RegistryReader, artefact_urn
 from sdmxlib.model.representation import DataType, Facet, Representation, SentinelValue
 from sdmxlib.model.urn import SdmxUrn
+from sdmxlib.model.version import version_key
 
 __all__ = [
     "ActionType",
@@ -281,4 +282,5 @@ __all__ = [
     "to_dict",
     "validate",
     "validate_references",
+    "version_key",
 ]

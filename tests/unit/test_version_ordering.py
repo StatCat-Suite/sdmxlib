@@ -32,7 +32,7 @@ import pytest
 import sdmxlib as sl
 from sdmxlib.model.codelist import Codelist
 from sdmxlib.model.organisation import Agency
-from sdmxlib.model.version import sort_key
+from sdmxlib.model.version import version_key
 from sdmxlib.query.accessors import CodelistRow, q
 
 if TYPE_CHECKING:
@@ -48,24 +48,24 @@ pytestmark = pytest.mark.unit
 
 def test_numeric_parts_compare_numerically() -> None:
     """#311's headline. `1.10` is a perfectly ordinary version."""
-    assert sorted(["1.10", "1.9", "1.2"], key=sort_key) == ["1.2", "1.9", "1.10"]
+    assert sorted(["1.10", "1.9", "1.2"], key=version_key) == ["1.2", "1.9", "1.10"]
 
 
 def test_legacy_and_semantic_versions_interleave() -> None:
     """The XSD permits both, so a catalogue may hold both and must still order."""
-    assert sorted(["2.0", "1.10.0", "1.9", "1"], key=sort_key) == ["1", "1.9", "1.10.0", "2.0"]
+    assert sorted(["2.0", "1.10.0", "1.9", "1"], key=version_key) == ["1", "1.9", "1.10.0", "2.0"]
 
 
 def test_a_missing_part_is_zero() -> None:
     """`1`, `1.0` and `1.0.0` are the same version written three ways."""
-    assert sort_key("1") == sort_key("1.0") == sort_key("1.0.0")
+    assert version_key("1") == version_key("1.0") == version_key("1.0.0")
 
 
 def test_leading_zeros_do_not_change_the_version() -> None:
     """The XSD says so outright: *"1.3 and 1.03 would be equivalent, as both
     parse to an integer value of 3"* — which is exactly why text ordering is
     wrong rather than merely unusual."""
-    assert sort_key("1.03") == sort_key("1.3")
+    assert version_key("1.03") == version_key("1.3")
 
 
 def test_more_numeric_parts_than_three_still_order() -> None:
@@ -77,7 +77,7 @@ def test_more_numeric_parts_than_three_still_order() -> None:
     parts. Neither the schema pattern nor a 3.0-shaped test would have caught
     it; the corpus has only `1.0`.
     """
-    assert sorted(["1.2.3.9", "1.2.3.4", "1.2.3"], key=sort_key) == ["1.2.3", "1.2.3.4", "1.2.3.9"]
+    assert sorted(["1.2.3.9", "1.2.3.4", "1.2.3"], key=version_key) == ["1.2.3", "1.2.3.4", "1.2.3.9"]
 
 
 def test_more_parts_than_the_key_holds_collide() -> None:
@@ -87,14 +87,14 @@ def test_more_parts_than_the_key_holds_collide() -> None:
     three parts and 2.1's "unlimited" is theoretical, so eight is slack rather
     than a guess, but a silent tie past it should still be written down.
     """
-    assert sort_key("1.2.3.4.5.6.7.8.9") == sort_key("1.2.3.4.5.6.7.8.0")
-    assert sort_key("1.2.3.4.5.6.7.8") != sort_key("1.2.3.4.5.6.7.9")
+    assert version_key("1.2.3.4.5.6.7.8.9") == version_key("1.2.3.4.5.6.7.8.0")
+    assert version_key("1.2.3.4.5.6.7.8") != version_key("1.2.3.4.5.6.7.9")
 
 
 def test_a_prerelease_sorts_before_its_release() -> None:
     """SemVer's rule, and the opposite of what text gives: `-` sorts *below*
     the end of a string, so `1.0.0-draft` would otherwise follow `1.0.0`."""
-    assert sorted(["1.0.0", "1.0.0-draft"], key=sort_key) == ["1.0.0-draft", "1.0.0"]
+    assert sorted(["1.0.0", "1.0.0-draft"], key=version_key) == ["1.0.0-draft", "1.0.0"]
 
 
 def test_prerelease_ordering_is_lexical_not_semver() -> None:
@@ -105,7 +105,7 @@ def test_prerelease_ordering_is_lexical_not_semver() -> None:
     Left that way deliberately: the prerelease field is rare in published
     SDMX, and the fix is a second parser for a case no fixture uses.
     """
-    assert sorted(["1.0.0-alpha.9", "1.0.0-alpha.10"], key=sort_key) == ["1.0.0-alpha.10", "1.0.0-alpha.9"]
+    assert sorted(["1.0.0-alpha.9", "1.0.0-alpha.10"], key=version_key) == ["1.0.0-alpha.10", "1.0.0-alpha.9"]
 
 
 def test_an_unparseable_version_sorts_before_every_real_one() -> None:
@@ -115,7 +115,7 @@ def test_an_unparseable_version_sorts_before_every_real_one() -> None:
     malformed artefact — the failure this module exists to prevent, arriving
     by another route.
     """
-    assert min(["1.0", "not-a-version", "0.1"], key=sort_key) == "not-a-version"
+    assert min(["1.0", "not-a-version", "0.1"], key=version_key) == "not-a-version"
 
 
 # ── the three query sites ─────────────────────────────────────────────────
@@ -203,7 +203,7 @@ def test_only_version_diverges(reg: sl.LocalRegistry) -> None:
 
 
 def test_the_schema_default_matches_the_key_function() -> None:
-    """The DDL carries `sort_key("1.0")` as a literal, because it is DDL.
+    """The DDL carries `version_key("1.0")` as a literal, because it is DDL.
 
     A literal that drifts from the function is the worst kind of stale: rows
     inserted without an explicit `version_sort` would sort somewhere arbitrary
@@ -214,7 +214,7 @@ def test_the_schema_default_matches_the_key_function() -> None:
 
     tail = schema._DDL.split("version_sort    TEXT NOT NULL DEFAULT", 1)[1]
     literal = tail.split("'")[1]
-    assert literal == sort_key("1.0")
+    assert literal == version_key("1.0")
 
 
 # ── aggregates sort the same way ordering does (#351) ────────────────────────
@@ -361,3 +361,9 @@ def test_comparing_against_a_non_string_says_what_to_write() -> None:
     Python message it used to give named neither the type nor the fix."""
     with pytest.raises(TypeError, match=re.escape('q.dsd.version >= "2.0"')):
         _ = q.codelist.version >= 2.0
+
+
+def test_the_key_is_public() -> None:
+    """`sl.version_key` is the key the store bakes, so a caller sorts as the store does (GH-405)."""
+    assert sl.version_key is version_key
+    assert sorted(["1.10.0", "1.9.0", "1.10.0-draft"], key=sl.version_key) == ["1.9.0", "1.10.0-draft", "1.10.0"]
