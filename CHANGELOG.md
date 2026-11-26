@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.90.0] - 2026-11-26
+
+### Bug Fixes
+
+- **formats**: Refuse a version hint the SDMX-ML document contradicts
+- **model**: Match SDMX 3.0 versions in linear time, and as the XSD does
+
+### Documentation
+
+- **formats**: State that SDMX-JSON 2.0 writes include only when false (GH-412)
+- Add a guide to migrating a 2.1 registry to SDMX 3.0 and FMR (GH-399)
+
+### Features
+
+- **model**: Declare annotations and description on MaintainableArtefact (GH-403)
+- **model**: Export the SDMX version order as sl.version_key (GH-405)
+- **model**: Add SdmxUrn.owner() for an item or component URN (GH-404)
+- **formats**: Allow non-NCName code parents in SDMX-ML 3.0.0 by name (GH-398)
+- **model**: Add sl.rewrite to change artefacts' identities with references following (GH-406)
+- **migration**: Plan and apply the version rules of a 2.1 to 3.x move (GH-399)
+- **migration**: Treat annotations of named types as references (GH-399)
+- **migration**: Add the structure rules of a 2.1 to 3.x move (GH-399)
+- **migration**: Add Target.fmr with the rules FMR 12.5.0 enforces (GH-399)
+- **api**: Add FmrRegistry.submit with a verdict per artefact (GH-400)
+- **model**: Make the model diff public as sl.diff (GH-401)
+- **api**: Add byte-faithful structure downloads, every version by default (GH-402)
+- Add the IM's abstract bases, slotted (GH-403)
+- **migration**: Predict the SDMX-ML 3.0 constructs FMR 12.5.0 refuses (GH-399)
+- **migration**: Declare the agency scheme a sub-agency maintainer needs (GH-399)
+- **migration**: Add conflicts() for final versions the target holds otherwise (GH-399)
+- **api**: Add sl.read_all_structures to read a structure copy back as one message (GH-402)
+
+### Testing
+
+- **fmr**: Record FMR 12.5.0 and replay every recorded version (GH-407)
+- **fmr**: Record FMR 12.5.0's registry rules beyond the XSD (GH-407)
+- **fmr**: Name both FMR versions where the ledger's reasons hold for both (GH-407)
+- **docs**: Match the migration page's fake registries by hostname
+
 ## [0.89.0] - 2026-11-18
 
 ### Breaking Changes
