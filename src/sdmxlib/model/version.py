@@ -151,12 +151,24 @@ _GRAMMAR_21 = re.compile(r"^[0-9]+(\.[0-9]+)*$")
 #: SDMX-ML 3.0's `VersionType`, a union of `LegacyVersionNumberType` (one or
 #: two parts, no leading zeros) and `SemanticVersionNumberType` (exactly three
 #: plus an optional prerelease). 3.1 defines it identically.
+#:
+#: The prerelease is the XSD's language written without its overlapping
+#: alternatives, which backtracked exponentially on a version such as
+#: ``1.0.0-`` + ``---.`` repeated (CodeQL ``py/redos``: 0.9 s at 14 repeats,
+#: about three times slower for each more). As a set, each of the XSD's
+#: identifiers is a run of ``[A-Za-z0-9-]`` holding a letter or a hyphen, or a
+#: number without leading zeros; each alternative below matches a string one
+#: way only. The pattern copied here before differed from the XSD after a dot
+#: (``[A-Za-z-][A-Za-z-]`` for ``[A-Za-z\-][A-Za-z0-9\-]+``), refusing a later
+#: identifier such as ``a1`` the XSD accepts.
+#: `tests/unit/test_version_grammar_redos.py` holds the language to the
+#: vendored XSD's patterns over every short string and at random.
+_IDENTIFIER = r"(?:[0-9]*[A-Za-z-][A-Za-z0-9-]*|0|[1-9][0-9]*)"
 _GRAMMAR_30 = re.compile(
     r"^(0|[1-9]\d*)(\.(0|[1-9]\d*))?$"
     r"|"
     r"^(0|[1-9]\d*)(\.(0|[1-9]\d*)){2}"
-    r"(-(([A-Za-z-]|([A-Za-z-][A-Za-z0-9-]+)|([A-Za-z0-9-]+[A-Za-z-][A-Za-z0-9-]*))|(0|[1-9][0-9]*))"
-    r"(\.(([A-Za-z-]|([A-Za-z-][A-Za-z-][A-Za-z0-9-]*)|([A-Za-z0-9-]+[A-Za-z-][A-Za-z0-9-]*))|(0|[1-9][0-9]*)))*)?$"
+    rf"(-{_IDENTIFIER}(\.{_IDENTIFIER})*)?$"
 )
 
 #: Grammar name to its pattern. The names are the ones a user sees in an
