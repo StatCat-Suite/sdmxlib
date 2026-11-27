@@ -64,9 +64,18 @@ class Transform:
 
 @frozen
 class Add:
-    """Put `artefact` in the result, replacing one with its URN if the message holds it."""
+    """Put `artefact` in the result, replacing one with its URN if the message holds it.
+
+    Attributes:
+        artefact: The artefact to add.
+        versioned_as: The artefact this one is derived from, whose version it
+            has, such as the DSD a `HierarchyAssociation` binds. When a move
+            changes that one's version, this one's changes with it, so a
+            draft DSD's association is a draft too. None to keep its version.
+    """
 
     artefact: MaintainableArtefact = field(eq=False)
+    versioned_as: SdmxUrn[object] | None = None
 
     @property
     def urn(self) -> SdmxUrn[object]:

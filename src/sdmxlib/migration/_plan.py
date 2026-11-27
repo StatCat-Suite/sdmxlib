@@ -5,7 +5,7 @@ from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, S
 import attrs
 from attrs import field, frozen
 
-from sdmxlib.migration import _agencies, _fmr, _fmr_refusals, _structure, _versions
+from sdmxlib.migration import _agencies, _fmr, _fmr_refusals, _hierarchies, _structure, _versions
 from sdmxlib.migration._types import (
     Add,
     Blocked,
@@ -44,6 +44,7 @@ class _Inputs:
 _RULES: tuple[Callable[[StructureMessage, _Inputs], Iterator[_Finding]], ...] = (
     lambda msg, given: _versions.findings(msg, annotation_refs=given.annotation_refs),
     lambda msg, given: _structure.findings(msg, given.target),
+    lambda msg, _given: _hierarchies.findings(msg),
     lambda msg, given: _fmr.findings(msg, given.target),
     lambda msg, given: _fmr_refusals.findings(msg, given.target),
     lambda msg, given: _agencies.findings(msg, given.agency_names),
@@ -119,6 +120,10 @@ class Plan:
                 transforms.setdefault(str(edit.urn), []).append(edit.name)
         updated = _with_transforms(_with_fields(kept, fields), transforms)
         moves = _composed([edit for edit in edits if isinstance(edit, Move) and str(edit.old) not in omitted])
+        for add in (edit for edit in edits if isinstance(edit, Add)):
+            source = add.versioned_as
+            if source is not None and source in moves and add.urn not in moves:
+                moves[add.urn] = attrs.evolve(add.urn, version=moves[source].version)
         migrated = rewrite(updated, moves, annotation_refs=self.annotation_refs)
         check_serialisable(migrated, version=self.target.version, allow=self.target.allow)
         return migrated
@@ -237,6 +242,7 @@ def _of[F: (Change, Question, Blocked)](found: Iterable[_Finding], kind: type[F]
 QUESTIONS: dict[str, tuple[str, ...]] = {
     **_versions.QUESTIONS,
     **_structure.QUESTIONS,
+    **_hierarchies.QUESTIONS,
     **_fmr.QUESTIONS,
     **_fmr_refusals.QUESTIONS,
 }

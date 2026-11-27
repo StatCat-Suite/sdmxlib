@@ -13,7 +13,8 @@ result is writable in the target format.
     migrated = plan.apply({"version.external@urn:...": "final"})
 
 The rules are listed in `migration._versions` (versions),
-`migration._structure` (what the target format cannot carry) and
+`migration._structure` (what the target format cannot carry),
+`migration._hierarchies` (the associations a 2.1 hierarchy needs) and
 `migration._fmr` and `migration._fmr_refusals` (what FMR does beyond the XSD,
 and the 3.0 constructs it refuses, for `Target.fmr("12.5.0")`). A caller adds
 rules of their own with `Target(rules=...)`, such as `omit_agencies`.
