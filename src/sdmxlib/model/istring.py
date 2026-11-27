@@ -53,6 +53,16 @@ class InvalidTagError(ValueError):
         super().__init__(msg)
 
 
+#: Tags `normalize_tag` has accepted, each in the form it returned, which it
+#: returns as they are. Cleared when it holds `_SEEN_TAGS_MAX`, so an input
+#: with many distinct tags costs a full check per tag while common ones return
+#: to the fast path. `in` and `add` on a set are atomic, so no lock is needed.
+#: A tag is in it only once checked, so ``tag in _SEEN_TAGS`` implies
+#: ``normalize_tag(tag) == tag``.
+_SEEN_TAGS: set[str] = set()
+_SEEN_TAGS_MAX = 1024
+
+
 def _well_formed(tag: str) -> str | None:
     """`tag` lowercased if it is a well-formed tag, else None."""
     # ASCII first: `str.lower` maps some non-ASCII letters to ASCII ones (the
@@ -100,9 +110,16 @@ def normalize_tag(tag: str) -> str:
     if not isinstance(tag, str):
         msg = f"a language tag is a str, not {type(tag).__name__}"
         raise TypeError(msg)
+    # A tag already accepted in its normalised form skips the check: for a
+    # two-letter tag the check is three quarters of a lookup (GH-432).
+    if tag in _SEEN_TAGS:
+        return tag
     lowered = _well_formed(tag)
     if lowered is None:
         raise InvalidTagError(tag)
+    if len(_SEEN_TAGS) >= _SEEN_TAGS_MAX:
+        _SEEN_TAGS.clear()
+    _SEEN_TAGS.add(lowered)
     return lowered
 
 
@@ -149,14 +166,6 @@ def tag_alias(lang: str) -> str:
     return normalize_tag(lang).replace("-", "_")
 
 
-#: Tags `LocalisedString` has already checked, in normalised form. Cleared
-#: when it holds `_SEEN_TAGS_MAX`, so an input with many distinct tags costs a
-#: full check per tag while common ones return to the fast path. `in` and
-#: `add` on a set are atomic, so no lock is needed.
-_SEEN_TAGS: set[str] = set()
-_SEEN_TAGS_MAX = 1024
-
-
 class LocalisedString(msgspec.Struct, frozen=True, gc=False):
     """One text and its language tag: the SDMX Information Model's LocalisedString.
 
@@ -201,9 +210,6 @@ class LocalisedString(msgspec.Struct, frozen=True, gc=False):
         lang = normalize_tag(self.lang)
         if lang != self.lang:
             msgspec.structs.force_setattr(self, "lang", lang)
-        if len(_SEEN_TAGS) >= _SEEN_TAGS_MAX:
-            _SEEN_TAGS.clear()
-        _SEEN_TAGS.add(lang)
 
 
 def _normalized(pairs: Mapping[str, str]) -> dict[str, str]:
@@ -327,6 +333,11 @@ class InternationalString(Mapping[str, LocalisedString]):
 
     # ── Lookup ────────────────────────────────────────────────────────────
 
+    # Each lookup tests `_SEEN_TAGS` itself before calling `normalize_tag`,
+    # which tests it again: skipping the call takes `get` from 250 to 222 ns
+    # (GH-432). A tag that is not a `str` goes to `normalize_tag`, which
+    # raises its `TypeError`.
+
     @override
     def __getitem__(self, lang: str, /) -> LocalisedString:
         """The text held for `lang`, with its tag.
@@ -336,7 +347,7 @@ class InternationalString(Mapping[str, LocalisedString]):
             InvalidTagError: If `lang` is not a well-formed tag.
             MissingTagError: If no text is held for `lang`.
         """
-        key = normalize_tag(lang)
+        key = lang if type(lang) is str and lang in _SEEN_TAGS else normalize_tag(lang)
         text = self._data.get(key)
         if text is None:
             raise MissingTagError((key,), tuple(self._data))
@@ -356,7 +367,7 @@ class InternationalString(Mapping[str, LocalisedString]):
             TypeError: If `lang` is not a `str`.
             InvalidTagError: If `lang` is not a well-formed tag.
         """
-        key = normalize_tag(lang)
+        key = lang if type(lang) is str and lang in _SEEN_TAGS else normalize_tag(lang)
         text = self._data.get(key)
         return default if text is None else LocalisedString(text, key)
 
@@ -375,7 +386,7 @@ class InternationalString(Mapping[str, LocalisedString]):
         if not langs:
             msg = "pick() needs at least one language tag"
             raise TypeError(msg)
-        keys = [normalize_tag(lang) for lang in langs]
+        keys = [lang if type(lang) is str and lang in _SEEN_TAGS else normalize_tag(lang) for lang in langs]
         for key in keys:
             text = self._data.get(key)
             if text is not None:
@@ -401,7 +412,7 @@ class InternationalString(Mapping[str, LocalisedString]):
         if not isinstance(lang, str):
             msg = f"a language tag is a str, not {type(lang).__name__}"
             raise TypeError(msg)
-        return normalize_tag(lang) in self._data
+        return (lang if type(lang) is str and lang in _SEEN_TAGS else normalize_tag(lang)) in self._data
 
     @override
     def __iter__(self) -> Iterator[str]:

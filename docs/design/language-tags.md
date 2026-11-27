@@ -209,8 +209,11 @@ that design's second stage.
   both fields, and its `repr` is `LocalisedString(text=…, lang=…)`. It
   defines no `__str__`, `__format__` or `__bool__`: callers read `.text`.
 - `__post_init__` raises `TypeError` unless `text` is a `str`, and passes
-  `lang` through `normalize_tag` unless it is in a set of tags already seen
-  in normalised form (`_SEEN_TAGS`, cleared at 1,024). msgspec runs it on
+  `lang` through `normalize_tag` unless it is in the set of tags
+  `normalize_tag` has accepted, each in normalised form (`_SEEN_TAGS`,
+  cleared at 1,024). `normalize_tag` returns a tag in that set without
+  checking it again: for a two-letter tag the check was 182 of the 248 ns a
+  text lookup took (GH-432). msgspec runs it on
   construction, `msgspec.json.decode`, `msgspec.convert` and
   `msgspec.structs.replace`, so every value holds a normalised tag.
 - A malformed tag raises `InvalidTagError`, a `ValueError`, which
