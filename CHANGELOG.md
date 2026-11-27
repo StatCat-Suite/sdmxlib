@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.91.0] - 2026-11-27
+
+### Documentation
+
+- **migration**: Document caller rules, the id-case, hierarchy and measure-dimension rules (GH-399)
+
+### Features
+
+- **migration**: Add caller-defined rules to Target, and omit_agencies (GH-427)
+- **migration**: Ask about lower-case ids and block case clashes for FMR (GH-426)
+- **migration**: Add a HierarchyAssociation for each hierarchy an HCL carried (GH-428)
+- **migration**: Offer the MeasureDimension remodels as a question (GH-429)
+
+### Testing
+
+- **storage**: Collect the fsync errno cases on Linux, where ENOTSUP is EOPNOTSUPP
+
 ## [0.90.0] - 2026-11-26
 
 ### Bug Fixes
