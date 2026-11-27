@@ -109,7 +109,8 @@ class Plan:
         edits = [edit for change in self.changes for edit in change.edits]
         edits.extend(self._chosen(answers or {}, partial=partial))
         omitted = {str(edit.urn) for edit in edits if isinstance(edit, Omit)}
-        kept = _with_added(_without(self._msg, omitted), [edit.artefact for edit in edits if isinstance(edit, Add)])
+        added = [edit.artefact for edit in edits if isinstance(edit, Add) and str(edit.urn) not in omitted]
+        kept = _with_added(_without(self._msg, omitted), added)
         fields: dict[str, dict[str, object]] = {}
         for edit in edits:
             if isinstance(edit, SetField) and str(edit.urn) not in omitted:

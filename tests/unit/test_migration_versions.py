@@ -168,6 +168,7 @@ def test_every_question_a_rule_asks_is_declared_with_its_options():
         "fmr.next-major",
         "fmr.id-case",
         "hierarchy.association",
+        "structure.measure-dimension",
         *_fmr_refusals.QUESTIONS,
     }
     assert set(QUESTIONS) - set(asked) == unasked

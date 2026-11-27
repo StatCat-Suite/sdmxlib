@@ -126,7 +126,7 @@ def _with_measure_dimension(msg: sl.StructureMessage) -> sl.StructureMessage:
     return attrs.evolve(msg, data_structures=[attrs.evolve(dsd, measure_dimension=measure)])
 
 
-def test_a_measure_dimension_is_blocked():
+def test_a_measure_dimension_whose_concept_scheme_is_missing_is_blocked():
     plan = sl.migration.plan(_with_measure_dimension(_read("complete.xml")), target=_TARGET)
     (blocked,) = [b for b in plan.blocked if b.rule == "structure.measure-dimension"]
     assert "SDMX 3.x has no MeasureDimension, and DSD_TEST has MEASURE" in blocked.reason
