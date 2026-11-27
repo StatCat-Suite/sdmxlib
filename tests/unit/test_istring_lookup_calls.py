@@ -13,6 +13,7 @@ each Python frame and for no C function.
 import sys
 from collections.abc import Callable
 from types import FrameType
+from typing import cast
 
 import pytest
 
@@ -84,7 +85,7 @@ def test_every_lookup_skips_normalize_tag_for_a_seen_tag() -> None:
 
 
 def test_a_tag_that_is_not_a_str_still_names_its_type() -> None:
-    untyped: Callable[[object], object] = _HELD.get
+    untyped = cast("Callable[[object], object]", _HELD.get)
     with pytest.raises(TypeError, match="a language tag is a str, not list"):
         untyped(["fr"])
 
