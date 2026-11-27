@@ -231,8 +231,8 @@ hierarchical roll-ups.
   that invalidates the `_items` cache.
 - `enforce()` warns through `warnings.warn(..., skip_file_prefixes=...)`, so
   the warning points at the caller's line.
-- `istring.py` keeps `_SEEN_TAGS`, the tags `LocalisedString` has checked,
-  cleared at 1,024. At import it reads `SDMXLIB_ISTRING_AUDIT`; when set, the
+- `istring.py` keeps `_SEEN_TAGS`, the tags `normalize_tag` has accepted,
+  which it returns unchecked, cleared at 1,024. At import it reads `SDMXLIB_ISTRING_AUDIT`; when set, the
   `InternationalString` lookups append each new calling `file:line` to the
   file `SDMXLIB_ISTRING_AUDIT_OUT` names (GH-309's migration audit).
 - `InMemoryRegistry` keeps its state in memory: `_store`, `_by_type`,

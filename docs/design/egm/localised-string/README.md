@@ -11,5 +11,7 @@ record:
 - [`call-sites.md`](call-sites.md): every sdmxlib site the change reached,
   with its old and new expression and what caught it.
 
-The hub's `bench_final_split.py` became the gated test
-`tests/bench/test_istring_lookup_speed.py`. The other scripts stay in the hub.
+The hub's `bench_final_split.py` became `tests/bench/test_istring_lookup_speed.py`,
+which reports the cost of `get` and asserts nothing; the cost is guarded by
+the call counts in `tests/unit/test_istring_lookup_calls.py` (GH-432). The
+other scripts stay in the hub.
