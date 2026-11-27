@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.91.1] - 2026-11-27
+
+### Performance
+
+- **model**: Skip the language-tag check for a tag already accepted (GH-432)
+- **model**: Test the seen-tag set in each lookup before calling normalize_tag (GH-432)
+
+### Testing
+
+- **model**: Call get with a list through cast, as pyrefly requires (GH-432)
+
 ## [0.91.0] - 2026-11-27
 
 ### Documentation
