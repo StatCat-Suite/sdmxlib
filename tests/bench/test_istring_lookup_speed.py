@@ -7,8 +7,8 @@ failed `just ci` at its 1.5x budget without a change to the code, since both
 sides call `normalize_tag` and move with the interpreter.
 
 Measured on CPython 3.14.10 (GH-432): `get` took 396 ns a call with
-`normalize_tag` checking every tag, and 250 ns once a tag it has accepted
-skips the check.
+`normalize_tag` checking every tag, 250 ns once a tag it has accepted skips
+the check, and 222 ns once `get` tests the seen set itself.
 
     just bench -k istring
 """

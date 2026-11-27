@@ -333,6 +333,11 @@ class InternationalString(Mapping[str, LocalisedString]):
 
     # ── Lookup ────────────────────────────────────────────────────────────
 
+    # Each lookup tests `_SEEN_TAGS` itself before calling `normalize_tag`,
+    # which tests it again: skipping the call takes `get` from 250 to 222 ns
+    # (GH-432). A tag that is not a `str` goes to `normalize_tag`, which
+    # raises its `TypeError`.
+
     @override
     def __getitem__(self, lang: str, /) -> LocalisedString:
         """The text held for `lang`, with its tag.
@@ -342,7 +347,7 @@ class InternationalString(Mapping[str, LocalisedString]):
             InvalidTagError: If `lang` is not a well-formed tag.
             MissingTagError: If no text is held for `lang`.
         """
-        key = normalize_tag(lang)
+        key = lang if type(lang) is str and lang in _SEEN_TAGS else normalize_tag(lang)
         text = self._data.get(key)
         if text is None:
             raise MissingTagError((key,), tuple(self._data))
@@ -362,7 +367,7 @@ class InternationalString(Mapping[str, LocalisedString]):
             TypeError: If `lang` is not a `str`.
             InvalidTagError: If `lang` is not a well-formed tag.
         """
-        key = normalize_tag(lang)
+        key = lang if type(lang) is str and lang in _SEEN_TAGS else normalize_tag(lang)
         text = self._data.get(key)
         return default if text is None else LocalisedString(text, key)
 
@@ -381,7 +386,7 @@ class InternationalString(Mapping[str, LocalisedString]):
         if not langs:
             msg = "pick() needs at least one language tag"
             raise TypeError(msg)
-        keys = [normalize_tag(lang) for lang in langs]
+        keys = [lang if type(lang) is str and lang in _SEEN_TAGS else normalize_tag(lang) for lang in langs]
         for key in keys:
             text = self._data.get(key)
             if text is not None:
@@ -407,7 +412,7 @@ class InternationalString(Mapping[str, LocalisedString]):
         if not isinstance(lang, str):
             msg = f"a language tag is a str, not {type(lang).__name__}"
             raise TypeError(msg)
-        return normalize_tag(lang) in self._data
+        return (lang if type(lang) is str and lang in _SEEN_TAGS else normalize_tag(lang)) in self._data
 
     @override
     def __iter__(self) -> Iterator[str]:

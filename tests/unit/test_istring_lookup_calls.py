@@ -48,17 +48,13 @@ def seen_fr() -> None:
 
 
 @pytest.mark.usefixtures("seen_fr")
-def test_a_held_tag_already_seen_costs_three_calls() -> None:
-    assert _calls(_HELD.get, "fr") == [
-        "InternationalString.get",
-        "normalize_tag",
-        "LocalisedString.__post_init__",
-    ]
+def test_a_held_tag_already_seen_costs_two_calls() -> None:
+    assert _calls(_HELD.get, "fr") == ["InternationalString.get", "LocalisedString.__post_init__"]
 
 
 @pytest.mark.usefixtures("seen_fr")
 def test_a_missing_tag_already_seen_builds_nothing() -> None:
-    assert _calls(InternationalString.EMPTY.get, "fr") == ["InternationalString.get", "normalize_tag"]
+    assert _calls(InternationalString.EMPTY.get, "fr") == ["InternationalString.get"]
 
 
 def test_a_tag_not_yet_seen_is_checked_once() -> None:
@@ -70,11 +66,27 @@ def test_a_tag_not_yet_seen_is_checked_once() -> None:
         "_well_formed",
         "LocalisedString.__post_init__",
     ]
-    assert _calls(_HELD.get, "fr") == [
-        "InternationalString.get",
-        "normalize_tag",
-        "LocalisedString.__post_init__",
+    assert _calls(_HELD.get, "fr") == ["InternationalString.get", "LocalisedString.__post_init__"]
+
+
+@pytest.mark.usefixtures("seen_fr")
+def test_every_lookup_skips_normalize_tag_for_a_seen_tag() -> None:
+    lookups: list[tuple[str, Callable[[], object]]] = [
+        ("InternationalString.__getitem__", lambda: _HELD["fr"]),
+        ("InternationalString.pick", lambda: _HELD.pick("de", "fr")),
+        ("InternationalString.__contains__", lambda: "fr" in _HELD),
     ]
+    istring.normalize_tag("de")
+    for name, lookup in lookups:
+        called = _calls(lookup)
+        assert name in called
+        assert "normalize_tag" not in called, name
+
+
+def test_a_tag_that_is_not_a_str_still_names_its_type() -> None:
+    untyped: Callable[[object], object] = _HELD.get
+    with pytest.raises(TypeError, match="a language tag is a str, not list"):
+        untyped(["fr"])
 
 
 def test_a_tag_in_another_case_is_checked_every_time() -> None:
