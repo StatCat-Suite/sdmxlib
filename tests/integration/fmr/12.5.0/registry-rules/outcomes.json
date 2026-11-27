@@ -34,6 +34,32 @@
     "refusal": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_V(1.1.0): Version is lower then the expected version of 2.0.0",
     "status": 400
   },
+  "codelist-case-clash-1.0": {
+    "accepted": [
+      "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LOW(1.0)"
+    ],
+    "refusal": null,
+    "status": 200
+  },
+  "codelist-case-clash-1.0.0": {
+    "accepted": [],
+    "refusal": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_SEM(1.0.0): Semantically versioned structure can not be modified",
+    "status": 400
+  },
+  "codelist-lower-case-1.0": {
+    "accepted": [
+      "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LOW(1.0)"
+    ],
+    "refusal": null,
+    "status": 200
+  },
+  "codelist-lower-case-1.0.0": {
+    "accepted": [
+      "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_SEM(1.0.0)"
+    ],
+    "refusal": null,
+    "status": 200
+  },
   "codelist-non-ncname-parents": {
     "accepted": [
       "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_P(1.0.0)"

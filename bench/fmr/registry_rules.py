@@ -11,7 +11,9 @@ migration's FMR rules rest on what FMR did rather than on a note:
 - an attribute's related dimensions come back in the DSD's order;
 - a metadata attribute's ``isMultiLingual="false"`` comes back true;
 - a code whose parent is not an NCName (``1``, ``_T``) is accepted in
-  SDMX-ML 3.0.0, which the XSD forbids, and served back with its parent.
+  SDMX-ML 3.0.0, which the XSD forbids, and served back with its parent;
+- a maintainable id with lower-case letters, and a second one differing from
+  it only by case (GH-426).
 
 Writes ``<version>/registry-rules/`` beside the oracle's recordings: each
 document sent, FMR's outcome for it, and what FMR then serves.
@@ -104,11 +106,11 @@ def actual(base: StructureMessage) -> StructureMessage:
     return StructureMessage(constraints=[constraint])
 
 
-def _codelist(version: str, codes: str) -> StructureMessage:
+def _codelist(version: str, codes: str, id_: str = "CL_V") -> StructureMessage:
     return StructureMessage(
         codelists=[
             Codelist(
-                id="CL_V",
+                id=id_,
                 maintainer=_AGENCY,
                 version=version,
                 name={"en": "versioned"},
@@ -140,6 +142,13 @@ def steps() -> list[tuple[str, bytes]]:
         ("codelist-1.1.0-removes", to_xml(_codelist("1.1.0", "A"), version="3.0")),
         ("codelist-1.1.0-adds", to_xml(_codelist("1.1.0", "ABC"), version="3.0")),
         ("codelist-non-ncname-parents", to_xml(_parented(), version="3.0", allow={"non-ncname-parent"})),
+        # A lower-case id, then one differing from it only by case, at a
+        # legacy version FMR lets a submission replace and at a final
+        # semantic one it does not (GH-426).
+        ("codelist-lower-case-1.0", to_xml(_codelist("1.0", "AB", "CL_low"), version="3.0")),
+        ("codelist-case-clash-1.0", to_xml(_codelist("1.0", "XY", "CL_LOW"), version="3.0")),
+        ("codelist-lower-case-1.0.0", to_xml(_codelist("1.0.0", "AB", "CL_sem"), version="3.0")),
+        ("codelist-case-clash-1.0.0", to_xml(_codelist("1.0.0", "XY", "CL_SEM"), version="3.0")),
     ]
 
 

@@ -25,6 +25,7 @@ from sdmxlib.model.istring import InternationalString, to_istring
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.ref import SupportsUrn, artefact_urn
 from sdmxlib.model.rewrite import rewrite
+from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.model.validation import check_serialisable
 
 type _Finding = Change | Question | Blocked
@@ -85,7 +86,8 @@ class Plan:
 
         An answer overrides the policy's for its question. Edits are made in
         one order: leave out, add, set fields, run transforms, then move identities with
-        `sl.rewrite`, so every reference follows. The result is checked as
+        `sl.rewrite`, so every reference follows. Two moves of one artefact
+        compose: a rename and a version move make one move. The result is checked as
         writable in the target format.
 
         Args:
@@ -116,7 +118,7 @@ class Plan:
             if isinstance(edit, Transform) and str(edit.urn) not in omitted:
                 transforms.setdefault(str(edit.urn), []).append(edit.name)
         updated = _with_transforms(_with_fields(kept, fields), transforms)
-        moves = {edit.old: edit.new for edit in edits if isinstance(edit, Move) and str(edit.old) not in omitted}
+        moves = _composed([edit for edit in edits if isinstance(edit, Move) and str(edit.old) not in omitted])
         migrated = rewrite(updated, moves, annotation_refs=self.annotation_refs)
         check_serialisable(migrated, version=self.target.version, allow=self.target.allow)
         return migrated
@@ -196,6 +198,25 @@ def plan(
         annotation_refs=types,
         msg=msg,
     )
+
+
+def _composed(moves: Sequence[Move]) -> dict[SdmxUrn[object], SdmxUrn[object]]:
+    """Each artefact's new URN, from every move of it in order.
+
+    A move changes the parts of the URN it changes, its id or its version, so
+    `fmr.id-case`'s rename and the version rule's move make one move. Where
+    two moves change the same part, the later one wins, so a chosen option's
+    version overrides a change's.
+    """
+    composed: dict[SdmxUrn[object], SdmxUrn[object]] = {}
+    for move in moves:
+        current = composed.get(move.old, move.old)
+        composed[move.old] = attrs.evolve(
+            current,
+            id=move.new.id if move.new.id != move.old.id else current.id,
+            version=move.new.version if move.new.version != move.old.version else current.version,
+        )
+    return composed
 
 
 def _without_omitted(found: list[_Finding]) -> list[_Finding]:

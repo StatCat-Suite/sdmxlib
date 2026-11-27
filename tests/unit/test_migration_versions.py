@@ -162,7 +162,13 @@ def test_every_question_a_rule_asks_is_declared_with_its_options():
     plan = sl.migration.plan(_every_rule(), target=_TARGET)
     asked = {q.rule: tuple(o.id for o in q.options) for q in plan.questions}
     assert asked == {rule: QUESTIONS[rule] for rule in asked}
-    unasked = {"format.loss", "fmr.actual-constraint", "fmr.next-major", *_fmr_refusals.QUESTIONS}
+    unasked = {
+        "format.loss",
+        "fmr.actual-constraint",
+        "fmr.next-major",
+        "fmr.id-case",
+        *_fmr_refusals.QUESTIONS,
+    }
     assert set(QUESTIONS) - set(asked) == unasked
 
 

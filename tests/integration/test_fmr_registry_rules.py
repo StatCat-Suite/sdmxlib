@@ -89,3 +89,25 @@ def test_a_non_ncname_parent_is_accepted_and_served():
     assert _outcome("codelist-non-ncname-parents")["refusal"] is None
     served = _message("back/AG-ml30.xml").codelists["AG:CL_P"]
     assert {code.id: code.parent_id for code in served.codes} == {"_T": None, "1": "_T", "2": "1"}
+
+
+def test_a_lower_case_id_is_upper_cased():
+    """GH-426: FMR accepts ``CL_low`` as ``CL_LOW``, so a reference to ``CL_low`` no longer resolves."""
+    assert _outcome("codelist-lower-case-1.0")["accepted"] == [
+        "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LOW(1.0)"
+    ]
+    served = {codelist.id for codelist in _message("back/AG-ml30.xml").codelists}
+    assert "CL_LOW" in served
+    assert "CL_low" not in served
+
+
+def test_a_case_clash_replaces_a_legacy_version_and_is_refused_at_a_semantic_one():
+    """GH-426: the second of two ids differing only by case takes the first one's URN."""
+    served = _message("back/AG-ml30.xml").codelists
+    assert _outcome("codelist-case-clash-1.0")["refusal"] is None
+    assert served["AG:CL_LOW"].codes.ids() == ["X", "Y"]
+    assert _outcome("codelist-case-clash-1.0.0")["refusal"] == (
+        "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_SEM(1.0.0): "
+        "Semantically versioned structure can not be modified"
+    )
+    assert served["AG:CL_SEM"].codes.ids() == ["A", "B"]
