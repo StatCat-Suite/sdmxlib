@@ -7,11 +7,13 @@ cannot be migrated. A `Change` and each `Option` carry the `Edit`s that
 rebuild it with a rule's transform, add one, or leave it out.
 """
 
+from collections.abc import Callable, Iterable, Mapping
 from typing import Self
 
 from attrs import field, frozen
 
 from sdmxlib.model.base import MaintainableArtefact
+from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.model.validation import Deviation
 
@@ -22,45 +24,6 @@ _VERSIONS = frozenset({"3.0", "3.1", "json"})
 #: The FMR releases `Target.fmr` can name: the ones whose registry rules
 #: `bench/fmr/registry_rules.py` recorded.
 FMR_RELEASES: tuple[str, ...] = ("12.5.0",)
-
-
-@frozen
-class Target:
-    """What a migration moves a message to.
-
-    Attributes:
-        version: The format the result must be writable as: ``"3.0"``,
-            ``"3.1"`` or ``"json"`` (SDMX-JSON 2.0).
-        allow: The `Deviation`s the result may carry, passed to
-            `check_serialisable` when the plan is applied.
-        registry: The registry the result is loaded into, such as
-            ``"fmr-12.5.0"``, whose own rules the plan adds; None for none.
-    """
-
-    version: str
-    allow: frozenset[Deviation] = field(default=frozenset(), converter=frozenset)
-    registry: str | None = None
-
-    def __attrs_post_init__(self) -> None:
-        """Refuse a version no migration targets."""
-        if self.version not in _VERSIONS:
-            msg = f"a migration targets one of {sorted(_VERSIONS)}, not {self.version!r}"
-            raise ValueError(msg)
-
-    @classmethod
-    def fmr(cls, release: str) -> Self:
-        """The target for loading into Fusion Metadata Registry `release`.
-
-        SDMX-ML 3.0, with the non-NCName code parents FMR accepts, and the
-        rules FMR enforces beyond the XSD (`migration._fmr`).
-
-        Raises:
-            ValueError: If `release` is not one whose rules were recorded.
-        """
-        if release not in FMR_RELEASES:
-            msg = f"no recorded FMR rules for {release!r}; the releases recorded are {list(FMR_RELEASES)}"
-            raise ValueError(msg)
-        return cls(version="3.0", allow=frozenset({"non-ncname-parent"}), registry=f"fmr-{release}")
 
 
 @frozen
@@ -203,3 +166,81 @@ class Blocked:
     rule: str
     urn: str
     reason: str
+
+
+type Finding = Change | Question | Blocked
+
+
+def _to_questions(value: Mapping[str, Iterable[str]]) -> dict[str, tuple[str, ...]]:
+    return {rule: tuple(options) for rule, options in value.items()}
+
+
+@frozen
+class Rule:
+    """A rule of the caller's own, which a `Target` hands to `plan`.
+
+    `plan` runs it after its own rules and treats its findings as theirs: a
+    `Change`'s edits are made, a `Question` is answered by `policy=` or
+    `Plan.apply`, and a `Blocked` is reported.
+
+    Example:
+        def no_tests(msg):
+            for codelist in msg.codelists:
+                if codelist.id.startswith("TEST_"):
+                    urn = sl.SdmxUrn.parse(str(codelist.urn))
+                    yield Change(rule="local.test", urn=str(urn), path="", before=None,
+                                 after=None, reason="a test codelist", edits=(Omit(urn=urn),))
+
+        target = Target.fmr("12.5.0", rules=[Rule(find=no_tests)])
+
+    Attributes:
+        find: Yields the rule's findings for a message.
+        questions: Each rule id its questions carry, and the option ids they
+            take, as `QUESTIONS` holds them for the built-in rules. A
+            question of a rule id missing here is refused.
+    """
+
+    find: Callable[[StructureMessage], Iterable[Finding]] = field(eq=False)
+    questions: Mapping[str, tuple[str, ...]] = field(factory=dict, converter=_to_questions)
+
+
+@frozen
+class Target:
+    """What a migration moves a message to.
+
+    Attributes:
+        version: The format the result must be writable as: ``"3.0"``,
+            ``"3.1"`` or ``"json"`` (SDMX-JSON 2.0).
+        allow: The `Deviation`s the result may carry, passed to
+            `check_serialisable` when the plan is applied.
+        registry: The registry the result is loaded into, such as
+            ``"fmr-12.5.0"``, whose own rules the plan adds; None for none.
+        rules: The caller's own rules, which the plan runs after its own.
+    """
+
+    version: str
+    allow: frozenset[Deviation] = field(default=frozenset(), converter=frozenset)
+    registry: str | None = None
+    rules: tuple[Rule, ...] = field(default=(), converter=tuple)
+
+    def __attrs_post_init__(self) -> None:
+        """Refuse a version no migration targets."""
+        if self.version not in _VERSIONS:
+            msg = f"a migration targets one of {sorted(_VERSIONS)}, not {self.version!r}"
+            raise ValueError(msg)
+
+    @classmethod
+    def fmr(cls, release: str, *, rules: Iterable[Rule] = ()) -> Self:
+        """The target for loading into Fusion Metadata Registry `release`.
+
+        SDMX-ML 3.0, with the non-NCName code parents FMR accepts, and the
+        rules FMR enforces beyond the XSD (`migration._fmr`), followed by
+        the caller's own `rules`.
+
+        Raises:
+            ValueError: If `release` is not one whose rules were recorded.
+        """
+        if release not in FMR_RELEASES:
+            msg = f"no recorded FMR rules for {release!r}; the releases recorded are {list(FMR_RELEASES)}"
+            raise ValueError(msg)
+        return cls(version="3.0", allow=frozenset({"non-ncname-parent"}), registry=f"fmr-{release}", rules=tuple(rules))

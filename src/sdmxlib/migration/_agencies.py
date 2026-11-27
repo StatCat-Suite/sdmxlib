@@ -15,15 +15,23 @@ resolve. .Stat NSI serves sub-agencies whose scheme it does not serve.
 
 A top-level agency is the target registry's to declare in ``SDMX:AGENCIES``,
 which a message rarely holds, so it is not checked here.
+
+`omit_agencies` is a rule a caller adds (`Target(rules=...)`):
+
+- **agency.omitted** (change): an artefact a named agency maintains, or one
+  that references an artefact left out, is left out.
 """
 
 from collections.abc import Iterator, Mapping
 
-from sdmxlib.migration._types import Add, Blocked, Change
+from sdmxlib.migration._types import Add, Blocked, Change, Omit, Rule
 from sdmxlib.model.istring import InternationalString
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.organisation import Agency, AgencyScheme
 from sdmxlib.model.ref import artefact_urn
+from sdmxlib.model.urn import SdmxUrn
+from sdmxlib.model.validation import _collect_refs
+from sdmxlib.model.version import late_binds
 
 type Finding = Change | Blocked
 
@@ -84,3 +92,82 @@ def findings(msg: StructureMessage, agency_names: Mapping[str, InternationalStri
             reason=f"{', '.join(maintainers)} maintain artefacts, which needs {parent}:{_SCHEME_ID} to declare them",
             edits=(Add(artefact=scheme),),
         )
+
+
+#: The rule id of `omit_agencies`'s changes.
+OMIT_RULE = "agency.omitted"
+
+
+def omit_agencies(*agencies: str) -> Rule:
+    """A rule that leaves out what *agencies* maintain, and what references it.
+
+    For test and training agencies a registry should not receive. Each
+    artefact one of *agencies* maintains is left out and, repeatedly until
+    nothing changes, so is each artefact that references one left out, so the
+    result never names an artefact it does not hold. Each is a `Change` of
+    rule ``agency.omitted`` with an `Omit` edit.
+
+    Args:
+        agencies: The maintainers to leave out, such as ``"TEST"``. A
+            sub-agency is named in full (``"CA1.TEST"``); naming a parent does
+            not leave out its sub-agencies.
+
+    Returns:
+        The rule, for `Target(rules=...)`.
+    """
+    left_out = frozenset(agencies)
+
+    def find(msg: StructureMessage) -> Iterator[Change]:
+        artefacts = {str(artefact_urn(artefact)): artefact for artefact in msg.all_artefacts()}
+        names = {urn: _references(artefact) for urn, artefact in artefacts.items()}
+        why: dict[str, str] = {
+            urn: f"maintained by {artefact.agency_id}, which the caller leaves out"
+            for urn, artefact in artefacts.items()
+            if artefact.agency_id in left_out
+        }
+        changed = True
+        while changed:
+            changed = False
+            for urn, named in names.items():
+                if urn in why:
+                    continue
+                hit = next((gone for ref in named for gone in why if _binds(ref, SdmxUrn.parse(gone))), None)
+                if hit is not None:
+                    why[urn] = f"it references {hit}, which is left out"
+                    changed = True
+        for urn in artefacts:
+            if urn in why:
+                yield Change(
+                    rule=OMIT_RULE,
+                    urn=urn,
+                    path="",
+                    before=None,
+                    after=None,
+                    reason=why[urn],
+                    edits=(Omit(urn=SdmxUrn.parse(urn)),),
+                )
+
+    return Rule(find=find)
+
+
+def _binds(reference: SdmxUrn[object], urn: SdmxUrn[object]) -> bool:
+    """Whether a reference to the maintainable *reference* names the artefact at *urn*.
+
+    A late-bound version (``1.0+.0``, ``latest``) names every version it
+    may resolve to.
+    """
+    if (reference.artefact_class, reference.agency, reference.id) != (urn.artefact_class, urn.agency, urn.id):
+        return False
+    return reference.version == urn.version or reference.is_latest or late_binds(reference.version, urn.version)
+
+
+def _references(artefact: object) -> list[SdmxUrn[object]]:
+    """The maintainables *artefact* references, each as its own URN."""
+    named: dict[str, SdmxUrn[object]] = {}
+    for _path, ref in _collect_refs(artefact, ""):
+        try:
+            owner = ref.urn.owner()
+        except ValueError:
+            owner = ref.urn
+        named[str(owner)] = owner
+    return [named[key] for key in sorted(named)]

@@ -6,7 +6,19 @@ import attrs
 from attrs import field, frozen
 
 from sdmxlib.migration import _agencies, _fmr, _fmr_refusals, _structure, _versions
-from sdmxlib.migration._types import Add, Blocked, Change, Edit, Move, Omit, Question, SetField, Target, Transform
+from sdmxlib.migration._types import (
+    Add,
+    Blocked,
+    Change,
+    Edit,
+    Move,
+    Omit,
+    Question,
+    Rule,
+    SetField,
+    Target,
+    Transform,
+)
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.collections import ArtefactList
 from sdmxlib.model.istring import InternationalString, to_istring
@@ -162,12 +174,20 @@ def plan(
         ValueError: If the policy names a rule no rule asks, or an option that
             rule's questions do not take. A rule that asks nothing of this
             message is fine, so one policy serves every message of a registry.
+            Also if a caller's `Rule` claims a built-in rule id, or asks a
+            question its `questions` does not declare as asked.
     """
     types = frozenset(annotation_refs)
     names = {key: to_istring(value) for key, value in (agency_names or {}).items()}
     given = _Inputs(target=target, annotation_refs=types, agency_names=names)
-    found = _without_omitted([finding for rule in _RULES for finding in rule(msg, given)])
-    questions = tuple(_answered(_of(found, Question), policy or {}))
+    asks = _asks(target)
+    found = _without_omitted(
+        [
+            *(finding for rule in _RULES for finding in rule(msg, given)),
+            *(finding for rule in target.rules for finding in _checked(rule, msg)),
+        ]
+    )
+    questions = tuple(_answered(_of(found, Question), policy or {}, asks))
     return Plan(
         target=target,
         changes=tuple(_of(found, Change)),
@@ -201,11 +221,40 @@ QUESTIONS: dict[str, tuple[str, ...]] = {
 }
 
 
-def _answered(questions: Iterable[Question], policy: Mapping[str, str]) -> Iterator[Question]:
+def _asks(target: Target) -> dict[str, tuple[str, ...]]:
+    """Every rule the plan for *target* can ask: the built-in ones and the caller's."""
+    asks = dict(QUESTIONS)
+    for rule in target.rules:
+        for rule_id, options in rule.questions.items():
+            if rule_id in QUESTIONS:
+                msg = f"a caller's rule cannot ask {rule_id!r}, which is a built-in rule"
+                raise ValueError(msg)
+            asks[rule_id] = options
+    return asks
+
+
+def _checked(rule: Rule, message: StructureMessage) -> Iterator[_Finding]:
+    """A caller's rule's findings, refusing a question it did not declare."""
+    for finding in rule.find(message):
+        if isinstance(finding, Question):
+            asked = [option.id for option in finding.options]
+            declared = rule.questions.get(finding.rule)
+            if declared is None or set(declared) != set(asked):
+                msg = (
+                    f"{finding.key}: a caller's rule asked {finding.rule!r} with options {asked}, "
+                    f"and its questions= declares {list(declared) if declared is not None else 'no such rule'}"
+                )
+                raise ValueError(msg)
+        yield finding
+
+
+def _answered(
+    questions: Iterable[Question], policy: Mapping[str, str], asks: Mapping[str, tuple[str, ...]]
+) -> Iterator[Question]:
     for rule, choice in policy.items():
-        options = QUESTIONS.get(rule)
+        options = asks.get(rule)
         if options is None:
-            msg = f"policy for {rule!r}, which no rule asks; the rules that ask are {sorted(QUESTIONS)}"
+            msg = f"policy for {rule!r}, which no rule asks; the rules that ask are {sorted(asks)}"
             raise ValueError(msg)
         if choice not in options:
             msg = f"policy for {rule!r}: no option {choice!r}; it takes {list(options)}"
