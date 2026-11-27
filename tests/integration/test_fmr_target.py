@@ -36,6 +36,13 @@ def _refusal(step: str) -> str | None:
     return refusal
 
 
+def _outcome(step: str) -> dict[str, object]:
+    outcomes = json.loads((_CASE / "outcomes.json").read_text())
+    found = outcomes[step]
+    assert isinstance(found, dict)
+    return found
+
+
 def _merged(*names: str) -> sl.StructureMessage:
     """The recorded documents as one message, as a migration would hold them."""
     msgs = [_read(name) for name in names]
@@ -131,15 +138,74 @@ def test_non_ncname_parents_apply_and_fmr_took_them():
 def test_a_plain_3_0_target_asks_none_of_the_fmr_questions():
     """Discrimination: the FMR rules are the target's, not 3.0's."""
     plan = sl.migration.plan(
-        _merged("base.xml", "actual.xml", "codelist-1.0.0.xml", "codelist-1.1.0-removes.xml"),
+        _merged(
+            "base.xml",
+            "actual.xml",
+            "codelist-1.0.0.xml",
+            "codelist-1.1.0-removes.xml",
+            "codelist-lower-case-1.0.xml",
+            "codelist-case-clash-1.0.xml",
+        ),
         target=Target(version="3.0"),
     )
     assert {f.rule for f in (*plan.changes, *plan.questions, *plan.blocked) if f.rule.startswith("fmr.")} == set()
 
 
+def test_the_plan_asks_to_rename_the_lower_case_id_fmr_upper_cased():
+    plan = _plan("codelist-lower-case-1.0.0.xml")
+    (question,) = [q for q in plan.questions if q.rule == "fmr.id-case"]
+    assert question.recommended == "rename"
+    (move,) = question.option("rename").edits
+    assert isinstance(move, sl.migration.Move)
+    assert _outcome("codelist-lower-case-1.0.0")["accepted"] == [str(move.new)]
+
+
+def test_the_rename_composes_with_the_version_move():
+    codelist = sl.Codelist(
+        id="CL_low",
+        maintainer="AG",
+        version="1.0",
+        legacy_is_final=True,
+        name={"en": "c"},
+        codes=[sl.Code(id="A", name={"en": "A"})],
+    )
+    flow_dsd = sl.StructureMessage(codelists=[codelist])
+    plan = sl.migration.plan(flow_dsd, target=_TARGET, policy={"fmr.id-case": "rename"})
+    (migrated,) = plan.apply().codelists
+    assert (migrated.id, migrated.version) == ("CL_LOW", "1.0.0")
+
+
+def test_the_plan_blocks_the_case_clash_fmr_lost_an_artefact_to():
+    plan = _plan("codelist-lower-case-1.0.xml", "codelist-case-clash-1.0.xml")
+    (blocked,) = [b for b in plan.blocked if b.rule == "fmr.id-case-clash"]
+    assert blocked.urn.endswith("Codelist=AG:CL_low(1.0)")
+    assert [q for q in plan.questions if q.rule == "fmr.id-case"] == []
+    assert _outcome("codelist-case-clash-1.0")["accepted"] == [
+        "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=AG:CL_LOW(1.0)"
+    ]
+    semantic = _plan("codelist-lower-case-1.0.0.xml", "codelist-case-clash-1.0.0.xml")
+    assert [b.rule for b in semantic.blocked if b.rule == "fmr.id-case-clash"] == ["fmr.id-case-clash"]
+    assert "can not be modified" in str(_refusal("codelist-case-clash-1.0.0"))
+
+
 def test_every_fmr_rule_fires_on_the_recordings():
-    plan = _plan("base.xml", "actual.xml", "codelist-1.0.0.xml", "codelist-1.1.0-removes.xml")
+    plan = _plan(
+        "base.xml",
+        "actual.xml",
+        "codelist-1.0.0.xml",
+        "codelist-1.1.0-removes.xml",
+        "codelist-lower-case-1.0.xml",
+        "codelist-case-clash-1.0.xml",
+        "codelist-lower-case-1.0.0.xml",
+    )
     fired = {f.rule for f in (*plan.changes, *plan.questions, *plan.blocked) if f.rule.startswith("fmr.")}
-    assert fired == {"fmr.actual-constraint", "fmr.next-major", "fmr.related-dimensions", "fmr.monolingual"}
-    assert set(_fmr.QUESTIONS) == {"fmr.actual-constraint", "fmr.next-major"}
+    assert fired == {
+        "fmr.actual-constraint",
+        "fmr.next-major",
+        "fmr.related-dimensions",
+        "fmr.monolingual",
+        "fmr.id-case",
+        "fmr.id-case-clash",
+    }
+    assert set(_fmr.QUESTIONS) == {"fmr.actual-constraint", "fmr.next-major", "fmr.id-case"}
     assert set(_fmr.QUESTIONS) <= set(QUESTIONS)

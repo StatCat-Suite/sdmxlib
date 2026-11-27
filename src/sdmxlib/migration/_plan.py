@@ -5,14 +5,27 @@ from collections.abc import Callable, Collection, Iterable, Iterator, Mapping, S
 import attrs
 from attrs import field, frozen
 
-from sdmxlib.migration import _agencies, _fmr, _fmr_refusals, _structure, _versions
-from sdmxlib.migration._types import Add, Blocked, Change, Edit, Move, Omit, Question, SetField, Target, Transform
+from sdmxlib.migration import _agencies, _fmr, _fmr_refusals, _hierarchies, _structure, _versions
+from sdmxlib.migration._types import (
+    Add,
+    Blocked,
+    Change,
+    Edit,
+    Move,
+    Omit,
+    Question,
+    Rule,
+    SetField,
+    Target,
+    Transform,
+)
 from sdmxlib.model.base import MaintainableArtefact
 from sdmxlib.model.collections import ArtefactList
 from sdmxlib.model.istring import InternationalString, to_istring
 from sdmxlib.model.message import StructureMessage
 from sdmxlib.model.ref import SupportsUrn, artefact_urn
 from sdmxlib.model.rewrite import rewrite
+from sdmxlib.model.urn import SdmxUrn
 from sdmxlib.model.validation import check_serialisable
 
 type _Finding = Change | Question | Blocked
@@ -31,6 +44,7 @@ class _Inputs:
 _RULES: tuple[Callable[[StructureMessage, _Inputs], Iterator[_Finding]], ...] = (
     lambda msg, given: _versions.findings(msg, annotation_refs=given.annotation_refs),
     lambda msg, given: _structure.findings(msg, given.target),
+    lambda msg, _given: _hierarchies.findings(msg),
     lambda msg, given: _fmr.findings(msg, given.target),
     lambda msg, given: _fmr_refusals.findings(msg, given.target),
     lambda msg, given: _agencies.findings(msg, given.agency_names),
@@ -73,7 +87,8 @@ class Plan:
 
         An answer overrides the policy's for its question. Edits are made in
         one order: leave out, add, set fields, run transforms, then move identities with
-        `sl.rewrite`, so every reference follows. The result is checked as
+        `sl.rewrite`, so every reference follows. Two moves of one artefact
+        compose: a rename and a version move make one move. The result is checked as
         writable in the target format.
 
         Args:
@@ -94,7 +109,8 @@ class Plan:
         edits = [edit for change in self.changes for edit in change.edits]
         edits.extend(self._chosen(answers or {}, partial=partial))
         omitted = {str(edit.urn) for edit in edits if isinstance(edit, Omit)}
-        kept = _with_added(_without(self._msg, omitted), [edit.artefact for edit in edits if isinstance(edit, Add)])
+        added = [edit.artefact for edit in edits if isinstance(edit, Add) and str(edit.urn) not in omitted]
+        kept = _with_added(_without(self._msg, omitted), added)
         fields: dict[str, dict[str, object]] = {}
         for edit in edits:
             if isinstance(edit, SetField) and str(edit.urn) not in omitted:
@@ -104,7 +120,11 @@ class Plan:
             if isinstance(edit, Transform) and str(edit.urn) not in omitted:
                 transforms.setdefault(str(edit.urn), []).append(edit.name)
         updated = _with_transforms(_with_fields(kept, fields), transforms)
-        moves = {edit.old: edit.new for edit in edits if isinstance(edit, Move) and str(edit.old) not in omitted}
+        moves = _composed([edit for edit in edits if isinstance(edit, Move) and str(edit.old) not in omitted])
+        for add in (edit for edit in edits if isinstance(edit, Add)):
+            source = add.versioned_as
+            if source is not None and source in moves and add.urn not in moves:
+                moves[add.urn] = attrs.evolve(add.urn, version=moves[source].version)
         migrated = rewrite(updated, moves, annotation_refs=self.annotation_refs)
         check_serialisable(migrated, version=self.target.version, allow=self.target.allow)
         return migrated
@@ -162,12 +182,20 @@ def plan(
         ValueError: If the policy names a rule no rule asks, or an option that
             rule's questions do not take. A rule that asks nothing of this
             message is fine, so one policy serves every message of a registry.
+            Also if a caller's `Rule` claims a built-in rule id, or asks a
+            question its `questions` does not declare as asked.
     """
     types = frozenset(annotation_refs)
     names = {key: to_istring(value) for key, value in (agency_names or {}).items()}
     given = _Inputs(target=target, annotation_refs=types, agency_names=names)
-    found = _without_omitted([finding for rule in _RULES for finding in rule(msg, given)])
-    questions = tuple(_answered(_of(found, Question), policy or {}))
+    asks = _asks(target)
+    found = _without_omitted(
+        [
+            *(finding for rule in _RULES for finding in rule(msg, given)),
+            *(finding for rule in target.rules for finding in _checked(rule, msg)),
+        ]
+    )
+    questions = tuple(_answered(_of(found, Question), policy or {}, asks))
     return Plan(
         target=target,
         changes=tuple(_of(found, Change)),
@@ -176,6 +204,25 @@ def plan(
         annotation_refs=types,
         msg=msg,
     )
+
+
+def _composed(moves: Sequence[Move]) -> dict[SdmxUrn[object], SdmxUrn[object]]:
+    """Each artefact's new URN, from every move of it in order.
+
+    A move changes the parts of the URN it changes, its id or its version, so
+    `fmr.id-case`'s rename and the version rule's move make one move. Where
+    two moves change the same part, the later one wins, so a chosen option's
+    version overrides a change's.
+    """
+    composed: dict[SdmxUrn[object], SdmxUrn[object]] = {}
+    for move in moves:
+        current = composed.get(move.old, move.old)
+        composed[move.old] = attrs.evolve(
+            current,
+            id=move.new.id if move.new.id != move.old.id else current.id,
+            version=move.new.version if move.new.version != move.old.version else current.version,
+        )
+    return composed
 
 
 def _without_omitted(found: list[_Finding]) -> list[_Finding]:
@@ -196,16 +243,46 @@ def _of[F: (Change, Question, Blocked)](found: Iterable[_Finding], kind: type[F]
 QUESTIONS: dict[str, tuple[str, ...]] = {
     **_versions.QUESTIONS,
     **_structure.QUESTIONS,
+    **_hierarchies.QUESTIONS,
     **_fmr.QUESTIONS,
     **_fmr_refusals.QUESTIONS,
 }
 
 
-def _answered(questions: Iterable[Question], policy: Mapping[str, str]) -> Iterator[Question]:
+def _asks(target: Target) -> dict[str, tuple[str, ...]]:
+    """Every rule the plan for *target* can ask: the built-in ones and the caller's."""
+    asks = dict(QUESTIONS)
+    for rule in target.rules:
+        for rule_id, options in rule.questions.items():
+            if rule_id in QUESTIONS:
+                msg = f"a caller's rule cannot ask {rule_id!r}, which is a built-in rule"
+                raise ValueError(msg)
+            asks[rule_id] = options
+    return asks
+
+
+def _checked(rule: Rule, message: StructureMessage) -> Iterator[_Finding]:
+    """A caller's rule's findings, refusing a question it did not declare."""
+    for finding in rule.find(message):
+        if isinstance(finding, Question):
+            asked = [option.id for option in finding.options]
+            declared = rule.questions.get(finding.rule)
+            if declared is None or set(declared) != set(asked):
+                msg = (
+                    f"{finding.key}: a caller's rule asked {finding.rule!r} with options {asked}, "
+                    f"and its questions= declares {list(declared) if declared is not None else 'no such rule'}"
+                )
+                raise ValueError(msg)
+        yield finding
+
+
+def _answered(
+    questions: Iterable[Question], policy: Mapping[str, str], asks: Mapping[str, tuple[str, ...]]
+) -> Iterator[Question]:
     for rule, choice in policy.items():
-        options = QUESTIONS.get(rule)
+        options = asks.get(rule)
         if options is None:
-            msg = f"policy for {rule!r}, which no rule asks; the rules that ask are {sorted(QUESTIONS)}"
+            msg = f"policy for {rule!r}, which no rule asks; the rules that ask are {sorted(asks)}"
             raise ValueError(msg)
         if choice not in options:
             msg = f"policy for {rule!r}: no option {choice!r}; it takes {list(options)}"

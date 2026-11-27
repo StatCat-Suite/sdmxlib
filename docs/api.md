@@ -1559,6 +1559,14 @@ Plan and apply a move of a structure message from SDMX 2.1 to 3.x: what changes 
 
 ---
 
+::: sdmxlib.migration.Rule
+
+---
+
+::: sdmxlib.migration.omit_agencies
+
+---
+
 ## Dict conversion
 
 Round-trip artefacts through plain Python dicts (JSON-friendly, no SDMX wire format).

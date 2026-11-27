@@ -139,7 +139,10 @@ def test_create_exclusive_names_the_hard_link_requirement_when_the_link_fails(
     assert _left(tmp_path) == [], "nothing is written and the staged file is gone"
 
 
-@pytest.mark.parametrize("code", [errno.EINVAL, errno.ENOTSUP, errno.EOPNOTSUPP])
+# ENOTSUP and EOPNOTSUPP are one number on Linux and two on macOS.
+@pytest.mark.parametrize(
+    "code", sorted({errno.EINVAL, errno.ENOTSUP, errno.EOPNOTSUPP}), ids=lambda code: errno.errorcode[code]
+)
 def test_create_exclusive_succeeds_where_the_directory_cannot_be_fsynced(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, code: int
 ) -> None:

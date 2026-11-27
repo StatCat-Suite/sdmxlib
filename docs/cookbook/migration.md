@@ -105,6 +105,35 @@ Two kinds of input come as arguments rather than answers:
   parent's scheme if the message lacks it. The IM requires both names, and
   the plan invents none.
 
+A registry's own conventions go in rules of the caller's own, which the
+target hands to `plan` after the built-in ones. `omit_agencies` is one:
+it leaves out every artefact a test or training agency maintains, and every
+artefact that references one left out, so the load never names an artefact
+it does not hold:
+
+```python
+target = sl.migration.Target.fmr("12.5.0", rules=[sl.migration.omit_agencies("TEST", "TRAINING")])
+```
+
+A `Rule` of your own yields `Change`, `Question` and `Blocked` findings with
+the same edits, and declares the options its questions take, so a policy
+answers them as it answers the built-in rules.
+
+Three rules remodel what 3.0 has no place for:
+
+- `fmr.id-case` asks to rename a maintainable whose id has lower-case
+  letters: FMR stores `CL_low` as `CL_LOW`, and a reference to `CL_low`
+  stops resolving. Two ids that differ only by case are blocked
+  (`fmr.id-case-clash`), since FMR stores the second under the first one's
+  URN.
+- `hierarchy.association` binds each hierarchy a 2.1
+  `HierarchicalCodelist` carried to the dimension its codelist enumerates,
+  with a `HierarchyAssociation`, or asks when the codelist enumerates
+  several.
+- `structure.measure-dimension` asks whether a 2.1 MeasureDimension becomes
+  a dimension enumerated by a codelist of its concepts, or one measure per
+  concept.
+
 ## 4. Apply
 
 `apply` makes the changes and the chosen answers. It moves each artefact's
